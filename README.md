@@ -59,11 +59,12 @@ Chamber‑API is designed to pair with **Chamber‑UI**, a customized fork of th
 ## Architecture
 
 The project is organized into the following projects:
-•	src/Chamber.Api/ API entry point (handles HTTP requests and responses)
-•	src/Chamber.Core/ Core business logic and domain models
-•	src/Chamber.Data/ Data access and persistence
-•	src/Chamber.Services/ Application services and business operations
-•	tests/Chamber.Tests/ Unit and integration tests
+
+- `src/Chamber.Api/` — API entry point (handles HTTP requests and responses)
+- `src/Chamber.Core/` — Core business logic and domain models
+- `src/Chamber.Data/` — Data access and persistence
+- `src/Chamber.Services/` — Application services and business operations
+- `tests/Chamber.Tests/` — Unit and integration tests
 
 The API communicates with Chamber‑UI over REST and is designed for containerized deployment.
 
