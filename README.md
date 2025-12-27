@@ -59,14 +59,11 @@ Chamber‑API is designed to pair with **Chamber‑UI**, a customized fork of th
 ## Architecture
 
 Chamber‑API follows a clean, modular structure:
-Chamber-API/
-├── src/
-│   ├── Chamber.Api/
-│   ├── Chamber.Core/
-│   ├── Chamber.Data/
-│   └── Chamber.Services/
-└── tests/
-    └── Chamber.Tests/
+•	Chamber.Api/: Entry point for the API, handling HTTP requests and responses.
+•	Chamber.Core/: Contains core business logic and domain models.
+•	Chamber.Data/: Responsible for data access and persistence.
+•	Chamber.Services/: Implements application services and business operations.
+•	Chamber.Tests/: Contains unit and integration tests for the solution.
 
 The API communicates with Chamber‑UI over REST and is designed for containerized deployment.
 
