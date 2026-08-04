@@ -1,0 +1,199 @@
+:root {
+  --bg-main: #111215;         /* Audiobookshelf deep charcoal main background */
+  --bg-panel: #16171c;        /* Solid dark-grey top header / drawer backgrounds */
+  --bg-sidebar: #18191e;      /* Sidebar signature dark gray */
+  --bg-input: #23252d;        /* Sleek slate for input fields */
+  --bg-card: #1d1e24;         /* Rich charcoal card panels */
+  --bg-modal: #14151a;        /* Core modal window gray */
+  
+  --color-primary: #cca43b;    /* Warm gold/brass casing highlight */
+  --color-primary-hover: #e5c158; /* Bright gold casing hover */
+  --color-primary-rgb: 204, 164, 59;
+  
+  --color-accent: #d27c2d;     /* Bullet copper accent */
+  --color-accent-hover: #ea8b39;
+  --color-danger: #ef4444;     /* Red alert status */
+  --color-success: #10b981;    /* Safe active green */
+  --color-info: #3b82f6;       /* Blue indicators */
+  
+  --text-primary: #f3f4f6;     /* High contrast light gray/white */
+  --text-secondary: #a0aec0;   /* Muted gray text */
+  --text-muted: #64748b;       /* Understated text slate */
+  
+  --border-light: rgba(255, 255, 255, 0.08); /* Sophisticated thin gray borders */
+  --border-glow: rgba(204, 164, 59, 0.25);  /* Elegant gold highlights */
+  --border-solid: #282a35;     /* Structural borders */
+  
+  --font-heading: 'Outfit', 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  
+  --transition-fast: all 0.15s ease;
+  --transition-normal: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Beautiful custom thin scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-solid);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* Global button styles */
+button, .btn {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: var(--transition-fast);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--bg-main);
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 0 12px rgba(var(--color-primary-rgb), 0.3);
+}
+
+.btn-secondary {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border-color: var(--border-solid);
+}
+.btn-secondary:hover {
+  background: var(--border-solid);
+  border-color: var(--color-primary);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.btn-danger:hover {
+  background: var(--color-danger);
+  color: white;
+}
+
+/* Standard Glassmorphic Panel style */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: var(--transition-normal);
+}
+.card:hover {
+  border-color: var(--border-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 15px rgba(var(--color-primary-rgb), 0.05);
+}
+
+/* Input Fields */
+input, select, textarea {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+  transition: var(--transition-fast);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 8px rgba(var(--color-primary-rgb), 0.15);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+.badge-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+.badge-warning {
+  background: rgba(210, 124, 45, 0.15);
+  color: var(--color-accent);
+  border-color: rgba(210, 124, 45, 0.2);
+}
+.badge-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Loading Spinner */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(var(--color-primary-rgb), 0.1);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
