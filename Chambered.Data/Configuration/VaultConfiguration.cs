@@ -1,0 +1,53 @@
+﻿using Chambered.Data.Models;
+using Chambered.Data.Utility;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Chambered.Data.Configuration
+{
+    /// <summary>
+    /// Entity Framework Core Fluent API configuration for the <see cref="Vault"/> entity.
+    /// </summary>
+    public class VaultConfiguration : IEntityTypeConfiguration<Vault>
+    {
+        public void Configure(EntityTypeBuilder<Vault> builder)
+        {
+            builder.ToTable("Vaults");
+
+            builder.HasKey(v => v.Id);
+
+            builder.Property(v => v.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            builder.Property(v => v.Description)
+                .HasMaxLength(500);
+
+            builder.Property(v => v.LockType)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(v => v.EncryptedPasscode)
+                .HasConversion<SymmetricEncryptionConverter>()
+                .HasMaxLength(512);
+
+            builder.Property(v => v.EncryptionIv)
+                .HasMaxLength(128);
+
+            builder.Property(v => v.PasscodeHint)
+                .HasMaxLength(250);
+
+            builder.Property(v => v.BackupKeyLocation)
+                .HasMaxLength(250);
+
+            builder.Property(v => v.HasDehumidifier)
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            builder.HasOne(v => v.ParentVault)
+                .WithMany(v => v.ChildVaults)
+                .HasForeignKey(v => v.ParentVaultId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
+    }
+}

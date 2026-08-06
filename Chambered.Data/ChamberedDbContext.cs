@@ -1,4 +1,5 @@
 using Chambered.Data;
+using Chambered.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -15,20 +16,28 @@ namespace Chambered.Data
         {
         }
 
+        public DbSet<ArmoryItem> ArmoryItems { get; set; }
+        public DbSet<Vault> Vaults { get; set; }
+        public DbSet<Vault> VaultCategories { get; set; }
+        public DbSet<Arsenal> Arsenals { get; set; }
+
+
+
+
         public DbSet<Projectile> Projectiles { get; set; }
         public DbSet<Cartridge> Cartridges { get; set; }
         public DbSet<FactoryAmmo> FactoryAmmo { get; set; }
         public DbSet<Manufacturer> Manufacturers { get; set; }
         public DbSet<ExternalSourceMap> ExternalSourceMaps { get; set; }
         public DbSet<Powder> Powders { get; set; }
-        public DbSet<ArmoryItem> ArmoryItems { get; set; }
+        
         public DbSet<CartridgeLot> CartridgeLots { get; set; }
         public DbSet<AmmoLot> AmmoLots { get; set; }
         public DbSet<Primer> Primers { get; set; }
         public DbSet<OidcConfig> OidcConfigs { get; set; }
         public DbSet<ApiKey> ApiKeys { get; set; }
-        public DbSet<Arsenal> Arsenals { get; set; }
-        public DbSet<VaultLocation> VaultLocations { get; set; }
+        
+        
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -106,18 +115,6 @@ namespace Chambered.Data
         public string Notes { get; set; }
     }
 
-    public class Manufacturer
-    {
-        public int Id { get; set; }
-
-        public string Name { get; set; }
-        public string Country { get; set; }
-        public string Website { get; set; }
-
-        public ICollection<Projectile> Projectiles { get; set; }
-        public ICollection<FactoryAmmo> FactoryAmmo { get; set; }
-    }
-
     public class ExternalSourceMap
     {
         public int Id { get; set; }
@@ -143,40 +140,7 @@ namespace Chambered.Data
         public string Notes { get; set; }
     }
 
-    public class ArmoryItem
-    {
-        public int Id { get; set; }
-
-        public string Manufacturer { get; set; }
-        public string Model { get; set; }
-
-        public string Caliber { get; set; }
-        public decimal BarrelLengthInches { get; set; }
-        public string TwistRate { get; set; }        // e.g., "1:10"
-        public string ActionType { get; set; }       // Bolt, Semi-auto, Revolver, etc.
-
-        public string SerialNumber { get; set; }     // Optional, user-controlled
-        public string Notes { get; set; }
-
-        // Expanded fields for premium dashboard & armory details
-        public decimal? PurchasePrice { get; set; }
-        public DateTime? PurchaseDate { get; set; }
-        public decimal? CurrentValue { get; set; }
-        public string Condition { get; set; }        // e.g., New, Excellent, Good, Fair, Poor
-        public string ImageUrl { get; set; }         // Preset image names or absolute links
-        public int RoundCount { get; set; } = 0;     // Cumulative rounds fired
-
-        // Advanced legacy & maintenance columns
-        public string Beneficiary { get; set; }
-        public string StorageLocation { get; set; }
-        public string NotesMarkdown { get; set; }
-        public string AccessoriesListJson { get; set; }
-        public string MaintenanceTasksJson { get; set; }
-        public string RangeHistoryJson { get; set; }
-
-        public int? ArsenalId { get; set; }
-        public Arsenal? Arsenal { get; set; }
-    }
+    
 
     public class CartridgeLot
     {
@@ -374,35 +338,6 @@ namespace Chambered.Data
         }
     }
 
-    public class ArmoryItemConfiguration : IEntityTypeConfiguration<ArmoryItem>
-    {
-        public void Configure(EntityTypeBuilder<ArmoryItem> builder)
-        {
-            builder.Property(f => f.Manufacturer)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            builder.Property(f => f.Model)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            builder.Property(f => f.Caliber)
-                .HasMaxLength(20);
-
-            builder.Property(f => f.TwistRate)
-                .HasMaxLength(20);
-
-            builder.Property(f => f.ActionType)
-                .HasMaxLength(50);
-
-            builder.Property(f => f.SerialNumber)
-                .HasMaxLength(100);
-
-            builder.Property(f => f.Notes)
-                .HasMaxLength(500);
-        }
-    }
-
     public class CartridgeLotConfiguration : IEntityTypeConfiguration<CartridgeLot>
     {
         public void Configure(EntityTypeBuilder<CartridgeLot> builder)
@@ -492,36 +427,6 @@ namespace Chambered.Data
             builder.HasOne(a => a.User)
                 .WithMany()
                 .HasForeignKey(a => a.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        }
-    }
-
-    public class Arsenal
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string? OwnerId { get; set; }
-    }
-
-    public class VaultLocation
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public int? ArsenalId { get; set; }
-        public Arsenal? Arsenal { get; set; }
-    }
-
-    public class VaultLocationConfiguration : IEntityTypeConfiguration<VaultLocation>
-    {
-        public void Configure(EntityTypeBuilder<VaultLocation> builder)
-        {
-            builder.HasKey(vl => vl.Id);
-            builder.Property(vl => vl.Name).IsRequired().HasMaxLength(150);
-            builder.HasOne(vl => vl.Arsenal)
-                .WithMany()
-                .HasForeignKey(vl => vl.ArsenalId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

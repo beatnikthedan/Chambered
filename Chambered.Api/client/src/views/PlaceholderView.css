@@ -1,59 +1,3 @@
-<template>
-  <div class="placeholder-view">
-    <div class="coming-soon-card">
-      <h2 class="coming-soon-title">{{ title }}</h2>
-      <p class="coming-soon-subtitle">Under Construction</p>
-      
-      <div class="divider-line"></div>
-      
-      <div class="coming-soon-details">
-        <p>This section is a part of the premium <strong>Chambered</strong> suite expansion.</p>
-        <p>Our development team is actively engineering this module to include fully integrated, data logging, custom reporting, and real-time synchronizations.</p>
-      </div>
-      
-      <div class="interactive-progress">
-        <div class="progress-bar">
-          <div class="progress-fill"></div>
-        </div>
-        <span class="progress-text">Planned Module — Status: In Development Queue</span>
-      </div>
-
-      <router-link to="/" class="btn btn-primary back-home-btn">
-        Return to Dashboard
-      </router-link>
-    </div>
-  </div>
-</template>
-
-<script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-
-const route = useRoute()
-
-const details = computed(() => {
-  const path = route.path
-  if (path.includes('/bench/load-data')) {
-    return { title: 'Chambered Bench: Load Data', icon: '' }
-  } else if (path.includes('/bench/components')) {
-    return { title: 'Chambered Bench: Components', icon: '' }
-  } else if (path.includes('/range/trips')) {
-    return { title: 'Chambered Range: Trips', icon: '' }
-  } else if (path.includes('/range/targets')) {
-    return { title: 'Chambered Range: Targets', icon: '' }
-  } else if (path.includes('/range/training')) {
-    return { title: 'Chambered Range: Training', icon: '' }
-  } else if (path.includes('/vaults/locations')) {
-    return { title: 'Chambered Vaults: Locations', icon: '' }
-  }
-  return { title: 'Chambered Expansion Module', icon: '' }
-})
-
-const title = computed(() => details.value.title)
-const icon = computed(() => details.value.icon)
-</script>
-
-<style scoped>
 .placeholder-view {
   display: flex;
   align-items: center;
@@ -165,4 +109,3 @@ const icon = computed(() => details.value.icon)
   0% { width: 10%; margin-left: 0; }
   100% { width: 50%; margin-left: 50%; }
 }
-</style>

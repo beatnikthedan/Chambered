@@ -1,0 +1,271 @@
+.settings-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 8px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.tab-btn:hover {
+  background: rgba(204, 164, 59, 0.05);
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background: rgba(204, 164, 59, 0.1);
+  color: var(--color-primary);
+  border: 1px solid var(--border-light);
+}
+
+.settings-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sec-title {
+  font-size: 18px;
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+}
+
+.sec-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: -12px;
+  line-height: 1.5;
+}
+
+.loading-inline {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+/* Tabular lists */
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-sm);
+}
+
+.settings-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.settings-table th, .settings-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-solid);
+}
+
+.settings-table th {
+  background: var(--bg-input);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.settings-table tbody tr:hover {
+  background: rgba(255,255,255,0.01);
+}
+
+.text-bold {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.text-mono {
+  font-family: monospace;
+  color: var(--color-primary);
+}
+
+/* Dialog Overlay modals */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bg-deep-blur {
+  backdrop-filter: blur(15px);
+}
+
+.dialog-card {
+  background: var(--bg-modal);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dialog-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.checkbox-grp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.checkbox-grp input {
+  width: auto;
+  cursor: pointer;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* OIDC forms */
+.oidc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.toggle-setting {
+  background: var(--bg-input);
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-solid);
+  font-size: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.full-width {
+  grid-column: span 2;
+}
+
+.discover-input-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.discover-btn {
+  white-space: nowrap;
+}
+
+.redirect-helper {
+  border-top: 1px dashed var(--border-light);
+  padding-top: 16px;
+}
+
+.readonly-input {
+  background: var(--bg-sidebar);
+  border-color: var(--border-light);
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.form-actions-row {
+  display: flex;
+  justify-content: flex-start;
+  border-top: 1px solid var(--border-solid);
+  padding-top: 20px;
+}
+
+/* Token reveal dialog */
+.warning-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.token-reveal {
+  display: flex;
+  gap: 10px;
+  background: var(--bg-sidebar);
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary);
+}
+
+.raw-token-field {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  flex-grow: 1;
+}
+.raw-token-field:focus {
+  box-shadow: none;
+}
+
+.form-textarea-abs {
+  width: 100%;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 10px;
+  resize: vertical;
+}
+.form-textarea-abs:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
