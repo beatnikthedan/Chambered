@@ -36,48 +36,6 @@ namespace Chambered.Data.Models
 
         #endregion
 
-        #region Technical Specifications
-
-        /// <summary>
-        /// Gets or sets the barrel length measured in inches.
-        /// </summary>
-        public decimal? BarrelLengthInches { get; set; }
-
-        /// <summary>
-        /// Gets or sets the rifling twist rate (e.g., "1:7", "1:10").
-        /// </summary>
-        public string? TwistRate { get; set; }
-
-        /// <summary>
-        /// Gets or sets the muzzle thread pitch (e.g., "1/2x28", "5/8x24").
-        /// </summary>
-        public string? ThreadPitch { get; set; }
-
-        #endregion
-
-        #region Legal & NFA Metadata
-
-        /// <summary>
-        /// Gets or sets a value indicating whether this item falls under NFA regulation (e.g., SBR, Suppressor).
-        /// </summary>
-        public bool IsNfaItem { get; set; }
-
-        /// <summary>
-        /// Gets or sets the specific NFA form type for the application.
-        /// </summary>
-        public NfaFormType? NfaFormType { get; set; }
-
-        /// <summary>
-        /// Gets or sets the URL or file path for the approved NFA tax stamp document image or PDF.
-        /// </summary>
-        public string? TaxStampDocumentUrl { get; set; }
-
-        /// <summary>
-        /// Gets or sets the date the NFA tax stamp was officially approved.
-        /// </summary>
-        public DateTime? StampApprovalDate { get; set; }
-
-        #endregion
 
         #region Financial & Valuation
 
@@ -194,5 +152,74 @@ namespace Chambered.Data.Models
         //public ICollection<RangeSessionLog> RangeLogs { get; set; } = new List<RangeSessionLog>();
 
         #endregion
+    }
+
+    public class NfaArmoryItem : ArmoryItem
+    {
+        /// <summary>
+        /// Gets or sets a value indicating whether this item falls under NFA regulation (e.g., SBR, Suppressor).
+        /// </summary>
+        public bool IsNfaItem { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets the specific NFA form type for the application.
+        /// </summary>
+        public NfaFormType? NfaFormType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the URL or file path for the approved NFA tax stamp document image or PDF.
+        /// </summary>
+        public string? TaxStampDocumentUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the date the NFA tax stamp was officially approved.
+        /// </summary>
+        public DateTime? StampApprovalDate { get; set; }
+    }
+
+    public class PewArmoryItem : NfaArmoryItem
+    {
+        /// <summary>
+        /// Gets or sets the barrel length measured in inches.
+        /// </summary>
+        public decimal? BarrelLengthInches { get; set; }
+
+        /// <summary>
+        /// Gets or sets the rifling twist rate (e.g., "1:7", "1:10").
+        /// </summary>
+        public string? TwistRate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the muzzle thread pitch (e.g., "1/2x28", "5/8x24").
+        /// </summary>
+        public string? ThreadPitch { get; set; }
+    }
+
+    public class SuppressorArmoryItem : NfaArmoryItem
+    {
+        // Inherits legal and NFA structures cleanly
+    }
+
+    public class BatteryPoweredArmoryItem : ArmoryItem
+    {
+        /// <summary>
+        /// Gets or sets the date the battery was last changed.
+        /// </summary>
+        public DateTime? BatteryLastChangedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the battery form factor or model designation (e.g., CR2032, CR123A).
+        /// </summary>
+        public string? BatteryType { get; set; }
+    }
+
+    public class OpticArmoryItem : BatteryPoweredArmoryItem
+    {
+        // Inherits battery metrics
+    }
+
+    public class LightArmoryItem : BatteryPoweredArmoryItem
+    {
+        // Inherits battery metrics
     }
 }

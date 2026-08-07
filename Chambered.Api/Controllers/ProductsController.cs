@@ -276,6 +276,7 @@ namespace Chambered.Api.Controllers
                     Sku = pew.Sku,
                     ManufacturerId = pew.ManufacturerId,
                     ManufacturerName = pew.Manufacturer?.Name,
+                    ManufacturerWebPageUrl = pew.Manufacturer?.WebPageUrl,
                     WebPageUrl = pew.WebPageUrl,
                     ReferenceNotes = pew.ReferenceNotes,
                     Specifications = pew.Specifications ?? new(),
@@ -296,6 +297,7 @@ namespace Chambered.Api.Controllers
                     Sku = opt.Sku,
                     ManufacturerId = opt.ManufacturerId,
                     ManufacturerName = opt.Manufacturer?.Name,
+                    ManufacturerWebPageUrl = opt.Manufacturer?.WebPageUrl,
                     WebPageUrl = opt.WebPageUrl,
                     ReferenceNotes = opt.ReferenceNotes,
                     Specifications = opt.Specifications ?? new(),
@@ -323,6 +325,7 @@ namespace Chambered.Api.Controllers
                     Sku = sup.Sku,
                     ManufacturerId = sup.ManufacturerId,
                     ManufacturerName = sup.Manufacturer?.Name,
+                    ManufacturerWebPageUrl = sup.Manufacturer?.WebPageUrl,
                     WebPageUrl = sup.WebPageUrl,
                     ReferenceNotes = sup.ReferenceNotes,
                     Specifications = sup.Specifications ?? new(),
@@ -347,6 +350,7 @@ namespace Chambered.Api.Controllers
                     Sku = lgt.Sku,
                     ManufacturerId = lgt.ManufacturerId,
                     ManufacturerName = lgt.Manufacturer?.Name,
+                    ManufacturerWebPageUrl = lgt.Manufacturer?.WebPageUrl,
                     WebPageUrl = lgt.WebPageUrl,
                     ReferenceNotes = lgt.ReferenceNotes,
                     Specifications = lgt.Specifications ?? new(),
@@ -369,6 +373,7 @@ namespace Chambered.Api.Controllers
                 Sku = p.Sku,
                 ManufacturerId = p.ManufacturerId,
                 ManufacturerName = p.Manufacturer?.Name,
+                ManufacturerWebPageUrl = p.Manufacturer?.WebPageUrl,
                 WebPageUrl = p.WebPageUrl,
                 ReferenceNotes = p.ReferenceNotes,
                 Specifications = p.Specifications ?? new()
@@ -457,6 +462,7 @@ namespace Chambered.Api.Controllers
         public string? Sku { get; set; }
         public int ManufacturerId { get; set; }
         public string? ManufacturerName { get; set; }
+        public string? ManufacturerWebPageUrl { get; set; }
         public string? WebPageUrl { get; set; }
         public string? ReferenceNotes { get; set; }
         public Dictionary<string, string> Specifications { get; set; } = new();

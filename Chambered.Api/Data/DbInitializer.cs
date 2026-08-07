@@ -19,7 +19,6 @@ namespace Chambered.Api.Data
             await context.Database.EnsureCreatedAsync();
 
 
-
             // 1. Seed Roles
             string adminRole = "Admin";
             string userRole = "User";

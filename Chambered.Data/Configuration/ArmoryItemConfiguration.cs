@@ -21,24 +21,22 @@ namespace Chambered.Data.Configuration
                 .HasConversion<SymmetricEncryptionConverter>()
                 .HasMaxLength(512);
 
-            builder.Property(a => a.BarrelLengthInches)
-                .HasPrecision(5, 2);
+            #region TPH Discriminator Setup
 
-            builder.Property(a => a.TwistRate)
-                .HasMaxLength(20);
+            var discriminatorBuilder = builder.HasDiscriminator<string>("ItemType");
 
-            builder.Property(a => a.ThreadPitch)
-                .HasMaxLength(30);
+            var armorySubtypes = System.Reflection.Assembly.GetAssembly(typeof(ArmoryItem))!
+                .GetTypes()
+                .Where(t => t.IsClass
+                         && !t.IsAbstract
+                         && t.IsSubclassOf(typeof(ArmoryItem)));
 
-            builder.Property(a => a.IsNfaItem)
-                .IsRequired()
-                .HasDefaultValue(false);
+            foreach (var subtype in armorySubtypes)
+            {
+                discriminatorBuilder.HasValue(subtype, subtype.Name);
+            }
 
-            builder.Property(a => a.NfaFormType)
-                .IsRequired(false);
-
-            builder.Property(a => a.TaxStampDocumentUrl)
-                .HasMaxLength(2048);
+            #endregion
 
             builder.Property(a => a.PurchasePrice)
                 .HasPrecision(18, 2);
@@ -70,6 +68,46 @@ namespace Chambered.Data.Configuration
                 .WithMany(a => a.MountedAccessories)
                 .HasForeignKey(a => a.ParentItemId)
                 .OnDelete(DeleteBehavior.SetNull);
+        }
+    }
+
+    public class NfaArmoryItemConfiguration : IEntityTypeConfiguration<NfaArmoryItem>
+    {
+        public void Configure(EntityTypeBuilder<NfaArmoryItem> builder)
+        {
+            builder.Property(a => a.IsNfaItem)
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            builder.Property(a => a.NfaFormType)
+                .IsRequired(false);
+
+            builder.Property(a => a.TaxStampDocumentUrl)
+                .HasMaxLength(2048);
+        }
+    }
+
+    public class PewArmoryItemConfiguration : IEntityTypeConfiguration<PewArmoryItem>
+    {
+        public void Configure(EntityTypeBuilder<PewArmoryItem> builder)
+        {
+            builder.Property(a => a.BarrelLengthInches)
+                .HasPrecision(5, 2);
+
+            builder.Property(a => a.TwistRate)
+                .HasMaxLength(20);
+
+            builder.Property(a => a.ThreadPitch)
+                .HasMaxLength(30);
+        }
+    }
+
+    public class BatteryPoweredArmoryItemConfiguration : IEntityTypeConfiguration<BatteryPoweredArmoryItem>
+    {
+        public void Configure(EntityTypeBuilder<BatteryPoweredArmoryItem> builder)
+        {
+            builder.Property(a => a.BatteryType)
+                .HasMaxLength(100);
         }
     }
 }

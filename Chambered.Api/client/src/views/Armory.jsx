@@ -54,16 +54,29 @@ export default function Armory() {
     const [isCreatingAcc, setIsCreatingAcc] = useState(false)
 
 
+    // ATF NFA Form classification definitions
+    const nfaFormTypes = [
+        { value: 'Form1', label: 'Form 1 (Application to Make/Register)' },
+        { value: 'Form2', label: 'Form 2 (Notice of Manufacture/Import)' },
+        { value: 'Form3', label: 'Form 3 (Tax-Exempt Dealer Transfer)' },
+        { value: 'Form4', label: 'Form 4 (Tax-Paid Individual Transfer)' },
+        { value: 'Form5', label: 'Form 5 (Tax-Exempt Individual/Gov Transfer)' },
+        { value: 'Form9', label: 'Form 9 (Authorization to Export)' },
+        { value: 'Form10', label: 'Form 10 (Government Acquisition Registration)' }
+    ];
+
     // Form State
     const [form, setForm] = useState({
         id: 0,
         pewpewModelId: 0,
+        firearmModelId: 0,
         arsenalId: '',
         manufacturer: '',
         model: '',
         caliber: '',
         barrelLengthInches: '',
         twistRate: '',
+        threadPitch: '',
         actionType: '',
         serialNumber: '',
         notes: '',
@@ -82,7 +95,14 @@ export default function Armory() {
         opticReticle: '',
         opticSerial: '',
         opticBattery: '',
-        isOpticMounted: false
+        isOpticMounted: false,
+        isNfaItem: false,
+        nfaFormType: '',
+        taxStampDocumentUrl: '',
+        stampApprovalDate: '',
+        batteryLastChangedDate: '',
+        batteryType: '',
+        itemType: ''
     })
 
     // Dynamic lists inside the modal
@@ -370,6 +390,7 @@ export default function Armory() {
             caliber: '',
             barrelLengthInches: '',
             twistRate: '',
+            threadPitch: '',
             actionType: '',
             serialNumber: '',
             notes: '',
@@ -390,7 +411,14 @@ export default function Armory() {
             opticReticle: '',
             opticSerial: '',
             opticBattery: '',
-            isOpticMounted: false
+            isOpticMounted: false,
+            isNfaItem: false,
+            nfaFormType: '',
+            taxStampDocumentUrl: '',
+            stampApprovalDate: '',
+            batteryLastChangedDate: '',
+            batteryType: '',
+            itemType: ''
         })
         setShowModal(true)
     }
@@ -426,7 +454,15 @@ export default function Armory() {
             opticReticle: item.opticReticle || '',
             opticSerial: item.opticSerial || '',
             opticBattery: item.opticBattery || '',
-            isOpticMounted: item.isOpticMounted || false
+            isOpticMounted: item.isOpticMounted || false,
+            threadPitch: item.threadPitch || '',
+            isNfaItem: item.isNfaItem || false,
+            nfaFormType: item.nfaFormType || '',
+            taxStampDocumentUrl: item.taxStampDocumentUrl || '',
+            stampApprovalDate: item.stampApprovalDate ? item.stampApprovalDate.split('T')[0] : '',
+            batteryLastChangedDate: item.batteryLastChangedDate ? item.batteryLastChangedDate.split('T')[0] : '',
+            batteryType: item.batteryType || '',
+            itemType: item.itemType || ''
         })
 
         try {
@@ -464,20 +500,30 @@ export default function Armory() {
                 setForm(prev => ({
                     ...prev,
                     pewpewModelId: p.id,
+                    firearmModelId: p.id,
                     manufacturer: p.manufacturerName || '',
                     model: p.model || '',
                     caliber: p.caliberName || '',
-                    actionType: p.actionType || ''
+                    actionType: p.actionType || '',
+                    isNfaItem: p.pewPewCategory === 'NfaItem' || p.productType === 'Suppressor',
+                    itemType: p.productType === 'PewPew' ? 'PewArmoryItem'
+                            : p.productType === 'Suppressor' ? 'SuppressorArmoryItem'
+                            : p.productType === 'Optic' ? 'OpticArmoryItem'
+                            : p.productType === 'PewPewLight' ? 'LightArmoryItem'
+                            : 'ArmoryItem'
                 }))
             }
         } else {
             setForm(prev => ({
                 ...prev,
                 pewpewModelId: 0,
+                firearmModelId: 0,
                 manufacturer: '',
                 model: '',
                 caliber: '',
-                actionType: ''
+                actionType: '',
+                isNfaItem: false,
+                itemType: ''
             }))
         }
     }
@@ -601,10 +647,12 @@ export default function Armory() {
                 pewpewModelId: form.pewpewModelId || form.firearmModelId || 0,
                 manufacturer: finalMfg,
                 model: finalMod,
-                barrelLengthInches: parseFloat(form.barrelLengthInches) || 0,
+                barrelLengthInches: form.barrelLengthInches ? parseFloat(form.barrelLengthInches) : null,
                 purchasePrice: form.purchasePrice ? parseFloat(form.purchasePrice) : null,
                 currentValue: form.currentValue ? parseFloat(form.currentValue) : null,
                 purchaseDate: form.purchaseDateString ? new Date(form.purchaseDateString).toISOString() : null,
+                batteryLastChangedDate: form.batteryLastChangedDate ? new Date(form.batteryLastChangedDate).toISOString() : null,
+                stampApprovalDate: form.stampApprovalDate ? new Date(form.stampApprovalDate).toISOString() : null,
                 arsenalId: parseInt(form.arsenalId) || store.activeArsenalId,
                 accessoriesListJson: JSON.stringify(accessoriesList),
                 maintenanceTasksJson: JSON.stringify(maintenanceTasks),
@@ -641,7 +689,15 @@ export default function Armory() {
                     opticReticle: savedItem.opticReticle || '',
                     opticSerial: savedItem.opticSerial || '',
                     opticBattery: savedItem.opticBattery || '',
-                    isOpticMounted: savedItem.isOpticMounted || false
+                    isOpticMounted: savedItem.isOpticMounted || false,
+                    threadPitch: savedItem.threadPitch || '',
+                    isNfaItem: savedItem.isNfaItem || false,
+                    nfaFormType: savedItem.nfaFormType || '',
+                    taxStampDocumentUrl: savedItem.taxStampDocumentUrl || '',
+                    stampApprovalDate: savedItem.stampApprovalDate ? savedItem.stampApprovalDate.split('T')[0] : '',
+                    batteryLastChangedDate: savedItem.batteryLastChangedDate ? savedItem.batteryLastChangedDate.split('T')[0] : '',
+                    batteryType: savedItem.batteryType || '',
+                    itemType: savedItem.itemType || ''
                 })
 
                 try {
@@ -792,6 +848,22 @@ export default function Armory() {
             </div>
         )
     }
+
+    // Helper to determine active item type subclasses
+    const activeItemType = form.itemType || (() => {
+        if (!form.pewpewModelId) return 'ArmoryItem';
+        const p = products.find(prod => prod.id === form.pewpewModelId);
+        if (!p) return 'ArmoryItem';
+        if (p.productType === 'PewPew') return 'PewArmoryItem';
+        if (p.productType === 'Suppressor') return 'SuppressorArmoryItem';
+        if (p.productType === 'Optic') return 'OpticArmoryItem';
+        if (p.productType === 'PewPewLight') return 'LightArmoryItem';
+        return 'ArmoryItem';
+    })();
+
+    const isFirearm = activeItemType === 'PewArmoryItem';
+    const isNfa = activeItemType === 'NfaArmoryItem' || activeItemType === 'SuppressorArmoryItem' || (isFirearm && form.isNfaItem);
+    const isBatteryPowered = activeItemType === 'BatteryPoweredArmoryItem' || activeItemType === 'OpticArmoryItem' || activeItemType === 'LightArmoryItem';
 
     return (
         <div className="armory-view">
@@ -964,38 +1036,210 @@ export default function Armory() {
                                             </select>
                                         </div>
 
-                                        {form.pewpewModelId > 0 && (
-                                            <div className="specifications-card" style={{ gridColumn: 'span 2', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '14px 18px', marginTop: '4px', marginBottom: '12px' }}>
-                                                <h4 style={{ color: 'var(--color-primary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px 0', fontWeight: '700' }}>Product Specs</h4>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', fontSize: '13px' }}>
-                                                    <div><strong style={{ color: 'var(--text-muted)' }}>Manufacturer:</strong> <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.manufacturer}</span></div>
-                                                    <div><strong style={{ color: 'var(--text-muted)' }}>Model Name:</strong> <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.model}</span></div>
-                                                    <div><strong style={{ color: 'var(--text-muted)' }}>Caliber:</strong> <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.caliber}</span></div>
-                                                    <div><strong style={{ color: 'var(--text-muted)' }}>Action Type:</strong> <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.actionType}</span></div>
+                                        {form.pewpewModelId > 0 && (() => {
+                                            const selectedProduct = products.find(p => p.id === form.pewpewModelId);
+                                            return (
+                                                <div className="specifications-card" style={{ 
+                                                    gridColumn: 'span 2', 
+                                                    background: 'rgba(255, 255, 255, 0.02)', 
+                                                    border: '1px solid var(--border-color)', 
+                                                    borderRadius: 'var(--radius-md)', 
+                                                    padding: '16px 20px', 
+                                                    marginTop: '4px', 
+                                                    marginBottom: '12px',
+                                                    display: 'flex',
+                                                    gap: '20px',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    {/* Square Image Thumbnail */}
+                                                    {form.imageUrl ? (
+                                                        <div style={{ 
+                                                            width: '74px', 
+                                                            height: '74px', 
+                                                            borderRadius: 'var(--radius-sm)', 
+                                                            overflow: 'hidden', 
+                                                            border: '1px solid var(--border-solid)', 
+                                                            background: 'rgba(0,0,0,0.2)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            <img 
+                                                                src={form.imageUrl} 
+                                                                alt="Item Thumbnail" 
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ 
+                                                            width: '74px', 
+                                                            height: '74px', 
+                                                            borderRadius: 'var(--radius-sm)', 
+                                                            border: '1px dashed var(--border-solid)', 
+                                                            background: 'rgba(255,255,255,0.01)',
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: 'var(--text-muted)',
+                                                            fontSize: '10px',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            <span style={{ fontSize: '18px', marginBottom: '2px' }}>📷</span>
+                                                            No Image
+                                                        </div>
+                                                    )}
+
+                                                    {/* Specification details */}
+                                                    <div style={{ flexGrow: 1 }}>
+                                                        <h4 style={{ color: 'var(--color-primary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px 0', fontWeight: '700' }}>Product Specs</h4>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', fontSize: '13px' }}>
+                                                            <div>
+                                                                <strong style={{ color: 'var(--text-muted)' }}>Manufacturer:</strong>{' '}
+                                                                {selectedProduct?.manufacturerWebPageUrl ? (
+                                                                    <a 
+                                                                        href={selectedProduct.manufacturerWebPageUrl} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        style={{ color: 'var(--color-primary)', fontWeight: '600', textDecoration: 'none' }}
+                                                                        onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                                                                        onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                                                                    >
+                                                                        {form.manufacturer} ↗
+                                                                    </a>
+                                                                ) : (
+                                                                    <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.manufacturer}</span>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <strong style={{ color: 'var(--text-muted)' }}>Model Name:</strong>{' '}
+                                                                {selectedProduct?.webPageUrl ? (
+                                                                    <a 
+                                                                        href={selectedProduct.webPageUrl} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        style={{ color: 'var(--color-primary)', fontWeight: '600', textDecoration: 'none' }}
+                                                                        onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                                                                        onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                                                                    >
+                                                                        {form.model} ↗
+                                                                    </a>
+                                                                ) : (
+                                                                    <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.model}</span>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <strong style={{ color: 'var(--text-muted)' }}>Part Number:</strong>{' '}
+                                                                <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{selectedProduct?.partNumber || 'N/A'}</span>
+                                                            </div>
+                                                            <div>
+                                                                <strong style={{ color: 'var(--text-muted)' }}>SKU:</strong>{' '}
+                                                                <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{selectedProduct?.sku || 'N/A'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+
+                                        {isFirearm && (
+                                            <>
+                                                <div className="form-item">
+                                                    <label>Barrel Length (Inches)</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={form.barrelLengthInches || ''}
+                                                        onChange={(e) => setForm({ ...form, barrelLengthInches: e.target.value })}
+                                                    />
+                                                </div>
+
+                                                <div className="form-item">
+                                                    <label>Twist Rate</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g. 1:10"
+                                                        value={form.twistRate || ''}
+                                                        onChange={(e) => setForm({ ...form, twistRate: e.target.value })}
+                                                    />
+                                                </div>
+
+                                                <div className="form-item" style={{ gridColumn: 'span 2' }}>
+                                                    <label>Thread Pitch</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g. 1/2x28, 5/8x24"
+                                                        value={form.threadPitch || ''}
+                                                        onChange={(e) => setForm({ ...form, threadPitch: e.target.value })}
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {isNfa && (
+                                            <div className="form-item-group-container" style={{ gridColumn: 'span 2', background: 'rgba(235, 94, 85, 0.03)', border: '1px solid rgba(235, 94, 85, 0.15)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginTop: '4px', marginBottom: '12px' }}>
+                                                <h4 style={{ color: '#eb5e55', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 14px 0', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '15px' }}>📁</span> National Firearms Act (NFA) Registry Specs
+                                                </h4>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                                                    <div className="form-item">
+                                                        <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>ATF Form Type</label>
+                                                        <select value={form.nfaFormType || ''} onChange={(e) => setForm({ ...form, nfaFormType: e.target.value })}>
+                                                            <option value="">-- Select ATF Form --</option>
+                                                            {nfaFormTypes.map(f => (
+                                                                <option key={f.value} value={f.value}>{f.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="form-item">
+                                                        <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Stamp Approval Date</label>
+                                                        <input
+                                                            type="date"
+                                                            value={form.stampApprovalDate || ''}
+                                                            onChange={(e) => setForm({ ...form, stampApprovalDate: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="form-item" style={{ gridColumn: 'span 2' }}>
+                                                        <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Tax Stamp Document (PDF/URL)</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Secure document link or cloud bucket URL..."
+                                                            value={form.taxStampDocumentUrl || ''}
+                                                            onChange={(e) => setForm({ ...form, taxStampDocumentUrl: e.target.value })}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
 
-
-                                        <div className="form-item">
-                                            <label>Barrel Length (Inches)</label>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={form.barrelLengthInches || ''}
-                                                onChange={(e) => setForm({ ...form, barrelLengthInches: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div className="form-item">
-                                            <label>Twist Rate</label>
-                                            <input
-                                                type="text"
-                                                placeholder="e.g. 1:10"
-                                                value={form.twistRate || ''}
-                                                onChange={(e) => setForm({ ...form, twistRate: e.target.value })}
-                                            />
-                                        </div>
+                                        {isBatteryPowered && (
+                                            <div className="form-item-group-container" style={{ gridColumn: 'span 2', background: 'rgba(58, 190, 240, 0.03)', border: '1px solid rgba(58, 190, 240, 0.15)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginTop: '4px', marginBottom: '12px' }}>
+                                                <h4 style={{ color: '#3abef0', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 14px 0', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '15px' }}>🔋</span> Power & Battery Specifications
+                                                </h4>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                                                    <div className="form-item">
+                                                        <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Battery Type</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="e.g. CR2032, CR123A, AAA"
+                                                            value={form.batteryType || ''}
+                                                            onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="form-item">
+                                                        <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Battery Last Changed</label>
+                                                        <input
+                                                            type="date"
+                                                            value={form.batteryLastChangedDate || ''}
+                                                            onChange={(e) => setForm({ ...form, batteryLastChangedDate: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="form-item">
                                             <label>Serial Number <span style={{ color: 'green' }}>(256-AES Encryption)</span></label>

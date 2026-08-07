@@ -207,30 +207,79 @@ namespace Chambered.Api.Controllers
 
             var vaultId = await ResolveVaultIdAsync(model.StorageLocation, arsenalId ?? 1);
 
-            var armoryItem = new ArmoryItem
+            // Determine concrete ArmoryItem type based on product subclass
+            ArmoryItem armoryItem;
+
+            if (product is PewPew)
             {
-                ProductId = product.Id,
-                ParentItemId = model.ParentItemId,
-                SerialNumber = model.SerialNumber ?? "",
-                BarrelLengthInches = model.BarrelLengthInches ?? 0,
-                TwistRate = model.TwistRate,
-                ThreadPitch = model.ThreadPitch,
-                IsNfaItem = model.IsNfaItem,
-                NfaFormType = !string.IsNullOrEmpty(model.NfaFormType) && Enum.TryParse<NfaFormType>(model.NfaFormType, true, out var formType) ? formType : null,
-                TaxStampDocumentUrl = model.TaxStampDocumentUrl,
-                StampApprovalDate = model.StampApprovalDate,
-                PurchasePrice = model.PurchasePrice,
-                PurchaseDate = model.PurchaseDate,
-                EstimatedValue = model.CurrentValue ?? model.EstimatedValue,
-                Condition = ParseCondition(model.Condition),
-                RoundCount = model.RoundCount,
-                OwnerId = model.OwnerId,
-                BeneficiaryId = model.BeneficiaryId,
-                VaultId = vaultId,
-                ArsenalId = arsenalId,
-                ImageUrl = model.ImageUrl,
-                NotesMarkdown = model.NotesMarkdown ?? model.Notes
-            };
+                armoryItem = new PewArmoryItem
+                {
+                    BarrelLengthInches = model.BarrelLengthInches ?? 0,
+                    TwistRate = model.TwistRate,
+                    ThreadPitch = model.ThreadPitch,
+                    IsNfaItem = model.IsNfaItem,
+                    NfaFormType = !string.IsNullOrEmpty(model.NfaFormType) && Enum.TryParse<NfaFormType>(model.NfaFormType, true, out var formType) ? formType : null,
+                    TaxStampDocumentUrl = model.TaxStampDocumentUrl,
+                    StampApprovalDate = model.StampApprovalDate
+                };
+            }
+            else if (product is Suppressor)
+            {
+                armoryItem = new SuppressorArmoryItem
+                {
+                    IsNfaItem = true, // Suppressors are always NFA items
+                    NfaFormType = !string.IsNullOrEmpty(model.NfaFormType) && Enum.TryParse<NfaFormType>(model.NfaFormType, true, out var formType) ? formType : NfaFormType.Form4,
+                    TaxStampDocumentUrl = model.TaxStampDocumentUrl,
+                    StampApprovalDate = model.StampApprovalDate
+                };
+            }
+            else if (product is Optic)
+            {
+                armoryItem = new OpticArmoryItem
+                {
+                    BatteryLastChangedDate = model.BatteryLastChangedDate,
+                    BatteryType = model.BatteryType
+                };
+            }
+            else if (product is PewPewLight)
+            {
+                armoryItem = new LightArmoryItem
+                {
+                    BatteryLastChangedDate = model.BatteryLastChangedDate,
+                    BatteryType = model.BatteryType
+                };
+            }
+            else
+            {
+                if (model.BatteryLastChangedDate != null || !string.IsNullOrEmpty(model.BatteryType))
+                {
+                    armoryItem = new BatteryPoweredArmoryItem
+                    {
+                        BatteryLastChangedDate = model.BatteryLastChangedDate,
+                        BatteryType = model.BatteryType
+                    };
+                }
+                else
+                {
+                    armoryItem = new ArmoryItem();
+                }
+            }
+
+            // Set common inventory parameters
+            armoryItem.ProductId = product.Id;
+            armoryItem.ParentItemId = model.ParentItemId;
+            armoryItem.SerialNumber = model.SerialNumber ?? "";
+            armoryItem.PurchasePrice = model.PurchasePrice;
+            armoryItem.PurchaseDate = model.PurchaseDate;
+            armoryItem.EstimatedValue = model.CurrentValue ?? model.EstimatedValue;
+            armoryItem.Condition = ParseCondition(model.Condition);
+            armoryItem.RoundCount = model.RoundCount;
+            armoryItem.OwnerId = model.OwnerId;
+            armoryItem.BeneficiaryId = model.BeneficiaryId;
+            armoryItem.VaultId = vaultId;
+            armoryItem.ArsenalId = arsenalId;
+            armoryItem.ImageUrl = model.ImageUrl;
+            armoryItem.NotesMarkdown = model.NotesMarkdown ?? model.Notes;
 
             _db.ArmoryItems.Add(armoryItem);
             await _db.SaveChangesAsync();
@@ -291,13 +340,26 @@ namespace Chambered.Api.Controllers
             armoryItem.ProductId = product.Id;
             armoryItem.ParentItemId = model.ParentItemId;
             armoryItem.SerialNumber = model.SerialNumber ?? "";
-            armoryItem.BarrelLengthInches = model.BarrelLengthInches ?? 0;
-            armoryItem.TwistRate = model.TwistRate;
-            armoryItem.ThreadPitch = model.ThreadPitch;
-            armoryItem.IsNfaItem = model.IsNfaItem;
-            armoryItem.NfaFormType = !string.IsNullOrEmpty(model.NfaFormType) && Enum.TryParse<NfaFormType>(model.NfaFormType, true, out var formType) ? formType : null;
-            armoryItem.TaxStampDocumentUrl = model.TaxStampDocumentUrl;
-            armoryItem.StampApprovalDate = model.StampApprovalDate;
+            if (armoryItem is PewArmoryItem pew)
+            {
+                pew.BarrelLengthInches = model.BarrelLengthInches ?? 0;
+                pew.TwistRate = model.TwistRate;
+                pew.ThreadPitch = model.ThreadPitch;
+            }
+
+            if (armoryItem is NfaArmoryItem nfa)
+            {
+                nfa.IsNfaItem = model.IsNfaItem;
+                nfa.NfaFormType = !string.IsNullOrEmpty(model.NfaFormType) && Enum.TryParse<NfaFormType>(model.NfaFormType, true, out var formType) ? formType : null;
+                nfa.TaxStampDocumentUrl = model.TaxStampDocumentUrl;
+                nfa.StampApprovalDate = model.StampApprovalDate;
+            }
+
+            if (armoryItem is BatteryPoweredArmoryItem bat)
+            {
+                bat.BatteryLastChangedDate = model.BatteryLastChangedDate;
+                bat.BatteryType = model.BatteryType;
+            }
             armoryItem.PurchasePrice = model.PurchasePrice;
             armoryItem.PurchaseDate = model.PurchaseDate;
             armoryItem.EstimatedValue = model.CurrentValue ?? model.EstimatedValue;
@@ -404,13 +466,16 @@ namespace Chambered.Api.Controllers
                 Caliber = i.Product is PewPew pew ? (pew.Caliber?.Name ?? "") : (i.Product is Suppressor sup ? (sup.MaxCaliber?.Name ?? "") : ""),
                 SerialNumber = i.SerialNumber,
                 ActionType = i.Product is PewPew p ? FormatActionType(p.ActionType) : "Semi-Automatic",
-                BarrelLengthInches = i.BarrelLengthInches,
-                TwistRate = i.TwistRate,
-                ThreadPitch = i.ThreadPitch,
-                IsNfaItem = i.IsNfaItem,
-                NfaFormType = i.NfaFormType?.ToString(),
-                TaxStampDocumentUrl = i.TaxStampDocumentUrl,
-                StampApprovalDate = i.StampApprovalDate,
+                BarrelLengthInches = i is PewArmoryItem pewItem ? pewItem.BarrelLengthInches : null,
+                TwistRate = i is PewArmoryItem twistItem ? twistItem.TwistRate : null,
+                ThreadPitch = i is PewArmoryItem threadItem ? threadItem.ThreadPitch : null,
+                IsNfaItem = i is NfaArmoryItem nfaItem ? nfaItem.IsNfaItem : false,
+                NfaFormType = i is NfaArmoryItem formItem ? formItem.NfaFormType?.ToString() : null,
+                TaxStampDocumentUrl = i is NfaArmoryItem stampDoc ? stampDoc.TaxStampDocumentUrl : null,
+                StampApprovalDate = i is NfaArmoryItem stampDate ? stampDate.StampApprovalDate : null,
+                BatteryLastChangedDate = i is BatteryPoweredArmoryItem batItem ? batItem.BatteryLastChangedDate : null,
+                BatteryType = i is BatteryPoweredArmoryItem batType ? batType.BatteryType : null,
+                ItemType = i.GetType().Name,
                 PurchasePrice = i.PurchasePrice,
                 PurchaseDate = i.PurchaseDate,
                 CurrentValue = i.EstimatedValue,
@@ -691,6 +756,9 @@ namespace Chambered.Api.Controllers
         public string? NfaFormType { get; set; }
         public string? TaxStampDocumentUrl { get; set; }
         public DateTime? StampApprovalDate { get; set; }
+        public DateTime? BatteryLastChangedDate { get; set; }
+        public string? BatteryType { get; set; }
+        public string? ItemType { get; set; }
         public decimal? PurchasePrice { get; set; }
         public DateTime? PurchaseDate { get; set; }
         public decimal? CurrentValue { get; set; }
