@@ -1044,23 +1044,22 @@ export default function Catalog() {
                             </div> {/* closes .modal-tabs-body-content */}
 
                             {/* Form footer actions */}
+                            {/* Modal Footer Controls */}
                             <div className="modal-footer-row-container">
-                                {saveSuccess && <span className="save-success-indicator">✓ Saved Successfully</span>}
-                                {error && <span className="modal-error" style={{ color: 'var(--color-danger)', marginRight: '16px' }}>{error}</span>}
-                                <button 
-                                    type="button" 
-                                    className="btn btn-secondary" 
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
                                     onClick={() => setShowModal(false)}
                                     disabled={isSaving}
                                 >
                                     Cancel
                                 </button>
-                                <button 
-                                    type="submit" 
-                                    className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`} 
+                                <button
+                                    type="submit"
+                                    className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`}
                                     disabled={isSaving}
                                 >
-                                    {isSaving ? 'Saving...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Update' : 'Add Catalog Reference'}
+                                    {isSaving ? 'Saving...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Update' : 'Create'}
                                 </button>
                             </div>
 

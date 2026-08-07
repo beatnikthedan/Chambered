@@ -604,11 +604,22 @@ export default function Munitions() {
                 )}
               </div>
 
-              {/* Modal action buttons */}
+              {/* Modal Footer Controls */}
               <div className="modal-footer-row-container">
-                <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-                <button type="submit" className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`} disabled={isSaving}>
-                  {isSaving ? 'Saving specifications...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Save Changes' : 'Log Lot'}
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={closeModal}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`}
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Update' : 'Create'}
                 </button>
               </div>
             </form>

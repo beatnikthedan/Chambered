@@ -40,6 +40,18 @@ export default function Armory() {
     const [deleteConfirmId, setDeleteConfirmId] = useState(null)
     const [isEditMode, setIsEditMode] = useState(false)
     const [activeTab, setActiveTab] = useState('general')
+    const [viewMode, setViewMode] = useState('grid') // 'grid' | 'tree'
+    const [selectedExistingId, setSelectedExistingId] = useState('')
+    const [expandedNodes, setExpandedNodes] = useState({})
+    const toggleNode = (id) => {
+        setExpandedNodes(prev => ({ ...prev, [id]: prev[id] === false ? true : false }))
+    }
+
+    // New accessory inline creation state
+    const [newAccProductId, setNewAccProductId] = useState('')
+    const [newAccSerialNumber, setNewAccSerialNumber] = useState('')
+    const [newAccCondition, setNewAccCondition] = useState('Excellent')
+    const [isCreatingAcc, setIsCreatingAcc] = useState(false)
 
 
     // Form State
@@ -167,7 +179,7 @@ export default function Armory() {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('/api/products?type=PewPew')
+            const res = await fetch('/api/products')
             if (res.ok) {
                 setProducts(await res.json())
             }
@@ -198,6 +210,7 @@ export default function Armory() {
 
     const filteredArmoryItems = useMemo(() => {
         return armoryItems.filter(item => {
+            const isParent = !item.parentItemId;
             const textMatch = !searchQuery ||
                 [item.manufacturer, item.model, item.serialNumber, item.caliber]
                     .some(v => v && v.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -205,7 +218,7 @@ export default function Armory() {
             const caliberMatch = !filterCaliber || item.caliber === filterCaliber
             const actionMatch = !filterAction || item.actionType === filterAction
 
-            return textMatch && caliberMatch && actionMatch
+            return isParent && textMatch && caliberMatch && actionMatch
         })
     }, [armoryItems, searchQuery, filterCaliber, filterAction])
 
@@ -246,6 +259,94 @@ export default function Armory() {
         }
     }
 
+    const handleAttachAccessory = async () => {
+        const accessoryId = parseInt(selectedExistingId) || 0;
+        if (!accessoryId) return;
+
+        try {
+            const res = await fetch(`/api/armory/${accessoryId}/mount?parentId=${form.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (res.ok) {
+                await fetchArmoryItems();
+                setSelectedExistingId('');
+            } else {
+                alert('Failed to attach accessory.');
+            }
+        } catch (err) {
+            console.error('Error attaching accessory', err);
+        }
+    };
+
+    const handleDetachAccessory = async (accessoryId) => {
+        try {
+            const res = await fetch(`/api/armory/${accessoryId}/unmount`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (res.ok) {
+                await fetchArmoryItems();
+            } else {
+                alert('Failed to detach accessory.');
+            }
+        } catch (err) {
+            console.error('Error detaching accessory', err);
+        }
+    };
+
+    const handleCreateAndAttachAccessory = async () => {
+        const prodId = parseInt(newAccProductId) || 0;
+        if (!prodId) {
+            alert('Please select a catalog product first.');
+            return;
+        }
+
+        setIsCreatingAcc(true);
+        try {
+            const p = products.find(prod => prod.id === prodId);
+            if (!p) {
+                alert('Selected product not found in catalog.');
+                setIsCreatingAcc(false);
+                return;
+            }
+
+            const payload = {
+                firearmModelId: p.id,
+                pewpewModelId: p.id,
+                parentItemId: form.id,
+                manufacturer: p.manufacturerName || '',
+                model: p.model || '',
+                caliber: p.caliberName || '',
+                condition: newAccCondition,
+                serialNumber: newAccSerialNumber || '',
+                storageLocation: form.storageLocation || '',
+                arsenalId: form.arsenalId || store.activeArsenalId || 1
+            };
+
+            const res = await fetch('/api/armory', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                await fetchArmoryItems();
+                setNewAccProductId('');
+                setNewAccSerialNumber('');
+                setNewAccCondition('Excellent');
+            } else {
+                const text = await res.text();
+                alert(`Failed to create accessory: ${text}`);
+            }
+        } catch (err) {
+            console.error('Error creating accessory', err);
+        } finally {
+            setIsCreatingAcc(false);
+        }
+    };
+
+
     const openCreateModal = () => {
         setIsEditMode(false)
         setActiveTab('general')
@@ -257,10 +358,12 @@ export default function Armory() {
         setMaintenanceTasks([])
         setRangeSessions([])
         setAttachments([])
+        setSelectedExistingId('')
 
         setForm({
             id: 0,
             pewpewModelId: 0,
+            firearmModelId: 0,
             arsenalId: store.activeArsenalId || (store.arsenals[0]?.id || 1),
             manufacturer: '',
             model: '',
@@ -299,6 +402,7 @@ export default function Armory() {
         setCustomModel('')
         setCoverSourceType('web')
         setShowSerial(false)
+        setSelectedExistingId('')
 
         let dateString = ''
         if (item.purchaseDate) {
@@ -307,7 +411,8 @@ export default function Armory() {
 
         setForm({
             ...item,
-            pewpewModelId: item.pewpewModelId || 0,
+            pewpewModelId: item.pewpewModelId || item.firearmModelId || 0,
+            firearmModelId: item.firearmModelId || item.pewpewModelId || 0,
             arsenalId: item.arsenalId || store.activeArsenalId || 1,
             purchaseDateString: dateString,
             owner: item.owner || '',
@@ -492,6 +597,8 @@ export default function Armory() {
 
             const payload = {
                 ...form,
+                firearmModelId: form.pewpewModelId || form.firearmModelId || 0,
+                pewpewModelId: form.pewpewModelId || form.firearmModelId || 0,
                 manufacturer: finalMfg,
                 model: finalMod,
                 barrelLengthInches: parseFloat(form.barrelLengthInches) || 0,
@@ -614,6 +721,60 @@ export default function Armory() {
         return new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)
     }
 
+    const renderTreeNode = (item, depth = 0) => {
+        const children = armoryItems.filter(child => child.parentItemId === item.id);
+        const hasChildren = children.length > 0;
+        const isExpanded = expandedNodes[item.id] !== false; // default to expanded
+
+        return (
+            <div 
+                key={item.id} 
+                className="tree-node-wrapper" 
+                style={{ marginLeft: `${depth * 24}px`, borderLeft: depth > 0 ? '1px dashed var(--border-color)' : 'none' }}
+            >
+                <div className="tree-node-strip" onClick={() => openEditModal(item)}>
+                    <div className="tree-node-toggle-col">
+                        {hasChildren ? (
+                            <button
+                                type="button"
+                                className="btn-toggle-tree"
+                                onClick={(e) => { e.stopPropagation(); toggleNode(item.id); }}
+                            >
+                                {isExpanded ? '▼' : '►'}
+                            </button>
+                        ) : (
+                            <span className="leaf-bullet">•</span>
+                        )}
+                    </div>
+
+                    <div className="tree-node-info-col">
+                        <span className="tree-hub-name">{item.manufacturer} {item.model}</span>
+                        {item.caliber && <span className="tree-hub-cat">({item.caliber})</span>}
+                        {item.serialNumber && (
+                            <span className="tree-hub-inventory-count" style={{ marginLeft: '8px' }}>
+                                SN: {item.serialNumber}
+                            </span>
+                        )}
+                        {item.roundCount > 0 && (
+                            <span className="tree-hub-inventory-count" style={{ marginLeft: '8px' }}>
+                                • {item.roundCount} rounds
+                            </span>
+                        )}
+                        {item.storageLocation && (
+                            <span className="tree-node-location" style={{ marginLeft: '12px' }}>📍 {item.storageLocation}</span>
+                        )}
+                    </div>
+                </div>
+
+                {hasChildren && isExpanded && (
+                    <div className="tree-node-children-subgroup">
+                        {children.map(child => renderTreeNode(child, depth + 1))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     if (loading) {
         return (
             <div className="loading-state">
@@ -665,59 +826,100 @@ export default function Armory() {
                         ))}
                     </select>
                 </div>
-                <button onClick={openCreateModal} className="btn btn-primary">Add Item</button>
+                <div className="header-actions">
+                    <div className="view-toggle-buttons">
+                        <button
+                            type="button"
+                            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                            onClick={() => setViewMode('grid')}
+                            title="Card Grid View"
+                        >
+                            Grid
+                        </button>
+                        <button
+                            type="button"
+                            className={`view-btn ${viewMode === 'tree' ? 'active' : ''}`}
+                            onClick={() => setViewMode('tree')}
+                            title="Hierarchy Tree View"
+                        >
+                            Tree View
+                        </button>
+                    </div>
+                    <button className="btn btn-primary" onClick={openCreateModal}>
+                        Add Item
+                    </button>
+                </div>
             </section>
 
-            {/* Grid Display */}
-            {filteredArmoryItems.length === 0 ? (
-                <div className="empty-state panel">
-                    <h3>You have no items in your Armory.</h3>
-                    <p style={{ marginTop: '4px', color: 'var(--text-muted)' }}>Click 'Add Item' above to add your first item.</p>
+            {/* Layout Display based on viewMode */}
+            {viewMode === 'tree' ? (
+                <div className="treeview-panel panel">
+                    <h3 style={{ marginBottom: '24px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>🌿</span> Armory Hierarchy Tree
+                    </h3>
+                    <div className="treeview-container">
+                        {armoryItems.filter(item => item.parentItemId === null || item.parentItemId === undefined).map(rootItem => (
+                            renderTreeNode(rootItem)
+                        ))}
+                        {armoryItems.filter(item => item.parentItemId === null || item.parentItemId === undefined).length === 0 && (
+                            <div className="empty-state" style={{ padding: '40px 0', textAlign: 'center' }}>
+                                <p style={{ color: 'var(--text-muted)' }}>No parent items registered in inventory.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             ) : (
-                <section className="items-grid">
-                    {filteredArmoryItems.map((item) => (
-                        <div key={item.id} className="item-card" onClick={() => openEditModal(item)}>
-                            <div className="item-header-img">
-                                <span className="item-action-type">{item.actionType}</span>
-                                {item.imageUrl ? (
-                                    <img src={item.imageUrl} className="active-cover-img" alt={item.model} />
-                                ) : (
-                                    <div className="item-silhouette">
-                                        {isCompactUnit(item.actionType) ? '🛡️' : '🛡️'}
-                                    </div>
-                                )}
-                                <span className={`badge item-badge-condition ${getConditionClass(item.condition)}`}>
-                                    {item.condition}
-                                </span>
-                            </div>
-
-                            <div className="item-card-body">
-                                <div className="item-title-row">
-                                    <h4 className="item-title">{item.manufacturer} {item.model}</h4>
-                                    <span className="item-caliber">{item.caliber}</span>
-                                </div>
-
-                                <div className="item-details">
-                                    <div className="detail-row">
-                                        <span className="detail-label">Storage Hub</span>
-                                        <span className="detail-value">{item.storageLocation || ''}</span>
-                                    </div>
-                                    {item.purchasePrice && (
-                                        <div className="detail-row">
-                                            <span className="detail-label">Valuation</span>
-                                            <span className="detail-value gold-text">${formatCurrency(item.purchasePrice)}</span>
+                /* Grid Display */
+                filteredArmoryItems.length === 0 ? (
+                    <div className="empty-state panel">
+                        <h3>You have no items in your Armory.</h3>
+                        <p style={{ marginTop: '4px', color: 'var(--text-muted)' }}>Click 'Add Item' above to add your first item.</p>
+                    </div>
+                ) : (
+                    <section className="items-grid">
+                        {filteredArmoryItems.map((item) => (
+                            <div key={item.id} className="item-card" onClick={() => openEditModal(item)}>
+                                <div className="item-header-img">
+                                    <span className="item-action-type">{item.actionType}</span>
+                                    {item.imageUrl ? (
+                                        <img src={item.imageUrl} className="active-cover-img" alt={item.model} />
+                                    ) : (
+                                        <div className="item-silhouette">
+                                            🛡️
                                         </div>
                                     )}
+                                    <span className={`badge item-badge-condition ${getConditionClass(item.condition)}`}>
+                                        {item.condition}
+                                    </span>
                                 </div>
 
-                                <div className="item-card-actions">
-                                    <button onClick={(e) => handleDeleteClick(item.id, e)} className="btn btn-danger btn-small">Remove</button>
+                                <div className="item-card-body">
+                                    <div className="item-title-row">
+                                        <h4 className="item-title">{item.manufacturer} {item.model}</h4>
+                                        <span className="item-caliber">{item.caliber}</span>
+                                    </div>
+
+                                    <div className="item-details">
+                                        <div className="detail-row">
+                                            <span className="detail-label">Storage Hub</span>
+                                            <span className="detail-value">{item.storageLocation || ''}</span>
+                                        </div>
+                                        {item.purchasePrice && (
+                                            <div className="detail-row">
+                                                <span className="detail-label">Valuation</span>
+                                                <span className="detail-value gold-text">${formatCurrency(item.purchasePrice)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="item-card-actions">
+                                        <button onClick={(e) => handleDeleteClick(item.id, e)} className="btn btn-danger btn-small">Remove</button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </section>
+                        ))}
+                    </section>
+                )
             )}
 
             {/* Identical Audiobookshelf tabs modal overlay */}
@@ -734,7 +936,10 @@ export default function Armory() {
 
                         {/* Modal Tabs strip */}
                         <div className="modal-tabs-header-row">
-                            <button className={`tab-btn ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>General</button>
+                            <button className={`tab-btn ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>General Specs</button>
+                            {isEditMode && (
+                                <button className={`tab-btn ${activeTab === 'accessories' ? 'active' : ''}`} onClick={() => setActiveTab('accessories')}>Accessories</button>
+                            )}
                         </div>
 
                         {/* Scrollable Modal content wrapper */}
@@ -892,6 +1097,112 @@ export default function Armory() {
                                                 ))}
                                             </select>
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'accessories' && (
+                                <div className="tab-pane" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+                                    
+                                    {/* LEFT COLUMN: Currently Attached Accessories */}
+                                    <div className="accessories-card" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-solid, #203040)', borderRadius: '10px', padding: '20px' }}>
+                                        <h4 style={{ marginBottom: '16px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: '600' }}>
+                                            <span>🔗</span> Attached Accessories &amp; Attachments
+                                        </h4>
+                                        
+                                        <div className="mounted-list" style={{ minHeight: '180px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
+                                            {armoryItems.filter(item => item.parentItemId === form.id).length === 0 ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '180px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                                    <span style={{ fontSize: '1.8rem', opacity: '0.4', marginBottom: '8px' }}>🛠️</span>
+                                                    <p style={{ fontSize: '0.85rem', fontStyle: 'italic', margin: 0 }}>No accessories attached to this item.</p>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                    {armoryItems.filter(item => item.parentItemId === form.id).map(acc => (
+                                                        <div key={acc.id} className="accessory-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color, #203040)', borderRadius: '8px', transition: 'all 0.2s ease' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                <span style={{ color: 'var(--color-primary)', fontSize: '1.1rem' }}>•</span>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                                     <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>{acc.manufacturer} {acc.model}</span>
+                                                                     <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Caliber: {acc.caliber || 'N/A'} • SN: {acc.serialNumber || 'N/A'}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                                <button type="button" className="btn btn-secondary btn-small" style={{ padding: '4px 8px', fontSize: '0.72rem', background: 'transparent', border: '1px solid var(--text-muted, #718096)', color: 'var(--text-muted, #718096)', height: 'auto', minWidth: '0' }} onClick={() => openEditModal(acc)}>Edit</button>
+                                                                <button type="button" className="btn btn-danger btn-small" style={{ padding: '4px 8px', fontSize: '0.72rem', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', height: 'auto', minWidth: '0' }} onClick={() => handleDetachAccessory(acc.id)}>Detach</button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* RIGHT COLUMN: Attach & Create Controls */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                        
+                                        {/* Card A: Attach Existing Accessory */}
+                                        <div className="accessories-card" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-solid, #203040)', borderRadius: '10px', padding: '20px' }}>
+                                            <h5 style={{ marginBottom: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '600' }}>
+                                                <span>🔌</span> Attach Existing Inventory Item
+                                            </h5>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <select
+                                                    style={{ flex: 1, height: '38px', borderRadius: '6px', padding: '0 12px', fontSize: '0.85rem' }}
+                                                    value={selectedExistingId}
+                                                    onChange={(e) => setSelectedExistingId(e.target.value)}
+                                                >
+                                                    <option value="">-- Select from your unattached inventory --</option>
+                                                    {armoryItems
+                                                        .filter(item => item.id !== form.id && !item.parentItemId)
+                                                        .map(item => (
+                                                            <option key={item.id} value={item.id}>
+                                                                {item.manufacturer} {item.model} {item.caliber ? `(${item.caliber})` : ''} {item.serialNumber ? `[SN: ${item.serialNumber}]` : ''}
+                                                            </option>
+                                                        ))
+                                                    }
+                                                </select>
+                                                <button 
+                                                    type="button" 
+                                                    className="btn btn-primary" 
+                                                    style={{ padding: '0 16px', height: '38px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                                                    onClick={handleAttachAccessory}
+                                                    disabled={!selectedExistingId}
+                                                >
+                                                    Attach Item
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Card B: Create & Attach New Accessory */}
+                                        <div className="accessories-card" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-solid, #203040)', borderRadius: '10px', padding: '20px' }}>
+                                            <h5 style={{ marginBottom: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '600' }}>
+                                                <span>✨</span> Create &amp; Attach New Accessory
+                                            </h5>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <select
+                                                    style={{ flex: 1, height: '38px', borderRadius: '6px', padding: '0 12px', fontSize: '0.85rem' }}
+                                                    value={newAccProductId}
+                                                    onChange={(e) => setNewAccProductId(e.target.value)}
+                                                >
+                                                    <option value="">-- Choose reference product --</option>
+                                                    {products.map(p => (
+                                                        <option key={p.id} value={p.id}>
+                                                            {p.manufacturerName} {p.model} {p.partNumber ? `[PN: ${p.partNumber}]` : ''} ({p.caliberName || 'N/A'})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <button 
+                                                    type="button" 
+                                                    className="btn btn-primary" 
+                                                    style={{ padding: '0 16px', height: '38px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                                                    onClick={handleCreateAndAttachAccessory}
+                                                    disabled={!newAccProductId || isCreatingAcc}
+                                                >
+                                                    {isCreatingAcc ? 'Creating...' : 'Attach New'}
+                                                </button>
+                                            </div>
+                                        </div>
 
                                     </div>
                                 </div>
@@ -900,9 +1211,21 @@ export default function Armory() {
 
                         {/* Modal Footer Controls */}
                         <div className="modal-footer-row-container">
-                            <button className="btn btn-secondary" onClick={closeModal} disabled={isSaving}>Cancel</button>
-                            <button className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`} onClick={handleSave} disabled={isSaving}>
-                                {isSaving ? 'Saving...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Update' : 'Add Item'}
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={closeModal}
+                                disabled={isSaving}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`}
+                                onClick={handleSave}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? 'Saving...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Update' : 'Create'}
                             </button>
                         </div>
                     </div>

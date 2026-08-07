@@ -156,6 +156,21 @@ namespace Chambered.Data.Models
         /// </summary>
         public Arsenal? Arsenal { get; set; }
 
+        /// <summary>
+        /// Gets or sets the optional foreign key for the parent armory item (for mounted accessories).
+        /// </summary>
+        public int? ParentItemId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the navigation property for the parent armory item.
+        /// </summary>
+        public ArmoryItem? ParentItem { get; set; }
+
+        /// <summary>
+        /// Gets or sets the collection of mounted accessories under this armory item.
+        /// </summary>
+        public ICollection<ArmoryItem> MountedAccessories { get; set; } = new List<ArmoryItem>();
+
         #endregion
 
         #region Supplemental Notes & Media

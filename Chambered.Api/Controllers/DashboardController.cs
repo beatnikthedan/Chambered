@@ -61,7 +61,7 @@ namespace Chambered.Api.Controllers
 
             // 6. Action type breakdown for Armory Items (Count per action type)
             var armoryActionsRaw = await _db.ArmoryItems
-                .Where(f => f.ArsenalId == arsenalId)
+                .Where(f => f.ArsenalId == arsenalId && f.Product is PewPew)
                 .GroupBy(f => (f.Product as PewPew).ActionType)
                 .Select(g => new
                 {

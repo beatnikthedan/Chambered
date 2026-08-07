@@ -667,3 +667,131 @@
   margin: 10px 14px;
 }
 
+/* TreeView and Toggle Styling consistent with Vaults */
+.view-toggle-buttons {
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.view-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted, #888888);
+  font-size: 0.9rem;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn.active {
+  background-color: var(--primary-color, #d4af37);
+  color: #000000;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+}
+
+.view-btn:hover:not(.active) {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Tree Nodes structure */
+.tree-node-wrapper {
+  padding-left: 8px;
+  transition: all 0.2s ease;
+}
+
+.tree-node-strip {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tree-node-strip:hover {
+  background-color: rgba(212, 175, 55, 0.05);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.tree-node-toggle-col {
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-toggle-tree {
+  background: none;
+  border: none;
+  color: var(--text-muted, #888888);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-toggle-tree:hover {
+  color: #ffffff;
+}
+
+.leaf-bullet {
+  color: var(--text-muted, #555555);
+  font-size: 1.2rem;
+}
+
+.tree-node-info-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.tree-hub-icon {
+  font-size: 1.1rem;
+}
+
+.tree-hub-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.tree-hub-cat {
+  color: var(--text-muted, #888888);
+  font-size: 0.8rem;
+}
+
+.tree-hub-inventory-count {
+  font-size: 0.78rem;
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--primary-color, #d4af37);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: auto;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.tree-node-children-subgroup {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Accessory rows in Modal list */
+.accessory-row {
+  transition: all 0.2s ease;
+}
+
+.accessory-row:hover {
+  border-color: var(--color-primary) !important;
+  background: rgba(204, 164, 59, 0.02) !important;
+}
+
