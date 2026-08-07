@@ -1,7 +1,7 @@
 ﻿namespace Chambered.Data.Models
 {
     /// <summary>
-    /// Represents a standard chambering or caliber designation across firearm models.
+    /// Represents a standard chambering or caliber designation for items.
     /// </summary>
     public class Caliber
     {
@@ -27,7 +27,7 @@
         #region Navigation Properties
 
         /// <summary>
-        /// Gets or sets firearm catalog models chambered in this caliber.
+        /// Gets or sets catalog models chambered in this caliber.
         /// </summary>
         public ICollection<Product> Models { get; set; } = new List<Product>();
 

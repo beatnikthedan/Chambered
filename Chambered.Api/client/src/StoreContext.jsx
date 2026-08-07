@@ -12,6 +12,9 @@ export function StoreProvider({ children }) {
   const [activeArsenalId, setActiveArsenalId] = useState(null);
   const [activeArsenalName, setActiveArsenalName] = useState('Loading...');
   const [arsenals, setArsenals] = useState([]);
+  
+  // Enums metadata state
+  const [enums, setEnums] = useState(null);
 
   // Check initialization status
   const checkInitialization = useCallback(async () => {
@@ -53,6 +56,19 @@ export function StoreProvider({ children }) {
     }
   }, []);
 
+  // Fetch all metadata enums
+  const fetchEnums = useCallback(async () => {
+    try {
+      const res = await fetch('/api/armory/enums');
+      if (res.ok) {
+        const data = await res.json();
+        setEnums(data);
+      }
+    } catch (err) {
+      console.error('Failed to load enums metadata', err);
+    }
+  }, []);
+
   // Check authentication status
   const checkAuth = useCallback(async () => {
     try {
@@ -64,6 +80,7 @@ export function StoreProvider({ children }) {
         setIsAuthenticated(true);
         // Fetch arsenals right after successful auth
         await fetchArsenals();
+        await fetchEnums();
       } else {
         setUser(null);
         setIsAuthenticated(false);
@@ -75,7 +92,7 @@ export function StoreProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [checkInitialization, fetchArsenals]);
+  }, [checkInitialization, fetchArsenals, fetchEnums]);
 
   // Login action
   const login = useCallback(async (username, password) => {
@@ -109,11 +126,12 @@ export function StoreProvider({ children }) {
           setActiveArsenalName('No Collections');
         }
       }
+      await fetchEnums();
       return true;
     }
     const err = await res.text();
     throw new Error(err || 'Invalid credentials');
-  }, []);
+  }, [fetchEnums]);
 
   // Register action
   const firstRegister = useCallback(async (username, password, email) => {
@@ -141,11 +159,12 @@ export function StoreProvider({ children }) {
           setActiveArsenalName('No Collections');
         }
       }
+      await fetchEnums();
       return true;
     }
     const err = await res.text();
     throw new Error(err || 'Registration failed');
-  }, []);
+  }, [fetchEnums]);
 
   // Logout action
   const logout = useCallback(async () => {
@@ -159,6 +178,7 @@ export function StoreProvider({ children }) {
       setActiveArsenalId(null);
       setActiveArsenalName('Loading...');
       setArsenals([]);
+      setEnums(null);
     }
   }, []);
 
@@ -248,6 +268,7 @@ export function StoreProvider({ children }) {
     activeArsenalId,
     activeArsenalName,
     arsenals,
+    enums,
     checkAuth,
     checkInitialization,
     login,

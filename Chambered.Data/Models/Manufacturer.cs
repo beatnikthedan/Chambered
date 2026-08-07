@@ -1,7 +1,7 @@
 ﻿namespace Chambered.Data.Models
 {
     /// <summary>
-    /// Represents a firearm manufacturer or maker with corporate metadata and catalog listings.
+    /// Represents a manufacturer or maker with corporate metadata and catalog listings.
     /// </summary>
     public class Manufacturer
     {
@@ -13,7 +13,7 @@
         public int Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the official name of the manufacturer (e.g., "Glock", "Sturm, Ruger & Co.").
+        /// Gets or sets the official name of the manufacturer.
         /// </summary>
         public string Name { get; set; } = string.Empty;
 
@@ -65,9 +65,9 @@
         #region Navigation Properties
 
         /// <summary>
-        /// Gets or sets the catalog of firearm models produced by this manufacturer.
+        /// Gets or sets the catalog of products produced by this manufacturer.
         /// </summary>
-        public ICollection<Product> Models { get; set; } = new List<Product>();
+        public ICollection<Product> Product { get; set; } = new List<Product>();
 
         #endregion
     }

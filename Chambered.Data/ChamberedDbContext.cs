@@ -53,10 +53,15 @@ namespace Chambered.Data
             builder.ApplyConfigurationsFromAssembly(typeof(ChamberedDbContext).Assembly);
         }
 
-        //protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-        //{
-        //    configurationBuilder.Properties<LockType>().HaveConversion<int>();
-        //}
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            configurationBuilder.Properties<ActionType>().HaveConversion<int>();
+            configurationBuilder.Properties<DocumentType>().HaveConversion<int>();
+            configurationBuilder.Properties<ItemCondition>().HaveConversion<int>();
+            configurationBuilder.Properties<LockType>().HaveConversion<int>();
+            configurationBuilder.Properties<NfaFormType>().HaveConversion<int>();
+            configurationBuilder.Properties<ProductCategory>().HaveConversion<int>();
+        }
     }
 
     public class Projectile

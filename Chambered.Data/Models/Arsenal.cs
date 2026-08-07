@@ -1,7 +1,7 @@
 ﻿namespace Chambered.Data.Models
 {
     /// <summary>
-    /// Represents an isolated collection workspace, location context, or firearm portfolio.
+    /// Represents an isolated collection.
     /// </summary>
     public class Arsenal
     {
@@ -47,9 +47,9 @@
         public ICollection<Vault> Vaults { get; set; } = new List<Vault>();
 
         /// <summary>
-        /// Gets or sets the firearms directly linked to this arsenal.
+        /// Gets or sets the armory items directly linked to this arsenal.
         /// </summary>
-        public ICollection<ArmoryItem> Firearms { get; set; } = new List<ArmoryItem>();
+        public ICollection<ArmoryItem> ArmoryItems { get; set; } = new List<ArmoryItem>();
 
         #endregion
     }

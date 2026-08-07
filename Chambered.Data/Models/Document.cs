@@ -3,7 +3,7 @@
 namespace Chambered.Data.Models
 {
     /// <summary>
-    /// Represents an offline binary document or file attachment associated with a firearm model or item.
+    /// Represents an offline binary document or file attachment associated with a product or item.
     /// </summary>
     public class Document
     {
@@ -53,14 +53,14 @@ namespace Chambered.Data.Models
         #region Relationships
 
         /// <summary>
-        /// Gets or sets the optional foreign key for the associated firearm model.
+        /// Gets or sets the optional foreign key for the associated product.
         /// </summary>
-        public int? FirearmModelId { get; set; }
+        public int? ProductId { get; set; }
 
         /// <summary>
-        /// Gets or sets the navigation property for the associated firearm model.
+        /// Gets or sets the navigation property for the associated product.
         /// </summary>
-        public Product? FirearmModel { get; set; }
+        public Product? Product { get; set; }
 
         #endregion
     }

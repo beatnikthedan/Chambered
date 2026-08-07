@@ -35,7 +35,7 @@ namespace Chambered.Data.Configuration
                 .HasDefaultValue(false);
 
             builder.Property(a => a.NfaFormType)
-                .HasMaxLength(20);
+                .IsRequired(false);
 
             builder.Property(a => a.TaxStampDocumentUrl)
                 .HasMaxLength(2048);
@@ -47,7 +47,7 @@ namespace Chambered.Data.Configuration
                 .HasPrecision(18, 2);
 
             builder.Property(a => a.Condition)
-                .HasMaxLength(50);
+                .IsRequired(false);
 
             builder.Property(a => a.RoundCount)
                 .IsRequired()

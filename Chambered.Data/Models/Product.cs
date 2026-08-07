@@ -10,27 +10,32 @@ namespace Chambered.Data.Models
         #region Primary Identification
 
         /// <summary>
-        /// Gets or sets the unique primary key for the model.
+        /// Gets or sets the unique primary key for the product.
         /// </summary>
         public int Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the model name (e.g., "10/22 Carbine", "19 Gen 5", "DDM4 V7").
+        /// Gets or sets the product model.
         /// </summary>
-        public string Name { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the manufacturer SKU or model number (e.g., "1103").
+        /// Gets or sets the product part number.
+        /// </summary>
+        public string PartNumber { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the manufacturer SKU or product number (e.g., "1103").
         /// </summary>
         public string? Sku { get; set; }
 
         /// <summary>
-        /// Gets or sets the primary functional category assigned to this model.
+        /// Gets or sets the primary functional category assigned to this product.
         /// </summary>
         public ProductCategory Category { get; set; }
 
         /// <summary>
-        /// Gets or sets the mechanical operating action type for this model line.
+        /// Gets or sets the mechanical operating action type for this product line.
         /// </summary>
         public ActionType ActionType { get; set; }
 
@@ -64,7 +69,7 @@ namespace Chambered.Data.Models
         public string? WebPageUrl { get; set; }
 
         /// <summary>
-        /// Gets or sets reference notes or historical details regarding the model line.
+        /// Gets or sets reference notes or historical details regarding the product line.
         /// </summary>
         public string? ReferenceNotes { get; set; }
 
@@ -73,7 +78,7 @@ namespace Chambered.Data.Models
         #region Embedded Media
 
         /// <summary>
-        /// Gets or sets raw image binary data for the model preview image (stored offline).
+        /// Gets or sets raw image binary data for the product preview image (stored offline).
         /// </summary>
         public byte[]? ImageData { get; set; }
 
@@ -92,7 +97,7 @@ namespace Chambered.Data.Models
         public ICollection<Document> Documents { get; set; } = new List<Document>();
 
         /// <summary>
-        /// Gets or sets individual inventory items belonging to this model line.
+        /// Gets or sets individual inventory items belonging to this product line.
         /// </summary>
         public ICollection<ArmoryItem> ArmoryItems { get; set; } = new List<ArmoryItem>();
 

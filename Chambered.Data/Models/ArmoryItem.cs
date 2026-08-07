@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Chambered.Data.Models
 {
     /// <summary>
-    /// Represents a primary firearm or firearm receiver within the inventory system.
+    /// Represents an item in your armory.
     /// </summary>
     public class ArmoryItem
     {
@@ -25,7 +25,7 @@ namespace Chambered.Data.Models
         public int ProductId { get; set; }
 
         /// <summary>
-        /// Gets or sets the navigation property for the catalog product model (which carries manufacturer, caliber, category, and action type).
+        /// Gets or sets the navigation property for the catalog product model.
         /// </summary>
         public Product Product { get; set; } = null!;
 
@@ -63,9 +63,9 @@ namespace Chambered.Data.Models
         public bool IsNfaItem { get; set; }
 
         /// <summary>
-        /// Gets or sets the NFA tax stamp form classification (e.g., "Form 1", "Form 4").
+        /// Gets or sets the specific NFA form type for the application.
         /// </summary>
-        public string? NfaFormType { get; set; }
+        public NfaFormType? NfaFormType { get; set; }
 
         /// <summary>
         /// Gets or sets the URL or file path for the approved NFA tax stamp document image or PDF.
@@ -97,16 +97,16 @@ namespace Chambered.Data.Models
         public decimal? EstimatedValue { get; set; }
 
         /// <summary>
-        /// Gets or sets the physical condition rating of the item (e.g., "Factory New", "Excellent", "Used").
+        /// Gets or sets the physical condition rating of the item.
         /// </summary>
-        public string? Condition { get; set; }
+        public ItemCondition? Condition { get; set; }
 
         #endregion
 
         #region Usage & Maintenance Stats
 
         /// <summary>
-        /// Gets or sets the total cumulative round count fired through this armory item.
+        /// Gets or sets the total cumulative round count fired through this item.
         /// </summary>
         public int RoundCount { get; set; } = 0;
 

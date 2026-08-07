@@ -52,14 +52,15 @@ namespace Chambered.Api.Controllers
             var products = await _db.Products
                 .Include(p => p.Manufacturer)
                 .Include(p => p.Caliber)
-                .OrderBy(p => p.Name)
+                .OrderBy(p => p.Model)
                 .ToListAsync();
 
             var dtos = products.Select(p => new
             {
                 id = p.Id,
-                name = p.Name,
+                name = p.Model,
                 sku = p.Sku,
+                partNumber = p.PartNumber,
                 category = p.Category.ToString(),
                 actionType = FormatActionType(p.ActionType),
                 manufacturerId = p.ManufacturerId,
@@ -69,6 +70,21 @@ namespace Chambered.Api.Controllers
             }).ToList();
 
             return Ok(dtos);
+        }
+
+        // GET: api/armory/enums
+        [HttpGet("enums")]
+        public IActionResult GetEnums()
+        {
+            return Ok(new
+            {
+                actionTypes = Enum.GetValues<ActionType>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatActionType(e) }).ToList(),
+                documentTypes = Enum.GetValues<DocumentType>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatDocumentType(e) }).ToList(),
+                itemConditions = Enum.GetValues<ItemCondition>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatCondition(e) }).ToList(),
+                lockTypes = Enum.GetValues<LockType>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatLockType(e) }).ToList(),
+                nfaFormTypes = Enum.GetValues<NfaFormType>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatNfaFormType(e) }).ToList(),
+                productCategories = Enum.GetValues<ProductCategory>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatProductCategory(e) }).ToList()
+            });
         }
 
         // GET: api/armory/{id}
@@ -138,13 +154,13 @@ namespace Chambered.Api.Controllers
                 TwistRate = model.TwistRate,
                 ThreadPitch = model.ThreadPitch,
                 IsNfaItem = model.IsNfaItem,
-                NfaFormType = model.NfaFormType,
+                NfaFormType = !string.IsNullOrEmpty(model.NfaFormType) && Enum.TryParse<NfaFormType>(model.NfaFormType, true, out var formType) ? formType : null,
                 TaxStampDocumentUrl = model.TaxStampDocumentUrl,
                 StampApprovalDate = model.StampApprovalDate,
                 PurchasePrice = model.PurchasePrice,
                 PurchaseDate = model.PurchaseDate,
                 EstimatedValue = model.CurrentValue ?? model.EstimatedValue,
-                Condition = model.Condition,
+                Condition = ParseCondition(model.Condition),
                 RoundCount = model.RoundCount,
                 Beneficiary = model.Beneficiary,
                 VaultId = vaultId,
@@ -212,13 +228,13 @@ namespace Chambered.Api.Controllers
             armoryItem.TwistRate = model.TwistRate;
             armoryItem.ThreadPitch = model.ThreadPitch;
             armoryItem.IsNfaItem = model.IsNfaItem;
-            armoryItem.NfaFormType = model.NfaFormType;
+            armoryItem.NfaFormType = !string.IsNullOrEmpty(model.NfaFormType) && Enum.TryParse<NfaFormType>(model.NfaFormType, true, out var formType) ? formType : null;
             armoryItem.TaxStampDocumentUrl = model.TaxStampDocumentUrl;
             armoryItem.StampApprovalDate = model.StampApprovalDate;
             armoryItem.PurchasePrice = model.PurchasePrice;
             armoryItem.PurchaseDate = model.PurchaseDate;
             armoryItem.EstimatedValue = model.CurrentValue ?? model.EstimatedValue;
-            armoryItem.Condition = model.Condition;
+            armoryItem.Condition = ParseCondition(model.Condition);
             armoryItem.RoundCount = model.RoundCount;
             armoryItem.Beneficiary = model.Beneficiary;
             armoryItem.VaultId = vaultId;
@@ -279,7 +295,8 @@ namespace Chambered.Api.Controllers
                 ManufacturerId = i.Product?.ManufacturerId ?? 0,
                 Manufacturer = i.Product?.Manufacturer?.Name ?? "",
                 FirearmModelId = i.ProductId,
-                Model = i.Product?.Name ?? "",
+                Model = i.Product?.Model ?? "",
+                PartNumber = i.Product?.PartNumber,
                 Caliber = i.Product?.Caliber?.Name ?? "",
                 SerialNumber = i.SerialNumber,
                 ActionType = i.Product != null ? FormatActionType(i.Product.ActionType) : "Semi-Automatic",
@@ -287,14 +304,14 @@ namespace Chambered.Api.Controllers
                 TwistRate = i.TwistRate,
                 ThreadPitch = i.ThreadPitch,
                 IsNfaItem = i.IsNfaItem,
-                NfaFormType = i.NfaFormType,
+                NfaFormType = i.NfaFormType?.ToString(),
                 TaxStampDocumentUrl = i.TaxStampDocumentUrl,
                 StampApprovalDate = i.StampApprovalDate,
                 PurchasePrice = i.PurchasePrice,
                 PurchaseDate = i.PurchaseDate,
                 CurrentValue = i.EstimatedValue,
                 EstimatedValue = i.EstimatedValue,
-                Condition = i.Condition ?? "Good (90%)",
+                Condition = FormatCondition(i.Condition),
                 RoundCount = i.RoundCount,
                 Beneficiary = i.Beneficiary,
                 VaultId = i.VaultId,
@@ -337,12 +354,12 @@ namespace Chambered.Api.Controllers
 
         private async Task<Product> ResolveProductAsync(string modelName, int mfgId, int caliberId)
         {
-            var prod = await _db.Products.FirstOrDefaultAsync(p => p.Name.ToLower() == modelName.ToLower() && p.ManufacturerId == mfgId);
+            var prod = await _db.Products.FirstOrDefaultAsync(p => p.Model.ToLower() == modelName.ToLower() && p.ManufacturerId == mfgId);
             if (prod == null)
             {
                 prod = new Product
                 {
-                    Name = modelName,
+                    Model = modelName,
                     ManufacturerId = mfgId,
                     CaliberId = caliberId,
                     Category = ProductCategory.Handgun // fallback category
@@ -446,6 +463,70 @@ namespace Chambered.Api.Controllers
             };
         }
 
+        private string FormatDocumentType(DocumentType doc)
+        {
+            return doc switch
+            {
+                DocumentType.OwnerManual => "Owner's Manual",
+                DocumentType.PartsDiagram => "Parts Diagram / Schematic",
+                DocumentType.WarrantyDocument => "Warranty Document",
+                DocumentType.RecallNotice => "Recall Notice",
+                DocumentType.SpecSheet => "Spec Sheet",
+                DocumentType.TaxStamp => "Tax Stamp / NFA Form",
+                DocumentType.ReceiptOrInvoice => "Receipt or Invoice",
+                _ => "Other Document"
+            };
+        }
+
+        private string FormatLockType(LockType lockType)
+        {
+            return lockType switch
+            {
+                LockType.ElectronicKeypad => "Electronic Keypad",
+                LockType.MechanicalDial => "Mechanical Dial",
+                LockType.BiometricScanner => "Biometric Scanner",
+                LockType.DualKeySystem => "Dual Key System",
+                LockType.PhysicalKeyLock => "Physical Key Lock",
+                LockType.RfidTransponder => "RFID Transponder",
+                LockType.OpenCabinet => "None / Cabinet",
+                LockType.ActionLock => "Action Lock",
+                _ => "None / Open Cabinet"
+            };
+        }
+
+        private string FormatNfaFormType(NfaFormType form)
+        {
+            return form switch
+            {
+                NfaFormType.Form1 => "ATF Form 1 (Manufacture)",
+                NfaFormType.Form2 => "ATF Form 2 (Notice of Manufacture)",
+                NfaFormType.Form3 => "ATF Form 3 (Dealer-to-Dealer)",
+                NfaFormType.Form4 => "ATF Form 4 (Tax-Paid Transfer)",
+                NfaFormType.Form5 => "ATF Form 5 (Tax-Exempt Transfer)",
+                NfaFormType.Form9 => "ATF Form 9 (Export)",
+                NfaFormType.Form10 => "ATF Form 10 (Government)",
+                _ => form.ToString()
+            };
+        }
+
+        private string FormatProductCategory(ProductCategory cat)
+        {
+            return cat switch
+            {
+                ProductCategory.Handgun => "Handgun / Pistol",
+                ProductCategory.Rifle => "Centerfire Rifle",
+                ProductCategory.Shotgun => "Shotgun",
+                ProductCategory.Rimfire => "Rimfire Rifle / Pistol",
+                ProductCategory.PistolCaliberCarbine => "Pistol Caliber Carbine (PCC)",
+                ProductCategory.ReceiverOnly => "Receiver / Frame Only",
+                ProductCategory.NfaItem => "NFA regulated Item (SBR/Suppressor)",
+                ProductCategory.PrecisionLongRange => "Precision Long Range",
+                ProductCategory.Competition => "Competition Match",
+                ProductCategory.CurioAndRelic => "Curio & Relic (C&R)",
+                _ => cat.ToString()
+            };
+        }
+
         #endregion
     }
 
@@ -479,6 +560,7 @@ namespace Chambered.Api.Controllers
         public string? ImageUrl { get; set; }
         public string? NotesMarkdown { get; set; }
         public string? Notes { get; set; }
+        public string? PartNumber { get; set; }
         public string? AccessoriesListJson { get; set; }
         public string? MaintenanceTasksJson { get; set; }
         public string? RangeHistoryJson { get; set; }

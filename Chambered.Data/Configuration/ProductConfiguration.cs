@@ -16,7 +16,11 @@ namespace Chambered.Data.Configuration
 
             builder.HasKey(p => p.Id);
 
-            builder.Property(p => p.Name)
+            builder.Property(p => p.Model)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            builder.Property(p => p.PartNumber)
                 .IsRequired()
                 .HasMaxLength(100);
 
@@ -46,7 +50,7 @@ namespace Chambered.Data.Configuration
                     Id = 1,
                     ManufacturerId = 2,
                     CaliberId = 11,
-                    Name = "10/22 Carbine",
+                    Model = "10/22 Carbine",
                     Sku = "1103",
                     Category = ProductCategory.Rimfire,
                     ActionType = ActionType.SemiAutomatic,
@@ -58,7 +62,7 @@ namespace Chambered.Data.Configuration
                     Id = 2,
                     ManufacturerId = 1,
                     CaliberId = 1,
-                    Name = "19 Gen 5",
+                    Model = "19 Gen 5",
                     Sku = "PA1950203",
                     Category = ProductCategory.Handgun,
                     ActionType = ActionType.SemiAutomatic,

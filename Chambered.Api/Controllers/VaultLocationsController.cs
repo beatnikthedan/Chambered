@@ -263,7 +263,7 @@ namespace Chambered.Api.Controllers
                 {
                     Id = ai.Id,
                     Manufacturer = ai.Product?.Manufacturer?.Name ?? "",
-                    Model = ai.Product?.Name ?? "",
+                    Model = ai.Product?.Model ?? "",
                     Caliber = ai.Product?.Caliber?.Name ?? "",
                     SerialNumber = ai.SerialNumber
                 }).ToList() ?? new List<VaultInventoryItemDto>()

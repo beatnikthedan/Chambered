@@ -23,13 +23,14 @@ namespace Chambered.Data.Configuration
                 .HasMaxLength(250);
 
             builder.HasData(
-                new VaultCategory { Id = 1, Name = "Heavy Safe", Description = "Fire-rated standup safe or residential security container." },
+                new VaultCategory { Id = 1, Name = "Floor Safe", Description = "Fire-rated standup safe or residential security container." },
                 new VaultCategory { Id = 2, Name = "Lockbox", Description = "Portable or rapid-access key/biometric lockbox." },
                 new VaultCategory { Id = 3, Name = "Vehicle Storage", Description = "Console vault, trunk lockbox, or dedicated vehicle mount." },
                 new VaultCategory { Id = 4, Name = "Display / Cabinet", Description = "Glass display case, gun rack, or wooden cabinet." },
                 new VaultCategory { Id = 5, Name = "Secure Room", Description = "Dedicated walk-in armory, reinforced closet, or vault room." },
                 new VaultCategory { Id = 6, Name = "Soft Case / Range Bag", Description = "Temporary mobile transport storage." },
-                new VaultCategory { Id = 7, Name = "Hard Travel Case", Description = "Flight-approved heavy-duty protective travel case." }
+                new VaultCategory { Id = 7, Name = "Hard Travel Case", Description = "Flight-approved heavy-duty protective travel case." },
+                new VaultCategory { Id = 8, Name = "Trigger / Action Lock", Description = "Lock used to secure the trigger or action." }
             );
         }
     }
