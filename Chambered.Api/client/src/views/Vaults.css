@@ -1,0 +1,580 @@
+/* Vaults view styles */
+
+.vaults-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header styling */
+.vaults-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  padding-bottom: 16px;
+}
+
+.vaults-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vaults-header .header-left h2 {
+  font-size: 1.8rem;
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-color, #ffffff);
+}
+
+.section-title-icon {
+  font-size: 1.8rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* View Toggle Buttons */
+.view-toggle-buttons {
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.view-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted, #888888);
+  font-size: 0.9rem;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn.active {
+  background-color: var(--primary-color, #d4af37);
+  color: #000000;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+}
+
+.view-btn:hover:not(.active) {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Loading, Error and Empty states */
+.loading-spinner-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(212, 175, 55, 0.1);
+  border-top-color: var(--primary-color, #d4af37);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.vaults-error-card {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 480px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.err-icon {
+  font-size: 2rem;
+}
+
+.vaults-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 60px 24px;
+  max-width: 600px;
+  margin: 40px auto;
+}
+
+.empty-state-symbol {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.vaults-empty-state h3 {
+  font-size: 1.4rem;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.vaults-empty-state p {
+  color: var(--text-muted, #888888);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+  max-width: 450px;
+}
+
+/* GRID LAYOUT STYLE */
+.vaults-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.vault-card-node {
+  background: rgba(30, 30, 30, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.vault-card-node:hover {
+  transform: translateY(-4px);
+  border-color: rgba(212, 175, 55, 0.4);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.vault-card-decor {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vault-cat-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: rgba(212, 175, 55, 0.1);
+  color: var(--primary-color, #d4af37);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.vault-status-indicator {
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vault-status-indicator.active::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.vault-card-contents {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.vault-name {
+  font-size: 1.2rem;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vault-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted, #888888);
+  line-height: 1.4;
+  margin: 0 0 20px 0;
+  height: 3.2em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.vault-meta-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.met-lbl {
+  color: var(--text-muted, #888888);
+}
+
+.met-val {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.active-green {
+  color: #10b981 !important;
+}
+
+/* Alert styles inside cards */
+.vault-card-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.v-alert {
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.v-alert.warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.v-alert.info {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.vault-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: auto;
+}
+
+/* TREE VIEW STYLES */
+.vaults-tree-sheet {
+  background: rgba(30, 30, 30, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.tree-sheet-header {
+  margin-bottom: 24px;
+}
+
+.tree-sheet-header h3 {
+  font-size: 1.3rem;
+  margin: 0 0 4px 0;
+  font-weight: 600;
+}
+
+.tree-sheet-header p {
+  color: var(--text-muted, #888888);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.tree-topology-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Tree Nodes structure */
+.tree-node-wrapper {
+  padding-left: 8px;
+  transition: all 0.2s ease;
+}
+
+.tree-node-strip {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tree-node-strip:hover {
+  background-color: rgba(212, 175, 55, 0.05);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.tree-node-toggle-col {
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-toggle-tree {
+  background: none;
+  border: none;
+  color: var(--text-muted, #888888);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-toggle-tree:hover {
+  color: #ffffff;
+}
+
+.leaf-bullet {
+  color: var(--text-muted, #555555);
+  font-size: 1.2rem;
+}
+
+.tree-node-info-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.tree-hub-icon {
+  font-size: 1.1rem;
+}
+
+.tree-hub-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.tree-hub-cat {
+  color: var(--text-muted, #888888);
+  font-size: 0.8rem;
+}
+
+.tree-hub-inventory-count {
+  font-size: 0.78rem;
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--primary-color, #d4af37);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: auto;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.tree-node-children-subgroup {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+
+
+.passcode-input-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.passcode-field {
+  flex: 1;
+}
+
+.passcode-reveal-btn {
+  white-space: nowrap;
+}
+
+/* Climate controls & sliders */
+.env-boundary-decorator {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 16px;
+  padding-top: 20px;
+}
+
+.checkbox-toggle-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkbox-switch-label {
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.form-range-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  margin: 12px 0;
+}
+
+.form-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary-color, #d4af37);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+  transition: transform 0.1s ease;
+}
+
+.form-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Inventory Tab Styles */
+.vault-inventory-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inventory-subheading {
+  font-size: 1.05rem;
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-color, #ffffff);
+}
+
+.inventory-grid-table {
+  background-color: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1fr 1fr;
+  padding: 10px 16px;
+  background-color: rgba(255, 255, 255, 0.03);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted, #888888);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-body-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1fr 1fr;
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  align-items: center;
+}
+
+.table-body-row:last-child {
+  border-bottom: none;
+}
+
+.badge-caliber {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
+  border: 1px solid rgba(59, 130, 246, 0.15) !important;
+  width: fit-content;
+  font-size: 0.72rem !important;
+  padding: 2px 8px !important;
+}
+
+.serial-mono {
+  font-size: 0.78rem;
+  color: var(--text-muted, #888888);
+}
+
+.empty-inventory-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+.empty-box-symbol {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.6;
+}
+
+.empty-inventory-box h5 {
+  font-size: 0.95rem;
+  margin: 0 0 4px 0;
+  font-weight: 600;
+}
+
+.empty-inventory-box p {
+  color: var(--text-muted, #888888);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
+  max-width: 320px;
+}

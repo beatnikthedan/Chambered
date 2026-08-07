@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -19,9 +19,13 @@ namespace Chambered.Data.Utility
 
         private static string? EncryptPasscode(string? plainText)
         {
-            if (string.IsNullOrEmpty(plainText))
+            if (plainText == null)
             {
                 return null;
+            }
+            if (plainText == string.Empty)
+            {
+                return string.Empty;
             }
 
             byte[] key = GetMasterKey();
@@ -43,29 +47,45 @@ namespace Chambered.Data.Utility
 
         private static string? DecryptPasscode(string? combinedBase64)
         {
-            if (string.IsNullOrEmpty(combinedBase64))
+            if (combinedBase64 == null)
             {
                 return null;
             }
+            if (combinedBase64 == string.Empty)
+            {
+                return string.Empty;
+            }
 
-            byte[] combinedResult = Convert.FromBase64String(combinedBase64);
-            byte[] key = GetMasterKey();
+            try
+            {
+                byte[] combinedResult = Convert.FromBase64String(combinedBase64);
+                if (combinedResult.Length < 16)
+                {
+                    return combinedBase64;
+                }
 
-            using var aes = Aes.Create();
-            aes.Key = key;
+                byte[] key = GetMasterKey();
 
-            byte[] iv = new byte[16];
-            byte[] cipherBytes = new byte[combinedResult.Length - 16];
+                using var aes = Aes.Create();
+                aes.Key = key;
 
-            Buffer.BlockCopy(combinedResult, 0, iv, 0, 16);
-            Buffer.BlockCopy(combinedResult, 16, cipherBytes, 0, cipherBytes.Length);
+                byte[] iv = new byte[16];
+                byte[] cipherBytes = new byte[combinedResult.Length - 16];
 
-            aes.IV = iv;
+                Buffer.BlockCopy(combinedResult, 0, iv, 0, 16);
+                Buffer.BlockCopy(combinedResult, 16, cipherBytes, 0, cipherBytes.Length);
 
-            using var decryptor = aes.CreateDecryptor();
-            byte[] plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
+                aes.IV = iv;
 
-            return Encoding.UTF8.GetString(plainBytes);
+                using var decryptor = aes.CreateDecryptor();
+                byte[] plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
+
+                return Encoding.UTF8.GetString(plainBytes);
+            }
+            catch (Exception ex) when (ex is FormatException || ex is CryptographicException || ex is ArgumentException)
+            {
+                return combinedBase64;
+            }
         }
 
         private static byte[] GetMasterKey()

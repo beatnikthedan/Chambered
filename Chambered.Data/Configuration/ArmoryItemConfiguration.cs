@@ -1,4 +1,5 @@
-﻿using Chambered.Data.Models;
+using Chambered.Data.Models;
+using Chambered.Data.Utility;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,11 +18,8 @@ namespace Chambered.Data.Configuration
 
             builder.Property(a => a.SerialNumber)
                 .IsRequired()
-                .HasMaxLength(100);
-
-            builder.Property(a => a.ActionType)
-                .IsRequired()
-                .HasConversion<int>();
+                .HasConversion<SymmetricEncryptionConverter>()
+                .HasMaxLength(512);
 
             builder.Property(a => a.BarrelLengthInches)
                 .HasPrecision(5, 2);

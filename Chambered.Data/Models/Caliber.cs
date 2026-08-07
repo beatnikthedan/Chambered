@@ -29,7 +29,7 @@
         /// <summary>
         /// Gets or sets firearm catalog models chambered in this caliber.
         /// </summary>
-        public ICollection<FirearmModel> Models { get; set; } = new List<FirearmModel>();
+        public ICollection<Product> Models { get; set; } = new List<Product>();
 
         #endregion
     }

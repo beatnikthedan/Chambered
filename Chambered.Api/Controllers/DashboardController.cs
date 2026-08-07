@@ -37,11 +37,11 @@ namespace Chambered.Api.Controllers
             // 3. Total valuation of armory items (Project fields and sum client-side to bypass SQLite decimal aggregate limitations)
             var valuationData = await _db.ArmoryItems
                 .Where(f => f.ArsenalId == arsenalId)
-                .Select(f => new { f.CurrentValue, f.PurchasePrice })
+                .Select(f => new { f.EstimatedValue, f.PurchasePrice })
                 .ToListAsync();
 
             decimal totalArmoryValue = valuationData
-                .Sum(f => f.CurrentValue ?? f.PurchasePrice ?? 0m);
+                .Sum(f => f.EstimatedValue ?? f.PurchasePrice ?? 0m);
 
             // 4. Cumulative rounds fired
             int cumulativeRoundsFired = await _db.ArmoryItems.Where(f => f.ArsenalId == arsenalId).SumAsync(f => f.RoundCount);
@@ -59,15 +59,21 @@ namespace Chambered.Api.Controllers
                 .ToListAsync();
 
             // 6. Action type breakdown for Armory Items (Count per action type)
-            var armoryActions = await _db.ArmoryItems
+            var armoryActionsRaw = await _db.ArmoryItems
                 .Where(f => f.ArsenalId == arsenalId)
-                .GroupBy(f => f.ActionType)
-                .Select(g => new ActionStatDto
+                .GroupBy(f => f.Product.ActionType)
+                .Select(g => new
                 {
-                    ActionType = g.Key,
+                    ActionTypeEnum = g.Key,
                     Count = g.Count()
                 })
                 .ToListAsync();
+
+            var armoryActions = armoryActionsRaw.Select(g => new ActionStatDto
+            {
+                ActionType = FormatActionType(g.ActionTypeEnum),
+                Count = g.Count
+            }).ToList();
 
             // 7. Handloads vs Factory Ammunition split
             int handloadedRounds = await _db.AmmoLots
@@ -104,6 +110,22 @@ namespace Chambered.Api.Controllers
                 FactoryRounds = factoryRounds,
                 RecentActivities = recentLots
             });
+        }
+
+        private string FormatActionType(Chambered.Data.Enums.ActionType action)
+        {
+            return action switch
+            {
+                Chambered.Data.Enums.ActionType.SemiAutomatic => "Semi-Automatic",
+                Chambered.Data.Enums.ActionType.BoltAction => "Bolt Action",
+                Chambered.Data.Enums.ActionType.LeverAction2 => "Lever Action",
+                Chambered.Data.Enums.ActionType.PumpAction => "Pump Action",
+                Chambered.Data.Enums.ActionType.Revolver => "Revolver",
+                Chambered.Data.Enums.ActionType.BreakAction => "Break Action",
+                Chambered.Data.Enums.ActionType.SingleShot => "Single Shot",
+                Chambered.Data.Enums.ActionType.FullAutomatic => "Full-Automatic",
+                _ => "Unknown"
+            };
         }
     }
 

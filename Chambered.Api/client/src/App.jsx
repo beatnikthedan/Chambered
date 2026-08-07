@@ -10,6 +10,7 @@ import Munitions from './views/Munitions'
 import Settings from './views/Settings'
 import Login from './views/Login'
 import PlaceholderView from './views/PlaceholderView'
+import Vaults from './views/Vaults'
 
 // Route guarding components
 function ProtectedRoute({ children }) {
@@ -413,7 +414,7 @@ export default function App() {
               <Route path="/range/training" element={<ProtectedRoute><PlaceholderView /></ProtectedRoute>} />
               
               {/* Vaults routes */}
-              <Route path="/vaults/locations" element={<ProtectedRoute><PlaceholderView /></ProtectedRoute>} />
+              <Route path="/vaults/locations" element={<ProtectedRoute><Vaults /></ProtectedRoute>} />
 
               {/* Guest Route */}
               <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />

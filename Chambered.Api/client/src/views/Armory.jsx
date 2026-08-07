@@ -39,7 +39,14 @@ const actionTypePresets = [
 ]
 
 const conditionPresets = [
-  "New / Unfired (100%)", "Excellent (98%)", "Very Good (95%)", "Good (90%)", "Fair (80%)", "Poor (60%)"
+  "New / Unfired (100%)",
+  "Excellent (98%)",
+  "Very Good (95%)",
+  "Good (90%)",
+  "Fair (80%)",
+  "Serviceable (70%)",
+  "Poor (60%)",
+  "Salvage (50%)"
 ]
 
 const attachmentCategoryPresets = [
@@ -53,6 +60,7 @@ export default function Armory() {
   const [armoryItems, setArmoryItems] = useState([])
   const [vaultLocations, setVaultLocations] = useState([])
   const [ammoLots, setAmmoLots] = useState([])
+  const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -63,12 +71,16 @@ export default function Armory() {
 
   // Modal control & edit mode state
   const [showModal, setShowModal] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [isEditMode, setIsEditMode] = useState(false)
   const [activeTab, setActiveTab] = useState('general')
+
 
   // Form State
   const [form, setForm] = useState({
     id: 0,
+    firearmModelId: 0,
+    arsenalId: '',
     manufacturer: 'Glock',
     model: '19 Gen 5',
     caliber: '9mm Luger',
@@ -97,6 +109,7 @@ export default function Armory() {
   // Dynamic lists inside the modal
   const [customManufacturer, setCustomManufacturer] = useState('')
   const [customModel, setCustomModel] = useState('')
+  const [showSerial, setShowSerial] = useState(false)
   const [coverSourceType, setCoverSourceType] = useState('web')
   const [accessoriesList, setAccessoriesList] = useState([])
   const [maintenanceTasks, setMaintenanceTasks] = useState([])
@@ -118,6 +131,7 @@ export default function Armory() {
   // Ref for markdown toolbar manipulations
   const markdownTextareaRef = useRef(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   // Load backend collections
   const fetchArmoryItems = async () => {
@@ -172,10 +186,22 @@ export default function Armory() {
     }
   }
 
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/armory/products')
+      if (res.ok) {
+        setProducts(await res.json())
+      }
+    } catch (err) {
+      console.error('Failed to load products', err)
+    }
+  }
+
   useEffect(() => {
     fetchArmoryItems()
     fetchVaultLocations()
     fetchAmmoLots()
+    fetchProducts()
   }, [store.activeArsenalId])
 
   // Computed / filtered helpers
@@ -190,13 +216,13 @@ export default function Armory() {
   }, [armoryItems])
 
   const filteredArmoryItems = useMemo(() => {
-    return armoryItems.filter(gun => {
+    return armoryItems.filter(item => {
       const textMatch = !searchQuery || 
-        [gun.manufacturer, gun.model, gun.serialNumber, gun.caliber]
+        [item.manufacturer, item.model, item.serialNumber, item.caliber]
           .some(v => v && v.toLowerCase().includes(searchQuery.toLowerCase()))
       
-      const caliberMatch = !filterCaliber || gun.caliber === filterCaliber
-      const actionMatch = !filterAction || gun.actionType === filterAction
+      const caliberMatch = !filterCaliber || item.caliber === filterCaliber
+      const actionMatch = !filterAction || item.actionType === filterAction
 
       return textMatch && caliberMatch && actionMatch
     })
@@ -229,7 +255,7 @@ export default function Armory() {
       })
       if (res.ok) {
         const data = await res.json()
-        setArmoryItems(prev => prev.map(gun => gun.id === id ? { ...gun, roundCount: data.roundCount } : gun))
+        setArmoryItems(prev => prev.map(item => item.id === id ? { ...item, roundCount: data.roundCount } : item))
       }
     } catch (err) {
       console.error('Increment rounds error', err)
@@ -241,23 +267,23 @@ export default function Armory() {
     setActiveTab('general')
     setCustomManufacturer('')
     setCustomModel('')
+    setShowSerial(false)
     setCoverSourceType('web')
     setAccessoriesList([])
     setMaintenanceTasks([])
     setRangeSessions([])
-    setAttachments([
-      { id: 101, filename: "Glock_19_Gen5_Manual.pdf", category: "Owner's Manual", size: "3.4 MB", dateAdded: "2026-08-01" },
-      { id: 102, filename: "Glock_Promo_Flyer.png", category: "Other Document", size: "1.2 MB", dateAdded: "2026-08-01" }
-    ])
+    setAttachments([])
 
     setForm({
       id: 0,
-      manufacturer: 'Glock',
-      model: '19 Gen 5',
-      caliber: '9mm Luger',
-      barrelLengthInches: 4.02,
-      twistRate: '1:10',
-      actionType: 'Semi-Automatic',
+      firearmModelId: 0,
+      arsenalId: store.activeArsenalId || (store.arsenals[0]?.id || 1),
+      manufacturer: '',
+      model: '',
+      caliber: '',
+      barrelLengthInches: '',
+      twistRate: '',
+      actionType: '',
       serialNumber: '',
       notes: '',
       purchasePrice: '',
@@ -279,60 +305,86 @@ export default function Armory() {
     setShowModal(true)
   }
 
-  const openEditModal = (gun) => {
+  const openEditModal = (item) => {
     setIsEditMode(true)
     setActiveTab('general')
     setCustomManufacturer('')
     setCustomModel('')
     setCoverSourceType('web')
+    setShowSerial(false)
 
     let dateString = ''
-    if (gun.purchaseDate) {
-      dateString = gun.purchaseDate.split('T')[0]
+    if (item.purchaseDate) {
+      dateString = item.purchaseDate.split('T')[0]
     }
 
     setForm({ 
-      ...gun, 
+      ...item, 
+      firearmModelId: item.firearmModelId || 0,
+      arsenalId: item.arsenalId || store.activeArsenalId || 1,
       purchaseDateString: dateString,
-      beneficiary: gun.beneficiary || '',
-      storageLocation: gun.storageLocation || 'Main Vault',
-      notesMarkdown: gun.notesMarkdown || '',
-      opticManufacturer: gun.opticManufacturer || '',
-      opticModel: gun.opticModel || '',
-      opticReticle: gun.opticReticle || '',
-      opticSerial: gun.opticSerial || '',
-      opticBattery: gun.opticBattery || '',
-      isOpticMounted: gun.isOpticMounted || false
+      beneficiary: item.beneficiary || '',
+      storageLocation: item.storageLocation || 'Main Vault',
+      notesMarkdown: item.notesMarkdown || '',
+      opticManufacturer: item.opticManufacturer || '',
+      opticModel: item.opticModel || '',
+      opticReticle: item.opticReticle || '',
+      opticSerial: item.opticSerial || '',
+      opticBattery: item.opticBattery || '',
+      isOpticMounted: item.isOpticMounted || false
     })
 
     try {
-      setAccessoriesList(gun.accessoriesListJson ? JSON.parse(gun.accessoriesListJson) : [])
+      setAccessoriesList(item.accessoriesListJson ? JSON.parse(item.accessoriesListJson) : [])
     } catch (err) {
       setAccessoriesList([])
     }
 
     try {
-      setMaintenanceTasks(gun.maintenanceTasksJson ? JSON.parse(gun.maintenanceTasksJson) : [])
+      setMaintenanceTasks(item.maintenanceTasksJson ? JSON.parse(item.maintenanceTasksJson) : [])
     } catch (err) {
       setMaintenanceTasks([])
     }
 
     try {
-      setRangeSessions(gun.rangeHistoryJson ? JSON.parse(gun.rangeHistoryJson) : [])
+      setRangeSessions(item.rangeHistoryJson ? JSON.parse(item.rangeHistoryJson) : [])
     } catch (err) {
       setRangeSessions([])
     }
 
-    setAttachments([
-      { id: 101, filename: "Glock_19_Gen5_Manual.pdf", category: "Owner's Manual", size: "3.4 MB", dateAdded: "2026-08-01" },
-      { id: 102, filename: "Glock_Promo_Flyer.png", category: "Other Document", size: "1.2 MB", dateAdded: "2026-08-01" }
-    ])
+    setAttachments([])
 
     setShowModal(true)
   }
 
   const closeModal = () => {
     setShowModal(false)
+  }
+
+  const handleProductSelectChange = (e) => {
+    const prodId = parseInt(e.target.value) || 0
+    if (prodId > 0) {
+      const p = products.find(prod => prod.id === prodId)
+      if (p) {
+        setForm(prev => ({
+          ...prev,
+          firearmModelId: p.id,
+          manufacturer: p.manufacturer,
+          model: p.name,
+          caliber: p.caliber,
+          actionType: p.actionType
+        }))
+      }
+    } else {
+      setForm(prev => ({
+        ...prev,
+        firearmModelId: 0,
+        manufacturer: '',
+        model: '',
+        caliber: '',
+        actionType: ''
+      }))
+    }
   }
 
   // Model selection dependency helper
@@ -459,7 +511,7 @@ export default function Armory() {
         purchasePrice: form.purchasePrice ? parseFloat(form.purchasePrice) : null,
         currentValue: form.currentValue ? parseFloat(form.currentValue) : null,
         purchaseDate: form.purchaseDateString ? new Date(form.purchaseDateString).toISOString() : null,
-        arsenalId: store.activeArsenalId,
+        arsenalId: parseInt(form.arsenalId) || store.activeArsenalId,
         accessoriesListJson: JSON.stringify(accessoriesList),
         maintenanceTasksJson: JSON.stringify(maintenanceTasks),
         rangeHistoryJson: JSON.stringify(rangeSessions)
@@ -473,7 +525,52 @@ export default function Armory() {
 
       if (res.ok) {
         await fetchArmoryItems()
-        closeModal()
+        const savedItem = await res.json()
+        setIsEditMode(true)
+        
+        let dateString = ''
+        if (savedItem.purchaseDate) {
+          dateString = savedItem.purchaseDate.split('T')[0]
+        }
+        
+        setForm({ 
+          ...savedItem, 
+          purchaseDateString: dateString,
+          beneficiary: savedItem.beneficiary || '',
+          storageLocation: savedItem.storageLocation || 'Main Vault',
+          notesMarkdown: savedItem.notesMarkdown || '',
+          opticManufacturer: savedItem.opticManufacturer || '',
+          opticModel: savedItem.opticModel || '',
+          opticReticle: savedItem.opticReticle || '',
+          opticSerial: savedItem.opticSerial || '',
+          opticBattery: savedItem.opticBattery || '',
+          isOpticMounted: savedItem.isOpticMounted || false
+        })
+
+        try {
+          setAccessoriesList(savedItem.accessoriesListJson ? JSON.parse(savedItem.accessoriesListJson) : [])
+        } catch (err) {
+          setAccessoriesList([])
+        }
+
+        try {
+          setMaintenanceTasks(savedItem.maintenanceTasksJson ? JSON.parse(savedItem.maintenanceTasksJson) : [])
+        } catch (err) {
+          setMaintenanceTasks([])
+        }
+
+        try {
+          setRangeSessions(savedItem.rangeHistoryJson ? JSON.parse(savedItem.rangeHistoryJson) : [])
+        } catch (err) {
+          setRangeSessions([])
+        }
+
+        setAttachments([])
+        setCustomManufacturer('')
+        setCustomModel('')
+
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 2000)
       } else {
         const text = await res.text()
         alert(`Save failed: ${text || res.statusText}`)
@@ -486,26 +583,33 @@ export default function Armory() {
     }
   }
 
-  const handleDelete = async (id, e) => {
-    e.stopPropagation()
-    if (!window.confirm('Are you absolutely sure you want to delete this armory item from inventory? This action is permanent.')) return
-    
-    try {
-      const res = await fetch(`/api/armory/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setArmoryItems(prev => prev.filter(f => f.id !== id))
-      } else {
-        alert('Delete failed.')
-      }
-    } catch (err) {
-      console.error(err)
+    // Triggers when you click "Remove" on the card
+    const handleDeleteClick = (id, e) => {
+        e.stopPropagation()
+        setDeleteConfirmId(id) // Stores the ID of the item you want to delete and opens the modal
     }
-  }
 
-  const isHandgun = (action) => {
+    // Triggers when you click "Yes, Delete" in the confirmation modal
+    const handleDeleteConfirm = async () => {
+        if (!deleteConfirmId) return
+        try {
+            const res = await fetch(`/api/armory/${deleteConfirmId}`, { method: 'DELETE' })
+            if (res.ok) {
+                setArmoryItems(prev => prev.filter(f => f.id !== deleteConfirmId))
+            } else {
+                alert('Delete failed.')
+            }
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setDeleteConfirmId(null) // Resets state, closing the modal
+        }
+    }
+
+  const isCompactUnit = (action) => {
     if (!action) return false
     const l = action.toLowerCase()
-    return l.includes('pistol') || l.includes('revolver') || l.includes('handgun') || l.includes('semi-automatic')
+    return l.includes('pistol') || l.includes('revolver') || l.includes('sidearm') || l.includes('semi-automatic')
   }
 
   const getConditionClass = (cond) => {
@@ -571,72 +675,55 @@ export default function Armory() {
             ))}
           </select>
         </div>
-        <button onClick={openCreateModal} className="btn btn-primary">Add Armory Unit</button>
+        <button onClick={openCreateModal} className="btn btn-primary">Add Item</button>
       </section>
 
       {/* Grid Display */}
       {filteredArmoryItems.length === 0 ? (
         <div className="empty-state panel">
-          <h3>No armory units registered in this collection.</h3>
-          <p style={{ marginTop: '4px', color: 'var(--text-muted)' }}>Click Add Armory Unit above to log your first weapon.</p>
+          <h3>You have no items in your Armory.</h3>
+          <p style={{ marginTop: '4px', color: 'var(--text-muted)' }}>Click 'Add Item' above to add your first item.</p>
         </div>
       ) : (
-        <section className="firearms-grid">
-          {filteredArmoryItems.map((gun) => (
-            <div key={gun.id} className="gun-card" onClick={() => openEditModal(gun)}>
-              <div className="gun-header-img">
-                <span className="gun-action-type">{gun.actionType}</span>
-                {gun.imageUrl ? (
-                  <img src={gun.imageUrl} className="active-cover-img" alt={gun.model} />
+        <section className="items-grid">
+          {filteredArmoryItems.map((item) => (
+            <div key={item.id} className="item-card" onClick={() => openEditModal(item)}>
+              <div className="item-header-img">
+                <span className="item-action-type">{item.actionType}</span>
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} className="active-cover-img" alt={item.model} />
                 ) : (
-                  <div className="gun-silhouette">
-                    {isHandgun(gun.actionType) ? '🔫' : '🔫'}
+                  <div className="item-silhouette">
+                    {isCompactUnit(item.actionType) ? '🛡️' : '🛡️'}
                   </div>
                 )}
-                <span className={`badge gun-badge-condition ${getConditionClass(gun.condition)}`}>
-                  {gun.condition}
+                <span className={`badge item-badge-condition ${getConditionClass(item.condition)}`}>
+                  {item.condition}
                 </span>
               </div>
 
-              <div className="gun-card-body">
-                <div className="gun-title-row">
-                  <h4 className="gun-title">{gun.manufacturer} {gun.model}</h4>
-                  <span className="gun-caliber">{gun.caliber}</span>
+              <div className="item-card-body">
+                <div className="item-title-row">
+                  <h4 className="item-title">{item.manufacturer} {item.model}</h4>
+                  <span className="item-caliber">{item.caliber}</span>
                 </div>
 
-                <div className="gun-details">
+                <div className="item-details">
                   <div className="detail-row">
                     <span className="detail-label">Storage Hub</span>
-                    <span className="detail-value">{gun.storageLocation || 'Main Vault'}</span>
+                    <span className="detail-value">{item.storageLocation || 'Main Vault'}</span>
                   </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Twist Rate</span>
-                    <span className="detail-value text-mono">{gun.twistRate || '1:10'}</span>
-                  </div>
-                  {gun.purchasePrice && (
+                  {item.purchasePrice && (
                     <div className="detail-row">
                       <span className="detail-label">Valuation</span>
-                      <span className="detail-value gold-text">${formatCurrency(gun.purchasePrice)}</span>
+                      <span className="detail-value gold-text">${formatCurrency(item.purchasePrice)}</span>
                     </div>
                   )}
-                  <div className="detail-row tracker-row">
-                    <span className="detail-label">Rounds Fired</span>
-                    <div className="tracker-controls">
-                      <span className="highlight-text">{gun.roundCount}</span>
-                      <button 
-                        onClick={(e) => quickIncrementRounds(gun.id, e)} 
-                        className="btn btn-secondary btn-mini" 
-                        title="Add 50 rounds"
-                      >
-                        +50
-                      </button>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="gun-card-actions">
-                  <button onClick={(e) => { e.stopPropagation(); openEditModal(gun); }} className="btn btn-secondary btn-small">Edit Specs</button>
-                  <button onClick={(e) => handleDelete(gun.id, e)} className="btn btn-danger btn-small">Deregister</button>
+                <div className="item-card-actions">
+                          <button onClick={(e) => { e.stopPropagation(); openEditModal(item); }} className="btn btn-secondary btn-small">Edit</button>
+                          <button onClick={(e) => handleDeleteClick(item.id, e)} className="btn btn-danger btn-small">Remove</button>
                 </div>
               </div>
             </div>
@@ -647,11 +734,11 @@ export default function Armory() {
       {/* Identical Audiobookshelf tabs modal overlay */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="abs-center-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="armory-center-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-title-bar">
               <div className="title-left">
                 <span className="modal-title-icon">🔥</span>
-                <h3>{isEditMode ? 'Edit Weapon Specifications' : 'New Armory Registration'}</h3>
+                <h3>{isEditMode ? 'Edit Item' : 'Add New Item'}</h3>
               </div>
               <button className="modal-close-x-btn" onClick={closeModal}>×</button>
             </div>
@@ -674,78 +761,86 @@ export default function Armory() {
               {activeTab === 'general' && (
                 <div className="tab-pane">
                   <div className="form-grid-columns">
+                    <div className="form-item" style={{ gridColumn: 'span 2' }}>
+                      {/*<label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>*/}
+                      {/*  <span style={{ fontWeight: '600' }}>Product Selection</span>*/}
+                      {/*  {form.firearmModelId > 0 && (*/}
+                      {/*    <span style={{ color: 'var(--color-success)', fontSize: '0.85rem', fontWeight: '600' }}>*/}
+                      {/*      ✓ Linked to Catalog Entry*/}
+                      {/*    </span>*/}
+                      {/*  )}*/}
+                      {/*</label>*/}
+                      <select 
+                        value={form.firearmModelId || ''} 
+                        onChange={handleProductSelectChange}
+                        style={{ border: form.firearmModelId ? '1px solid var(--color-success)' : '1px solid var(--border-solid)' }}
+                      >
+                        <option value="">Select Product from Catalog</option>
+                        {products.map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.manufacturer} {p.name} ({p.caliber}) — {p.actionType}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     <div className="form-item">
                       <label>Manufacturer</label>
-                      <select value={form.manufacturer} onChange={handleManufacturerChange}>
-                        {manufacturerPresets.map(p => (
-                          <option key={p} value={p}>{p}</option>
-                        ))}
-                        <option value="Custom">Custom Override...</option>
-                      </select>
+                      <input 
+                        type="text" 
+                        value={form.manufacturer || ''} 
+                        readOnly={!!form.firearmModelId}
+                        disabled={!!form.firearmModelId}
+                        style={form.firearmModelId ? { opacity: 0.8, cursor: 'not-allowed', background: 'var(--bg-main)' } : {}}
+                        onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
+                        placeholder="e.g. Glock"
+                      />
                     </div>
 
                     <div className="form-item">
-                      <label>Model</label>
-                      {form.manufacturer === 'Custom' ? (
+                      <label>Model Name</label>
+                      <input 
+                        type="text" 
+                        value={form.model || ''} 
+                        readOnly={!!form.firearmModelId}
+                        disabled={!!form.firearmModelId}
+                        style={form.firearmModelId ? { opacity: 0.8, cursor: 'not-allowed', background: 'var(--bg-main)' } : {}}
+                        onChange={(e) => setForm({ ...form, model: e.target.value })}
+                        placeholder="e.g. 19 Gen 5"
+                      />
+                    </div>
+
+                    <div className="form-item">
+                      <label>Caliber</label>
+                      <input 
+                        type="text" 
+                        value={form.caliber || ''} 
+                        readOnly={!!form.firearmModelId}
+                        disabled={!!form.firearmModelId}
+                        style={form.firearmModelId ? { opacity: 0.8, cursor: 'not-allowed', background: 'var(--bg-main)' } : {}}
+                        onChange={(e) => setForm({ ...form, caliber: e.target.value })}
+                        placeholder="e.g. 9mm Luger"
+                      />
+                    </div>
+
+                    <div className="form-item">
+                      <label>Action Type</label>
+                      {form.firearmModelId ? (
                         <input 
                           type="text" 
-                          placeholder="e.g. Model 1911" 
-                          value={customModel} 
-                          onChange={(e) => setCustomModel(e.target.value)} 
+                          value={form.actionType || ''} 
+                          readOnly 
+                          disabled
+                          style={{ opacity: 0.8, cursor: 'not-allowed', background: 'var(--bg-main)' }}
                         />
                       ) : (
-                        <select 
-                          value={form.model} 
-                          onChange={(e) => setForm({ ...form, model: e.target.value })}
-                        >
-                          {(modelPresets[form.manufacturer] || []).map(m => (
-                            <option key={m} value={m}>{m}</option>
+                        <select value={form.actionType} onChange={(e) => setForm({ ...form, actionType: e.target.value })}>
+                          <option value="">-- Select Action --</option>
+                          {actionTypePresets.map(p => (
+                            <option key={p} value={p}>{p}</option>
                           ))}
-                          <option value="Custom">Custom Override...</option>
                         </select>
                       )}
-                    </div>
-
-                    {form.manufacturer === 'Custom' && (
-                      <div className="form-item">
-                        <label>Custom Manufacturer Name</label>
-                        <input 
-                          type="text" 
-                          placeholder="Brand Name" 
-                          value={customManufacturer} 
-                          onChange={(e) => setCustomManufacturer(e.target.value)} 
-                        />
-                      </div>
-                    )}
-
-                    {form.model === 'Custom' && form.manufacturer !== 'Custom' && (
-                      <div className="form-item">
-                        <label>Custom Model Name</label>
-                        <input 
-                          type="text" 
-                          placeholder="Model Name" 
-                          value={customModel} 
-                          onChange={(e) => setCustomModel(e.target.value)} 
-                        />
-                      </div>
-                    )}
-
-                    <div className="form-item">
-                      <label>Primary Caliber</label>
-                      <select value={form.caliber} onChange={(e) => setForm({ ...form, caliber: e.target.value })}>
-                        {caliberPresets.map(p => (
-                          <option key={p} value={p}>{p}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-item">
-                      <label>Action Classification</label>
-                      <select value={form.actionType} onChange={(e) => setForm({ ...form, actionType: e.target.value })}>
-                        {actionTypePresets.map(p => (
-                          <option key={p} value={p}>{p}</option>
-                        ))}
-                      </select>
                     </div>
 
                     <div className="form-item">
@@ -769,13 +864,23 @@ export default function Armory() {
                     </div>
 
                     <div className="form-item">
-                      <label>Serial Number</label>
-                      <input 
-                        type="text" 
-                        placeholder="Unique identification code" 
-                        value={form.serialNumber || ''} 
-                        onChange={(e) => setForm({ ...form, serialNumber: e.target.value })} 
-                      />
+                                          <label>Serial Number <span style={{ color: 'green' }}>(Encrypted)</span></label>
+                      <div className="passcode-input-wrapper">
+                        <input 
+                          type={showSerial ? "text" : "password"} 
+                          className="passcode-field"
+                          placeholder="Decrypted serial number..." 
+                          value={form.serialNumber || ''} 
+                          onChange={(e) => setForm({ ...form, serialNumber: e.target.value })} 
+                        />
+                        <button 
+                          type="button"
+                          className="btn btn-secondary passcode-reveal-btn"
+                          onClick={() => setShowSerial(!showSerial)}
+                        >
+                          {showSerial ? 'Hide 🔒' : 'Show 👁️'}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="form-item">
@@ -794,6 +899,19 @@ export default function Armory() {
                           <option key={loc.name} value={loc.name}>{loc.name} ({loc.securityLevel})</option>
                         ))}
                         <option value="Main Vault">Main Vault</option>
+                      </select>
+                    </div>
+
+                    <div className="form-item">
+                      <label>Arsenal Library Context</label>
+                      <select 
+                        value={form.arsenalId || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, arsenalId: e.target.value }))}
+                        required
+                      >
+                        {store.arsenals.map(ars => (
+                          <option key={ars.id} value={ars.id}>{ars.name}</option>
+                        ))}
                       </select>
                     </div>
 
@@ -947,7 +1065,7 @@ export default function Armory() {
                 <div className="tab-pane">
                   <div className="tab-intro">
                     <h4>Document Attachments</h4>
-                    <p>Store manuals, purchase receipts, or PDF target groups connected to this firearm.</p>
+                    <p>Store manuals, purchase receipts, or PDF target groups connected to this item.</p>
                   </div>
 
                   <div className="uploads-panel">
@@ -1309,13 +1427,27 @@ export default function Armory() {
             {/* Modal Footer Controls */}
             <div className="modal-footer-row-container">
               <button className="btn btn-secondary" onClick={closeModal} disabled={isSaving}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? 'Saving specifications...' : 'Save Unit Details'}
+              <button className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`} onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Saving...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Update' : 'Add Item'}
               </button>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  )
+          )}
+            {deleteConfirmId && (
+                <div className="modal-overlay">
+                    <div className="modal-content confirmation-modal" style={{ maxWidth: '400px' }}>
+                        <h3 style={{ marginBottom: '12px' }}>Are you sure?</h3>
+                        <p style={{ marginBottom: '20px', color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                            This action will permanently delete this item from your armory. This cannot be undone.
+                        </p>
+                        <div className="modal-footer-row-container" style={{ marginTop: '0', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-secondary" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
+                            <button className="btn btn-danger" onClick={handleDeleteConfirm}>Yes, Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
 }

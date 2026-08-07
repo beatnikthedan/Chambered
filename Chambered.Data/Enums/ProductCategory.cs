@@ -1,9 +1,9 @@
 ﻿namespace Chambered.Data.Enums
 {
     /// <summary>
-    /// Specifies the primary functional classification of a firearm model line.
+    /// Specifies the primary functional classification of a product.
     /// </summary>
-    public enum FirearmCategory
+    public enum ProductCategory
     {
         Handgun = 0,
         Rifle = 1,

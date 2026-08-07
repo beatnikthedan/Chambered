@@ -1,4 +1,4 @@
-﻿using Chambered.Data.Models;
+using Chambered.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -28,6 +28,12 @@ namespace Chambered.Data.Configuration
             builder.Property(a => a.ColorHex)
                 .HasMaxLength(9);
 
+            builder.HasData(new Arsenal
+            {
+                Id = 1,
+                Name = "Primary Arsenal",
+                Description = "Default system owner arsenal"
+            });
         }
     }
 }

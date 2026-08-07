@@ -1,4 +1,5 @@
 using Chambered.Data;
+using Chambered.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -38,7 +39,11 @@ namespace Chambered.Api.Controllers
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (!string.IsNullOrEmpty(userId))
             {
-                arsenal.OwnerId = userId;
+                var user = await _db.Users.FindAsync(userId);
+                if (user != null)
+                {
+                    arsenal.Users.Add(user);
+                }
             }
 
             _db.Arsenals.Add(arsenal);

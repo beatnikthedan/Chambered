@@ -67,7 +67,7 @@
         /// <summary>
         /// Gets or sets the catalog of firearm models produced by this manufacturer.
         /// </summary>
-        public ICollection<FirearmModel> Models { get; set; } = new List<FirearmModel>();
+        public ICollection<Product> Models { get; set; } = new List<Product>();
 
         #endregion
     }

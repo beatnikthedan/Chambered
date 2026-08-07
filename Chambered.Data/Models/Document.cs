@@ -5,7 +5,7 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents an offline binary document or file attachment associated with a firearm model or item.
     /// </summary>
-    public class FirearmDocument
+    public class Document
     {
         #region Primary Identification
 
@@ -60,7 +60,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the navigation property for the associated firearm model.
         /// </summary>
-        public FirearmModel? FirearmModel { get; set; }
+        public Product? FirearmModel { get; set; }
 
         #endregion
     }

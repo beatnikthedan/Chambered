@@ -1,5 +1,6 @@
 using Chambered.Data;
 using Chambered.Data.Models;
+using Chambered.Data.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -17,9 +18,14 @@ namespace Chambered.Data
         }
 
         public DbSet<ArmoryItem> ArmoryItems { get; set; }
-        public DbSet<Vault> Vaults { get; set; }
-        public DbSet<Vault> VaultCategories { get; set; }
         public DbSet<Arsenal> Arsenals { get; set; }
+        public DbSet<Caliber> Calibers { get; set; }
+        public DbSet<Document> Documents { get; set; }
+        public DbSet<Manufacturer> Manufacturers { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<Vault> Vaults { get; set; }
+        public DbSet<VaultCategory> VaultCategories { get; set; }
+        
 
 
 
@@ -27,7 +33,7 @@ namespace Chambered.Data
         public DbSet<Projectile> Projectiles { get; set; }
         public DbSet<Cartridge> Cartridges { get; set; }
         public DbSet<FactoryAmmo> FactoryAmmo { get; set; }
-        public DbSet<Manufacturer> Manufacturers { get; set; }
+        
         public DbSet<ExternalSourceMap> ExternalSourceMaps { get; set; }
         public DbSet<Powder> Powders { get; set; }
         
@@ -46,6 +52,11 @@ namespace Chambered.Data
             // Apply your own entity configurations
             builder.ApplyConfigurationsFromAssembly(typeof(ChamberedDbContext).Assembly);
         }
+
+        //protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        //{
+        //    configurationBuilder.Properties<LockType>().HaveConversion<int>();
+        //}
     }
 
     public class Projectile
@@ -279,22 +290,6 @@ namespace Chambered.Data
 
             builder.Property(f => f.Notes)
                 .HasMaxLength(500);
-        }
-    }
-
-    public class ManufacturerConfiguration : IEntityTypeConfiguration<Manufacturer>
-    {
-        public void Configure(EntityTypeBuilder<Manufacturer> builder)
-        {
-            builder.Property(m => m.Name)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            builder.Property(m => m.Country)
-                .HasMaxLength(50);
-
-            builder.Property(m => m.Website)
-                .HasMaxLength(200);
         }
     }
 

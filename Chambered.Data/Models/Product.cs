@@ -5,12 +5,12 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents a specific product line or catalog entry offered by a manufacturer.
     /// </summary>
-    public class FirearmModel
+    public class Product
     {
         #region Primary Identification
 
         /// <summary>
-        /// Gets or sets the unique primary key for the firearm model.
+        /// Gets or sets the unique primary key for the model.
         /// </summary>
         public int Id { get; set; }
 
@@ -27,7 +27,12 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the primary functional category assigned to this model.
         /// </summary>
-        public FirearmCategory Category { get; set; }
+        public ProductCategory Category { get; set; }
+
+        /// <summary>
+        /// Gets or sets the mechanical operating action type for this model line.
+        /// </summary>
+        public ActionType ActionType { get; set; }
 
         /// <summary>
         /// Gets or sets the foreign key for the manufacturer.
@@ -84,7 +89,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the collection of embedded offline reference documents (manuals, diagrams, etc.).
         /// </summary>
-        public ICollection<FirearmDocument> Documents { get; set; } = new List<FirearmDocument>();
+        public ICollection<Document> Documents { get; set; } = new List<Document>();
 
         /// <summary>
         /// Gets or sets individual inventory items belonging to this model line.

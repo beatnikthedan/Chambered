@@ -1,4 +1,4 @@
-﻿namespace Chambered.Data.Models
+namespace Chambered.Data.Models
 {
     /// <summary>
     /// Represents a secure container, room, vehicle, or physical location where armory items or ammunition are stored.
@@ -66,9 +66,9 @@
         #region Access Controls & Security
 
         /// <summary>
-        /// Gets or sets the primary lock type (e.g., "Electronic Keypad", "Mechanical Dial", "Biometric", "Key Lock").
+        /// Gets or sets the primary lock type (e.g., Electronic Keypad, Mechanical Dial, Biometric, Key Lock).
         /// </summary>
-        public string LockType { get; set; } = string.Empty;
+        public Enums.LockType LockType { get; set; }
 
         /// <summary>
         /// Gets or sets the AES-encrypted combination or passcode string.
@@ -119,19 +119,19 @@
         #region Navigation Properties
 
         /// <summary>
-        /// Gets or sets the firearms currently stored in this vault.
+        /// Gets or sets the items currently stored in this vault.
         /// </summary>
-        public ICollection<ArmoryItem> Firearms { get; set; } = new List<ArmoryItem>();
+        public ICollection<ArmoryItem> ArmoryItem { get; set; } = new List<ArmoryItem>();
 
         /// <summary>
         /// Gets or sets the ammunition inventory stored in this vault.
         /// </summary>
-        public ICollection<AmmunitionInventory> Ammunition { get; set; } = new List<AmmunitionInventory>();
+        // public ICollection<AmmunitionInventory> Ammunition { get; set; } = new List<AmmunitionInventory>();
 
         /// <summary>
         /// Gets or sets the standalone accessories stored in this vault.
         /// </summary>
-        public ICollection<Accessory> Accessories { get; set; } = new List<Accessory>();
+        // public ICollection<Accessory> Accessories { get; set; } = new List<Accessory>();
 
         #endregion
     }

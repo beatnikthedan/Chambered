@@ -6,61 +6,62 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Chambered.Data.Configuration
 {
     /// <summary>
-    /// Entity Framework Core Fluent API configuration for the <see cref="FirearmModel"/> entity.
+    /// Entity Framework Core Fluent API configuration for the <see cref="Product"/> entity.
     /// </summary>
-    public class FirearmModelConfiguration : IEntityTypeConfiguration<FirearmModel>
+    public class ProductConfiguration : IEntityTypeConfiguration<Product>
     {
-        public void Configure(EntityTypeBuilder<FirearmModel> builder)
+        public void Configure(EntityTypeBuilder<Product> builder)
         {
-            builder.ToTable("FirearmModels");
+            builder.ToTable("Products");
 
-            builder.HasKey(fm => fm.Id);
+            builder.HasKey(p => p.Id);
 
-            builder.Property(fm => fm.Name)
+            builder.Property(p => p.Name)
                 .IsRequired()
                 .HasMaxLength(100);
 
-            builder.Property(fm => fm.Sku)
+            builder.Property(p => p.Sku)
                 .HasMaxLength(50);
 
-            builder.Property(fm => fm.Category)
+            builder.Property(p => p.Category)
                 .IsRequired()
                 .HasConversion<int>();
 
-            builder.Property(fm => fm.WebPageUrl)
+            builder.Property(p => p.ActionType)
+                .IsRequired()
+                .HasConversion<int>();
+
+            builder.Property(p => p.WebPageUrl)
                 .HasMaxLength(2048);
 
-            builder.Property(fm => fm.ImageContentType)
+            builder.Property(p => p.ImageContentType)
                 .HasMaxLength(100);
 
-            builder.Property(fm => fm.ReferenceNotes)
+            builder.Property(p => p.ReferenceNotes)
                 .HasMaxLength(2000);
 
-            builder.HasOne(fm => fm.Caliber)
-                .WithMany(c => c.Models)
-                .HasForeignKey(fm => fm.CaliberId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             builder.HasData(
-                new FirearmModel
+                new Product
                 {
                     Id = 1,
                     ManufacturerId = 2,
                     CaliberId = 11,
                     Name = "10/22 Carbine",
                     Sku = "1103",
-                    Category = FirearmCategory.Rimfire,
+                    Category = ProductCategory.Rimfire,
+                    ActionType = ActionType.SemiAutomatic,
                     WebPageUrl = "https://ruger.com/products/1022Carbine/models.html",
                     ReferenceNotes = "Compatible with all standard BX series magazines."
                 },
-                new FirearmModel
+                new Product
                 {
                     Id = 2,
                     ManufacturerId = 1,
                     CaliberId = 1,
                     Name = "19 Gen 5",
                     Sku = "PA1950203",
-                    Category = FirearmCategory.Handgun,
+                    Category = ProductCategory.Handgun,
+                    ActionType = ActionType.SemiAutomatic,
                     WebPageUrl = "https://us.glock.com/en/pistols/g19-gen5"
                 }
             );

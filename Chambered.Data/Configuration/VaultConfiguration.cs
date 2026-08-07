@@ -1,5 +1,6 @@
-﻿using Chambered.Data.Models;
+using Chambered.Data.Models;
 using Chambered.Data.Utility;
+using Chambered.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -24,8 +25,7 @@ namespace Chambered.Data.Configuration
                 .HasMaxLength(500);
 
             builder.Property(v => v.LockType)
-                .IsRequired()
-                .HasMaxLength(50);
+                .IsRequired();
 
             builder.Property(v => v.EncryptedPasscode)
                 .HasConversion<SymmetricEncryptionConverter>()
@@ -48,6 +48,17 @@ namespace Chambered.Data.Configuration
                 .WithMany(v => v.ChildVaults)
                 .HasForeignKey(v => v.ParentVaultId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasData(new Vault
+            {
+                Id = 1,
+                Name = "Main Vault",
+                Description = "Secure storage vault",
+                ArsenalId = 1,
+                VaultCategoryId = 1,
+                LockType = LockType.ElectronicKeypad,
+                HasDehumidifier = false
+            });
         }
     }
 }

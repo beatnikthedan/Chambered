@@ -17,6 +17,7 @@ export default function Munitions() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState('')
@@ -209,7 +210,24 @@ export default function Munitions() {
 
       if (res.ok) {
         await fetchMunitions()
-        closeModal()
+        const savedLot = await res.json()
+        setIsEditMode(true)
+        
+        const d = new Date(savedLot.dateLoaded)
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+        setFormDateFormatted(d.toISOString().slice(0, 16))
+        
+        setForm({ 
+          ...savedLot,
+          projectileId: savedLot.projectileId || null,
+          powderId: savedLot.powderId || null,
+          powderChargeGrains: savedLot.powderChargeGrains || '',
+          cartridgeOverallLength: savedLot.cartridgeOverallLength || '',
+          factoryAmmoId: savedLot.factoryAmmoId || null
+        })
+
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 2000)
       } else {
         alert('Save inventory lot failed.')
       }
@@ -589,8 +607,8 @@ export default function Munitions() {
               {/* Modal action buttons */}
               <div className="modal-footer-row-container">
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSaving}>
-                  {isSaving ? 'Saving specifications...' : isEditMode ? 'Save Changes' : 'Log Lot'}
+                <button type="submit" className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`} disabled={isSaving}>
+                  {isSaving ? 'Saving specifications...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Save Changes' : 'Log Lot'}
                 </button>
               </div>
             </form>
