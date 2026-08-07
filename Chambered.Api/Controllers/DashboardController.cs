@@ -1,4 +1,5 @@
 using Chambered.Data;
+using Chambered.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +62,7 @@ namespace Chambered.Api.Controllers
             // 6. Action type breakdown for Armory Items (Count per action type)
             var armoryActionsRaw = await _db.ArmoryItems
                 .Where(f => f.ArsenalId == arsenalId)
-                .GroupBy(f => f.Product.ActionType)
+                .GroupBy(f => (f.Product as PewPew).ActionType)
                 .Select(g => new
                 {
                     ActionTypeEnum = g.Key,
@@ -112,8 +113,9 @@ namespace Chambered.Api.Controllers
             });
         }
 
-        private string FormatActionType(Chambered.Data.Enums.ActionType action)
+        private string FormatActionType(Chambered.Data.Enums.ActionType? action)
         {
+            if (action == null) return "N/A";
             return action switch
             {
                 Chambered.Data.Enums.ActionType.SemiAutomatic => "Semi-Automatic",

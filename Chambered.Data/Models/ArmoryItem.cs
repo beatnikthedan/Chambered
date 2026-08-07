@@ -115,9 +115,26 @@ namespace Chambered.Data.Models
         #region Location & Ownership Context
 
         /// <summary>
+        /// Gets or sets the optional foreign key for the designated estate beneficiary for legal and legacy tracking.
+        /// </summary>
+        public string? OwnerId { get; set; }
+
+
+        /// <summary>
         /// Gets or sets the designated estate beneficiary for legal and legacy tracking.
         /// </summary>
-        public string? Beneficiary { get; set; }
+        public ChamberedUser? Owner { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional foreign key for the designated estate beneficiary for legal and legacy tracking.
+        /// </summary>
+        public string? BeneficiaryId { get; set; }
+
+
+        /// <summary>
+        /// Gets or sets the designated estate beneficiary for legal and legacy tracking.
+        /// </summary>
+        public ChamberedUser? Beneficiary { get; set; }
 
         /// <summary>
         /// Gets or sets the optional foreign key for the physical vault container housing this item.

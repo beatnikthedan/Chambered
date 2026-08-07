@@ -1,0 +1,366 @@
+/* Catalog View Layout Styling */
+
+.catalog-view {
+  padding: 10px 4px;
+}
+
+.view-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-filters {
+  display: flex;
+  gap: 12px;
+  flex-grow: 1;
+  max-width: 600px;
+}
+
+.search-input {
+  flex-grow: 1;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: var(--transition-fast);
+}
+
+.search-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(240, 98, 146, 0.15);
+}
+
+.type-filter-select {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+
+.type-filter-select:focus {
+  border-color: var(--color-primary);
+}
+
+.add-btn {
+  background-color: var(--color-primary);
+  color: #white;
+  color: var(--text-on-primary, #ffffff);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.add-btn:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+/* Products Cards Grid is now styled globally in style.css */
+
+.card-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.card-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.manufacturer-tag {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.model-header {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+}
+
+.sku-part-info {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.attributes-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* Specifications Preview inside Card */
+.specifications-preview {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 12px;
+}
+
+.specifications-preview h4 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin: 0 0 6px 0;
+  letter-spacing: 0.5px;
+}
+
+.specs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spec-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.spec-key {
+  color: var(--text-muted);
+}
+
+.spec-val {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.more-specs-tag {
+  font-size: 11px;
+  color: var(--color-primary);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Card footers are styled globally in style.css to maintain left-alignment with other cards */
+
+/* Form item labels styling matching premium standards */
+.form-item label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+/* Checkbox Toggle / Custom checkmark container */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 28px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0;
+  height: 18px;
+  width: 18px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-solid);
+  border-radius: 4px;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+  border-color: var(--color-primary);
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid var(--bg-main);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Dynamic Specifications Editor Grid styling */
+.specifications-editor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.spec-info-card {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+
+.spec-info-card h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.spec-info-card p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.specs-editor-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.specs-headers {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px;
+  gap: 12px;
+  padding: 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.spec-editor-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px;
+  gap: 12px;
+  align-items: center;
+}
+
+.spec-editor-row input {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.spec-editor-row input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.remove-spec-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 82, 82, 0.3);
+  color: #ff5252;
+  border-radius: var(--radius-md);
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.remove-spec-btn:hover {
+  background-color: rgba(255, 82, 82, 0.1);
+}
+
+.add-spec-btn {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: var(--transition-fast);
+}
+
+.add-spec-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-primary);
+  color: var(--text-primary);
+}
+
+.no-specs-text {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 16px;
+}
+
+/* States & Notifications */
+.loading-state, .empty-state {
+  text-align: center;
+  padding: 48px;
+  font-size: 15px;
+  color: var(--text-secondary);
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-color);
+}
+
+.save-success-indicator {
+  color: #4caf50;
+  font-weight: 600;
+  font-size: 13px;
+  margin-right: auto;
+}

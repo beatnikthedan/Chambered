@@ -11,6 +11,7 @@ import Settings from './views/Settings'
 import Login from './views/Login'
 import PlaceholderView from './views/PlaceholderView'
 import Vaults from './views/Vaults'
+import Catalog from './views/Catalog'
 
 // Route guarding components
 function ProtectedRoute({ children }) {
@@ -79,6 +80,8 @@ export default function App() {
         return 'Chambered Armory'
       case '/munitions':
         return 'Chambered Munitions'
+      case '/catalog':
+        return 'Product Catalog'
       case '/settings':
         return 'System Settings'
       default:
@@ -296,6 +299,18 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            {/* Catalog Section */}
+            <hr className="sidebar-divider" />
+            <div className="nav-group">
+              <Link 
+                to="/catalog" 
+                className={`nav-item ${location.pathname.startsWith('/catalog') ? 'active' : ''}`} 
+                title="Catalog"
+              >
+                <span className="nav-text">{!isSidebarCollapsed ? 'Catalog' : ''}</span>
+              </Link>
+            </div>
           </nav>
 
           {/* Sidebar Footer */}
@@ -415,6 +430,7 @@ export default function App() {
               
               {/* Vaults routes */}
               <Route path="/vaults/locations" element={<ProtectedRoute><Vaults /></ProtectedRoute>} />
+              <Route path="/catalog" element={<ProtectedRoute><Catalog /></ProtectedRoute>} />
 
               {/* Guest Route */}
               <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />

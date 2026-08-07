@@ -38,11 +38,6 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
-                    .ThenInclude(ai => ai.Product)
-                        .ThenInclude(p => p.Manufacturer)
-                .Include(v => v.ArmoryItem)
-                    .ThenInclude(ai => ai.Product)
-                        .ThenInclude(p => p.Caliber)
                 .Where(v => v.ArsenalId == arsenalId)
                 .ToListAsync();
 
@@ -67,11 +62,6 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
-                    .ThenInclude(ai => ai.Product)
-                        .ThenInclude(p => p.Manufacturer)
-                .Include(v => v.ArmoryItem)
-                    .ThenInclude(ai => ai.Product)
-                        .ThenInclude(p => p.Caliber)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (vault == null)
@@ -137,11 +127,6 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
-                    .ThenInclude(ai => ai.Product)
-                        .ThenInclude(p => p.Manufacturer)
-                .Include(v => v.ArmoryItem)
-                    .ThenInclude(ai => ai.Product)
-                        .ThenInclude(p => p.Caliber)
                 .FirstAsync(v => v.Id == vault.Id);
 
             return CreatedAtAction(nameof(GetById), new { id = vault.Id }, MapToDto(created));
@@ -180,11 +165,6 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
-                    .ThenInclude(ai => ai.Product)
-                        .ThenInclude(p => p.Manufacturer)
-                .Include(v => v.ArmoryItem)
-                    .ThenInclude(ai => ai.Product)
-                        .ThenInclude(p => p.Caliber)
                 .FirstAsync(v => v.Id == vault.Id);
 
             return Ok(MapToDto(updated));
@@ -262,9 +242,6 @@ namespace Chambered.Api.Controllers
                 StoredItems = v.ArmoryItem?.Select(ai => new VaultInventoryItemDto
                 {
                     Id = ai.Id,
-                    Manufacturer = ai.Product?.Manufacturer?.Name ?? "",
-                    Model = ai.Product?.Model ?? "",
-                    Caliber = ai.Product?.Caliber?.Name ?? "",
                     SerialNumber = ai.SerialNumber
                 }).ToList() ?? new List<VaultInventoryItemDto>()
             };
@@ -304,9 +281,6 @@ namespace Chambered.Api.Controllers
     public class VaultInventoryItemDto
     {
         public int Id { get; set; }
-        public string Manufacturer { get; set; } = string.Empty;
-        public string Model { get; set; } = string.Empty;
-        public string Caliber { get; set; } = string.Empty;
         public string SerialNumber { get; set; } = string.Empty;
     }
 }

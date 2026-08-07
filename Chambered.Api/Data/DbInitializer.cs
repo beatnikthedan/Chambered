@@ -18,6 +18,8 @@ namespace Chambered.Api.Data
             // Ensure database is created (this triggers EF Core Fluent API .HasData() configurations!)
             await context.Database.EnsureCreatedAsync();
 
+
+
             // 1. Seed Roles
             string adminRole = "Admin";
             string userRole = "User";
@@ -42,6 +44,37 @@ namespace Chambered.Api.Data
                     JwksUrl = "",
                     AutoCreateUser = true
                 });
+                await context.SaveChangesAsync();
+            }
+
+            // 3. Seed default Products (PewPews) programmatically if none exist
+            if (!await context.Products.AnyAsync())
+            {
+                context.Products.Add(new PewPew
+                {
+                    ManufacturerId = 2,
+                    CaliberId = 11,
+                    Model = "10/22 Carbine",
+                    PartNumber = "1103",
+                    Sku = "1103",
+                    PewPewCategory = Chambered.Data.Enums.PewPewCategory.Rimfire,
+                    ActionType = Chambered.Data.Enums.ActionType.SemiAutomatic,
+                    WebPageUrl = "https://ruger.com/products/1022Carbine/models.html",
+                    ReferenceNotes = "Compatible with all standard BX series magazines."
+                });
+
+                context.Products.Add(new PewPew
+                {
+                    ManufacturerId = 1,
+                    CaliberId = 1,
+                    Model = "19 Gen 5",
+                    PartNumber = "PA1950203",
+                    Sku = "PA1950203",
+                    PewPewCategory = Chambered.Data.Enums.PewPewCategory.Handgun,
+                    ActionType = Chambered.Data.Enums.ActionType.SemiAutomatic,
+                    WebPageUrl = "https://us.glock.com/en/pistols/g19-gen5"
+                });
+
                 await context.SaveChangesAsync();
             }
         }

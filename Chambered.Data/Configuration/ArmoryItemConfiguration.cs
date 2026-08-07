@@ -53,11 +53,23 @@ namespace Chambered.Data.Configuration
                 .IsRequired()
                 .HasDefaultValue(0);
 
-            builder.Property(a => a.Beneficiary)
-                .HasMaxLength(150);
+            builder.HasOne(a => a.Owner)
+                .WithMany(u => u.OwnedItems)
+                .HasForeignKey(a => a.OwnerId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(a => a.Beneficiary)
+                .WithMany(u => u.BenificiaryItems)
+                .HasForeignKey(a => a.BeneficiaryId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder.Property(a => a.ImageUrl)
                 .HasMaxLength(2048);
+
+            builder.HasOne(a => a.ParentItem)
+                .WithMany(a => a.MountedAccessories)
+                .HasForeignKey(a => a.ParentItemId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

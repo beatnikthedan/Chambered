@@ -37,28 +37,7 @@
   color: var(--text-secondary);
 }
 
-.items-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-}
-
-.item-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transition: var(--transition-normal);
-  display: flex;
-  flex-direction: column;
-}
-
-.item-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--border-glow);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(204, 164, 59, 0.05);
-}
+/* items-grid and item-card are now styled globally in style.css */
 
 .item-header-img {
   height: 140px;
@@ -102,13 +81,7 @@
   right: 12px;
 }
 
-.item-card-body {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex-grow: 1;
-}
+/* item-card-body is now styled globally in style.css */
 
 .item-title-row {
   display: flex;
@@ -964,6 +937,241 @@
   border: solid var(--bg-main);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+}
+
+/* VIEW MODE SEGMENTED TOGGLE */
+.view-mode-toggle {
+  display: flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.view-mode-toggle .toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-mode-toggle .toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.view-mode-toggle .toggle-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+/* TREEVIEW HIERARCHY STYLING */
+.treeview-panel {
+  padding: 30px;
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.treeview-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.tree-node-wrapper {
+  position: relative;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  z-index: 2;
+}
+
+.tree-node:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-primary);
+  transform: translateX(3px);
+  box-shadow: var(--shadow-sm);
+}
+
+.tree-node-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(147, 51, 234, 0.1); /* fallback safe purple */
+  border-radius: 50%;
+}
+
+.tree-node-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.tree-node-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tree-node-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.tree-node-location {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-primary);
+  background: rgba(147, 51, 234, 0.08);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* Connectors lines for hierarchical structure */
+.tree-node-children {
+  margin-top: 8px;
+  position: relative;
+  padding-left: 20px;
+}
+
+.tree-node-children::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 10px;
+  bottom: 22px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tree-node-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 22px;
+  left: -10px;
+  width: 14px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ACCESSORIES TAB PANEL */
+.accessories-tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mounted-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  min-height: 80px;
+}
+
+.mounted-accessory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.mounted-accessory-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.acc-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.acc-icon {
+  font-size: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.acc-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.acc-name {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.acc-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.no-attachments-msg {
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+  font-size: 13px;
+  margin: 12px 0;
+}
+
+.accessories-actions-grid .action-card {
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.015);
+  border-radius: var(--radius-md);
+}
+
+.accessories-actions-grid .card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.accessories-actions-grid .card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 12px;
 }
 
 

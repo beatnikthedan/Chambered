@@ -6,19 +6,12 @@ export default function Vaults() {
     const store = useStore()
     const { enums } = store
 
+    // Memoized dynamic lock types strictly loaded from the database
     const lockTypePresets = useMemo(() => {
         if (enums && enums.lockTypes) {
             return enums.lockTypes.map(e => e.label);
         }
-        return [
-            "Electronic Keypad",
-            "Mechanical Dial",
-            "Biometric Scanner",
-            "Dual Key System",
-            "Physical Key Lock",
-            "RFID Transponder",
-            "None / Cabinet"
-        ];
+        return [];
     }, [enums]);
 
     const [vaults, setVaults] = useState([])
@@ -403,12 +396,6 @@ export default function Vaults() {
 
                                             <div className="vault-card-actions">
                                                 <button
-                                                    className="btn btn-secondary btn-small"
-                                                    onClick={(e) => { e.stopPropagation(); openEditModal(vault); }}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
                                                     className="btn btn-danger btn-small"
                                                     onClick={(e) => handleDeleteClick(vault.id, e)}
                                                 >
@@ -558,7 +545,7 @@ export default function Vaults() {
                                         </div>
 
                                         <div className="form-item">
-                                            <label>Combination/Passcode<span style={{ color: 'green' }}>(Encrypted)</span></label>
+                                            <label>Combination/Passcode <span style={{ color: 'green' }}>(256-AES Encryption)</span></label>
                                             <div className="passcode-input-wrapper">
                                                 <input
                                                     type={showPassword ? "text" : "password"}
@@ -656,16 +643,12 @@ export default function Vaults() {
                                         {form.storedItems && form.storedItems.length > 0 ? (
                                             <div className="inventory-grid-table">
                                                 <div className="table-header-row">
-                                                    <span>Manufacturer</span>
-                                                    <span>Model</span>
-                                                    <span>Caliber</span>
+                                                    <span>Item ID</span>
                                                     <span>Serial Number</span>
                                                 </div>
                                                 {form.storedItems.map((item) => (
                                                     <div key={item.id} className="table-body-row">
-                                                        <strong>{item.manufacturer}</strong>
-                                                        <span>{item.model}</span>
-                                                        <span className="badge badge-caliber">{item.caliber}</span>
+                                                        <strong>Armory Item #{item.id}</strong>
                                                         <span className="serial-mono font-mono">{item.serialNumber || 'N/A'}</span>
                                                     </div>
                                                 ))}

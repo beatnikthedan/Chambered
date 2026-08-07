@@ -2,74 +2,23 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../StoreContext'
 import './Armory.css'
 
-// Preset lists matching original Vue code
-const manufacturerPresets = [
-    "Glock", "Ruger", "Smith & Wesson", "Sig Sauer", "Springfield Armory",
-    "Colt", "Winchester", "Remington", "Beretta", "Taurus", "CZ",
-    "Browning", "Savage Arms", "Walther", "Henry Repeating Arms"
-]
-
-const modelPresets = {
-    "Glock": ["19 Gen 5", "17 Gen 5", "43X", "34 Gen 5", "20 Gen 5"],
-    "Ruger": ["10/22", "Mark IV", "LCP MAX", "American Rifle", "GP100"],
-    "Smith & Wesson": ["M&P 9 Shield Plus", "Model 686", "M&P 15-22", "Model 29"],
-    "Sig Sauer": ["P320", "P365", "M17", "P226", "MCX Virtus"],
-    "Springfield Armory": ["Hellcat", "Echelon", "M1A", "110 Mil-Spec"],
-    "Colt": ["Python", "M4 Carbine", "1911 Gold Cup", "Anaconda"],
-    "Winchester": ["Model 1894", "Model 70", "SXP Defender"],
-    "Remington": ["Model 870", "Model 700"],
-    "Beretta": ["M9A4", "92FS", "A300 Patrol", "APX A1"],
-    "Taurus": ["G3c", "Judge", "TX22", "Model 856"],
-    "CZ": ["P-10 C", "75 B", "Shadow 2", "457 Training"],
-    "Browning": ["BAR", "Citori", "Buck Mark"],
-    "Savage Arms": ["Model 110", "A22"],
-    "Walther": ["PDP", "PPQ", "PPK"],
-    "Henry Repeating Arms": ["Golden Boy", "Big Boy Brass"],
-    "Custom": ["Other Model..."]
-}
-
-const caliberPresets = [
-    "9mm Luger", ".22 LR", ".45 ACP", ".357 Magnum", ".38 Special",
-    ".223 Remington", "5.56x45mm NATO", ".308 Winchester", "7.62x39mm",
-    "12 Gauge", "20 Gauge", "6.5 Creedmoor", "300 AAC Blackout", "10mm Auto"
-]
-
-const actionTypePresets = [
-    "Semi-Automatic", "Bolt Action", "Lever Action", "Revolver", "Break Action", "Pump Action", "Single Shot"
-]
-
-const conditionPresets = [
-    "New / Unfired (100%)",
-    "Excellent (98%)",
-    "Very Good (95%)",
-    "Good (90%)",
-    "Fair (80%)",
-    "Serviceable (70%)",
-    "Poor (60%)",
-    "Salvage (50%)"
-]
-
-const attachmentCategoryPresets = [
-    "Owner's Manual", "Purchase Receipt", "Target Sheet", "Warranty Certificate", "Schematic Diagram", "Other Document"
-]
-
 export default function Armory() {
     const store = useStore()
     const { enums } = store
 
-    // Memoized dynamic enums falling back to presets
+    // Memoized dynamic enums strictly loaded from the database
     const actionTypes = useMemo(() => {
         if (enums && enums.actionTypes) {
             return enums.actionTypes.map(e => e.label);
         }
-        return actionTypePresets;
+        return [];
     }, [enums]);
 
     const conditions = useMemo(() => {
         if (enums && enums.itemConditions) {
             return enums.itemConditions.map(e => e.label);
         }
-        return conditionPresets;
+        return [];
     }, [enums]);
 
     // State lists
@@ -77,6 +26,7 @@ export default function Armory() {
     const [vaultLocations, setVaultLocations] = useState([])
     const [ammoLots, setAmmoLots] = useState([])
     const [products, setProducts] = useState([])
+    const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -95,24 +45,25 @@ export default function Armory() {
     // Form State
     const [form, setForm] = useState({
         id: 0,
-        firearmModelId: 0,
+        pewpewModelId: 0,
         arsenalId: '',
-        manufacturer: 'Glock',
-        model: '19 Gen 5',
-        caliber: '9mm Luger',
-        barrelLengthInches: 4.02,
-        twistRate: '1:10',
-        actionType: 'Semi-Automatic',
+        manufacturer: '',
+        model: '',
+        caliber: '',
+        barrelLengthInches: '',
+        twistRate: '',
+        actionType: '',
         serialNumber: '',
         notes: '',
         purchasePrice: '',
         purchaseDateString: '',
         currentValue: '',
-        condition: 'Good (90%)',
+        condition: '',
         imageUrl: '',
         roundCount: 0,
         beneficiary: '',
-        storageLocation: 'Main Vault',
+        beneficiaryId: '',
+        storageLocation: '',
         notesMarkdown: '',
         opticManufacturer: '',
         opticModel: '',
@@ -171,6 +122,18 @@ export default function Armory() {
         }
     }
 
+    const fetchUsers = async () => {
+        try {
+            const res = await fetch('/api/settings/users')
+            if (res.ok) {
+                const data = await res.json()
+                setUsers(data)
+            }
+        } catch (err) {
+            console.error('Failed to fetch users', err)
+        }
+    }
+
     const fetchVaultLocations = async () => {
         try {
             const url = store.activeArsenalId
@@ -204,7 +167,7 @@ export default function Armory() {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('/api/armory/products')
+            const res = await fetch('/api/products?type=PewPew')
             if (res.ok) {
                 setProducts(await res.json())
             }
@@ -213,11 +176,13 @@ export default function Armory() {
         }
     }
 
+
     useEffect(() => {
         fetchArmoryItems()
         fetchVaultLocations()
         fetchAmmoLots()
         fetchProducts()
+        fetchUsers()
     }, [store.activeArsenalId])
 
     // Computed / filtered helpers
@@ -246,7 +211,10 @@ export default function Armory() {
 
     const filteredAmmoLots = useMemo(() => {
         if (!form.caliber) return []
-        return ammoLots.filter(lot => lot.caliber.toLowerCase() === form.caliber.toLowerCase())
+        return ammoLots.filter(lot => {
+            const lotCaliber = lot.caliber || lot.cartridge?.name || "";
+            return lotCaliber.toLowerCase() === form.caliber.toLowerCase();
+        })
     }, [ammoLots, form.caliber])
 
     const filteredTasks = useMemo(() => {
@@ -292,7 +260,7 @@ export default function Armory() {
 
         setForm({
             id: 0,
-            firearmModelId: 0,
+            pewpewModelId: 0,
             arsenalId: store.activeArsenalId || (store.arsenals[0]?.id || 1),
             manufacturer: '',
             model: '',
@@ -308,8 +276,11 @@ export default function Armory() {
             condition: 'Good (90%)',
             imageUrl: '',
             roundCount: 0,
+            owner: '',
+            ownerId: '',
             beneficiary: '',
-            storageLocation: 'Main Vault',
+            beneficiaryId: '',
+            storageLocation: '',
             notesMarkdown: '',
             opticManufacturer: '',
             opticModel: '',
@@ -336,11 +307,14 @@ export default function Armory() {
 
         setForm({
             ...item,
-            firearmModelId: item.firearmModelId || 0,
+            pewpewModelId: item.pewpewModelId || 0,
             arsenalId: item.arsenalId || store.activeArsenalId || 1,
             purchaseDateString: dateString,
+            owner: item.owner || '',
+            ownerId: item.ownerId || '',
             beneficiary: item.beneficiary || '',
-            storageLocation: item.storageLocation || 'Main Vault',
+            beneficiaryId: item.beneficiaryId || '',
+            storageLocation: item.storageLocation || '',
             notesMarkdown: item.notesMarkdown || '',
             opticManufacturer: item.opticManufacturer || '',
             opticModel: item.opticModel || '',
@@ -384,17 +358,17 @@ export default function Armory() {
             if (p) {
                 setForm(prev => ({
                     ...prev,
-                    firearmModelId: p.id,
-                    manufacturer: p.manufacturer,
-                    model: p.name,
-                    caliber: p.caliber,
-                    actionType: p.actionType
+                    pewpewModelId: p.id,
+                    manufacturer: p.manufacturerName || '',
+                    model: p.model || '',
+                    caliber: p.caliberName || '',
+                    actionType: p.actionType || ''
                 }))
             }
         } else {
             setForm(prev => ({
                 ...prev,
-                firearmModelId: 0,
+                pewpewModelId: 0,
                 manufacturer: '',
                 model: '',
                 caliber: '',
@@ -403,15 +377,7 @@ export default function Armory() {
         }
     }
 
-    // Model selection dependency helper
-    const handleManufacturerChange = (e) => {
-        const mfg = e.target.value
-        setForm(prev => ({
-            ...prev,
-            manufacturer: mfg,
-            model: modelPresets[mfg] ? modelPresets[mfg][0] : 'Custom'
-        }))
-    }
+
 
     // Sub-items lists management
     const addAccessoryItem = () => {
@@ -504,6 +470,11 @@ export default function Armory() {
 
     // CRUD actions
     const handleSave = async () => {
+        if (!form.pewpewModelId || form.pewpewModelId <= 0) {
+            alert('Please select a product before saving.')
+            return
+        }
+
         setIsSaving(true)
         try {
             const url = isEditMode ? `/api/armory/${form.id}` : '/api/armory'
@@ -552,8 +523,11 @@ export default function Armory() {
                 setForm({
                     ...savedItem,
                     purchaseDateString: dateString,
+                    owner: savedItem.owner || '',
+                    ownerId: savedItem.ownerId || '',
                     beneficiary: savedItem.beneficiary || '',
-                    storageLocation: savedItem.storageLocation || 'Main Vault',
+                    beneficiaryId: savedItem.beneficiaryId || '',
+                    storageLocation: savedItem.storageLocation || '',
                     notesMarkdown: savedItem.notesMarkdown || '',
                     opticManufacturer: savedItem.opticManufacturer || '',
                     opticModel: savedItem.opticModel || '',
@@ -727,7 +701,7 @@ export default function Armory() {
                                 <div className="item-details">
                                     <div className="detail-row">
                                         <span className="detail-label">Storage Hub</span>
-                                        <span className="detail-value">{item.storageLocation || 'Main Vault'}</span>
+                                        <span className="detail-value">{item.storageLocation || ''}</span>
                                     </div>
                                     {item.purchasePrice && (
                                         <div className="detail-row">
@@ -738,7 +712,6 @@ export default function Armory() {
                                 </div>
 
                                 <div className="item-card-actions">
-                                    <button onClick={(e) => { e.stopPropagation(); openEditModal(item); }} className="btn btn-secondary btn-small">Edit</button>
                                     <button onClick={(e) => handleDeleteClick(item.id, e)} className="btn btn-danger btn-small">Remove</button>
                                 </div>
                             </div>
@@ -762,13 +735,6 @@ export default function Armory() {
                         {/* Modal Tabs strip */}
                         <div className="modal-tabs-header-row">
                             <button className={`tab-btn ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>General</button>
-                            <button className={`tab-btn ${activeTab === 'optics' ? 'active' : ''}`} onClick={() => setActiveTab('optics')}>Optics</button>
-                            <button className={`tab-btn ${activeTab === 'attachments' ? 'active' : ''}`} onClick={() => setActiveTab('attachments')}>Documents</button>
-                            <button className={`tab-btn ${activeTab === 'accessories' ? 'active' : ''}`} onClick={() => setActiveTab('accessories')}>Accessories</button>
-                            <button className={`tab-btn ${activeTab === 'loads' ? 'active' : ''}`} onClick={() => setActiveTab('loads')}>Matching Lots</button>
-                            <button className={`tab-btn ${activeTab === 'notes' ? 'active' : ''}`} onClick={() => setActiveTab('notes')}>Custom Logs</button>
-                            <button className={`tab-btn ${activeTab === 'maintenance' ? 'active' : ''}`} onClick={() => setActiveTab('maintenance')}>Maintenance</button>
-                            <button className={`tab-btn ${activeTab === 'range' ? 'active' : ''}`} onClick={() => setActiveTab('range')}>Range History</button>
                         </div>
 
                         {/* Scrollable Modal content wrapper */}
@@ -778,86 +744,33 @@ export default function Armory() {
                                 <div className="tab-pane">
                                     <div className="form-grid-columns">
                                         <div className="form-item" style={{ gridColumn: 'span 2' }}>
-                                            {/*<label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>*/}
-                                            {/*  <span style={{ fontWeight: '600' }}>Product Selection</span>*/}
-                                            {/*  {form.firearmModelId > 0 && (*/}
-                                            {/*    <span style={{ color: 'var(--color-success)', fontSize: '0.85rem', fontWeight: '600' }}>*/}
-                                            {/*      ✓ Linked to Catalog Entry*/}
-                                            {/*    </span>*/}
-                                            {/*  )}*/}
-                                            {/*</label>*/}
+                                            <label>Select product from Catalog</label>
                                             <select
-                                                value={form.firearmModelId || ''}
+                                                value={form.pewpewModelId || ''}
                                                 onChange={handleProductSelectChange}
-                                                style={{ border: form.firearmModelId ? '1px solid var(--color-success)' : '1px solid var(--border-solid)' }}
+                                                style={{ border: form.pewpewModelId ? '1px solid var(--color-success)' : '1px solid var(--border-solid)' }}
                                             >
-                                                <option value="">Select Product from Catalog</option>
+                                                <option value="">-- Choose product --</option>
                                                 {products.map(p => (
                                                     <option key={p.id} value={p.id}>
-                                                        {p.manufacturer} {p.name} {p.partNumber ? `[PN: ${p.partNumber}]` : ''} ({p.caliber}) — {p.actionType}
+                                                        {p.manufacturerName} {p.model} {p.partNumber ? `[PN: ${p.partNumber}]` : ''} ({p.caliberName}) — {p.actionType}
                                                     </option>
                                                 ))}
                                             </select>
                                         </div>
 
-                                        <div className="form-item">
-                                            <label>Manufacturer</label>
-                                            <input
-                                                type="text"
-                                                value={form.manufacturer || ''}
-                                                readOnly={!!form.firearmModelId}
-                                                disabled={!!form.firearmModelId}
-                                                style={form.firearmModelId ? { opacity: 0.8, cursor: 'not-allowed', background: 'var(--bg-main)' } : {}}
-                                                onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
-                                                placeholder="e.g. Glock"
-                                            />
-                                        </div>
+                                        {form.pewpewModelId > 0 && (
+                                            <div className="specifications-card" style={{ gridColumn: 'span 2', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '14px 18px', marginTop: '4px', marginBottom: '12px' }}>
+                                                <h4 style={{ color: 'var(--color-primary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 10px 0', fontWeight: '700' }}>Product Specs</h4>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', fontSize: '13px' }}>
+                                                    <div><strong style={{ color: 'var(--text-muted)' }}>Manufacturer:</strong> <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.manufacturer}</span></div>
+                                                    <div><strong style={{ color: 'var(--text-muted)' }}>Model Name:</strong> <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.model}</span></div>
+                                                    <div><strong style={{ color: 'var(--text-muted)' }}>Caliber:</strong> <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.caliber}</span></div>
+                                                    <div><strong style={{ color: 'var(--text-muted)' }}>Action Type:</strong> <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{form.actionType}</span></div>
+                                                </div>
+                                            </div>
+                                        )}
 
-                                        <div className="form-item">
-                                            <label>Model Name</label>
-                                            <input
-                                                type="text"
-                                                value={form.model || ''}
-                                                readOnly={!!form.firearmModelId}
-                                                disabled={!!form.firearmModelId}
-                                                style={form.firearmModelId ? { opacity: 0.8, cursor: 'not-allowed', background: 'var(--bg-main)' } : {}}
-                                                onChange={(e) => setForm({ ...form, model: e.target.value })}
-                                                placeholder="e.g. 19 Gen 5"
-                                            />
-                                        </div>
-
-                                        <div className="form-item">
-                                            <label>Caliber</label>
-                                            <input
-                                                type="text"
-                                                value={form.caliber || ''}
-                                                readOnly={!!form.firearmModelId}
-                                                disabled={!!form.firearmModelId}
-                                                style={form.firearmModelId ? { opacity: 0.8, cursor: 'not-allowed', background: 'var(--bg-main)' } : {}}
-                                                onChange={(e) => setForm({ ...form, caliber: e.target.value })}
-                                                placeholder="e.g. 9mm Luger"
-                                            />
-                                        </div>
-
-                                        <div className="form-item">
-                                            <label>Action Type</label>
-                                            {form.firearmModelId ? (
-                                                <input
-                                                    type="text"
-                                                    value={form.actionType || ''}
-                                                    readOnly
-                                                    disabled
-                                                    style={{ opacity: 0.8, cursor: 'not-allowed', background: 'var(--bg-main)' }}
-                                                />
-                                            ) : (
-                                                <select value={form.actionType} onChange={(e) => setForm({ ...form, actionType: e.target.value })}>
-                                                    <option value="">-- Select Action --</option>
-                                                    {actionTypes.map(p => (
-                                                        <option key={p} value={p}>{p}</option>
-                                                    ))}
-                                                </select>
-                                            )}
-                                        </div>
 
                                         <div className="form-item">
                                             <label>Barrel Length (Inches)</label>
@@ -880,7 +793,7 @@ export default function Armory() {
                                         </div>
 
                                         <div className="form-item">
-                                            <label>Serial Number <span style={{ color: 'green' }}>(Encrypted)</span></label>
+                                            <label>Serial Number <span style={{ color: 'green' }}>(256-AES Encryption)</span></label>
                                             <div className="passcode-input-wrapper">
                                                 <input
                                                     type={showSerial ? "text" : "password"}
@@ -951,450 +864,35 @@ export default function Armory() {
                                         </div>
 
                                         <div className="form-item full-row">
-                                            <label>Beneficiaryr</label>
-                                            <input
-                                                type="text"
-                                                placeholder="Name of inheritor"
-                                                value={form.beneficiary || ''}
-                                                onChange={(e) => setForm({ ...form, beneficiary: e.target.value })}
-                                            />
-                                        </div>
-
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* TAB 2: Optics configurations */}
-                            {activeTab === 'optics' && (
-                                <div className="tab-pane">
-                                    <div className="tab-intro">
-                                        <h4>Optic Configurations</h4>
-                                        <p>Register attachments like scopes, holographic reticles, or iron-sights connected to the receiver rails.</p>
-                                    </div>
-
-                                    <div className="form-item">
-                                        <label className="checkbox-container">
-                                            <input
-                                                type="checkbox"
-                                                checked={form.isOpticMounted}
-                                                onChange={(e) => setForm({ ...form, isOpticMounted: e.target.checked })}
-                                            />
-                                            <span className="checkmark"></span>
-                                            <span>Optic is currently mounted to this armory unit</span>
-                                        </label>
-                                    </div>
-
-                                    {form.isOpticMounted && (
-                                        <div className="form-grid-columns">
-                                            <div className="form-item">
-                                                <label>Optic Manufacturer</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="e.g. Trijicon, Vortex"
-                                                    value={form.opticManufacturer}
-                                                    onChange={(e) => setForm({ ...form, opticManufacturer: e.target.value })}
-                                                />
-                                            </div>
-                                            <div className="form-item">
-                                                <label>Optic Model</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="e.g. RMR, Venom"
-                                                    value={form.opticModel}
-                                                    onChange={(e) => setForm({ ...form, opticModel: e.target.value })}
-                                                />
-                                            </div>
-                                            <div className="form-item">
-                                                <label>Reticle Spec</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="e.g. 3.25 MOA Red Dot"
-                                                    value={form.opticReticle}
-                                                    onChange={(e) => setForm({ ...form, opticReticle: e.target.value })}
-                                                />
-                                            </div>
-                                            <div className="form-item">
-                                                <label>Optic Serial Number</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Serial Code"
-                                                    value={form.opticSerial}
-                                                    onChange={(e) => setForm({ ...form, opticSerial: e.target.value })}
-                                                />
-                                            </div>
-                                            <div className="form-item">
-                                                <label>Battery Specification</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="e.g. CR2032"
-                                                    value={form.opticBattery}
-                                                    onChange={(e) => setForm({ ...form, opticBattery: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* TAB 3: Attachments (O owners manual pdfs / targets) */}
-                            {activeTab === 'attachments' && (
-                                <div className="tab-pane">
-                                    <div className="tab-intro">
-                                        <h4>Document Attachments</h4>
-                                        <p>Store manuals, purchase receipts, or PDF target groups connected to this item.</p>
-                                    </div>
-
-                                    <div className="uploads-panel">
-                                        <div className="upload-controls-row">
-                                            <div className="upload-file-selector">
-                                                <span className="selected-file-name">No file selected</span>
-                                            </div>
-                                            <button className="btn btn-secondary btn-mini-inline" onClick={() => alert('Local document upload simulated.')}>Browse</button>
-                                        </div>
-
-                                        <div className="attachments-list-section">
-                                            <span className="list-title">Uploaded Files</span>
-                                            {attachments.length === 0 ? (
-                                                <div className="empty-list-placeholder">No document attachments uploaded.</div>
-                                            ) : (
-                                                <table className="attachments-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>File Name</th>
-                                                            <th>Category</th>
-                                                            <th>Size</th>
-                                                            <th>Date Added</th>
-                                                            <th>Actions</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {attachments.map(att => (
-                                                            <tr key={att.id}>
-                                                                <td>
-                                                                    <a href="#" onClick={(e) => { e.preventDefault(); alert(`Downloading file: ${att.filename}`); }} className="clickable-attachment-link">
-                                                                        {att.filename}
-                                                                    </a>
-                                                                </td>
-                                                                <td>{att.category}</td>
-                                                                <td>{att.size}</td>
-                                                                <td>{att.dateAdded}</td>
-                                                                <td className="action-cell">
-                                                                    <button onClick={() => removeAttachmentFile(att.id)} className="btn btn-danger btn-mini-inline">Remove</button>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* TAB 4: Custom Accessories dynamic insertion */}
-                            {activeTab === 'accessories' && (
-                                <div className="tab-pane">
-                                    <div className="tab-intro">
-                                        <h4>Accessories Ledger</h4>
-                                        <p>Register flashlights, lasers, triggers, or grips physically attached to this unit.</p>
-                                    </div>
-
-                                    <div className="add-accessory-form-row">
-                                        <input
-                                            type="text"
-                                            placeholder="Grip, Flashlight model..."
-                                            value={newAccessoryName}
-                                            onChange={(e) => setNewAccessoryName(e.target.value)}
-                                            className="flex-grow-input"
-                                            onKeyDown={(e) => { if (e.key === 'Enter') addAccessoryItem(); }}
-                                        />
-                                        <button className="btn btn-primary" onClick={addAccessoryItem}>Add Attachment</button>
-                                    </div>
-
-                                    <div className="accessories-dynamic-list-section">
-                                        <span className="list-title">Equipped Accessories ({accessoriesList.length})</span>
-                                        {accessoriesList.length === 0 ? (
-                                            <div className="empty-list-placeholder">No aftermarket attachments logged.</div>
-                                        ) : (
-                                            <div className="accessories-scroll-box">
-                                                {accessoriesList.map((acc, idx) => (
-                                                    <div key={idx} className="accessory-dynamic-card">
-                                                        <div className="card-left">
-                                                            <span className="bullet-dot">♦</span>
-                                                            <span className="accessory-item-text">{acc}</span>
-                                                        </div>
-                                                        <button className="btn btn-danger btn-mini-inline" onClick={() => removeAccessoryItem(idx)}>Deregister</button>
-                                                    </div>
+                                            <label>Designated Owner</label>
+                                            <select
+                                                value={form.ownerId || ''}
+                                                onChange={(e) => setForm({ ...form, ownerId: e.target.value })}
+                                            >
+                                                <option value="">-- No Owner Assigned --</option>
+                                                {users.map(u => (
+                                                    <option key={u.id} value={u.id}>
+                                                        {u.username} ({u.email})
+                                                    </option>
                                                 ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* TAB 5: Matching Ammo Lots list */}
-                            {activeTab === 'loads' && (
-                                <div className="tab-pane">
-                                    <div className="tab-intro">
-                                        <h4>Compatible Ammunition Lots</h4>
-                                        <p>Ammunition on record matching this unit's primary caliber ({form.caliber}).</p>
-                                    </div>
-
-                                    <div className="lots-list-display">
-                                        {filteredAmmoLots.length === 0 ? (
-                                            <div className="empty-list-placeholder">No matching caliber lots on record in your Munitions cache.</div>
-                                        ) : (
-                                            <table className="lots-compact-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Lot Brand / Recipe</th>
-                                                        <th>Caliber Spec</th>
-                                                        <th>Stock Level</th>
-                                                        <th>Classification</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {filteredAmmoLots.map(lot => (
-                                                        <tr key={lot.id}>
-                                                            <td>
-                                                                <strong>{lot.brandName || lot.recipeName}</strong>
-                                                                {lot.notes && <span className="lot-row-notes-tag" title={lot.notes}>info</span>}
-                                                            </td>
-                                                            <td className="text-mono">{lot.caliber}</td>
-                                                            <td className="gold-text">{lot.roundsRemaining} rds</td>
-                                                            <td>{lot.isHandload ? 'Handload' : 'Factory'}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* TAB 6: Notes editor split panel */}
-                            {activeTab === 'notes' && (
-                                <div className="tab-pane">
-                                    <div className="tab-intro">
-                                        <h4>Internal Range Logs</h4>
-                                        <p>Formulate log narratives, technical specs, zero-ranges, or custom triggers using simple formatting tools.</p>
-                                    </div>
-
-                                    <div className="markdown-editor-pane">
-                                        <div className="markdown-toolbar">
-                                            <button className="toolbar-btn" onClick={() => insertMarkdownTag('**')}>Bold</button>
-                                            <button className="toolbar-btn" onClick={() => insertMarkdownTag('*')}>Italic</button>
-                                            <button className="toolbar-btn" onClick={() => insertMarkdownTag('__')}>Underline</button>
-                                            <button className="toolbar-btn" onClick={() => insertMarkdownTag('- ')}>Bullet List</button>
-                                            <button className="toolbar-btn" onClick={() => insertMarkdownTag('&gt; ')}>Quote</button>
-                                            <button className="toolbar-btn" onClick={() => insertMarkdownTag('`')}>Code Block</button>
-                                            <span className="text-format-indicator">Rich Editor Active</span>
-                                        </div>
-
-                                        <div className="markdown-split-panel">
-                                            <div className="editor-col">
-                                                <textarea
-                                                    id="markdown-textarea-box"
-                                                    ref={markdownTextareaRef}
-                                                    value={form.notesMarkdown || ''}
-                                                    onChange={(e) => setForm({ ...form, notesMarkdown: e.target.value })}
-                                                    placeholder="Register technical specifications, bullet groups, or barrel histories..."
-                                                />
-                                            </div>
-                                            <div className="preview-col">
-                                                <span className="preview-tag-title">Rendered Output</span>
-                                                <div
-                                                    className="markdown-rendered-view"
-                                                    dangerouslySetInnerHTML={{ __html: renderMarkdown(form.notesMarkdown) }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* TAB 7: Maintenance tasks schedule list */}
-                            {activeTab === 'maintenance' && (
-                                <div className="tab-pane">
-                                    <div className="tab-intro">
-                                        <h4>Maintenance Schedules</h4>
-                                        <p>Log actions like detailing, action lubricating, or custom installations to ensure active reliability.</p>
-                                    </div>
-
-                                    <div className="task-insertion-panel">
-                                        <div className="task-form-row">
-                                            <div className="task-item-input-col flex-grow-input">
-                                                <label>Action / Detailing Needed</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Detonator detailing, barrel clean, parts replace..."
-                                                    value={newTaskText}
-                                                    onChange={(e) => setNewTaskText(e.target.value)}
-                                                    onKeyDown={(e) => { if (e.key === 'Enter') addMaintenanceTaskItem(); }}
-                                                />
-                                            </div>
-                                            <div className="task-item-input-col">
-                                                <label>Category</label>
-                                                <select value={newTaskCategory} onChange={(e) => setNewTaskCategory(e.target.value)} className="mini-cat-select">
-                                                    <option value="Clean">Detail Cleaning</option>
-                                                    <option value="Inspection">Inspect Parts</option>
-                                                    <option value="Repair">Replace Parts</option>
-                                                    <option value="Lubrication">Lubrication</option>
-                                                    <option value="Upgrade">Mod Upgrade</option>
-                                                </select>
-                                            </div>
-                                            <div className="task-item-input-col">
-                                                <label>Target Date</label>
-                                                <input
-                                                    type="date"
-                                                    value={newTaskDueDate}
-                                                    onChange={(e) => setNewTaskDueDate(e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="task-item-input-col align-center-checkbox">
-                                                <label className="checkbox-container">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={newTaskNotification}
-                                                        onChange={(e) => setNewTaskNotification(e.target.checked)}
-                                                    />
-                                                    <span className="checkmark"></span>
-                                                    <span>Notify</span>
-                                                </label>
-                                            </div>
-                                            <button className="btn btn-primary" style={{ marginTop: '16px' }} onClick={addMaintenanceTaskItem}>Schedule</button>
-                                        </div>
-                                    </div>
-
-                                    <div className="listings-header-row">
-                                        <h5>Registered Tasks ({filteredTasks.length})</h5>
-                                        <div className="listings-filter-controls">
-                                            <select value={taskFilterStatus} onChange={(e) => setTaskFilterStatus(e.target.value)} className="mini-table-filter">
-                                                <option value="All">All Statuses</option>
-                                                <option value="Active">Active Scheduled</option>
-                                                <option value="Completed">Completed Logs</option>
-                                            </select>
-                                            <select value={taskFilterCategory} onChange={(e) => setTaskFilterCategory(e.target.value)} className="mini-table-filter">
-                                                <option value="All">All Categories</option>
-                                                <option value="Clean">Cleaning</option>
-                                                <option value="Inspection">Inspections</option>
-                                                <option value="Repair">Repairs</option>
-                                                <option value="Lubrication">Lubrication</option>
-                                                <option value="Upgrade">Upgrades</option>
                                             </select>
                                         </div>
-                                    </div>
 
-                                    {filteredTasks.length === 0 ? (
-                                        <div className="empty-list-placeholder">No maintenance logs matches your active search filters.</div>
-                                    ) : (
-                                        <table className="tasks-master-table">
-                                            <thead>
-                                                <tr>
-                                                    <th style={{ width: '40px' }}>Mark</th>
-                                                    <th>Action Description</th>
-                                                    <th>Group</th>
-                                                    <th>Target Date</th>
-                                                    <th>Alert</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {filteredTasks.map(task => (
-                                                    <tr key={task.id} className={task.isCompleted ? 'completed' : ''}>
-                                                        <td>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={task.isCompleted}
-                                                                onChange={() => toggleTaskStatus(task.id)}
-                                                                className="task-row-checkbox"
-                                                            />
-                                                        </td>
-                                                        <td className="task-text-cell">{task.description}</td>
-                                                        <td>{task.category}</td>
-                                                        <td>{task.dueDate || 'No Date'}</td>
-                                                        <td>{task.enableNotifications ? '🔔 Active' : 'Off'}</td>
-                                                        <td>
-                                                            <button onClick={() => removeTaskItem(task.id)} className="btn btn-danger btn-mini-inline">Remove</button>
-                                                        </td>
-                                                    </tr>
+                                        <div className="form-item full-row">
+                                            <label>Beneficiary</label>
+                                            <select
+                                                value={form.beneficiaryId || ''}
+                                                onChange={(e) => setForm({ ...form, beneficiaryId: e.target.value })}
+                                            >
+                                                <option value="">-- No Beneficiary Assigned --</option>
+                                                {users.map(u => (
+                                                    <option key={u.id} value={u.id}>
+                                                        {u.username} ({u.email})
+                                                    </option>
                                                 ))}
-                                            </tbody>
-                                        </table>
-                                    )}
-                                </div>
-                            )}
+                                            </select>
+                                        </div>
 
-                            {/* TAB 8: Range history logs accordion list */}
-                            {activeTab === 'range' && (
-                                <div className="tab-pane">
-                                    <div className="tab-intro">
-                                        <h4>Range History</h4>
-                                        <p>Interactive catalog of range trips, target groupings, and operational rounds fired.</p>
-                                    </div>
-
-                                    <div className="range-history-panel-scroll">
-                                        {rangeSessions.length === 0 ? (
-                                            <div className="empty-list-placeholder">No range shooting sessions on record. Record targets at your local bench.</div>
-                                        ) : (
-                                            <div className="expandable-accordion-list">
-                                                {rangeSessions.map(session => (
-                                                    <div key={session.id} className="accordion-item-box">
-                                                        <div className="accordion-header-trigger" onClick={() => toggleAccordion(session.id)}>
-                                                            <div className="trigger-left">
-                                                                <span className="expand-icon">{activeAccordionId === session.id ? '▼' : '►'}</span>
-                                                                <span className="session-date-tag">{session.dateString}</span>
-                                                                <span className="session-location-tag">{session.location}</span>
-                                                            </div>
-                                                            <span className="gold-text">{session.roundsFired} rds fired</span>
-                                                        </div>
-
-                                                        {activeAccordionId === session.id && (
-                                                            <div className="accordion-content">
-                                                                <div className="session-stats-grid">
-                                                                    <div className="stat-bubble">
-                                                                        <span>Rounds</span>
-                                                                        <strong>{session.roundsFired}</strong>
-                                                                    </div>
-                                                                    <div className="stat-bubble">
-                                                                        <span>Average Speed</span>
-                                                                        <strong>{session.velocityAvg || 'N/A'} fps</strong>
-                                                                    </div>
-                                                                    <div className="stat-bubble">
-                                                                        <span>Spread Group</span>
-                                                                        <strong>{session.groupSizeInches || 'N/A'} in</strong>
-                                                                    </div>
-                                                                    <div className="stat-bubble">
-                                                                        <span>Distance</span>
-                                                                        <strong>{session.distanceYards || 'N/A'} yds</strong>
-                                                                    </div>
-                                                                </div>
-
-                                                                {session.notes && (
-                                                                    <div className="session-notes-box">
-                                                                        <label>Trip Observations</label>
-                                                                        <p>{session.notes}</p>
-                                                                    </div>
-                                                                )}
-
-                                                                {session.targetCards && session.targetCards.length > 0 && (
-                                                                    <div className="session-targets-row">
-                                                                        <label>Target Groups Records</label>
-                                                                        <div className="targets-preview-flex">
-                                                                            {session.targetCards.map(t => (
-                                                                                <div key={t.id} className="target-mock-preview-card" onClick={() => alert(`Previewing grouping target [${t.name}]`)}>
-                                                                                    🎯 {t.name}
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             )}

@@ -22,7 +22,17 @@ namespace Chambered.Data
         public DbSet<Caliber> Calibers { get; set; }
         public DbSet<Document> Documents { get; set; }
         public DbSet<Manufacturer> Manufacturers { get; set; }
+
+
+
         public DbSet<Product> Products { get; set; }
+        public DbSet<PewPew> PewPews => Set<PewPew>();
+        public DbSet<Optic> Optics => Set<Optic>();
+        public DbSet<Suppressor> Suppressors => Set<Suppressor>();
+        public DbSet<PewPewLight> PewPewLights => Set<PewPewLight>();
+
+
+
         public DbSet<Vault> Vaults { get; set; }
         public DbSet<VaultCategory> VaultCategories { get; set; }
         
@@ -60,7 +70,19 @@ namespace Chambered.Data
             configurationBuilder.Properties<ItemCondition>().HaveConversion<int>();
             configurationBuilder.Properties<LockType>().HaveConversion<int>();
             configurationBuilder.Properties<NfaFormType>().HaveConversion<int>();
-            configurationBuilder.Properties<ProductCategory>().HaveConversion<int>();
+            configurationBuilder.Properties<PewPewCategory>().HaveConversion<int>();
+
+
+
+            configurationBuilder.Properties<OpticType>().HaveConversion<int>();
+            configurationBuilder.Properties<OpticFocalPlane>().HaveConversion<int>();
+            configurationBuilder.Properties<OpticReticle>().HaveConversion<int>();
+            configurationBuilder.Properties<OpticAdjustmentUnit>().HaveConversion<int>();
+            configurationBuilder.Properties<SuppressorAttachmentType>().HaveConversion<int>();
+            configurationBuilder.Properties<SuppressorMaterial>().HaveConversion<int>();
+            configurationBuilder.Properties<LightMountType>().HaveConversion<int>();
+            configurationBuilder.Properties<LaserColor>().HaveConversion<int>();
+            configurationBuilder.Properties<BatteryType>().HaveConversion<int>();
         }
     }
 

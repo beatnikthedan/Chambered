@@ -660,3 +660,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.sidebar-divider {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 10px 14px;
+}
+

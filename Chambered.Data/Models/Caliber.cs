@@ -1,4 +1,4 @@
-﻿namespace Chambered.Data.Models
+namespace Chambered.Data.Models
 {
     /// <summary>
     /// Represents a standard chambering or caliber designation for items.
@@ -29,7 +29,7 @@
         /// <summary>
         /// Gets or sets catalog models chambered in this caliber.
         /// </summary>
-        public ICollection<Product> Models { get; set; } = new List<Product>();
+        public ICollection<PewPew> Models { get; set; } = new List<PewPew>();
 
         #endregion
     }

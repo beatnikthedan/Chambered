@@ -85,6 +85,7 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
     });
 
 // Learn more about configuring OpenAPI

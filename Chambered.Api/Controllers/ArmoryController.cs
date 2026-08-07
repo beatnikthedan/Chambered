@@ -1,6 +1,7 @@
 using Chambered.Data;
 using Chambered.Data.Models;
 using Chambered.Data.Enums;
+using Chambered.Data.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -36,8 +37,21 @@ namespace Chambered.Api.Controllers
                 .Include(i => i.Product)
                     .ThenInclude(p => p.Manufacturer)
                 .Include(i => i.Product)
-                    .ThenInclude(p => p.Caliber)
+                    .ThenInclude(p => (p as PewPew).Caliber)
+                .Include(i => i.Product)
+                    .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .Include(i => i.Vault)
+                .Include(i => i.Owner)
+                .Include(i => i.Beneficiary)
+                .Include(i => i.MountedAccessories)
+                    .ThenInclude(acc => acc.Product)
+                        .ThenInclude(p => p.Manufacturer)
+                .Include(i => i.MountedAccessories)
+                    .ThenInclude(acc => acc.Product)
+                        .ThenInclude(p => (p as PewPew).Caliber)
+                .Include(i => i.MountedAccessories)
+                    .ThenInclude(acc => acc.Product)
+                        .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .Where(f => f.ArsenalId == arsenalId)
                 .ToListAsync();
 
@@ -51,22 +65,52 @@ namespace Chambered.Api.Controllers
         {
             var products = await _db.Products
                 .Include(p => p.Manufacturer)
-                .Include(p => p.Caliber)
+                .Include(p => (p as PewPew).Caliber)
+                .Include(p => (p as Suppressor).MaxCaliber)
                 .OrderBy(p => p.Model)
                 .ToListAsync();
 
-            var dtos = products.Select(p => new
-            {
-                id = p.Id,
-                name = p.Model,
-                sku = p.Sku,
-                partNumber = p.PartNumber,
-                category = p.Category.ToString(),
-                actionType = FormatActionType(p.ActionType),
-                manufacturerId = p.ManufacturerId,
-                manufacturer = p.Manufacturer?.Name ?? "",
-                caliberId = p.CaliberId,
-                caliber = p.Caliber?.Name ?? ""
+            var dtos = products.Select(p => {
+                string caliberName = "";
+                int caliberId = 0;
+                string actionType = "N/A";
+                string productType = "General";
+
+                if (p is PewPew pew)
+                {
+                    caliberName = pew.Caliber?.Name ?? "";
+                    caliberId = pew.CaliberId;
+                    actionType = FormatActionType(pew.ActionType);
+                    productType = "PewPew";
+                }
+                else if (p is Suppressor sup)
+                {
+                    caliberName = sup.MaxCaliber?.Name ?? "";
+                    caliberId = sup.MaxCaliberId;
+                    productType = "Suppressor";
+                }
+                else if (p is Optic)
+                {
+                    productType = "Optic";
+                }
+                else if (p is PewPewLight)
+                {
+                    productType = "PewPewLight";
+                }
+
+                return new
+                {
+                    id = p.Id,
+                    name = p.Model,
+                    sku = p.Sku,
+                    partNumber = p.PartNumber,
+                    category = productType,
+                    actionType = actionType,
+                    manufacturerId = p.ManufacturerId,
+                    manufacturer = p.Manufacturer?.Name ?? "",
+                    caliberId = caliberId,
+                    caliber = caliberName
+                };
             }).ToList();
 
             return Ok(dtos);
@@ -78,12 +122,17 @@ namespace Chambered.Api.Controllers
         {
             return Ok(new
             {
-                actionTypes = Enum.GetValues<ActionType>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatActionType(e) }).ToList(),
-                documentTypes = Enum.GetValues<DocumentType>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatDocumentType(e) }).ToList(),
-                itemConditions = Enum.GetValues<ItemCondition>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatCondition(e) }).ToList(),
-                lockTypes = Enum.GetValues<LockType>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatLockType(e) }).ToList(),
-                nfaFormTypes = Enum.GetValues<NfaFormType>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatNfaFormType(e) }).ToList(),
-                productCategories = Enum.GetValues<ProductCategory>().Select(e => new { id = (int)e, name = e.ToString(), label = FormatProductCategory(e) }).ToList()
+                actionTypes = Enum.GetValues<ActionType>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = FormatActionType(e) }).ToList(),
+                documentTypes = Enum.GetValues<DocumentType>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = FormatDocumentType(e) }).ToList(),
+                itemConditions = Enum.GetValues<ItemCondition>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = FormatCondition(e) }).ToList(),
+                lockTypes = Enum.GetValues<LockType>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = FormatLockType(e) }).ToList(),
+                nfaFormTypes = Enum.GetValues<NfaFormType>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = FormatNfaFormType(e) }).ToList(),
+                productCategories = Enum.GetValues<PewPewCategory>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = FormatProductCategory(e) }).ToList(),
+                suppressorMaterials = Enum.GetValues<SuppressorMaterial>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList(),
+                suppressorAttachmentTypes = Enum.GetValues<SuppressorAttachmentType>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList(),
+                opticFocalPlanes = Enum.GetValues<OpticFocalPlane>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList(),
+                opticReticles = Enum.GetValues<OpticReticle>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList(),
+                opticAdjustmentUnits = Enum.GetValues<OpticAdjustmentUnit>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList()
             });
         }
 
@@ -95,8 +144,21 @@ namespace Chambered.Api.Controllers
                 .Include(i => i.Product)
                     .ThenInclude(p => p.Manufacturer)
                 .Include(i => i.Product)
-                    .ThenInclude(p => p.Caliber)
+                    .ThenInclude(p => (p as PewPew).Caliber)
+                .Include(i => i.Product)
+                    .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .Include(i => i.Vault)
+                .Include(i => i.Owner)
+                .Include(i => i.Beneficiary)
+                .Include(i => i.MountedAccessories)
+                    .ThenInclude(acc => acc.Product)
+                        .ThenInclude(p => p.Manufacturer)
+                .Include(i => i.MountedAccessories)
+                    .ThenInclude(acc => acc.Product)
+                        .ThenInclude(p => (p as PewPew).Caliber)
+                .Include(i => i.MountedAccessories)
+                    .ThenInclude(acc => acc.Product)
+                        .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .FirstOrDefaultAsync(i => i.Id == id);
 
             if (item == null)
@@ -128,7 +190,6 @@ namespace Chambered.Api.Controllers
             {
                 product = await _db.Products
                     .Include(p => p.Manufacturer)
-                    .Include(p => p.Caliber)
                     .FirstOrDefaultAsync(p => p.Id == model.FirearmModelId);
             }
 
@@ -149,6 +210,7 @@ namespace Chambered.Api.Controllers
             var armoryItem = new ArmoryItem
             {
                 ProductId = product.Id,
+                ParentItemId = model.ParentItemId,
                 SerialNumber = model.SerialNumber ?? "",
                 BarrelLengthInches = model.BarrelLengthInches ?? 0,
                 TwistRate = model.TwistRate,
@@ -162,7 +224,8 @@ namespace Chambered.Api.Controllers
                 EstimatedValue = model.CurrentValue ?? model.EstimatedValue,
                 Condition = ParseCondition(model.Condition),
                 RoundCount = model.RoundCount,
-                Beneficiary = model.Beneficiary,
+                OwnerId = model.OwnerId,
+                BeneficiaryId = model.BeneficiaryId,
                 VaultId = vaultId,
                 ArsenalId = arsenalId,
                 ImageUrl = model.ImageUrl,
@@ -177,8 +240,12 @@ namespace Chambered.Api.Controllers
                 .Include(i => i.Product)
                     .ThenInclude(p => p.Manufacturer)
                 .Include(i => i.Product)
-                    .ThenInclude(p => p.Caliber)
+                    .ThenInclude(p => (p as PewPew).Caliber)
+                .Include(i => i.Product)
+                    .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .Include(i => i.Vault)
+                .Include(i => i.Owner)
+                .Include(i => i.Beneficiary)
                 .FirstAsync(i => i.Id == armoryItem.Id);
 
             return CreatedAtAction(nameof(GetById), new { id = armoryItem.Id }, MapToDto(created));
@@ -204,7 +271,6 @@ namespace Chambered.Api.Controllers
             {
                 product = await _db.Products
                     .Include(p => p.Manufacturer)
-                    .Include(p => p.Caliber)
                     .FirstOrDefaultAsync(p => p.Id == model.FirearmModelId);
             }
 
@@ -223,6 +289,7 @@ namespace Chambered.Api.Controllers
             var vaultId = await ResolveVaultIdAsync(model.StorageLocation, arsenalId);
 
             armoryItem.ProductId = product.Id;
+            armoryItem.ParentItemId = model.ParentItemId;
             armoryItem.SerialNumber = model.SerialNumber ?? "";
             armoryItem.BarrelLengthInches = model.BarrelLengthInches ?? 0;
             armoryItem.TwistRate = model.TwistRate;
@@ -236,7 +303,8 @@ namespace Chambered.Api.Controllers
             armoryItem.EstimatedValue = model.CurrentValue ?? model.EstimatedValue;
             armoryItem.Condition = ParseCondition(model.Condition);
             armoryItem.RoundCount = model.RoundCount;
-            armoryItem.Beneficiary = model.Beneficiary;
+            armoryItem.OwnerId = model.OwnerId;
+            armoryItem.BeneficiaryId = model.BeneficiaryId;
             armoryItem.VaultId = vaultId;
             armoryItem.ImageUrl = model.ImageUrl;
             armoryItem.NotesMarkdown = model.NotesMarkdown ?? model.Notes;
@@ -248,8 +316,12 @@ namespace Chambered.Api.Controllers
                 .Include(i => i.Product)
                     .ThenInclude(p => p.Manufacturer)
                 .Include(i => i.Product)
-                    .ThenInclude(p => p.Caliber)
+                    .ThenInclude(p => (p as PewPew).Caliber)
+                .Include(i => i.Product)
+                    .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .Include(i => i.Vault)
+                .Include(i => i.Owner)
+                .Include(i => i.Beneficiary)
                 .FirstAsync(i => i.Id == armoryItem.Id);
 
             return Ok(MapToDto(updated));
@@ -285,6 +357,38 @@ namespace Chambered.Api.Controllers
             return Ok(new { roundCount = armoryItem.RoundCount });
         }
 
+        // POST: api/armory/{id}/mount?parentId={parentId}
+        [HttpPost("{id}/mount")]
+        public async Task<IActionResult> Mount(int id, [FromQuery] int parentId)
+        {
+            var childItem = await _db.ArmoryItems.FindAsync(id);
+            if (childItem == null)
+                return NotFound("Child accessory not found.");
+
+            var parentItem = await _db.ArmoryItems.FindAsync(parentId);
+            if (parentItem == null)
+                return NotFound("Parent firearm/item not found.");
+
+            childItem.ParentItemId = parentId;
+            await _db.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        // POST: api/armory/{id}/unmount
+        [HttpPost("{id}/unmount")]
+        public async Task<IActionResult> Unmount(int id)
+        {
+            var childItem = await _db.ArmoryItems.FindAsync(id);
+            if (childItem == null)
+                return NotFound("Accessory not found.");
+
+            childItem.ParentItemId = null;
+            await _db.SaveChangesAsync();
+
+            return Ok();
+        }
+
         #region Helpers
 
         private ArmoryItemDto MapToDto(ArmoryItem i)
@@ -297,9 +401,9 @@ namespace Chambered.Api.Controllers
                 FirearmModelId = i.ProductId,
                 Model = i.Product?.Model ?? "",
                 PartNumber = i.Product?.PartNumber,
-                Caliber = i.Product?.Caliber?.Name ?? "",
+                Caliber = i.Product is PewPew pew ? (pew.Caliber?.Name ?? "") : (i.Product is Suppressor sup ? (sup.MaxCaliber?.Name ?? "") : ""),
                 SerialNumber = i.SerialNumber,
-                ActionType = i.Product != null ? FormatActionType(i.Product.ActionType) : "Semi-Automatic",
+                ActionType = i.Product is PewPew p ? FormatActionType(p.ActionType) : "Semi-Automatic",
                 BarrelLengthInches = i.BarrelLengthInches,
                 TwistRate = i.TwistRate,
                 ThreadPitch = i.ThreadPitch,
@@ -313,7 +417,10 @@ namespace Chambered.Api.Controllers
                 EstimatedValue = i.EstimatedValue,
                 Condition = FormatCondition(i.Condition),
                 RoundCount = i.RoundCount,
-                Beneficiary = i.Beneficiary,
+                OwnerId = i.OwnerId,
+                Owner = i.Owner?.UserName ?? "",
+                BeneficiaryId = i.BeneficiaryId,
+                Beneficiary = i.Beneficiary?.UserName ?? "",
                 VaultId = i.VaultId,
                 StorageLocation = i.Vault?.Name ?? "Main Vault",
                 ArsenalId = i.ArsenalId,
@@ -322,7 +429,26 @@ namespace Chambered.Api.Controllers
                 Notes = i.NotesMarkdown ?? "",
                 AccessoriesListJson = "[]",
                 MaintenanceTasksJson = "[]",
-                RangeHistoryJson = "[]"
+                RangeHistoryJson = "[]",
+                ParentItemId = i.ParentItemId,
+                ParentItemName = i.ParentItem != null ? $"{i.ParentItem.Product?.Manufacturer?.Name} {i.ParentItem.Product?.Model}" : null,
+                MountedAccessories = i.MountedAccessories != null 
+                    ? i.MountedAccessories.Select(acc => new ArmoryItemDto {
+                        Id = acc.Id,
+                        ManufacturerId = acc.Product?.ManufacturerId ?? 0,
+                        Manufacturer = acc.Product?.Manufacturer?.Name ?? "",
+                        FirearmModelId = acc.ProductId,
+                        Model = acc.Product?.Model ?? "",
+                        SerialNumber = acc.SerialNumber,
+                        Caliber = acc.Product is PewPew accPew ? (accPew.Caliber?.Name ?? "") : (acc.Product is Suppressor accSup ? (accSup.MaxCaliber?.Name ?? "") : ""),
+                        RoundCount = acc.RoundCount,
+                        Condition = FormatCondition(acc.Condition),
+                        ImageUrl = acc.ImageUrl,
+                        NotesMarkdown = acc.NotesMarkdown,
+                        Notes = acc.NotesMarkdown ?? "",
+                        ParentItemId = acc.ParentItemId
+                    }).ToList() 
+                    : new List<ArmoryItemDto>()
             };
         }
 
@@ -357,12 +483,12 @@ namespace Chambered.Api.Controllers
             var prod = await _db.Products.FirstOrDefaultAsync(p => p.Model.ToLower() == modelName.ToLower() && p.ManufacturerId == mfgId);
             if (prod == null)
             {
-                prod = new Product
+                prod = new PewPew
                 {
                     Model = modelName,
                     ManufacturerId = mfgId,
                     CaliberId = caliberId,
-                    Category = ProductCategory.Handgun // fallback category
+                    PewPewCategory = PewPewCategory.Handgun // fallback category
                 };
                 _db.Products.Add(prod);
                 await _db.SaveChangesAsync();
@@ -417,6 +543,9 @@ namespace Chambered.Api.Controllers
 
         private string FormatActionType(ActionType action)
         {
+            var displayName = action.GetDisplayName();
+            if (displayName != action.ToString()) return displayName;
+
             return action switch
             {
                 ActionType.SemiAutomatic => "Semi-Automatic",
@@ -449,6 +578,9 @@ namespace Chambered.Api.Controllers
         private string FormatCondition(ItemCondition? condition)
         {
             if (condition == null) return "Good (90%)";
+            var displayName = condition.GetDisplayName();
+            if (displayName != condition.ToString()) return displayName;
+
             return condition switch
             {
                 ItemCondition.Unfired => "New / Unfired (100%)",
@@ -465,6 +597,9 @@ namespace Chambered.Api.Controllers
 
         private string FormatDocumentType(DocumentType doc)
         {
+            var displayName = doc.GetDisplayName();
+            if (displayName != doc.ToString()) return displayName;
+
             return doc switch
             {
                 DocumentType.OwnerManual => "Owner's Manual",
@@ -480,6 +615,9 @@ namespace Chambered.Api.Controllers
 
         private string FormatLockType(LockType lockType)
         {
+            var displayName = lockType.GetDisplayName();
+            if (displayName != lockType.ToString()) return displayName;
+
             return lockType switch
             {
                 LockType.ElectronicKeypad => "Electronic Keypad",
@@ -496,6 +634,9 @@ namespace Chambered.Api.Controllers
 
         private string FormatNfaFormType(NfaFormType form)
         {
+            var displayName = form.GetDisplayName();
+            if (displayName != form.ToString()) return displayName;
+
             return form switch
             {
                 NfaFormType.Form1 => "ATF Form 1 (Manufacture)",
@@ -509,20 +650,23 @@ namespace Chambered.Api.Controllers
             };
         }
 
-        private string FormatProductCategory(ProductCategory cat)
+        private string FormatProductCategory(PewPewCategory cat)
         {
+            var displayName = cat.GetDisplayName();
+            if (displayName != cat.ToString()) return displayName;
+
             return cat switch
             {
-                ProductCategory.Handgun => "Handgun / Pistol",
-                ProductCategory.Rifle => "Centerfire Rifle",
-                ProductCategory.Shotgun => "Shotgun",
-                ProductCategory.Rimfire => "Rimfire Rifle / Pistol",
-                ProductCategory.PistolCaliberCarbine => "Pistol Caliber Carbine (PCC)",
-                ProductCategory.ReceiverOnly => "Receiver / Frame Only",
-                ProductCategory.NfaItem => "NFA regulated Item (SBR/Suppressor)",
-                ProductCategory.PrecisionLongRange => "Precision Long Range",
-                ProductCategory.Competition => "Competition Match",
-                ProductCategory.CurioAndRelic => "Curio & Relic (C&R)",
+                PewPewCategory.Handgun => "Handgun / Pistol",
+                PewPewCategory.Rifle => "Centerfire Rifle",
+                PewPewCategory.Shotgun => "Shotgun",
+                PewPewCategory.Rimfire => "Rimfire Rifle / Pistol",
+                PewPewCategory.PistolCaliberCarbine => "Pistol Caliber Carbine (PCC)",
+                PewPewCategory.ReceiverOnly => "Receiver / Frame Only",
+                PewPewCategory.NfaItem => "NFA regulated Item (SBR/Suppressor)",
+                PewPewCategory.PrecisionLongRange => "Precision Long Range",
+                PewPewCategory.Competition => "Competition Match",
+                PewPewCategory.CurioAndRelic => "Curio & Relic (C&R)",
                 _ => cat.ToString()
             };
         }
@@ -553,6 +697,9 @@ namespace Chambered.Api.Controllers
         public decimal? EstimatedValue { get; set; }
         public string? Condition { get; set; }
         public int RoundCount { get; set; }
+        public string? OwnerId { get; set; }
+        public string? Owner { get; set; }
+        public string? BeneficiaryId { get; set; }
         public string? Beneficiary { get; set; }
         public int? VaultId { get; set; }
         public string? StorageLocation { get; set; }
@@ -564,6 +711,10 @@ namespace Chambered.Api.Controllers
         public string? AccessoriesListJson { get; set; }
         public string? MaintenanceTasksJson { get; set; }
         public string? RangeHistoryJson { get; set; }
+
+        public int? ParentItemId { get; set; }
+        public string? ParentItemName { get; set; }
+        public List<ArmoryItemDto> MountedAccessories { get; set; } = new();
     }
 
     public class IncrementRoundsRequest
