@@ -1,16 +1,12 @@
 using Chambered.Data;
 using Chambered.Data.Enums;
 using Chambered.Data.Extensions;
-using Chambered.Data.Models;
 using Chambered.Data.Interfaces;
+using Chambered.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Chambered.Api.Controllers
 {

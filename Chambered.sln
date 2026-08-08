@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chambered.Api", "Chambered.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chambered.Data", "Chambered.Data\Chambered.Data.csproj", "{6BAEBB82-BEA4-94BD-6B48-1EA4464F5539}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chambered.Core", "Chambered.Core\Chambered.Core.csproj", "{C8D5EB13-2F31-4060-9D25-0B2BCB41896F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chambered.Infrastructure", "Chambered.Infrastructure\Chambered.Infrastructure.csproj", "{A80F33DB-0745-4AED-96C4-DDC1BA05E922}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{6BAEBB82-BEA4-94BD-6B48-1EA4464F5539}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BAEBB82-BEA4-94BD-6B48-1EA4464F5539}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BAEBB82-BEA4-94BD-6B48-1EA4464F5539}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8D5EB13-2F31-4060-9D25-0B2BCB41896F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8D5EB13-2F31-4060-9D25-0B2BCB41896F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8D5EB13-2F31-4060-9D25-0B2BCB41896F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8D5EB13-2F31-4060-9D25-0B2BCB41896F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A80F33DB-0745-4AED-96C4-DDC1BA05E922}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A80F33DB-0745-4AED-96C4-DDC1BA05E922}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A80F33DB-0745-4AED-96C4-DDC1BA05E922}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A80F33DB-0745-4AED-96C4-DDC1BA05E922}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,6 +1,6 @@
+using Chambered.Data.Enums;
 using Chambered.Data.Models;
 using Chambered.Data.Utility;
-using Chambered.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

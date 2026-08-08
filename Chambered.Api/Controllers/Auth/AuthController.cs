@@ -1,14 +1,10 @@
 using Chambered.Data;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Chambered.Api.Controllers.Auth
 {
@@ -155,7 +151,7 @@ namespace Chambered.Api.Controllers.Auth
             // Set cookie for state verification
             Response.Cookies.Append("oidc_state", state, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Lax });
 
-            var redirectUri = Url.Action("OidcCallback", "AuthController", null, Request.Scheme) 
+            var redirectUri = Url.Action("OidcCallback", "AuthController", null, Request.Scheme)
                 ?? $"{Request.Scheme}://{Request.Host}/api/auth/oidc/callback";
 
             var authUrl = $"{config.AuthUrl}?client_id={Uri.EscapeDataString(config.ClientId)}" +
@@ -185,7 +181,7 @@ namespace Chambered.Api.Controllers.Auth
             if (config == null || !config.IsEnabled)
                 return BadRequest("OIDC is disabled.");
 
-            var redirectUri = Url.Action("OidcCallback", "AuthController", null, Request.Scheme) 
+            var redirectUri = Url.Action("OidcCallback", "AuthController", null, Request.Scheme)
                 ?? $"{Request.Scheme}://{Request.Host}/api/auth/oidc/callback";
 
             try

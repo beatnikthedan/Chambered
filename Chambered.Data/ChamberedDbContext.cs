@@ -1,6 +1,5 @@
-using Chambered.Data;
-using Chambered.Data.Models;
 using Chambered.Data.Enums;
+using Chambered.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -11,7 +10,7 @@ namespace Chambered.Data
     public class ChamberedDbContext : IdentityDbContext<ChamberedUser>
     {
         //builder.Services.AddDbContext<ChamberedDbContext>(options =>options.UseSqlite("Data Source=chambered.db"));
-        
+
         public ChamberedDbContext(DbContextOptions<ChamberedDbContext> options)
             : base(options)
         {
@@ -36,7 +35,7 @@ namespace Chambered.Data
 
         public DbSet<Vault> Vaults { get; set; }
         public DbSet<VaultCategory> VaultCategories { get; set; }
-        
+
 
 
 
@@ -44,17 +43,17 @@ namespace Chambered.Data
         public DbSet<Projectile> Projectiles { get; set; }
         public DbSet<Cartridge> Cartridges { get; set; }
         public DbSet<FactoryAmmo> FactoryAmmo { get; set; }
-        
+
         public DbSet<ExternalSourceMap> ExternalSourceMaps { get; set; }
         public DbSet<Powder> Powders { get; set; }
-        
+
         public DbSet<CartridgeLot> CartridgeLots { get; set; }
         public DbSet<AmmoLot> AmmoLots { get; set; }
         public DbSet<Primer> Primers { get; set; }
         public DbSet<OidcConfig> OidcConfigs { get; set; }
         public DbSet<ApiKey> ApiKeys { get; set; }
-        
-        
+
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -179,7 +178,7 @@ namespace Chambered.Data
         public string Notes { get; set; }
     }
 
-    
+
 
     public class CartridgeLot
     {
@@ -237,7 +236,7 @@ namespace Chambered.Data
 
         public string Notes { get; set; }
     }
-    
+
     public class PrimerConfiguration : IEntityTypeConfiguration<Primer>
     {
         public void Configure(EntityTypeBuilder<Primer> builder)

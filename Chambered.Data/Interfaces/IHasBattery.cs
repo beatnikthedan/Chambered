@@ -1,6 +1,3 @@
-using System;
-using Chambered.Data.Enums;
-
 namespace Chambered.Data.Interfaces
 {
     /// <summary>

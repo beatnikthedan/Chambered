@@ -1,10 +1,7 @@
-using Chambered.Api.Authentication;
 using Chambered.Data;
 using Chambered.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Threading.Tasks;
 
 namespace Chambered.Api.Data
 {

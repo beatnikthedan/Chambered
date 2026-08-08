@@ -1,14 +1,11 @@
 using Chambered.Data;
-using Chambered.Data.Models;
 using Chambered.Data.Enums;
 using Chambered.Data.Extensions;
 using Chambered.Data.Interfaces;
+using Chambered.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Chambered.Api.Controllers
 {
@@ -72,7 +69,8 @@ namespace Chambered.Api.Controllers
                 .OrderBy(p => p.Model)
                 .ToListAsync();
 
-            var dtos = products.Select(p => {
+            var dtos = products.Select(p =>
+            {
                 string caliberName = "";
                 int caliberId = 0;
                 string actionType = "N/A";
@@ -498,8 +496,9 @@ namespace Chambered.Api.Controllers
                 RangeHistoryJson = "[]",
                 ParentItemId = i.ParentItemId,
                 ParentItemName = i.ParentItem != null ? $"{i.ParentItem.Product?.Manufacturer?.Name} {i.ParentItem.Product?.Model}" : null,
-                MountedAccessories = i.MountedAccessories != null 
-                    ? i.MountedAccessories.Select(acc => new ArmoryItemDto {
+                MountedAccessories = i.MountedAccessories != null
+                    ? i.MountedAccessories.Select(acc => new ArmoryItemDto
+                    {
                         Id = acc.Id,
                         ManufacturerId = acc.Product?.ManufacturerId ?? 0,
                         Manufacturer = acc.Product?.Manufacturer?.Name ?? "",
@@ -517,7 +516,7 @@ namespace Chambered.Api.Controllers
                         Sku = acc.Product?.Sku,
                         WebPageUrl = acc.Product?.WebPageUrl,
                         ManufacturerWebPageUrl = acc.Product?.Manufacturer?.WebPageUrl
-                    }).ToList() 
+                    }).ToList()
                     : new List<ArmoryItemDto>()
             };
         }

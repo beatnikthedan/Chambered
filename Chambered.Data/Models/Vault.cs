@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using Chambered.Data.Enums;
 using Chambered.Data.Interfaces;
 
 namespace Chambered.Data.Models
