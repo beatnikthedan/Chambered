@@ -2,6 +2,7 @@ using Chambered.Data;
 using Chambered.Data.Models;
 using Chambered.Data.Enums;
 using Chambered.Data.Extensions;
+using Chambered.Data.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -238,7 +239,7 @@ namespace Chambered.Api.Controllers
                 armoryItem = new OpticArmoryItem
                 {
                     BatteryLastChangedDate = model.BatteryLastChangedDate,
-                    BatteryType = model.BatteryType
+                    BatteryExpirationDate = model.BatteryExpirationDate
                 };
             }
             else if (product is PewPewLight)
@@ -246,23 +247,12 @@ namespace Chambered.Api.Controllers
                 armoryItem = new LightArmoryItem
                 {
                     BatteryLastChangedDate = model.BatteryLastChangedDate,
-                    BatteryType = model.BatteryType
+                    BatteryExpirationDate = model.BatteryExpirationDate
                 };
             }
             else
             {
-                if (model.BatteryLastChangedDate != null || !string.IsNullOrEmpty(model.BatteryType))
-                {
-                    armoryItem = new BatteryPoweredArmoryItem
-                    {
-                        BatteryLastChangedDate = model.BatteryLastChangedDate,
-                        BatteryType = model.BatteryType
-                    };
-                }
-                else
-                {
-                    armoryItem = new ArmoryItem();
-                }
+                armoryItem = new ArmoryItem();
             }
 
             // Set common inventory parameters
@@ -355,10 +345,10 @@ namespace Chambered.Api.Controllers
                 nfa.StampApprovalDate = model.StampApprovalDate;
             }
 
-            if (armoryItem is BatteryPoweredArmoryItem bat)
+            if (armoryItem is IHasBattery bat)
             {
                 bat.BatteryLastChangedDate = model.BatteryLastChangedDate;
-                bat.BatteryType = model.BatteryType;
+                bat.BatteryExpirationDate = model.BatteryExpirationDate;
             }
             armoryItem.PurchasePrice = model.PurchasePrice;
             armoryItem.PurchaseDate = model.PurchaseDate;
@@ -473,8 +463,9 @@ namespace Chambered.Api.Controllers
                 NfaFormType = i is NfaArmoryItem formItem ? formItem.NfaFormType?.ToString() : null,
                 TaxStampDocumentUrl = i is NfaArmoryItem stampDoc ? stampDoc.TaxStampDocumentUrl : null,
                 StampApprovalDate = i is NfaArmoryItem stampDate ? stampDate.StampApprovalDate : null,
-                BatteryLastChangedDate = i is BatteryPoweredArmoryItem batItem ? batItem.BatteryLastChangedDate : null,
-                BatteryType = i is BatteryPoweredArmoryItem batType ? batType.BatteryType : null,
+                BatteryLastChangedDate = i is IHasBattery batItem ? batItem.BatteryLastChangedDate : null,
+                BatteryExpirationDate = i is IHasBattery expItem ? expItem.BatteryExpirationDate : null,
+                BatteryType = i.Product is INeedsBattery needBat ? (BatteryType?)needBat.BatteryType : null,
                 ItemType = i.GetType().Name,
                 PurchasePrice = i.PurchasePrice,
                 PurchaseDate = i.PurchaseDate,
@@ -757,7 +748,8 @@ namespace Chambered.Api.Controllers
         public string? TaxStampDocumentUrl { get; set; }
         public DateTime? StampApprovalDate { get; set; }
         public DateTime? BatteryLastChangedDate { get; set; }
-        public string? BatteryType { get; set; }
+        public DateTime? BatteryExpirationDate { get; set; }
+        public BatteryType? BatteryType { get; set; }
         public string? ItemType { get; set; }
         public decimal? PurchasePrice { get; set; }
         public DateTime? PurchaseDate { get; set; }

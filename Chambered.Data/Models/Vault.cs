@@ -1,9 +1,14 @@
+using System;
+using System.Collections.Generic;
+using Chambered.Data.Enums;
+using Chambered.Data.Interfaces;
+
 namespace Chambered.Data.Models
 {
     /// <summary>
     /// Represents a secure container, room, vehicle, or physical location where armory items or ammunition are stored.
     /// </summary>
-    public class Vault
+    public class Vault : IHasBattery
     {
         #region Primary Identification
 
@@ -11,6 +16,16 @@ namespace Chambered.Data.Models
         /// Gets or sets the unique primary key for the vault.
         /// </summary>
         public int Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the foreign key of the associated catalog product.
+        /// </summary>
+        public int? ProductId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the navigation property for the associated catalog product.
+        /// </summary>
+        public Security? Product { get; set; }
 
         /// <summary>
         /// Gets or sets the friendly name of the vault (e.g., "Main Gun Safe", "Bedside Vault", "Truck Console Safe").
@@ -93,7 +108,12 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the last date electronic lock batteries were replaced.
         /// </summary>
-        public DateTime? LockBatteryLastChanged { get; set; }
+        public DateTime? BatteryLastChangedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the battery expiration date.
+        /// </summary>
+        public DateTime? BatteryExpirationDate { get; set; }
 
         #endregion
 

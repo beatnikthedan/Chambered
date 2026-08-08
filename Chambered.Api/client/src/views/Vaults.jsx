@@ -2,6 +2,18 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../StoreContext'
 import './Vaults.css'
 
+const BATTERY_TYPES = [
+    { value: 'Unknown', label: 'Unknown Battery' },
+    { value: 'Cr123A', label: 'CR123A Lithium' },
+    { value: 'Cr2', label: 'CR2 Lithium' },
+    { value: 'Cr2032', label: 'CR2032 Coin Cell' },
+    { value: 'Aa', label: 'AA Alkaline/Lithium' },
+    { value: 'Aaa', label: 'AAA Alkaline/Lithium' },
+    { value: 'LiIon18650', label: '18650 Li-Ion Rechargeable' },
+    { value: 'LiIon18350', label: '18350 Li-Ion Rechargeable' },
+    { value: 'IntegratedRechargeable', label: 'Integrated USB Rechargeable' }
+];
+
 export default function Vaults() {
     const store = useStore()
     const { enums } = store
@@ -16,6 +28,7 @@ export default function Vaults() {
 
     const [vaults, setVaults] = useState([])
     const [categories, setCategories] = useState([])
+    const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -44,7 +57,10 @@ export default function Vaults() {
         passcode: '',
         passcodeHint: '',
         backupKeyLocation: '',
-        lockBatteryLastChanged: '',
+        productId: '',
+        batteryLastChangedDate: '',
+        batteryExpirationDate: '',
+        batteryType: 'Unknown',
         hasDehumidifier: false,
         dehumidifierLastServiced: '',
         targetMaxHumidityPercent: 45,
@@ -83,9 +99,21 @@ export default function Vaults() {
         }
     }
 
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch('/api/products?type=security')
+            if (res.ok) {
+                setProducts(await res.json())
+            }
+        } catch (err) {
+            console.error('Failed to load products', err)
+        }
+    }
+
     useEffect(() => {
         fetchVaults()
         fetchCategories()
+        fetchProducts()
     }, [store.activeArsenalId])
 
     // Map flat vault list to a hierarchical tree
@@ -145,7 +173,10 @@ export default function Vaults() {
             passcode: '',
             passcodeHint: '',
             backupKeyLocation: '',
-            lockBatteryLastChanged: '',
+            productId: '',
+            batteryLastChangedDate: '',
+            batteryExpirationDate: '',
+            batteryType: 'Unknown',
             hasDehumidifier: false,
             dehumidifierLastServiced: '',
             targetMaxHumidityPercent: 45,
@@ -160,8 +191,13 @@ export default function Vaults() {
         setShowPassword(false)
 
         let batteryDate = ''
-        if (vault.lockBatteryLastChanged) {
-            batteryDate = vault.lockBatteryLastChanged.split('T')[0]
+        if (vault.batteryLastChangedDate) {
+            batteryDate = vault.batteryLastChangedDate.split('T')[0]
+        }
+
+        let batteryExpDate = ''
+        if (vault.batteryExpirationDate) {
+            batteryExpDate = vault.batteryExpirationDate.split('T')[0]
         }
 
         let dehumidifierDate = ''
@@ -180,7 +216,10 @@ export default function Vaults() {
             passcode: vault.passcode || '',
             passcodeHint: vault.passcodeHint || '',
             backupKeyLocation: vault.backupKeyLocation || '',
-            lockBatteryLastChanged: batteryDate,
+            productId: vault.productId || '',
+            batteryLastChangedDate: batteryDate,
+            batteryExpirationDate: batteryExpDate,
+            batteryType: vault.batteryType || 'Unknown',
             hasDehumidifier: vault.hasDehumidifier || false,
             dehumidifierLastServiced: dehumidifierDate,
             targetMaxHumidityPercent: vault.targetMaxHumidityPercent || 45,
@@ -194,13 +233,16 @@ export default function Vaults() {
         if (!form.name.trim()) return
 
         setIsSaving(true)
+        const { batteryType, ...restForm } = form
         const payload = {
-            ...form,
-            parentVaultId: form.parentVaultId ? parseInt(form.parentVaultId) : null,
-            vaultCategoryId: form.vaultCategoryId ? parseInt(form.vaultCategoryId) : null,
-            lockBatteryLastChanged: form.lockBatteryLastChanged ? new Date(form.lockBatteryLastChanged).toISOString() : null,
-            dehumidifierLastServiced: form.dehumidifierLastServiced ? new Date(form.dehumidifierLastServiced).toISOString() : null,
-            targetMaxHumidityPercent: form.hasDehumidifier ? parseInt(form.targetMaxHumidityPercent) : null
+            ...restForm,
+            parentVaultId: restForm.parentVaultId ? parseInt(restForm.parentVaultId) : null,
+            vaultCategoryId: restForm.vaultCategoryId ? parseInt(restForm.vaultCategoryId) : null,
+            productId: restForm.productId ? parseInt(restForm.productId) : null,
+            batteryLastChangedDate: restForm.batteryLastChangedDate ? new Date(restForm.batteryLastChangedDate).toISOString() : null,
+            batteryExpirationDate: restForm.batteryExpirationDate ? new Date(restForm.batteryExpirationDate).toISOString() : null,
+            dehumidifierLastServiced: restForm.dehumidifierLastServiced ? new Date(restForm.dehumidifierLastServiced).toISOString() : null,
+            targetMaxHumidityPercent: restForm.hasDehumidifier ? parseInt(restForm.targetMaxHumidityPercent) : null
         }
 
         try {
@@ -218,8 +260,12 @@ export default function Vaults() {
                 setIsEditMode(true)
 
                 let batteryDate = ''
-                if (savedItem.lockBatteryLastChanged) {
-                    batteryDate = savedItem.lockBatteryLastChanged.split('T')[0]
+                if (savedItem.batteryLastChangedDate) {
+                    batteryDate = savedItem.batteryLastChangedDate.split('T')[0]
+                }
+                let batteryExpDate = ''
+                if (savedItem.batteryExpirationDate) {
+                    batteryExpDate = savedItem.batteryExpirationDate.split('T')[0]
                 }
                 let dehumidifierDate = ''
                 if (savedItem.dehumidifierLastServiced) {
@@ -237,7 +283,10 @@ export default function Vaults() {
                     passcode: savedItem.passcode || '',
                     passcodeHint: savedItem.passcodeHint || '',
                     backupKeyLocation: savedItem.backupKeyLocation || '',
-                    lockBatteryLastChanged: batteryDate,
+                    productId: savedItem.productId || '',
+                    batteryLastChangedDate: batteryDate,
+                    batteryExpirationDate: batteryExpDate,
+                    batteryType: savedItem.batteryType || 'Unknown',
                     hasDehumidifier: savedItem.hasDehumidifier || false,
                     dehumidifierLastServiced: dehumidifierDate,
                     targetMaxHumidityPercent: savedItem.targetMaxHumidityPercent || 45,
@@ -343,7 +392,7 @@ export default function Vaults() {
                     {viewMode === 'grid' && (
                         <section className="vaults-grid-layout">
                             {vaults.map((vault) => {
-                                const isBatteryLow = needsBatteryChange(vault.lockBatteryLastChanged)
+                                 const isBatteryLow = needsBatteryChange(vault.batteryLastChangedDate)
                                 return (
                                     <div key={vault.id} className="vault-card-node" onClick={() => openEditModal(vault)}>
 
@@ -525,6 +574,28 @@ export default function Vaults() {
                                                 ))}
                                             </select>
                                         </div>
+                                        <div className="form-item full-row">
+                                            <label>Catalog Product Link</label>
+                                            <select
+                                                value={form.productId}
+                                                onChange={(e) => {
+                                                    const pId = e.target.value;
+                                                    const p = products.find(prod => prod.id === parseInt(pId));
+                                                    setForm(prev => ({
+                                                        ...prev,
+                                                        productId: pId,
+                                                        batteryType: p?.batteryType || 'Unknown'
+                                                    }));
+                                                }}
+                                            >
+                                                <option value="">-- No Linked Catalog Product --</option>
+                                                {products.map(prod => (
+                                                    <option key={prod.id} value={prod.id}>
+                                                        [{prod.productType}] {prod.manufacturerName} - {prod.model}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -584,14 +655,44 @@ export default function Vaults() {
                                             />
                                         </div>
 
-                                        <div className="form-item">
-                                            <label>Battery Last Replaced</label>
-                                            <input
-                                                type="date"
-                                                value={form.lockBatteryLastChanged}
-                                                onChange={(e) => setForm(prev => ({ ...prev, lockBatteryLastChanged: e.target.value }))}
-                                            />
-                                        </div>
+                                        {(() => {
+                                             const selectedProduct = products.find(p => p.id === parseInt(form.productId));
+                                             const hasBattery = !!selectedProduct?.hasBattery;
+                                             return hasBattery && (
+                                                 <div className="form-item-group-container" style={{ gridColumn: 'span 2', background: 'rgba(58, 190, 240, 0.03)', border: '1px solid rgba(58, 190, 240, 0.15)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginTop: '4px', marginBottom: '12px' }}>
+                                                     <h4 style={{ color: '#3abef0', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 14px 0', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                         <span style={{ fontSize: '15px' }}>🔋</span> Power & Battery Specifications
+                                                     </h4>
+                                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                                                         <div className="form-item">
+                                                             <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Battery Type</label>
+                                                             <input
+                                                                 type="text"
+                                                                 style={{ opacity: 0.8, cursor: 'not-allowed', backgroundColor: 'rgba(255,255,255,0.05)' }}
+                                                                 value={selectedProduct ? (selectedProduct.batteryType || 'Unknown') : 'N/A (No Product Linked)'}
+                                                                 readOnly
+                                                             />
+                                                         </div>
+                                                         <div className="form-item">
+                                                             <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Battery Last Changed</label>
+                                                             <input
+                                                                 type="date"
+                                                                 value={form.batteryLastChangedDate || ''}
+                                                                 onChange={(e) => setForm(prev => ({ ...prev, batteryLastChangedDate: e.target.value }))}
+                                                             />
+                                                         </div>
+                                                         <div className="form-item">
+                                                             <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Battery Expiration Date</label>
+                                                             <input
+                                                                 type="date"
+                                                                 value={form.batteryExpirationDate || ''}
+                                                                 onChange={(e) => setForm(prev => ({ ...prev, batteryExpirationDate: e.target.value }))}
+                                                             />
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             );
+                                         })()}
 
                                         {/* ENVIRONMENT / DEHUMIDIFIER */}
                                         <div className="form-item full-row env-boundary-decorator">

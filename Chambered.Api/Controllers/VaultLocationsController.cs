@@ -38,6 +38,7 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
+                .Include(v => v.Product).ThenInclude(p => p.Manufacturer)
                 .Where(v => v.ArsenalId == arsenalId)
                 .ToListAsync();
 
@@ -62,6 +63,7 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
+                .Include(v => v.Product).ThenInclude(p => p.Manufacturer)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (vault == null)
@@ -112,7 +114,9 @@ namespace Chambered.Api.Controllers
                 EncryptedPasscode = model.Passcode,
                 PasscodeHint = model.PasscodeHint,
                 BackupKeyLocation = model.BackupKeyLocation,
-                LockBatteryLastChanged = model.LockBatteryLastChanged,
+                ProductId = model.ProductId,
+                BatteryLastChangedDate = model.BatteryLastChangedDate,
+                BatteryExpirationDate = model.BatteryExpirationDate,
                 HasDehumidifier = model.HasDehumidifier,
                 DehumidifierLastServiced = model.DehumidifierLastServiced,
                 TargetMaxHumidityPercent = model.TargetMaxHumidityPercent
@@ -127,6 +131,7 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
+                .Include(v => v.Product).ThenInclude(p => p.Manufacturer)
                 .FirstAsync(v => v.Id == vault.Id);
 
             return CreatedAtAction(nameof(GetById), new { id = vault.Id }, MapToDto(created));
@@ -152,7 +157,9 @@ namespace Chambered.Api.Controllers
             vault.EncryptedPasscode = model.Passcode;
             vault.PasscodeHint = model.PasscodeHint;
             vault.BackupKeyLocation = model.BackupKeyLocation;
-            vault.LockBatteryLastChanged = model.LockBatteryLastChanged;
+            vault.ProductId = model.ProductId;
+            vault.BatteryLastChangedDate = model.BatteryLastChangedDate;
+            vault.BatteryExpirationDate = model.BatteryExpirationDate;
             vault.HasDehumidifier = model.HasDehumidifier;
             vault.DehumidifierLastServiced = model.DehumidifierLastServiced;
             vault.TargetMaxHumidityPercent = model.TargetMaxHumidityPercent;
@@ -165,6 +172,7 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
+                .Include(v => v.Product).ThenInclude(p => p.Manufacturer)
                 .FirstAsync(v => v.Id == vault.Id);
 
             return Ok(MapToDto(updated));
@@ -234,7 +242,12 @@ namespace Chambered.Api.Controllers
                 Passcode = v.EncryptedPasscode, // Transparently decrypted by symmetric value converter!
                 PasscodeHint = v.PasscodeHint,
                 BackupKeyLocation = v.BackupKeyLocation,
-                LockBatteryLastChanged = v.LockBatteryLastChanged,
+                ProductId = v.ProductId,
+                ProductModel = v.Product?.Model,
+                ProductManufacturerName = v.Product?.Manufacturer?.Name,
+                BatteryLastChangedDate = v.BatteryLastChangedDate,
+                BatteryExpirationDate = v.BatteryExpirationDate,
+                BatteryType = v.Product?.BatteryType,
                 HasDehumidifier = v.HasDehumidifier,
                 DehumidifierLastServiced = v.DehumidifierLastServiced,
                 TargetMaxHumidityPercent = v.TargetMaxHumidityPercent,
@@ -266,7 +279,12 @@ namespace Chambered.Api.Controllers
         public string? Passcode { get; set; }
         public string? PasscodeHint { get; set; }
         public string? BackupKeyLocation { get; set; }
-        public DateTime? LockBatteryLastChanged { get; set; }
+        public int? ProductId { get; set; }
+        public string? ProductModel { get; set; }
+        public string? ProductManufacturerName { get; set; }
+        public DateTime? BatteryLastChangedDate { get; set; }
+        public DateTime? BatteryExpirationDate { get; set; }
+        public BatteryType? BatteryType { get; set; }
 
         // Climate Info
         public bool HasDehumidifier { get; set; }

@@ -2,6 +2,7 @@ using Chambered.Data;
 using Chambered.Data.Enums;
 using Chambered.Data.Extensions;
 using Chambered.Data.Models;
+using Chambered.Data.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +63,7 @@ namespace Chambered.Api.Controllers
                     "optic" => query.OfType<Optic>(),
                     "suppressor" => query.OfType<Suppressor>(),
                     "pewpewlight" => query.OfType<PewPewLight>(),
+                    "security" => query.OfType<Security>(),
                     _ => query
                 };
             }
@@ -152,6 +154,7 @@ namespace Chambered.Api.Controllers
             else if (dto is OpticDto) product = new Optic();
             else if (dto is SuppressorDto) product = new Suppressor();
             else if (dto is PewPewLightDto) product = new PewPewLight();
+            else if (dto is SecurityDto) product = new Security();
             else product = new Product();
 
             UpdateEntityFromDto(product, dto);
@@ -311,7 +314,9 @@ namespace Chambered.Api.Controllers
                     TubeDiameter = opt.TubeDiameter,
                     Footprint = opt.Footprint,
                     IsIlluminated = opt.IsIlluminated,
-                    MagnificationDisplay = opt.MagnificationDisplay
+                    MagnificationDisplay = opt.MagnificationDisplay,
+                    HasBattery = opt.HasBattery,
+                    BatteryType = opt.BatteryType.GetDisplayName()
                 };
             }
             if (p is Suppressor sup)
@@ -360,11 +365,31 @@ namespace Chambered.Api.Controllers
                     MountType = lgt.MountType.GetDisplayName(),
                     LaserColor = lgt.LaserColor.GetDisplayName(),
                     HasRemoteSwitchPort = lgt.HasRemoteSwitchPort,
-                    IsInfraredCapable = lgt.IsInfraredCapable
+                    IsInfraredCapable = lgt.IsInfraredCapable,
+                    HasBattery = lgt.HasBattery
+                };
+            }
+            if (p is Security sec)
+            {
+                return new SecurityDto
+                {
+                    Id = sec.Id,
+                    ProductType = "Security",
+                    Model = sec.Model,
+                    PartNumber = sec.PartNumber,
+                    Sku = sec.Sku,
+                    ManufacturerId = sec.ManufacturerId,
+                    ManufacturerName = sec.Manufacturer?.Name,
+                    ManufacturerWebPageUrl = sec.Manufacturer?.WebPageUrl,
+                    WebPageUrl = sec.WebPageUrl,
+                    ReferenceNotes = sec.ReferenceNotes,
+                    Specifications = sec.Specifications ?? new(),
+                    HasBattery = sec.HasBattery,
+                    BatteryType = sec.BatteryType.GetDisplayName()
                 };
             }
 
-            return new ProductDto
+            var dtoResult = new ProductDto
             {
                 Id = p.Id,
                 ProductType = "Product",
@@ -378,6 +403,26 @@ namespace Chambered.Api.Controllers
                 ReferenceNotes = p.ReferenceNotes,
                 Specifications = p.Specifications ?? new()
             };
+
+            if (p is INeedsBattery bat)
+            {
+                dtoResult.HasBattery = bat.HasBattery;
+            }
+
+            if (p is Optic optProd)
+            {
+                dtoResult.BatteryType = optProd.BatteryType.GetDisplayName();
+            }
+            else if (p is PewPewLight lgtProd)
+            {
+                dtoResult.BatteryType = lgtProd.BatteryType.GetDisplayName();
+            }
+            else if (p is Security secProd)
+            {
+                dtoResult.BatteryType = secProd.BatteryType.GetDisplayName();
+            }
+
+            return dtoResult;
         }
 
         private void UpdateEntityFromDto(Product p, ProductDto dto)
@@ -389,6 +434,33 @@ namespace Chambered.Api.Controllers
             p.WebPageUrl = dto.WebPageUrl;
             p.ReferenceNotes = dto.ReferenceNotes;
             p.Specifications = dto.Specifications ?? new();
+
+            if (p is INeedsBattery bat)
+            {
+                bat.HasBattery = dto.HasBattery;
+            }
+
+            if (p is Optic optProd)
+            {
+                if (!string.IsNullOrEmpty(dto.BatteryType))
+                    optProd.BatteryType = EnumExtensions.ParseEnumWithDisplay<BatteryType>(dto.BatteryType);
+                else
+                    optProd.BatteryType = BatteryType.Unknown;
+            }
+            else if (p is PewPewLight lgtProd)
+            {
+                if (!string.IsNullOrEmpty(dto.BatteryType))
+                    lgtProd.BatteryType = EnumExtensions.ParseEnumWithDisplay<BatteryType>(dto.BatteryType);
+                else
+                    lgtProd.BatteryType = BatteryType.Unknown;
+            }
+            else if (p is Security secProd)
+            {
+                if (!string.IsNullOrEmpty(dto.BatteryType))
+                    secProd.BatteryType = EnumExtensions.ParseEnumWithDisplay<BatteryType>(dto.BatteryType);
+                else
+                    secProd.BatteryType = BatteryType.Unknown;
+            }
 
             if (p is PewPew pew && dto is PewPewDto pewDto)
             {
@@ -433,8 +505,6 @@ namespace Chambered.Api.Controllers
                 lgt.Candela = lgtDto.Candela;
                 lgt.HasRemoteSwitchPort = lgtDto.HasRemoteSwitchPort;
                 lgt.IsInfraredCapable = lgtDto.IsInfraredCapable;
-                if (!string.IsNullOrEmpty(lgtDto.BatteryType))
-                    lgt.BatteryType = EnumExtensions.ParseEnumWithDisplay<BatteryType>(lgtDto.BatteryType);
                 if (!string.IsNullOrEmpty(lgtDto.MountType))
                     lgt.MountType = EnumExtensions.ParseEnumWithDisplay<LightMountType>(lgtDto.MountType);
                 if (!string.IsNullOrEmpty(lgtDto.LaserColor))
@@ -453,6 +523,7 @@ namespace Chambered.Api.Controllers
     [JsonDerivedType(typeof(OpticDto), typeDiscriminator: "Optic")]
     [JsonDerivedType(typeof(SuppressorDto), typeDiscriminator: "Suppressor")]
     [JsonDerivedType(typeof(PewPewLightDto), typeDiscriminator: "PewPewLight")]
+    [JsonDerivedType(typeof(SecurityDto), typeDiscriminator: "Security")]
     public class ProductDto
     {
         public int Id { get; set; }
@@ -466,6 +537,8 @@ namespace Chambered.Api.Controllers
         public string? WebPageUrl { get; set; }
         public string? ReferenceNotes { get; set; }
         public Dictionary<string, string> Specifications { get; set; } = new();
+        public bool HasBattery { get; set; }
+        public string BatteryType { get; set; } = string.Empty;
     }
 
     public class PewPewDto : ProductDto
@@ -507,11 +580,14 @@ namespace Chambered.Api.Controllers
     {
         public int Lumens { get; set; }
         public int Candela { get; set; }
-        public string BatteryType { get; set; } = string.Empty;
         public string MountType { get; set; } = string.Empty;
         public string LaserColor { get; set; } = string.Empty;
         public bool HasRemoteSwitchPort { get; set; }
         public bool IsInfraredCapable { get; set; }
+    }
+
+    public class SecurityDto : ProductDto
+    {
     }
 
     #endregion

@@ -2,6 +2,18 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../StoreContext'
 import './Armory.css'
 
+const BATTERY_TYPES = [
+    { value: 'Unknown', label: 'Unknown Battery' },
+    { value: 'Cr123A', label: 'CR123A Lithium' },
+    { value: 'Cr2', label: 'CR2 Lithium' },
+    { value: 'Cr2032', label: 'CR2032 Coin Cell' },
+    { value: 'Aa', label: 'AA Alkaline/Lithium' },
+    { value: 'Aaa', label: 'AAA Alkaline/Lithium' },
+    { value: 'LiIon18650', label: '18650 Li-Ion Rechargeable' },
+    { value: 'LiIon18350', label: '18350 Li-Ion Rechargeable' },
+    { value: 'IntegratedRechargeable', label: 'Integrated USB Rechargeable' }
+];
+
 export default function Armory() {
     const store = useStore()
     const { enums } = store
@@ -641,8 +653,9 @@ export default function Armory() {
                 finalMod = customModel.trim()
             }
 
+            const { batteryType, ...restForm } = form;
             const payload = {
-                ...form,
+                ...restForm,
                 firearmModelId: form.pewpewModelId || form.firearmModelId || 0,
                 pewpewModelId: form.pewpewModelId || form.firearmModelId || 0,
                 manufacturer: finalMfg,
@@ -863,7 +876,11 @@ export default function Armory() {
 
     const isFirearm = activeItemType === 'PewArmoryItem';
     const isNfa = activeItemType === 'NfaArmoryItem' || activeItemType === 'SuppressorArmoryItem' || (isFirearm && form.isNfaItem);
-    const isBatteryPowered = activeItemType === 'BatteryPoweredArmoryItem' || activeItemType === 'OpticArmoryItem' || activeItemType === 'LightArmoryItem';
+    const isBatteryPowered = (() => {
+        if (activeItemType === 'OpticArmoryItem' || activeItemType === 'LightArmoryItem') return true;
+        const p = products.find(prod => prod.id === form.pewpewModelId);
+        return p?.hasBattery || false;
+    })();
 
     return (
         <div className="armory-view">
@@ -1143,39 +1160,43 @@ export default function Armory() {
                                             );
                                         })()}
 
-
                                         {isFirearm && (
-                                            <>
-                                                <div className="form-item">
-                                                    <label>Barrel Length (Inches)</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={form.barrelLengthInches || ''}
-                                                        onChange={(e) => setForm({ ...form, barrelLengthInches: e.target.value })}
-                                                    />
-                                                </div>
+                                            <div className="form-item-group-container" style={{ gridColumn: 'span 2', background: 'rgba(138, 79, 255, 0.03)', border: '1px solid rgba(138, 79, 255, 0.15)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginTop: '4px', marginBottom: '12px' }}>
+                                                <h4 style={{ color: '#8a4fff', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 14px 0', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '15px' }}>🎯</span> Firearm & Ballistics Specifications
+                                                </h4>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                                                    <div className="form-item">
+                                                        <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Barrel Length (Inches)</label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={form.barrelLengthInches || ''}
+                                                            onChange={(e) => setForm({ ...form, barrelLengthInches: e.target.value })}
+                                                        />
+                                                    </div>
 
-                                                <div className="form-item">
-                                                    <label>Twist Rate</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="e.g. 1:10"
-                                                        value={form.twistRate || ''}
-                                                        onChange={(e) => setForm({ ...form, twistRate: e.target.value })}
-                                                    />
-                                                </div>
+                                                    <div className="form-item">
+                                                        <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Twist Rate</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="e.g. 1:10"
+                                                            value={form.twistRate || ''}
+                                                            onChange={(e) => setForm({ ...form, twistRate: e.target.value })}
+                                                        />
+                                                    </div>
 
-                                                <div className="form-item" style={{ gridColumn: 'span 2' }}>
-                                                    <label>Thread Pitch</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="e.g. 1/2x28, 5/8x24"
-                                                        value={form.threadPitch || ''}
-                                                        onChange={(e) => setForm({ ...form, threadPitch: e.target.value })}
-                                                    />
+                                                    <div className="form-item" style={{ gridColumn: 'span 2' }}>
+                                                        <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Thread Pitch</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="e.g. 1/2x28, 5/8x24"
+                                                            value={form.threadPitch || ''}
+                                                            onChange={(e) => setForm({ ...form, threadPitch: e.target.value })}
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </>
+                                            </div>
                                         )}
 
                                         {isNfa && (
@@ -1224,9 +1245,12 @@ export default function Armory() {
                                                         <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Battery Type</label>
                                                         <input
                                                             type="text"
-                                                            placeholder="e.g. CR2032, CR123A, AAA"
-                                                            value={form.batteryType || ''}
-                                                            onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
+                                                            style={{ opacity: 0.8, cursor: 'not-allowed', backgroundColor: 'rgba(255,255,255,0.05)' }}
+                                                            value={(() => {
+                                                                const p = products.find(prod => prod.id === form.pewpewModelId);
+                                                                return p ? (p.batteryType || 'Unknown') : 'N/A (No Product Linked)';
+                                                            })()}
+                                                            readOnly
                                                         />
                                                     </div>
                                                     <div className="form-item">

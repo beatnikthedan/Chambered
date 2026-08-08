@@ -1,4 +1,5 @@
 using Chambered.Data.Enums;
+using Chambered.Data.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace Chambered.Data.Models
@@ -135,8 +136,11 @@ namespace Chambered.Data.Models
         NightVision
     }
 
-    public class Optic : Product
+    public class Optic : Product, INeedsBattery
     {
+        public bool HasBattery { get; set; } = false;
+        public BatteryType BatteryType { get; set; } = BatteryType.Unknown;
+
         #region Magnification & Lens Specs
 
         /// <summary>
@@ -276,8 +280,11 @@ namespace Chambered.Data.Models
         #endregion
     }
 
-    public class PewPewLight : Product
+    public class PewPewLight : Product, INeedsBattery
     {
+        public bool HasBattery { get; set; } = true;
+        public BatteryType BatteryType { get; set; } = BatteryType.Cr123A;
+
         #region Output & Electrical Specs
 
         /// <summary>
@@ -289,11 +296,6 @@ namespace Chambered.Data.Models
         /// Peak beam intensity rating in candela.
         /// </summary>
         public int Candela { get; set; }
-
-        /// <summary>
-        /// Primary battery cell designation or power source.
-        /// </summary>
-        public BatteryType BatteryType { get; set; } = BatteryType.Unknown;
 
         #endregion
 
@@ -320,5 +322,14 @@ namespace Chambered.Data.Models
         public bool IsInfraredCapable { get; set; }
 
         #endregion
+    }
+
+    /// <summary>
+    /// Represents a security, safe, lock, or secure container product catalog entry.
+    /// </summary>
+    public class Security : Product, INeedsBattery
+    {
+        public bool HasBattery { get; set; } = false;
+        public BatteryType BatteryType { get; set; } = BatteryType.Unknown;
     }
 }

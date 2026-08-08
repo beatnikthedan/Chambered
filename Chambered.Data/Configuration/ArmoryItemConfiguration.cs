@@ -101,13 +101,4 @@ namespace Chambered.Data.Configuration
                 .HasMaxLength(30);
         }
     }
-
-    public class BatteryPoweredArmoryItemConfiguration : IEntityTypeConfiguration<BatteryPoweredArmoryItem>
-    {
-        public void Configure(EntityTypeBuilder<BatteryPoweredArmoryItem> builder)
-        {
-            builder.Property(a => a.BatteryType)
-                .HasMaxLength(100);
-        }
-    }
 }

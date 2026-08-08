@@ -420,6 +420,7 @@ export default function Catalog() {
                         <option value="Optic">Optics</option>
                         <option value="Suppressor">Suppressors</option>
                         <option value="PewPewLight">PewPew Lights</option>
+                        <option value="Security">Security / Vaults</option>
                         <option value="Product">Base Products</option>
                     </select>
                 </div>
@@ -508,6 +509,7 @@ export default function Catalog() {
                                     {form.productType === 'Optic' && '🔭 Optical Specs'}
                                     {form.productType === 'Suppressor' && '🤫 Suppressor Specs'}
                                     {form.productType === 'PewPewLight' && '🔦 Light Specs'}
+                                    {form.productType === 'Security' && '🛡️ Security Specs'}
                                 </button>
                             )}
 
@@ -538,6 +540,7 @@ export default function Catalog() {
                                             <option value="Optic">Optic / Scope</option>
                                             <option value="Suppressor">Suppressor</option>
                                             <option value="PewPewLight">PewPew Light</option>
+                                            <option value="Security">Security / Vault Product</option>
                                         </select>
                                     </div>
 
@@ -800,6 +803,35 @@ export default function Catalog() {
                                                     <span>Features Reticle Illumination</span>
                                                 </label>
                                             </div>
+
+                                            <div className="form-item checkbox-row full-row" style={{ marginTop: '10px' }}>
+                                                <label className="checkbox-container">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={form.hasBattery}
+                                                        onChange={(e) => setForm({ ...form, hasBattery: e.target.checked })}
+                                                    />
+                                                    <span className="checkmark"></span>
+                                                    <span>Requires Battery Power (Illuminated Reticle / Dial)</span>
+                                                </label>
+                                            </div>
+
+                                            {form.hasBattery && (
+                                                <div className="form-item">
+                                                    <label>Battery Type</label>
+                                                    <select 
+                                                        value={form.batteryType}
+                                                        onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
+                                                    >
+                                                        <option value="CR2032 Coin Cell">CR2032 Coin Cell</option>
+                                                        <option value="CR1632 Coin Cell">CR1632 Coin Cell</option>
+                                                        <option value="CR123A Lithium">CR123A Lithium</option>
+                                                        <option value="AA Alkaline/Lithium">AA Alkaline/Lithium</option>
+                                                        <option value="AAA Alkaline/Lithium">AAA Alkaline/Lithium</option>
+                                                        <option value="Unknown Battery">Unknown Battery / Other</option>
+                                                    </select>
+                                                </div>
+                                            )}
                                         </>
                                     )}
 
@@ -983,8 +1015,42 @@ export default function Catalog() {
                                         </>
                                     )}
 
+                                    {/* Security Subclass Form Controls */}
+                                    {form.productType === 'Security' && (
+                                        <>
+                                            <div className="form-item checkbox-row full-row" style={{ marginBottom: '14px' }}>
+                                                <label className="checkbox-container">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={form.hasBattery}
+                                                        onChange={(e) => setForm({ ...form, hasBattery: e.target.checked })}
+                                                    />
+                                                    <span className="checkmark"></span>
+                                                    <span>Requires Battery Power (Electronic Keypad or Biometric Lock)</span>
+                                                </label>
+                                            </div>
+
+                                            {form.hasBattery && (
+                                                <div className="form-item">
+                                                    <label>Lock Battery Type</label>
+                                                    <select 
+                                                        value={form.batteryType}
+                                                        onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
+                                                    >
+                                                        <option value="CR2032 Coin Cell">CR2032 Coin Cell</option>
+                                                        <option value="CR123A Lithium">CR123A Lithium</option>
+                                                        <option value="AA Alkaline/Lithium">AA Alkaline/Lithium</option>
+                                                        <option value="AAA Alkaline/Lithium">AAA Alkaline/Lithium</option>
+                                                        <option value="Unknown Battery">Unknown Battery / Other</option>
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
                                 </div>
                             )}
+
 
                             {/* TAB: DYNAMIC JSON SPECIFICATIONS */}
                             {activeTab === 'specifications' && (

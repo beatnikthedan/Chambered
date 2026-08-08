@@ -30,6 +30,7 @@ namespace Chambered.Data
         public DbSet<Optic> Optics => Set<Optic>();
         public DbSet<Suppressor> Suppressors => Set<Suppressor>();
         public DbSet<PewPewLight> PewPewLights => Set<PewPewLight>();
+        public DbSet<Security> Securities => Set<Security>();
 
 
 

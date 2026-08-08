@@ -1,4 +1,5 @@
 using Chambered.Data.Enums;
+using Chambered.Data.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -200,7 +201,7 @@ namespace Chambered.Data.Models
         // Inherits legal and NFA structures cleanly
     }
 
-    public class BatteryPoweredArmoryItem : ArmoryItem
+    public class OpticArmoryItem : ArmoryItem, IHasBattery
     {
         /// <summary>
         /// Gets or sets the date the battery was last changed.
@@ -208,18 +209,21 @@ namespace Chambered.Data.Models
         public DateTime? BatteryLastChangedDate { get; set; }
 
         /// <summary>
-        /// Gets or sets the battery form factor or model designation (e.g., CR2032, CR123A).
+        /// Gets or sets the battery expiration date.
         /// </summary>
-        public string? BatteryType { get; set; }
+        public DateTime? BatteryExpirationDate { get; set; }
     }
 
-    public class OpticArmoryItem : BatteryPoweredArmoryItem
+    public class LightArmoryItem : ArmoryItem, IHasBattery
     {
-        // Inherits battery metrics
-    }
+        /// <summary>
+        /// Gets or sets the date the battery was last changed.
+        /// </summary>
+        public DateTime? BatteryLastChangedDate { get; set; }
 
-    public class LightArmoryItem : BatteryPoweredArmoryItem
-    {
-        // Inherits battery metrics
+        /// <summary>
+        /// Gets or sets the battery expiration date.
+        /// </summary>
+        public DateTime? BatteryExpirationDate { get; set; }
     }
 }

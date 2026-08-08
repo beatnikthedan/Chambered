@@ -49,6 +49,11 @@ namespace Chambered.Data.Configuration
                 .HasForeignKey(v => v.ParentVaultId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(v => v.Product)
+                .WithMany()
+                .HasForeignKey(v => v.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasData(new Vault
             {
                 Id = 1,
