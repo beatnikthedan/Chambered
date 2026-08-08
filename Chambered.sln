@@ -4,10 +4,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chambered.Api", "Chambered.Api\Chambered.Api.csproj", "{C980A249-17D3-6D8C-1BBB-51238C34BCA8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A80F33DB-0745-4AED-96C4-DDC1BA05E922} = {A80F33DB-0745-4AED-96C4-DDC1BA05E922}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chambered.Data", "Chambered.Data\Chambered.Data.csproj", "{6BAEBB82-BEA4-94BD-6B48-1EA4464F5539}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chambered.Core", "Chambered.Core\Chambered.Core.csproj", "{C8D5EB13-2F31-4060-9D25-0B2BCB41896F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6BAEBB82-BEA4-94BD-6B48-1EA4464F5539} = {6BAEBB82-BEA4-94BD-6B48-1EA4464F5539}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chambered.Infrastructure", "Chambered.Infrastructure\Chambered.Infrastructure.csproj", "{A80F33DB-0745-4AED-96C4-DDC1BA05E922}"
 EndProject

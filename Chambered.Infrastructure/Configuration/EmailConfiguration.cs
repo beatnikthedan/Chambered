@@ -68,4 +68,3 @@ namespace Chambered.Infrastructure.Configuration
         public string DefaultFromDisplayName { get; set; }
     }
 }
-}
