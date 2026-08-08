@@ -213,8 +213,8 @@
   font-size: 0.85rem;
   color: var(--text-muted, #888888);
   line-height: 1.4;
-  margin: 0 0 20px 0;
-  height: 3.2em;
+  margin: 0 0 8px 0;
+  max-height: 2.8em;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;

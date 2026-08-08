@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../StoreContext'
 import './Settings.css'
 
+import { ARSENAL_ICONS, ARSENAL_PRESET_COLORS } from '../components/ArsenalIcons'
+import SubmitButton from '../components/SubmitButton'
+
 export default function Settings() {
   const store = useStore()
 
@@ -40,10 +43,13 @@ export default function Settings() {
   const [rawToken, setRawToken] = useState('')
   const [showRawTokenModal, setShowRawTokenModal] = useState(false)
 
-  // Arsenals Create State
+  // Arsenals Create/Edit State
   const [showArsenalForm, setShowArsenalForm] = useState(false)
+  const [isEditArsenalMode, setIsEditArsenalMode] = useState(false)
+  const [editingArsenalId, setEditingArsenalId] = useState(null)
   const [savingArsenal, setSavingArsenal] = useState(false)
-  const [arsenalForm, setArsenalForm] = useState({ name: '', description: '' })
+  const [arsenalSaveSuccess, setArsenalSaveSuccess] = useState(false)
+  const [arsenalForm, setArsenalForm] = useState({ name: '', description: '', iconName: 'shield', colorHex: '#2563EB' })
 
   const resolvedRedirectUri = useMemo(() => {
     return `${window.location.origin}/api/auth/oidc/callback`
@@ -254,17 +260,48 @@ export default function Settings() {
   }
 
   // Arsenals CRUD Handlers
-  const handleCreateArsenal = async (e) => {
+  const openEditArsenalModal = (ars) => {
+    setIsEditArsenalMode(true)
+    setEditingArsenalId(ars.id)
+    setArsenalForm({
+      name: ars.name,
+      description: ars.description || '',
+      iconName: ars.iconName || 'shield',
+      colorHex: ars.colorHex || '#2563EB'
+    })
+    setShowArsenalForm(true)
+  }
+
+  const handleSaveArsenal = async (e) => {
     e.preventDefault()
     setSavingArsenal(true)
+    setArsenalSaveSuccess(false)
     try {
-      const success = await store.createArsenal(arsenalForm.name, arsenalForm.description)
-      if (success) {
-        setShowArsenalForm(false)
-        setArsenalForm({ name: '', description: '' })
+      if (isEditArsenalMode) {
+        const success = await store.updateArsenal(editingArsenalId, arsenalForm.name, arsenalForm.description, arsenalForm.iconName, arsenalForm.colorHex)
+        if (success) {
+          setArsenalSaveSuccess(true)
+          setTimeout(() => {
+            setShowArsenalForm(false)
+            setIsEditArsenalMode(false)
+            setEditingArsenalId(null)
+            setArsenalForm({ name: '', description: '', iconName: 'shield', colorHex: '#2563EB' })
+            setArsenalSaveSuccess(false)
+          }, 800)
+        }
+      } else {
+        const success = await store.createArsenal(arsenalForm.name, arsenalForm.description, arsenalForm.iconName, arsenalForm.colorHex)
+        if (success) {
+          setArsenalSaveSuccess(true)
+          setTimeout(() => {
+            setShowArsenalForm(false)
+            setArsenalForm({ name: '', description: '', iconName: 'shield', colorHex: '#2563EB' })
+            setArsenalSaveSuccess(false)
+          }, 800)
+        }
       }
     } catch (err) {
-      alert(`Failed to create arsenal collection: ${err.message}`)
+      alert(`Failed to save arsenal collection: ${err.message}`)
     } finally {
       setSavingArsenal(false)
     }
@@ -658,7 +695,20 @@ export default function Settings() {
                   <tbody>
                     {store.arsenals.map((ars) => (
                       <tr key={ars.id}>
-                        <td className="text-bold">{ars.name}</td>
+                        <td className="text-bold" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            width: '32px', 
+                            height: '32px', 
+                            borderRadius: '50%', 
+                            background: `${ars.colorHex || '#2563eb'}1A` 
+                          }}>
+                            {ARSENAL_ICONS[ars.iconName || 'shield']?.(ars.colorHex || '#2563eb')}
+                          </span>
+                          {ars.name}
+                        </td>
                         <td>{ars.description || 'No description provided'}</td>
                         <td>
                           {ars.id === store.activeArsenalId ? (
@@ -671,15 +721,45 @@ export default function Settings() {
                             </span>
                           )}
                         </td>
-                        <td>
-                          <button 
-                            className="btn btn-danger btn-mini" 
-                            disabled={store.arsenals.length <= 1}
-                            onClick={() => handleDeleteArsenal(ars.id)}
-                            title="Remove arsenal and all its items"
-                          >
-                            Delete
-                          </button>
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button 
+                              className="btn btn-secondary" 
+                              onClick={() => openEditArsenalModal(ars)}
+                              style={{ 
+                                width: '74px', 
+                                height: '32px',
+                                padding: '0',
+                                fontSize: '12px',
+                                fontWeight: '500',
+                                justifyContent: 'center', 
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                borderRadius: '4px'
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              className="btn btn-danger" 
+                              disabled={store.arsenals.length <= 1}
+                              onClick={() => handleDeleteArsenal(ars.id)}
+                              title="Remove arsenal and all its items"
+                              style={{ 
+                                width: '74px', 
+                                height: '32px',
+                                padding: '0',
+                                fontSize: '12px',
+                                fontWeight: '500',
+                                justifyContent: 'center', 
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                borderRadius: '4px'
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -688,12 +768,17 @@ export default function Settings() {
               </div>
             )}
 
-            {/* Create new collection model form */}
+            {/* Create/Edit collection modal form */}
             {showArsenalForm && (
-              <div className="dialog-overlay" onClick={() => setShowArsenalForm(false)}>
+              <div className="dialog-overlay" onClick={() => {
+                setShowArsenalForm(false)
+                setIsEditArsenalMode(false)
+                setEditingArsenalId(null)
+                setArsenalForm({ name: '', description: '', iconName: 'shield', colorHex: '#2563EB' })
+              }}>
                 <div className="dialog-card" onClick={(e) => e.stopPropagation()}>
-                  <h4 className="dialog-title">Create New Arsenal</h4>
-                  <form onSubmit={handleCreateArsenal} className="dialog-form">
+                  <h4 className="dialog-title">{isEditArsenalMode ? 'Edit Arsenal' : 'Create New Arsenal'}</h4>
+                  <form onSubmit={handleSaveArsenal} className="dialog-form">
                     <div className="form-group">
                       <label>Arsenal Name</label>
                       <input 
@@ -714,9 +799,96 @@ export default function Settings() {
                         className="form-textarea-abs"
                       />
                     </div>
-                    <div className="dialog-actions">
-                      <button type="button" className="btn btn-secondary" onClick={() => setShowArsenalForm(false)}>Cancel</button>
-                      <button type="submit" className="btn btn-primary" disabled={savingArsenal}>Create Arsenal</button>
+
+                    <div className="form-group">
+                      <label>Color Accent</label>
+                      <div className="color-picker-grid" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '8px' }}>
+                        {ARSENAL_PRESET_COLORS.map((col) => (
+                          <div
+                            key={col}
+                            onClick={() => setArsenalForm({ ...arsenalForm, colorHex: col })}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              backgroundColor: col,
+                              cursor: 'pointer',
+                              border: arsenalForm.colorHex === col ? '3px solid var(--text-primary)' : '2px solid rgba(255,255,255,0.1)',
+                              boxShadow: arsenalForm.colorHex === col ? '0 0 8px ' + col : 'none',
+                              transition: 'all 0.2s ease'
+                            }}
+                          />
+                        ))}
+                        <div style={{ position: 'relative', width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)' }}>
+                          <input
+                            type="color"
+                            value={arsenalForm.colorHex}
+                            onChange={(e) => setArsenalForm({ ...arsenalForm, colorHex: e.target.value })}
+                            style={{
+                              position: 'absolute',
+                              top: '-8px',
+                              left: '-8px',
+                              width: '48px',
+                              height: '48px',
+                              border: 'none',
+                              padding: 0,
+                              cursor: 'pointer'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label style={{ display: 'block', marginBottom: '8px' }}>Icon Identifier</label>
+                      <div className="icon-selector-scroll-container" style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(4, 1fr)', 
+                        gap: '10px',
+                        maxHeight: '160px',
+                        overflowY: 'auto',
+                        padding: '8px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-solid)',
+                        background: 'rgba(0,0,0,0.15)'
+                      }}>
+                        {Object.keys(ARSENAL_ICONS).map((iconKey) => (
+                          <div
+                            key={iconKey}
+                            onClick={() => setArsenalForm({ ...arsenalForm, iconName: iconKey })}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '10px',
+                              borderRadius: 'var(--radius-sm)',
+                              background: arsenalForm.iconName === iconKey ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+                              border: arsenalForm.iconName === iconKey ? `1px solid ${arsenalForm.colorHex}` : '1px solid rgba(255,255,255,0.05)',
+                              cursor: 'pointer',
+                              color: arsenalForm.iconName === iconKey ? arsenalForm.colorHex : 'var(--text-muted)',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {ARSENAL_ICONS[iconKey](arsenalForm.iconName === iconKey ? arsenalForm.colorHex : 'var(--text-muted)', 20)}
+                            <span style={{ fontSize: '10px', marginTop: '4px', textTransform: 'capitalize', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>{iconKey}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="dialog-actions" style={{ marginTop: '20px' }}>
+                      <button type="button" className="btn btn-secondary" onClick={() => {
+                        setShowArsenalForm(false)
+                        setIsEditArsenalMode(false)
+                        setEditingArsenalId(null)
+                        setArsenalForm({ name: '', description: '', iconName: 'shield', colorHex: '#2563EB' })
+                      }}>Cancel</button>
+                      <SubmitButton 
+                        isSaving={savingArsenal} 
+                        saveSuccess={arsenalSaveSuccess} 
+                        isEditMode={isEditArsenalMode} 
+                      />
                     </div>
                   </form>
                 </div>

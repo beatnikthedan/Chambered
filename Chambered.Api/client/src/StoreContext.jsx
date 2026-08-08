@@ -198,11 +198,11 @@ export function StoreProvider({ children }) {
   }, []);
 
   // Create arsenal collection
-  const createArsenal = useCallback(async (name, description) => {
+  const createArsenal = useCallback(async (name, description, iconName, colorHex) => {
     const res = await fetch('/api/arsenals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description })
+      body: JSON.stringify({ name, description, iconName, colorHex })
     });
     if (res.ok) {
       const newArsenal = await res.json();
@@ -255,6 +255,30 @@ export function StoreProvider({ children }) {
     throw new Error(err || 'Failed to delete arsenal');
   }, []);
 
+  // Update arsenal collection
+  const updateArsenal = useCallback(async (id, name, description, iconName, colorHex) => {
+    const res = await fetch(`/api/arsenals/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, name, description, iconName, colorHex })
+    });
+    if (res.ok) {
+      // Reload lists
+      const arsenalsRes = await fetch('/api/arsenals');
+      if (arsenalsRes.ok) {
+        const list = await arsenalsRes.json();
+        setArsenals(list);
+        const active = list.find(a => a.id === id);
+        if (active && id === activeArsenalId) {
+          setActiveArsenalName(active.name);
+        }
+      }
+      return true;
+    }
+    const err = await res.text();
+    throw new Error(err || 'Failed to update arsenal collection');
+  }, [activeArsenalId]);
+
   // Check auth on mount
   useEffect(() => {
     checkAuth();
@@ -277,6 +301,7 @@ export function StoreProvider({ children }) {
     fetchArsenals,
     selectArsenal,
     createArsenal,
+    updateArsenal,
     deleteArsenal
   };
 

@@ -38,6 +38,7 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
+                .Include(v => v.Arsenal)
                 .Include(v => v.Product).ThenInclude(p => p.Manufacturer)
                 .Where(v => v.ArsenalId == arsenalId)
                 .ToListAsync();
@@ -63,6 +64,7 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
+                .Include(v => v.Arsenal)
                 .Include(v => v.Product).ThenInclude(p => p.Manufacturer)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
@@ -131,6 +133,7 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
+                .Include(v => v.Arsenal)
                 .Include(v => v.Product).ThenInclude(p => p.Manufacturer)
                 .FirstAsync(v => v.Id == vault.Id);
 
@@ -150,6 +153,7 @@ namespace Chambered.Api.Controllers
 
             vault.Name = model.Name;
             vault.Description = model.Description;
+            vault.ArsenalId = model.ArsenalId ?? vault.ArsenalId;
             vault.VaultCategoryId = model.VaultCategoryId ?? vault.VaultCategoryId;
             vault.ParentVaultId = model.ParentVaultId == 0 ? null : model.ParentVaultId;
             if (model.SecurityLevel != null)
@@ -172,6 +176,7 @@ namespace Chambered.Api.Controllers
                 .Include(v => v.ParentVault)
                 .Include(v => v.ChildVaults)
                 .Include(v => v.ArmoryItem)
+                .Include(v => v.Arsenal)
                 .Include(v => v.Product).ThenInclude(p => p.Manufacturer)
                 .FirstAsync(v => v.Id == vault.Id);
 
@@ -234,6 +239,7 @@ namespace Chambered.Api.Controllers
                 Name = v.Name,
                 Description = v.Description,
                 ArsenalId = v.ArsenalId,
+                ArsenalName = v.Arsenal?.Name,
                 SecurityLevel = GetSecurityLevelString(v.LockType),
                 VaultCategoryId = v.VaultCategoryId,
                 VaultCategoryName = v.VaultCategory?.Name ?? "General Storage",
@@ -269,6 +275,7 @@ namespace Chambered.Api.Controllers
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public int? ArsenalId { get; set; }
+        public string? ArsenalName { get; set; }
         public string? SecurityLevel { get; set; }
         public int? VaultCategoryId { get; set; }
         public string? VaultCategoryName { get; set; }

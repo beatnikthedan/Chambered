@@ -14,6 +14,9 @@ import Vaults from './views/Vaults'
 import Catalog from './views/Catalog'
 
 // Route guarding components
+// Route guarding components
+import { ARSENAL_ICONS } from './components/ArsenalIcons'
+
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useStore()
   
@@ -61,6 +64,7 @@ export default function App() {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [showArsenalDropdown, setShowArsenalDropdown] = useState(false)
+  const activeArsenal = store.arsenals.find(a => a.id === store.activeArsenalId)
 
   // Use refs for outside clicks
   const profileDropdownRef = useRef(null)
@@ -141,8 +145,17 @@ export default function App() {
                   e.stopPropagation()
                   setShowArsenalDropdown(!showArsenalDropdown)
                 }}
+                style={{ 
+                  borderLeft: `4px solid ${activeArsenal?.colorHex || '#2563eb'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
               >
-                <span className="ars-name">{store.activeArsenalName}</span>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {ARSENAL_ICONS[activeArsenal?.iconName || 'shield']?.(activeArsenal?.colorHex || '#2563eb')}
+                </span>
+                <span className="ars-name" style={{ flexGrow: 1, textAlign: 'left', marginLeft: '2px' }}>{store.activeArsenalName}</span>
                 <span className="ars-chevron">▼</span>
               </button>
               {showArsenalDropdown && (
@@ -152,10 +165,19 @@ export default function App() {
                       key={ars.id} 
                       className={`arsenal-popover-item ${ars.id === store.activeArsenalId ? 'active' : ''}`}
                       onClick={() => selectArsenal(ars.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        borderLeft: `3px solid ${ars.colorHex || '#2563eb'}`
+                      }}
                     >
-                      <div className="item-details">
-                        <span className="item-name">{ars.name}</span>
-                        {ars.description && <span className="item-desc">{ars.description}</span>}
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {ARSENAL_ICONS[ars.iconName || 'shield']?.(ars.colorHex || '#2563eb')}
+                      </span>
+                      <div className="item-details" style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span className="item-name" style={{ fontWeight: ars.id === store.activeArsenalId ? 'bold' : 'normal' }}>{ars.name}</span>
+                        {ars.description && <span className="item-desc" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{ars.description}</span>}
                       </div>
                     </div>
                   ))}

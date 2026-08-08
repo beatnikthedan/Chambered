@@ -42,6 +42,7 @@ namespace Chambered.Api.Controllers
                 .Include(i => i.Product)
                     .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .Include(i => i.Vault)
+                .Include(i => i.Arsenal)
                 .Include(i => i.Owner)
                 .Include(i => i.Beneficiary)
                 .Include(i => i.MountedAccessories)
@@ -149,6 +150,7 @@ namespace Chambered.Api.Controllers
                 .Include(i => i.Product)
                     .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .Include(i => i.Vault)
+                .Include(i => i.Arsenal)
                 .Include(i => i.Owner)
                 .Include(i => i.Beneficiary)
                 .Include(i => i.MountedAccessories)
@@ -264,8 +266,8 @@ namespace Chambered.Api.Controllers
             armoryItem.EstimatedValue = model.CurrentValue ?? model.EstimatedValue;
             armoryItem.Condition = ParseCondition(model.Condition);
             armoryItem.RoundCount = model.RoundCount;
-            armoryItem.OwnerId = model.OwnerId;
-            armoryItem.BeneficiaryId = model.BeneficiaryId;
+            armoryItem.OwnerId = string.IsNullOrWhiteSpace(model.OwnerId) ? null : model.OwnerId;
+            armoryItem.BeneficiaryId = string.IsNullOrWhiteSpace(model.BeneficiaryId) ? null : model.BeneficiaryId;
             armoryItem.VaultId = vaultId;
             armoryItem.ArsenalId = arsenalId;
             armoryItem.ImageUrl = model.ImageUrl;
@@ -283,6 +285,7 @@ namespace Chambered.Api.Controllers
                 .Include(i => i.Product)
                     .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .Include(i => i.Vault)
+                .Include(i => i.Arsenal)
                 .Include(i => i.Owner)
                 .Include(i => i.Beneficiary)
                 .FirstAsync(i => i.Id == armoryItem.Id);
@@ -355,8 +358,8 @@ namespace Chambered.Api.Controllers
             armoryItem.EstimatedValue = model.CurrentValue ?? model.EstimatedValue;
             armoryItem.Condition = ParseCondition(model.Condition);
             armoryItem.RoundCount = model.RoundCount;
-            armoryItem.OwnerId = model.OwnerId;
-            armoryItem.BeneficiaryId = model.BeneficiaryId;
+            armoryItem.OwnerId = string.IsNullOrWhiteSpace(model.OwnerId) ? null : model.OwnerId;
+            armoryItem.BeneficiaryId = string.IsNullOrWhiteSpace(model.BeneficiaryId) ? null : model.BeneficiaryId;
             armoryItem.VaultId = vaultId;
             armoryItem.ImageUrl = model.ImageUrl;
             armoryItem.NotesMarkdown = model.NotesMarkdown ?? model.Notes;
@@ -372,6 +375,7 @@ namespace Chambered.Api.Controllers
                 .Include(i => i.Product)
                     .ThenInclude(p => (p as Suppressor).MaxCaliber)
                 .Include(i => i.Vault)
+                .Include(i => i.Arsenal)
                 .Include(i => i.Owner)
                 .Include(i => i.Beneficiary)
                 .FirstAsync(i => i.Id == armoryItem.Id);
@@ -453,6 +457,9 @@ namespace Chambered.Api.Controllers
                 FirearmModelId = i.ProductId,
                 Model = i.Product?.Model ?? "",
                 PartNumber = i.Product?.PartNumber,
+                Sku = i.Product?.Sku,
+                WebPageUrl = i.Product?.WebPageUrl,
+                ManufacturerWebPageUrl = i.Product?.Manufacturer?.WebPageUrl,
                 Caliber = i.Product is PewPew pew ? (pew.Caliber?.Name ?? "") : (i.Product is Suppressor sup ? (sup.MaxCaliber?.Name ?? "") : ""),
                 SerialNumber = i.SerialNumber,
                 ActionType = i.Product is PewPew p ? FormatActionType(p.ActionType) : "Semi-Automatic",
@@ -480,6 +487,9 @@ namespace Chambered.Api.Controllers
                 VaultId = i.VaultId,
                 StorageLocation = i.Vault?.Name ?? "Main Vault",
                 ArsenalId = i.ArsenalId,
+                ArsenalName = i.Arsenal?.Name,
+                ArsenalColor = i.Arsenal?.ColorHex,
+                ArsenalIcon = i.Arsenal?.IconName,
                 ImageUrl = i.ImageUrl,
                 NotesMarkdown = i.NotesMarkdown,
                 Notes = i.NotesMarkdown ?? "",
@@ -502,7 +512,11 @@ namespace Chambered.Api.Controllers
                         ImageUrl = acc.ImageUrl,
                         NotesMarkdown = acc.NotesMarkdown,
                         Notes = acc.NotesMarkdown ?? "",
-                        ParentItemId = acc.ParentItemId
+                        ParentItemId = acc.ParentItemId,
+                        PartNumber = acc.Product?.PartNumber,
+                        Sku = acc.Product?.Sku,
+                        WebPageUrl = acc.Product?.WebPageUrl,
+                        ManufacturerWebPageUrl = acc.Product?.Manufacturer?.WebPageUrl
                     }).ToList() 
                     : new List<ArmoryItemDto>()
             };
@@ -764,10 +778,16 @@ namespace Chambered.Api.Controllers
         public int? VaultId { get; set; }
         public string? StorageLocation { get; set; }
         public int? ArsenalId { get; set; }
+        public string? ArsenalName { get; set; }
+        public string? ArsenalColor { get; set; }
+        public string? ArsenalIcon { get; set; }
         public string? ImageUrl { get; set; }
         public string? NotesMarkdown { get; set; }
         public string? Notes { get; set; }
         public string? PartNumber { get; set; }
+        public string? Sku { get; set; }
+        public string? WebPageUrl { get; set; }
+        public string? ManufacturerWebPageUrl { get; set; }
         public string? AccessoriesListJson { get; set; }
         public string? MaintenanceTasksJson { get; set; }
         public string? RangeHistoryJson { get; set; }

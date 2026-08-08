@@ -52,6 +52,29 @@ namespace Chambered.Api.Controllers
             return Ok(arsenal);
         }
 
+        // PUT: api/arsenals/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Arsenal model)
+        {
+            if (model == null || id != model.Id)
+                return BadRequest("Invalid payload or ID mismatch.");
+
+            var arsenal = await _db.Arsenals.FindAsync(id);
+            if (arsenal == null)
+                return NotFound();
+
+            if (string.IsNullOrWhiteSpace(model.Name))
+                return BadRequest("Arsenal name is required.");
+
+            arsenal.Name = model.Name;
+            arsenal.Description = model.Description;
+            arsenal.IconName = model.IconName;
+            arsenal.ColorHex = model.ColorHex;
+
+            await _db.SaveChangesAsync();
+            return Ok(arsenal);
+        }
+
         // DELETE: api/arsenals/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)

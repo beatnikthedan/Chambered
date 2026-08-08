@@ -874,8 +874,8 @@ export default function Armory() {
         return 'ArmoryItem';
     })();
 
-    const isFirearm = activeItemType === 'PewArmoryItem';
-    const isNfa = activeItemType === 'NfaArmoryItem' || activeItemType === 'SuppressorArmoryItem' || (isFirearm && form.isNfaItem);
+    const isPewPew = activeItemType === 'PewArmoryItem';
+    const isNfa = activeItemType === 'NfaArmoryItem' || activeItemType === 'SuppressorArmoryItem' || (isPewPew && form.isNfaItem);
     const isBatteryPowered = (() => {
         if (activeItemType === 'OpticArmoryItem' || activeItemType === 'LightArmoryItem') return true;
         const p = products.find(prod => prod.id === form.pewpewModelId);
@@ -968,6 +968,13 @@ export default function Armory() {
                     <section className="items-grid">
                         {filteredArmoryItems.map((item) => (
                             <div key={item.id} className="item-card" onClick={() => openEditModal(item)}>
+                                {/* Colored Top Accent Bar based on Arsenal context color */}
+                                <div className="card-top-accent" style={{ 
+                                    height: '4px', 
+                                    width: '100%', 
+                                    backgroundColor: item.arsenalColor || '#2563eb',
+                                    boxShadow: `0 2px 8px ${item.arsenalColor || '#2563eb'}80`
+                                }} />
                                 <div className="item-header-img">
                                     <span className="item-action-type">{item.actionType}</span>
                                     {item.imageUrl ? (
@@ -984,14 +991,54 @@ export default function Armory() {
 
                                 <div className="item-card-body">
                                     <div className="item-title-row">
-                                        <h4 className="item-title">{item.manufacturer} {item.model}</h4>
+                                        <h4 className="item-title">
+                                            {item.manufacturerWebPageUrl ? (
+                                                <a 
+                                                    href={item.manufacturerWebPageUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    style={{ color: 'inherit', textDecoration: 'none' }}
+                                                    onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                                                    onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                                                >
+                                                    {item.manufacturer}
+                                                </a>
+                                            ) : (
+                                                item.manufacturer
+                                            )}
+                                            {' '}
+                                            {item.webPageUrl ? (
+                                                <a 
+                                                    href={item.webPageUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    style={{ color: 'var(--color-primary)', textDecoration: 'none', fontWeight: '600' }}
+                                                    onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                                                    onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                                                >
+                                                    {item.model}
+                                                </a>
+                                            ) : (
+                                                item.model
+                                            )}
+                                        </h4>
                                         <span className="item-caliber">{item.caliber}</span>
                                     </div>
 
                                     <div className="item-details">
                                         <div className="detail-row">
-                                            <span className="detail-label">Storage Hub</span>
+                                            <span className="detail-label">Part Number</span>
+                                            <span className="detail-value">{item.partNumber || 'N/A'}</span>
+                                        </div>
+                                        <div className="detail-row">
+                                            <span className="detail-label">Vault</span>
                                             <span className="detail-value">{item.storageLocation || ''}</span>
+                                        </div>
+                                        <div className="detail-row">
+                                            <span className="detail-label">Arsenal</span>
+                                            <span className="detail-value">{item.arsenalName || 'N/A'}</span>
                                         </div>
                                         {item.purchasePrice && (
                                             <div className="detail-row">
@@ -1092,7 +1139,7 @@ export default function Armory() {
                                                         <div style={{ 
                                                             width: '74px', 
                                                             height: '74px', 
-                                                            borderRadius: 'var(--radius-sm)', 
+                                                            borderRadius: 'var(--radius-sm)',
                                                             border: '1px dashed var(--border-solid)', 
                                                             background: 'rgba(255,255,255,0.01)',
                                                             display: 'flex',
@@ -1160,7 +1207,7 @@ export default function Armory() {
                                             );
                                         })()}
 
-                                        {isFirearm && (
+                                        {isPewPew && (
                                             <div className="form-item-group-container" style={{ gridColumn: 'span 2', background: 'rgba(138, 79, 255, 0.03)', border: '1px solid rgba(138, 79, 255, 0.15)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginTop: '4px', marginBottom: '12px' }}>
                                                 <h4 style={{ color: '#8a4fff', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 14px 0', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                     <span style={{ fontSize: '15px' }}>🎯</span> Firearm & Ballistics Specifications
@@ -1286,10 +1333,60 @@ export default function Armory() {
                                         </div>
 
                                         <div className="form-item">
-                                            <label>Operation Condition</label>
+                                            <label>Condition</label>
                                             <select value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })}>
                                                 {conditions.map(p => (
                                                     <option key={p} value={p}>{p}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="form-item">
+                                            <label>Purchase Price</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Price paid"
+                                                value={form.purchasePrice || ''}
+                                                onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="form-item">
+                                            <label>Purchase Date</label>
+                                            <input
+                                                type="date"
+                                                value={form.purchaseDateString || ''}
+                                                onChange={(e) => setForm({ ...form, purchaseDateString: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="form-item">
+                                            <label>Designated Owner</label>
+                                            <select
+                                                value={form.ownerId || ''}
+                                                onChange={(e) => setForm({ ...form, ownerId: e.target.value })}
+                                            >
+                                                <option value="">-- No Owner Assigned --</option>
+                                                {users.map(u => (
+                                                    <option key={u.id} value={u.id}>
+                                                        {u.username} ({u.email})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="form-item">
+                                            <label>Beneficiary</label>
+                                            <select
+                                                value={form.beneficiaryId || ''}
+                                                onChange={(e) => setForm({ ...form, beneficiaryId: e.target.value })}
+                                            >
+                                                <option value="">-- No Beneficiary Assigned --</option>
+                                                {users.map(u => (
+                                                    <option key={u.id} value={u.id}>
+                                                        {u.username} ({u.email})
+                                                    </option>
                                                 ))}
                                             </select>
                                         </div>
@@ -1316,55 +1413,6 @@ export default function Armory() {
                                             </select>
                                         </div>
 
-                                        <div className="form-item">
-                                            <label>Purchase Price</label>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                placeholder="Price paid"
-                                                value={form.purchasePrice || ''}
-                                                onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div className="form-item">
-                                            <label>Purchase Date</label>
-                                            <input
-                                                type="date"
-                                                value={form.purchaseDateString || ''}
-                                                onChange={(e) => setForm({ ...form, purchaseDateString: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div className="form-item full-row">
-                                            <label>Designated Owner</label>
-                                            <select
-                                                value={form.ownerId || ''}
-                                                onChange={(e) => setForm({ ...form, ownerId: e.target.value })}
-                                            >
-                                                <option value="">-- No Owner Assigned --</option>
-                                                {users.map(u => (
-                                                    <option key={u.id} value={u.id}>
-                                                        {u.username} ({u.email})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-
-                                        <div className="form-item full-row">
-                                            <label>Beneficiary</label>
-                                            <select
-                                                value={form.beneficiaryId || ''}
-                                                onChange={(e) => setForm({ ...form, beneficiaryId: e.target.value })}
-                                            >
-                                                <option value="">-- No Beneficiary Assigned --</option>
-                                                {users.map(u => (
-                                                    <option key={u.id} value={u.id}>
-                                                        {u.username} ({u.email})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -1375,13 +1423,13 @@ export default function Armory() {
                                     {/* LEFT COLUMN: Currently Attached Accessories */}
                                     <div className="accessories-card" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-solid, #203040)', borderRadius: '10px', padding: '20px' }}>
                                         <h4 style={{ marginBottom: '16px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: '600' }}>
-                                            <span>🔗</span> Attached Accessories &amp; Attachments
+                                            <span>🔗</span> Accessories
                                         </h4>
                                         
                                         <div className="mounted-list" style={{ minHeight: '180px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
                                             {armoryItems.filter(item => item.parentItemId === form.id).length === 0 ? (
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '180px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                                    <span style={{ fontSize: '1.8rem', opacity: '0.4', marginBottom: '8px' }}>🛠️</span>
+
                                                     <p style={{ fontSize: '0.85rem', fontStyle: 'italic', margin: 0 }}>No accessories attached to this item.</p>
                                                 </div>
                                             ) : (
@@ -1412,7 +1460,7 @@ export default function Armory() {
                                         {/* Card A: Attach Existing Accessory */}
                                         <div className="accessories-card" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-solid, #203040)', borderRadius: '10px', padding: '20px' }}>
                                             <h5 style={{ marginBottom: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '600' }}>
-                                                <span>🔌</span> Attach Existing Inventory Item
+                                                Attach Existing Item
                                             </h5>
                                             <div style={{ display: 'flex', gap: '10px' }}>
                                                 <select
@@ -1445,7 +1493,7 @@ export default function Armory() {
                                         {/* Card B: Create & Attach New Accessory */}
                                         <div className="accessories-card" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-solid, #203040)', borderRadius: '10px', padding: '20px' }}>
                                             <h5 style={{ marginBottom: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '600' }}>
-                                                <span>✨</span> Create &amp; Attach New Accessory
+                                                Create &amp; Attach a new Item
                                             </h5>
                                             <div style={{ display: 'flex', gap: '10px' }}>
                                                 <select

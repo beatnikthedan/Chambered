@@ -76,6 +76,31 @@ namespace Chambered.Api.Data
 
                 await context.SaveChangesAsync();
             }
+
+            // 4. Self-heal and fix legacy/orphan records with missing ArsenalIds
+            var defaultArsenal = await context.Arsenals.FirstOrDefaultAsync();
+            if (defaultArsenal != null)
+            {
+                var orphanItems = await context.ArmoryItems.Where(i => i.ArsenalId == null).ToListAsync();
+                if (orphanItems.Any())
+                {
+                    foreach (var item in orphanItems)
+                    {
+                        item.ArsenalId = defaultArsenal.Id;
+                    }
+                }
+
+                var orphanVaults = await context.Vaults.Where(v => v.ArsenalId == null).ToListAsync();
+                if (orphanVaults.Any())
+                {
+                    foreach (var vault in orphanVaults)
+                    {
+                        vault.ArsenalId = defaultArsenal.Id;
+                    }
+                }
+
+                await context.SaveChangesAsync();
+            }
         }
     }
 }

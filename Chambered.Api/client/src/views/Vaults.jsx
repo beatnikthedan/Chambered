@@ -17,6 +17,8 @@ const BATTERY_TYPES = [
 export default function Vaults() {
     const store = useStore()
     const { enums } = store
+    const activeArsenal = store.arsenals.find(a => a.id === store.activeArsenalId)
+    const activeArsenalColor = activeArsenal?.colorHex || '#2563eb'
 
     // Memoized dynamic lock types strictly loaded from the database
     const lockTypePresets = useMemo(() => {
@@ -371,7 +373,7 @@ export default function Vaults() {
             {loading ? (
                 <div className="loading-spinner-box">
                     <div className="spinner"></div>
-                    <p>Analyzing storage hubs...</p>
+                    <p>Analyzing vaults...</p>
                 </div>
             ) : error ? (
                 <div className="vaults-error-card">
@@ -395,12 +397,52 @@ export default function Vaults() {
                                  const isBatteryLow = needsBatteryChange(vault.batteryLastChangedDate)
                                 return (
                                     <div key={vault.id} className="vault-card-node" onClick={() => openEditModal(vault)}>
+                                        {/* Colored Top Accent Bar based on Arsenal context color */}
+                                        <div className="card-top-accent" style={{ 
+                                            height: '4px', 
+                                            width: '100%', 
+                                            backgroundColor: activeArsenalColor,
+                                            boxShadow: `0 2px 8px ${activeArsenalColor}80`
+                                        }} />
 
                                         <div className="vault-card-contents">
                                             <h4 className="vault-name">
                                                 <span className="v-symbol">📂</span> {vault.name}
                                             </h4>
                                             <p className="vault-desc">{vault.description || ''}</p>
+                                            {vault.productManufacturerName || vault.productModel ? (
+                                                <div className="vault-make-model" style={{ 
+                                                    fontSize: '16px', 
+                                                    fontFamily: 'var(--font-heading)',
+                                                    fontWeight: '700', 
+                                                    marginTop: '4px', 
+                                                    marginBottom: '16px', 
+                                                    display: 'inline-flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '6px',
+                                                    flexWrap: 'wrap'
+                                                }}>
+                                                    <span style={{ color: '#ffffff' }}>
+                                                        {vault.productManufacturerName || ''}
+                                                    </span>
+                                                    <span style={{ color: 'var(--color-primary, #d4af37)' }}>
+                                                        {vault.productModel || ''}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <p className="vault-make-model" style={{ 
+                                                    fontSize: '11px', 
+                                                    color: 'var(--text-muted)', 
+                                                    marginTop: '4px', 
+                                                    marginBottom: '16px', 
+                                                    fontStyle: 'italic', 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '4px' 
+                                                }}>
+                                                    No Model Linked
+                                                </p>
+                                            )}
 
                                             <div className="vault-meta-metrics">
                                                 {vault.parentVaultName && (
@@ -410,11 +452,11 @@ export default function Vaults() {
                                                     </div>
                                                 )}
                                                 <div className="metric-row">
-                                                    <span className="met-lbl">Access Lock</span>
+                                                    <span className="met-lbl">Access Type</span>
                                                     <span className="met-val">{vault.securityLevel}</span>
                                                 </div>
                                                 <div className="metric-row">
-                                                    <span className="met-lbl">Stored Items</span>
+                                                    <span className="met-lbl">Secured Items</span>
                                                     <span className="met-val gold-text font-bold">
                                                         {vault.storedItems?.length || 0} items
                                                     </span>
@@ -425,6 +467,10 @@ export default function Vaults() {
                                                         <span className="met-val active-green">Active (Max {vault.targetMaxHumidityPercent}%)</span>
                                                     </div>
                                                 )}
+                                                <div className="metric-row" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
+                                                    <span className="met-lbl">Arsenal</span>
+                                                    <span className="met-val" style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}> {vault.arsenalName || 'N/A'}</span>
+                                                </div>
                                             </div>
 
                                             {/* Warnings Banner */}
@@ -758,7 +804,7 @@ export default function Vaults() {
                                             <div className="empty-inventory-box">
                                                 <span className="empty-box-symbol">🛡️</span>
                                                 <h5>No Stored Items</h5>
-                                                <p>To inventory an item here, select this safe as the "Storage Hub" on the item's armory card form.</p>
+                                                <p>To inventory an item here, select this safe as the "Vault" on the item's armory card form.</p>
                                             </div>
                                         )}
                                     </div>
