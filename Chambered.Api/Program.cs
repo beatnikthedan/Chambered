@@ -1,7 +1,14 @@
 using Chambered.Api.Authentication;
+using Chambered.Api.BackgroundServices;
+using Chambered.Core.Services;
 using Chambered.Data;
+using Chambered.Infrastructure.Configuration;
+using Chambered.Infrastructure.Services.BackupServices;
+using Chambered.Infrastructure.Services.EmailServices;
+using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -90,6 +97,33 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+
+
+
+
+
+builder.Services.Configure<AppriseConfiguration>(builder.Configuration.GetSection(nameof(AppriseConfiguration)));
+builder.Services.AddScoped<IAppriseService, AppriseService>();
+
+builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(nameof(EmailConfiguration)));
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+
+builder.Services.Configure<BackupConfiguration>(builder.Configuration.GetSection(nameof(BackupConfiguration)));
+builder.Services.AddScoped<IBackupService, SqliteBackupService>();
+
+builder.Services.AddHttpClient();
+
+builder.Services.AddHostedService<BackupSchedulerWorker>();
+
+
+
+
+
+
+
+
+
 // 6. Build application
 var app = builder.Build();
 
@@ -128,5 +162,44 @@ app.UseStaticFiles();
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");
+
+
+
+
+
+
+
+
+
+
+//// Temporary developer test endpoint
+//app.MapPost("/api/test/send-email", async (IEmailService emailService, string toEmail) =>
+//{
+//    var message = new MailMessage
+//    {
+//        Subject = "Chambered System - Test Email",
+//        Body = "<h1>Success!</h1><p>Your SMTP email configuration is working correctly.</p>",
+//        IsBodyHtml = true
+//    };
+
+//    message.To.Add(toEmail);
+
+//    bool sent = await emailService.SendEmailAsync(message);
+
+//    return sent
+//        ? Results.Ok(new { success = true, message = $"Test email sent to {toEmail}" })
+//        : Results.Problem($"Failed to send email to {toEmail}. Check application logs for details.");
+//})
+//.WithTags("Testing");
+
+
+
+
+
+
+
+
+
+
 
 app.Run();

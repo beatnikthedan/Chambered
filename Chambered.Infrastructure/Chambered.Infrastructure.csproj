@@ -9,6 +9,7 @@
 	<ItemGroup>
 		<PackageReference Include="MailKit" Version="4.17.0" />
 		<PackageReference Include="Microsoft.Data.Sqlite.Core" Version="8.0.29" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
 		<!-- Updated to 9.0.0 to satisfy Npgsql 10.x requirement -->
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
@@ -19,6 +20,10 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Chambered.Core\Chambered.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Extensions\" />
 	</ItemGroup>
 
 </Project>
