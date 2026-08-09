@@ -366,3 +366,8 @@ FodyWeavers.xsd
 *.db
 *.db-wal
 *.db-shm
+
+**/Properties/launchSettings.json
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
