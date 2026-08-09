@@ -2,22 +2,35 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../StoreContext'
 import './Catalog.css'
 import SubmitButton from '../components/SubmitButton'
+import buildQuery from 'odata-query'
 
 export default function Catalog() {
     const store = useStore()
+    const { enums } = store || {}
 
     // State collections
     const [products, setProducts] = useState([])
     const [manufacturers, setManufacturers] = useState([])
     const [calibers, setCalibers] = useState([])
-    const [suppressorMaterials, setSuppressorMaterials] = useState([])
-    const [suppressorAttachmentTypes, setSuppressorAttachmentTypes] = useState([])
-    const [opticFocalPlanes, setOpticFocalPlanes] = useState([])
-    const [opticReticles, setOpticReticles] = useState([])
-    const [opticAdjustmentUnits, setOpticAdjustmentUnits] = useState([])
-    const [batteryTypes, setBatteryTypes] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+
+    // Memoize OData metadata enums globally loaded by StoreContext
+    const suppressorMaterials = useMemo(() => enums?.suppressorMaterials || [], [enums])
+    const suppressorAttachmentTypes = useMemo(() => enums?.suppressorAttachmentTypes || [], [enums])
+    const opticReticles = useMemo(() => enums?.opticReticles || [], [enums])
+    const opticAdjustmentUnits = useMemo(() => enums?.opticAdjustmentUnits || [], [enums])
+    const batteryTypes = useMemo(() => enums?.batteryTypes || [], [enums])
+    const actionTypes = useMemo(() => enums?.actionTypes || [], [enums])
+    const pewPewCategories = useMemo(() => enums?.pewPewCategories || [], [enums])
+    const opticTypes = useMemo(() => enums?.opticTypes || [], [enums])
+    const laserColors = useMemo(() => enums?.laserColors || [], [enums])
+    const lightMountTypes = useMemo(() => enums?.lightMountTypes || [], [enums])
+
+    const opticFocalPlanes = useMemo(() => [
+        { id: 'FFP', name: 'FFP', label: 'First Focal Plane (FFP)' },
+        { id: 'SFP', name: 'SFP', label: 'Second Focal Plane (SFP)' }
+    ], [])
 
     // Search and filter states
     const [searchTerm, setSearchTerm] = useState('')
@@ -33,7 +46,7 @@ export default function Catalog() {
     // Specifications key-value editor local state
     const [customSpecs, setCustomSpecs] = useState([]) // Array of { key: '', value: '' }
 
-    // Form state
+    // Form state with blank strings instead of dummy values
     const [form, setForm] = useState({
         id: 0,
         productType: 'PewPew', // Default to PewPew
@@ -47,36 +60,36 @@ export default function Catalog() {
 
         // PewPew fields
         caliberId: '',
-        pewPewCategory: 'Rimfire',
-        actionType: 'Semi-Automatic',
+        pewPewCategory: '',
+        actionType: '',
 
         // Optic fields
-        minMagnification: 1.0,
-        maxMagnification: 1.0,
-        objectiveDiameterMm: 30,
-        opticType: 'Red Dot Sight',
-        focalPlane: 'FFP',
+        minMagnification: '',
+        maxMagnification: '',
+        objectiveDiameterMm: '',
+        opticType: '',
+        focalPlane: '',
         reticle: '',
-        adjustmentUnits: 'MOA',
-        tubeDiameter: '30mm',
+        adjustmentUnits: '',
+        tubeDiameter: '',
         footprint: '',
         isIlluminated: false,
 
         // Suppressor fields
         maxCaliberId: '',
         threadPitch: '',
-        attachmentType: 'Direct Thread',
+        attachmentType: '',
         material: '',
-        soundReductionDb: 30,
+        soundReductionDb: '',
         isFullAutoRated: false,
         isUserServiceable: false,
 
         // PewPewLight fields
-        lumens: 500,
-        candela: 5000,
-        batteryType: 'CR123A Lithium',
-        mountType: 'MIL-STD-1913 Picatinny',
-        laserColor: 'None',
+        lumens: '',
+        candela: '',
+        batteryType: '',
+        mountType: '',
+        laserColor: '',
         hasRemoteSwitchPort: false,
         isInfraredCapable: false
     })
@@ -86,24 +99,26 @@ export default function Catalog() {
         setLoading(true)
         setError('')
         try {
-            const [productsRes, mfgRes, calRes, enumsRes] = await Promise.all([
-                fetch('/api/products'),
-                fetch('/api/products/manufacturers'),
-                fetch('/api/products/calibers'),
-                fetch('/api/armory/enums')
+            const query = buildQuery({
+                expand: ['manufacturer', 'caliber']
+            })
+            const [productsRes, mfgRes, calRes] = await Promise.all([
+                fetch(`/api/v1/Products${query}`),
+                fetch('/api/v1/Manufacturers'),
+                fetch('/api/v1/Calibers')
             ])
 
-            if (productsRes.ok) setProducts(await productsRes.json())
-            if (mfgRes.ok) setManufacturers(await mfgRes.json())
-            if (calRes.ok) setCalibers(await calRes.json())
-            if (enumsRes.ok) {
-                const enumsData = await enumsRes.json()
-                setSuppressorMaterials(enumsData.suppressorMaterials || [])
-                setSuppressorAttachmentTypes(enumsData.suppressorAttachmentTypes || [])
-                setOpticFocalPlanes(enumsData.opticFocalPlanes || [])
-                setOpticReticles(enumsData.opticReticles || [])
-                setOpticAdjustmentUnits(enumsData.opticAdjustmentUnits || [])
-                setBatteryTypes(enumsData.batteryTypes || [])
+            if (productsRes.ok) {
+                const data = await productsRes.json()
+                setProducts(data.value || [])
+            }
+            if (mfgRes.ok) {
+                const data = await mfgRes.json()
+                setManufacturers(data.value || [])
+            }
+            if (calRes.ok) {
+                const data = await calRes.json()
+                setCalibers(data.value || [])
             }
 
         } catch (err) {
@@ -171,36 +186,36 @@ export default function Catalog() {
 
             // PewPew fields
             caliberId: calibers[0]?.id || '',
-            pewPewCategory: 'Rimfire',
-            actionType: 'Semi-Automatic',
+            pewPewCategory: '',
+            actionType: '',
 
             // Optic fields
-            minMagnification: 1.0,
-            maxMagnification: 1.0,
-            objectiveDiameterMm: 30,
-            opticType: 'Red Dot Sight',
-            focalPlane: opticFocalPlanes[0]?.label || 'None',
-            reticle: opticReticles[0]?.label || 'None',
-            adjustmentUnits: 'MOA',
-            tubeDiameter: '30mm',
+            minMagnification: '',
+            maxMagnification: '',
+            objectiveDiameterMm: '',
+            opticType: '',
+            focalPlane: '',
+            reticle: '',
+            adjustmentUnits: '',
+            tubeDiameter: '',
             footprint: '',
             isIlluminated: false,
 
             // Suppressor fields
             maxCaliberId: calibers[0]?.id || '',
             threadPitch: '',
-            attachmentType: suppressorAttachmentTypes[0]?.label || 'Direct Thread',
-            material: suppressorMaterials[0]?.label || '',
-            soundReductionDb: 30,
+            attachmentType: '',
+            material: '',
+            soundReductionDb: '',
             isFullAutoRated: false,
             isUserServiceable: false,
 
             // PewPewLight fields
-            lumens: 500,
-            candela: 5000,
-            batteryType: batteryTypes[0]?.label || 'Unknown Battery', 
-            mountType: 'MIL-STD-1913 Picatinny',
-            laserColor: 'None',
+            lumens: '',
+            candela: '',
+            batteryType: '',
+            mountType: '',
+            laserColor: '',
             hasRemoteSwitchPort: false,
             isInfraredCapable: false
         })
@@ -227,7 +242,7 @@ export default function Catalog() {
 
         try {
             const isNew = !isEditMode
-            const url = isNew ? '/api/products' : `/api/products/${form.id}`
+            const url = isNew ? '/api/v1/Products' : `/api/v1/Products/${form.id}`
             const method = isNew ? 'POST' : 'PUT'
 
             // Sanitize payload integers and types to avoid invalid JSON types (like NaN) causing model binding failure.
@@ -291,6 +306,19 @@ export default function Catalog() {
                 delete payload.isInfraredCapable
             }
 
+            // Prune navigation property objects and arrays (e.g. manufacturer, caliber) to prevent OData deserialization failure
+            Object.keys(payload).forEach(key => {
+                const val = payload[key]
+                if (val !== null && typeof val === 'object') {
+                    delete payload[key]
+                }
+            })
+
+            // Inject @odata.type so OData knows which derived subclass type to instantiate on creation/update
+            if (payload.productType) {
+                payload['@odata.type'] = `#Chambered.Data.Models.${payload.productType}`
+            }
+
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
@@ -333,7 +361,7 @@ export default function Catalog() {
         if (!window.confirm('Are you sure you want to delete this product catalog entry?')) return
 
         try {
-            const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
+            const res = await fetch(`/api/v1/Products/${id}`, { method: 'DELETE' })
             if (res.ok) {
                 fetchCatalogData()
             } else {
@@ -675,16 +703,10 @@ export default function Catalog() {
                                                     value={form.pewPewCategory}
                                                     onChange={(e) => setForm({ ...form, pewPewCategory: e.target.value })}
                                                 >
-                                                    <option value="Handgun">Handgun</option>
-                                                    <option value="Rifle">Rifle</option>
-                                                    <option value="Shotgun">Shotgun</option>
-                                                    <option value="Rimfire">Rimfire</option>
-                                                    <option value="Pistol Caliber Carbine">Pistol Caliber Carbine</option>
-                                                    <option value="Receiver Only">Receiver Only</option>
-                                                    <option value="NFA Class III">NFA Class III</option>
-                                                    <option value="Precision Long Range">Precision Long Range</option>
-                                                    <option value="Competition">Competition</option>
-                                                    <option value="Curio & Relic">Curio & Relic</option>
+                                                    <option value="">-- Select Category --</option>
+                                                    {pewPewCategories.map(opt => (
+                                                        <option key={opt.id} value={opt.label}>{opt.label}</option>
+                                                    ))}
                                                 </select>
                                             </div>
 
@@ -694,15 +716,10 @@ export default function Catalog() {
                                                     value={form.actionType}
                                                     onChange={(e) => setForm({ ...form, actionType: e.target.value })}
                                                 >
-                                                    <option value="Unknown">Unknown</option>
-                                                    <option value="Semi-Automatic">Semi-Automatic</option>
-                                                    <option value="Bolt Action">Bolt Action</option>
-                                                    <option value="Lever Action">Lever Action</option>
-                                                    <option value="Pump Action">Pump Action</option>
-                                                    <option value="Revolver">Revolver</option>
-                                                    <option value="Break Action">Break Action</option>
-                                                    <option value="Single Shot">Single Shot</option>
-                                                    <option value="Full-Automatic">Full-Automatic</option>
+                                                    <option value="">-- Select Action Type --</option>
+                                                    {actionTypes.map(opt => (
+                                                        <option key={opt.id} value={opt.label}>{opt.label}</option>
+                                                    ))}
                                                 </select>
                                             </div>
                                         </>
@@ -959,11 +976,10 @@ export default function Catalog() {
                                                     value={form.mountType}
                                                     onChange={(e) => setForm({ ...form, mountType: e.target.value })}
                                                 >
-                                                    <option value="MIL-STD-1913 Picatinny">MIL-STD-1913 Picatinny</option>
-                                                    <option value="M-LOK Slot">M-LOK Slot</option>
-                                                    <option value="KeyMod Slot">KeyMod Slot</option>
-                                                    <option value="Glock Accessory Rail">Glock Accessory Rail</option>
-                                                    <option value="Universal Accessory Rail">Universal Accessory Rail</option>
+                                                    <option value="">-- Select Mount Type --</option>
+                                                    {lightMountTypes.map(opt => (
+                                                        <option key={opt.id} value={opt.label}>{opt.label}</option>
+                                                    ))}
                                                 </select>
                                             </div>
 
@@ -973,10 +989,9 @@ export default function Catalog() {
                                                     value={form.laserColor}
                                                     onChange={(e) => setForm({ ...form, laserColor: e.target.value })}
                                                 >
-                                                    <option value="None">None</option>
-                                                    <option value="Visible Red">Visible Red</option>
-                                                    <option value="Visible Green">Visible Green</option>
-                                                    <option value="Infrared (IR)">Infrared (IR)</option>
+                                                    {laserColors.map(opt => (
+                                                        <option key={opt.id} value={opt.label}>{opt.label}</option>
+                                                    ))}
                                                 </select>
                                             </div>
 

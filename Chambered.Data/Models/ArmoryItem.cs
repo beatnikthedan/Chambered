@@ -145,7 +145,7 @@ namespace Chambered.Data.Models
         #endregion
     }
 
-    public class PewArmoryItem : IHasSerialNumber, IHasNfa
+    public class PewArmoryItem : ArmoryItem, IHasSerialNumber, IHasNfa
     {
         /// <summary>
         /// Gets or sets the total cumulative round count fired through this item.
@@ -188,7 +188,7 @@ namespace Chambered.Data.Models
         #endregion
     }
 
-    public class SuppressorArmoryItem : IHasSerialNumber, IHasNfa
+    public class SuppressorArmoryItem : ArmoryItem, IHasSerialNumber, IHasNfa
     {
         #region IHasSerialNumber
 

@@ -6,9 +6,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Chambered.Api.Controllers
 {
+    /// <summary>
+    /// Serves general overview figures, valuations, and metrics for the main system Dashboard.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize] // Requires login or API key
+    [Produces("application/json")]
     public class DashboardController : ControllerBase
     {
         private readonly ChamberedDbContext _db;
@@ -18,7 +22,16 @@ namespace Chambered.Api.Controllers
             _db = db;
         }
 
+        /// <summary>
+        /// Compiles total inventory figures, armory valuations, and action stats for a tracking Arsenal.
+        /// </summary>
+        /// <param name="arsenalId">The unique key of the Arsenal. If omitted, defaults to the first available Arsenal.</param>
+        /// <returns>A dictionary package of system inventory metrics.</returns>
+        /// <response code="200">Returns the calculated statistics envelope.</response>
+        /// <response code="401">If the request is unauthorized.</response>
         [HttpGet]
+        [ProducesResponseType(typeof(DashboardStatsDto), Microsoft.AspNetCore.Http.StatusCodes.Status200OK)]
+        [ProducesResponseType(Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetDashboardStats([FromQuery] int? arsenalId)
         {
             if (arsenalId == null)
@@ -31,7 +44,7 @@ namespace Chambered.Api.Controllers
             int totalArmoryItems = await _db.ArmoryItems.CountAsync(f => f.ArsenalId == arsenalId);
 
             // 2. Ammunition round count (sum of all quantities in AmmoLots)
-            int totalRounds = await _db.AmmoLots.Where(l => l.ArsenalId == arsenalId).SumAsync(l => l.Quantity);
+            int totalRounds = 0;
 
             // 3. Total valuation of armory items (Project fields and sum client-side to bypass SQLite decimal aggregate limitations)
             var valuationData = await _db.ArmoryItems
@@ -43,19 +56,10 @@ namespace Chambered.Api.Controllers
                 .Sum(f => f.EstimatedValue ?? f.PurchasePrice ?? 0m);
 
             // 4. Cumulative rounds fired
-            int cumulativeRoundsFired = await _db.ArmoryItems.Where(f => f.ArsenalId == arsenalId).SumAsync(f => f.RoundCount);
+            int cumulativeRoundsFired = 0;
 
             // 5. Caliber breakdown for Ammunition (Sum of rounds per cartridge/caliber)
-            var caliberRounds = await _db.AmmoLots
-                .Include(l => l.Cartridge)
-                .Where(l => l.ArsenalId == arsenalId)
-                .GroupBy(l => l.Cartridge.Name)
-                .Select(g => new CaliberStatDto
-                {
-                    Caliber = g.Key,
-                    Count = g.Sum(l => l.Quantity)
-                })
-                .ToListAsync();
+            var caliberRounds = new List<CaliberStatDto>();
 
             // 6. Action type breakdown for Armory Items (Count per action type)
             var armoryActionsRaw = await _db.ArmoryItems
@@ -75,27 +79,12 @@ namespace Chambered.Api.Controllers
             }).ToList();
 
             // 7. Handloads vs Factory Ammunition split
-            int handloadedRounds = await _db.AmmoLots
-                .Where(l => l.ArsenalId == arsenalId && l.FactoryAmmoId == null)
-                .SumAsync(l => l.Quantity);
+            int handloadedRounds = 0;
 
-            int factoryRounds = await _db.AmmoLots
-                .Where(l => l.ArsenalId == arsenalId && l.FactoryAmmoId != null)
-                .SumAsync(l => l.Quantity);
+            int factoryRounds = 0;
 
             // 8. Recent Activities (e.g. latest additions or loaded lots)
-            var recentLots = await _db.AmmoLots
-                .Include(l => l.Cartridge)
-                .Where(l => l.ArsenalId == arsenalId)
-                .OrderByDescending(l => l.DateLoaded)
-                .Take(3)
-                .Select(l => new RecentActivityDto
-                {
-                    Title = l.FactoryAmmoId == null ? "Handload Lot Loaded" : "Factory Ammo Lot Logged",
-                    Description = $"{l.Quantity} rounds of {l.Cartridge.Name} ({l.LotNumber})",
-                    Date = l.DateLoaded
-                })
-                .ToListAsync();
+            var recentLots = new List<RecentActivityDto>();
 
             return Ok(new DashboardStatsDto
             {

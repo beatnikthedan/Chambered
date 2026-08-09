@@ -6,7 +6,6 @@ import './App.css'
 // Lazy loaded views stubs
 import Dashboard from './views/Dashboard'
 import Armory from './views/Armory'
-import Munitions from './views/Munitions'
 import Settings from './views/Settings'
 import Login from './views/Login'
 import PlaceholderView from './views/PlaceholderView'
@@ -82,8 +81,6 @@ export default function App() {
         return 'Dashboard'
       case '/armory':
         return 'Chambered Armory'
-      case '/munitions':
-        return 'Chambered Munitions'
       case '/catalog':
         return 'Product Catalog'
       case '/settings':
@@ -214,32 +211,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Munitions */}
-            <div className="nav-group">
-              <Link 
-                to="/munitions" 
-                className={`nav-item ${location.pathname.startsWith('/munitions') ? 'active' : ''}`} 
-                title="Munitions"
-              >
-                <span className="nav-text">{!isSidebarCollapsed ? 'Munitions' : ''}</span>
-              </Link>
-              {!isSidebarCollapsed && location.pathname.startsWith('/munitions') && (
-                <div className="nav-sub-items">
-                  <Link 
-                    to="/munitions?type=factory" 
-                    className={`sub-nav-item ${location.search.includes('type=factory') ? 'active' : ''}`}
-                  >
-                    <span className="sub-text">Factory</span>
-                  </Link>
-                  <Link 
-                    to="/munitions?type=handload" 
-                    className={`sub-nav-item ${location.search.includes('type=handload') ? 'active' : ''}`}
-                  >
-                    <span className="sub-text">Handloads</span>
-                  </Link>
-                </div>
-              )}
-            </div>
 
             {/* Bench */}
             <div className="nav-group">
@@ -438,7 +409,6 @@ export default function App() {
               {/* Authenticated Routes */}
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/armory" element={<ProtectedRoute><Armory /></ProtectedRoute>} />
-              <Route path="/munitions" element={<ProtectedRoute><Munitions /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               
               {/* Bench routes */}

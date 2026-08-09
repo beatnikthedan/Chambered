@@ -32,9 +32,10 @@ export function StoreProvider({ children }) {
   // Fetch all arsenals
   const fetchArsenals = useCallback(async () => {
     try {
-      const res = await fetch('/api/arsenals');
+      const res = await fetch('/api/v1/Arsenals');
       if (res.ok) {
-        const list = await res.json();
+        const data = await res.json();
+        const list = data.value || [];
         setArsenals(list);
         if (list.length > 0) {
           const savedId = localStorage.getItem('activeArsenalId');
@@ -59,11 +60,74 @@ export function StoreProvider({ children }) {
   // Fetch all metadata enums
   const fetchEnums = useCallback(async () => {
     try {
-      const res = await fetch('/api/armory/enums');
-      if (res.ok) {
-        const data = await res.json();
-        setEnums(data);
-      }
+      const fetchEnum = async (url) => {
+        try {
+          const r = await fetch(url);
+          if (r.ok) {
+            const d = await r.json();
+            return (d.value || []).map(e => ({
+              id: e.value,
+              name: e.value,
+              label: e.displayName
+            }));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        return [];
+      };
+
+      const [
+        actionTypes,
+        batteryTypes,
+        laserColors,
+        lightMountTypes,
+        opticAdjustmentUnits,
+        opticReticles,
+        opticTypes,
+        pewPewCategories,
+        suppressorAttachmentTypes,
+        suppressorMaterials,
+        itemConditions,
+        nfaFormTypes,
+        lockTypes,
+        vaultCategories,
+        documentTypes
+      ] = await Promise.all([
+        fetchEnum('/api/v1/Products/GetActionTypes()'),
+        fetchEnum('/api/v1/Products/GetBatteryTypes()'),
+        fetchEnum('/api/v1/Products/GetLaserColors()'),
+        fetchEnum('/api/v1/Products/GetLightMountTypes()'),
+        fetchEnum('/api/v1/Products/GetOpticAdjustmentUnits()'),
+        fetchEnum('/api/v1/Products/GetOpticReticles()'),
+        fetchEnum('/api/v1/Products/GetOpticTypes()'),
+        fetchEnum('/api/v1/Products/GetPewPewCategories()'),
+        fetchEnum('/api/v1/Products/GetSuppressorAttachmentTypes()'),
+        fetchEnum('/api/v1/Products/GetSuppressorMaterials()'),
+        fetchEnum('/api/v1/Armory/GetItemConditions()'),
+        fetchEnum('/api/v1/Armory/GetNfaFormTypes()'),
+        fetchEnum('/api/v1/Vaults/GetLockTypes()'),
+        fetchEnum('/api/v1/Vaults/GetVaultCategories()'),
+        fetchEnum('/api/v1/Documents/GetDocumentTypes()')
+      ]);
+
+      setEnums({
+        actionTypes,
+        batteryTypes,
+        laserColors,
+        lightMountTypes,
+        opticAdjustmentUnits,
+        opticReticles,
+        opticTypes,
+        pewPewCategories,
+        suppressorAttachmentTypes,
+        suppressorMaterials,
+        itemConditions,
+        nfaFormTypes,
+        lockTypes,
+        vaultCategories,
+        documentTypes
+      });
     } catch (err) {
       console.error('Failed to load enums metadata', err);
     }
@@ -107,9 +171,10 @@ export function StoreProvider({ children }) {
       setIsAuthenticated(true);
       
       // Fetch arsenals right after login
-      const arsenalsRes = await fetch('/api/arsenals');
+      const arsenalsRes = await fetch('/api/v1/Arsenals');
       if (arsenalsRes.ok) {
-        const list = await arsenalsRes.json();
+        const data = await arsenalsRes.json();
+        const list = data.value || [];
         setArsenals(list);
         if (list.length > 0) {
           const savedId = localStorage.getItem('activeArsenalId');
@@ -147,9 +212,10 @@ export function StoreProvider({ children }) {
       setIsInitialized(true);
       
       // Fetch arsenals right after registration
-      const arsenalsRes = await fetch('/api/arsenals');
+      const arsenalsRes = await fetch('/api/v1/Arsenals');
       if (arsenalsRes.ok) {
-        const list = await arsenalsRes.json();
+        const data = await arsenalsRes.json();
+        const list = data.value || [];
         setArsenals(list);
         if (list.length > 0) {
           setActiveArsenalId(list[0].id);
@@ -184,9 +250,10 @@ export function StoreProvider({ children }) {
 
   // Select an arsenal
   const selectArsenal = useCallback(async (id) => {
-    const res = await fetch('/api/arsenals');
+    const res = await fetch('/api/v1/Arsenals');
     if (res.ok) {
-      const list = await res.json();
+      const data = await res.json();
+      const list = data.value || [];
       setArsenals(list);
       const found = list.find(a => a.id === id);
       if (found) {
@@ -199,7 +266,7 @@ export function StoreProvider({ children }) {
 
   // Create arsenal collection
   const createArsenal = useCallback(async (name, description, iconName, colorHex) => {
-    const res = await fetch('/api/arsenals', {
+    const res = await fetch('/api/v1/Arsenals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, description, iconName, colorHex })
@@ -208,9 +275,10 @@ export function StoreProvider({ children }) {
       const newArsenal = await res.json();
       
       // Reload and select
-      const arsenalsRes = await fetch('/api/arsenals');
+      const arsenalsRes = await fetch('/api/v1/Arsenals');
       if (arsenalsRes.ok) {
-        const list = await arsenalsRes.json();
+        const data = await arsenalsRes.json();
+        const list = data.value || [];
         setArsenals(list);
         const found = list.find(a => a.id === newArsenal.id);
         if (found) {
@@ -227,12 +295,13 @@ export function StoreProvider({ children }) {
 
   // Delete arsenal
   const deleteArsenal = useCallback(async (id) => {
-    const res = await fetch(`/api/arsenals/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/v1/Arsenals/${id}`, { method: 'DELETE' });
     if (res.ok) {
       // Reload arsenals
-      const arsenalsRes = await fetch('/api/arsenals');
+      const arsenalsRes = await fetch('/api/v1/Arsenals');
       if (arsenalsRes.ok) {
-        const list = await arsenalsRes.json();
+        const data = await arsenalsRes.json();
+        const list = data.value || [];
         setArsenals(list);
         if (list.length > 0) {
           const savedId = localStorage.getItem('activeArsenalId');
@@ -257,16 +326,17 @@ export function StoreProvider({ children }) {
 
   // Update arsenal collection
   const updateArsenal = useCallback(async (id, name, description, iconName, colorHex) => {
-    const res = await fetch(`/api/arsenals/${id}`, {
+    const res = await fetch(`/api/v1/Arsenals/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, name, description, iconName, colorHex })
     });
     if (res.ok) {
       // Reload lists
-      const arsenalsRes = await fetch('/api/arsenals');
+      const arsenalsRes = await fetch('/api/v1/Arsenals');
       if (arsenalsRes.ok) {
-        const list = await arsenalsRes.json();
+        const data = await arsenalsRes.json();
+        const list = data.value || [];
         setArsenals(list);
         const active = list.find(a => a.id === id);
         if (active && id === activeArsenalId) {

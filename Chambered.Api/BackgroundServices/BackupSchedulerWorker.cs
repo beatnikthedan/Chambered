@@ -1,32 +1,32 @@
-﻿using Microsoft.Extensions.Options;
-using Cronos;
+﻿using Chambered.Core.Services;
 using Chambered.Infrastructure.Configuration;
-using Chambered.Core.Services;
+using Cronos;
+using Microsoft.Extensions.Options;
 
 namespace Chambered.Api.BackgroundServices
 {
-    
-//    // 1. Bind Options Configuration
-//builder.Services.Configure<BackupConfiguration>(
-//    builder.Configuration.GetSection("Backup"));
 
-//// 2. Register Database Backup Implementation (Swap Sqlite for Postgres as needed)
-//string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    //    // 1. Bind Options Configuration
+    //builder.Services.Configure<BackupConfiguration>(
+    //    builder.Configuration.GetSection("Backup"));
 
-//    // FOR SQLITE:
-//    builder.Services.AddScoped<IBackupService>(sp => 
-//    new SqliteBackupService(connectionString, sp.GetRequiredService<IOptionsSnapshot<BackupConfiguration>>(), sp.GetRequiredService<ILogger<SqliteBackupService>>()));
+    //// 2. Register Database Backup Implementation (Swap Sqlite for Postgres as needed)
+    //string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-//// FOR POSTGRESQL (Uncomment when switching to Postgres):
-//// builder.Services.AddScoped<IBackupService>(sp => 
-////     new PostgresBackupService(connectionString, sp.GetRequiredService<IOptionsSnapshot<BackupConfiguration>>(), sp.GetRequiredService<ILogger<PostgresBackupService>>()));
+    //    // FOR SQLITE:
+    //    builder.Services.AddScoped<IBackupService>(sp => 
+    //    new SqliteBackupService(connectionString, sp.GetRequiredService<IOptionsSnapshot<BackupConfiguration>>(), sp.GetRequiredService<ILogger<SqliteBackupService>>()));
 
-//// 3. Register the Scheduled Background Worker
-//builder.Services.AddHostedService<BackupSchedulerWorker>();
-    
-    
-    
-    
+    //// FOR POSTGRESQL (Uncomment when switching to Postgres):
+    //// builder.Services.AddScoped<IBackupService>(sp => 
+    ////     new PostgresBackupService(connectionString, sp.GetRequiredService<IOptionsSnapshot<BackupConfiguration>>(), sp.GetRequiredService<ILogger<PostgresBackupService>>()));
+
+    //// 3. Register the Scheduled Background Worker
+    //builder.Services.AddHostedService<BackupSchedulerWorker>();
+
+
+
+
     /// <summary>
     /// Background hosted service that periodically triggers backups and handles retention policy cleanup based on CRON expressions.
     /// </summary>

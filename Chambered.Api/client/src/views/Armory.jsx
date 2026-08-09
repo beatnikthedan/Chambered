@@ -3,6 +3,7 @@ import { useStore } from "../StoreContext";
 import "./Armory.css";
 import BatteryTracker from "../components/BatteryTracker";
 import SubmitButton from "../components/SubmitButton";
+import buildQuery from "odata-query";
 
 const BATTERY_TYPES = [
   { value: "Unknown", label: "Unknown Battery" },
@@ -153,13 +154,15 @@ export default function Armory() {
     setLoading(true);
     setError("");
     try {
-      const url = store.activeArsenalId
-        ? `/api/armory?arsenalId=${store.activeArsenalId}`
-        : "/api/armory";
+      const query = buildQuery({
+        filter: store.activeArsenalId ? { arsenalId: store.activeArsenalId } : undefined,
+        expand: ['product', 'vault', 'owner', 'beneficiary']
+      })
+      const url = `/api/v1/Armory${query}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        setArmoryItems(data);
+        setArmoryItems(data.value || []);
       } else {
         setError(`Error loading: ${res.status}`);
       }
@@ -185,12 +188,12 @@ export default function Armory() {
   const fetchVaultLocations = async () => {
     try {
       const url = store.activeArsenalId
-        ? `/api/vaults/locations?arsenalId=${store.activeArsenalId}`
-        : "/api/vaults/locations";
+        ? `/api/v1/Vaults?$filter=arsenalId eq ${store.activeArsenalId}`
+        : "/api/v1/Vaults";
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        setVaultLocations(data);
+        setVaultLocations(data.value || []);
       }
     } catch (err) {
       console.error("Failed to load vault locations", err);
@@ -198,26 +201,16 @@ export default function Armory() {
   };
 
   const fetchAmmoLots = async () => {
-    try {
-      const res = await fetch("/api/settings/ammo-lots");
-      if (res.ok) {
-        setAmmoLots(await res.json());
-      } else {
-        const altRes = await fetch("/api/munitions");
-        if (altRes.ok) {
-          setAmmoLots(await altRes.json());
-        }
-      }
-    } catch (err) {
-      console.error("Ammo lots loading bypassed.", err);
-    }
+    // Ammo lots and munitions deleted on the backend
+    setAmmoLots([]);
   };
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("/api/products");
+      const res = await fetch("/api/v1/Products");
       if (res.ok) {
-        setProducts(await res.json());
+        const data = await res.json();
+        setProducts(data.value || []);
       }
     } catch (err) {
       console.error("Failed to load products", err);
@@ -283,17 +276,19 @@ export default function Armory() {
   // Event handlers
   const quickIncrementRounds = async (id, e) => {
     e.stopPropagation();
+    const item = armoryItems.find((x) => x.id === id);
+    if (!item) return;
+    const newRoundCount = (item.roundCount || 0) + 50;
     try {
-      const res = await fetch(`/api/armory/${id}/increment-rounds`, {
-        method: "POST",
+      const res = await fetch(`/api/v1/Armory/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: 50 }),
+        body: JSON.stringify({ ...item, roundCount: newRoundCount }),
       });
       if (res.ok) {
-        const data = await res.json();
         setArmoryItems((prev) =>
-          prev.map((item) =>
-            item.id === id ? { ...item, roundCount: data.roundCount } : item,
+          prev.map((it) =>
+            it.id === id ? { ...it, roundCount: newRoundCount } : it,
           ),
         );
       }
@@ -306,14 +301,15 @@ export default function Armory() {
     const accessoryId = parseInt(selectedExistingId) || 0;
     if (!accessoryId) return;
 
+    const accessoryItem = armoryItems.find((x) => x.id === accessoryId);
+    if (!accessoryItem) return;
+
     try {
-      const res = await fetch(
-        `/api/armory/${accessoryId}/mount?parentId=${form.id}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      const res = await fetch(`/api/v1/Armory/${accessoryId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...accessoryItem, parentItemId: form.id }),
+      });
       if (res.ok) {
         await fetchArmoryItems();
         setSelectedExistingId("");
@@ -326,10 +322,14 @@ export default function Armory() {
   };
 
   const handleDetachAccessory = async (accessoryId) => {
+    const accessoryItem = armoryItems.find((x) => x.id === accessoryId);
+    if (!accessoryItem) return;
+
     try {
-      const res = await fetch(`/api/armory/${accessoryId}/unmount`, {
-        method: "POST",
+      const res = await fetch(`/api/v1/Armory/${accessoryId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...accessoryItem, parentItemId: null }),
       });
       if (res.ok) {
         await fetchArmoryItems();
@@ -358,8 +358,7 @@ export default function Armory() {
       }
 
       const payload = {
-        firearmModelId: p.id,
-        pewpewModelId: p.id,
+        productId: p.id,
         parentItemId: form.id,
         manufacturer: p.manufacturerName || "",
         model: p.model || "",
@@ -370,7 +369,7 @@ export default function Armory() {
         arsenalId: form.arsenalId || store.activeArsenalId || 1,
       };
 
-      const res = await fetch("/api/armory", {
+      const res = await fetch("/api/v1/Armory", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -694,7 +693,7 @@ export default function Armory() {
     setIsSaving(true);
     try {
       const { batteryType, ...restForm } = form;
-      const url = isEditMode ? `/api/armory/${form.id}` : "/api/armory";
+      const url = isEditMode ? `/api/v1/Armory/${form.id}` : "/api/v1/Armory";
       const method = isEditMode ? "PUT" : "POST";
 
       let finalMfg = form.manufacturer;
@@ -709,8 +708,7 @@ export default function Armory() {
 
       const payload = {
         ...restForm,
-        firearmModelId: form.pewpewModelId || form.firearmModelId || 0,
-        pewpewModelId: form.pewpewModelId || form.firearmModelId || 0,
+        productId: form.pewpewModelId || form.productId || 0,
         manufacturer: finalMfg,
         model: finalMod,
         barrelLengthInches: form.barrelLengthInches
@@ -719,7 +717,7 @@ export default function Armory() {
         purchasePrice: form.purchasePrice
           ? parseFloat(form.purchasePrice)
           : null,
-        currentValue: form.currentValue ? parseFloat(form.currentValue) : null,
+        estimatedValue: form.currentValue ? parseFloat(form.currentValue) : null,
         purchaseDate: form.purchaseDateString
           ? new Date(form.purchaseDateString).toISOString()
           : null,
@@ -734,6 +732,19 @@ export default function Armory() {
         maintenanceTasksJson: JSON.stringify(maintenanceTasks),
         rangeHistoryJson: JSON.stringify(rangeSessions),
       };
+
+      // Prune navigation property objects and arrays (e.g. storageLocation, owner, beneficiary) to prevent OData deserialization failure
+      Object.keys(payload).forEach(key => {
+        const val = payload[key]
+        if (val !== null && typeof val === 'object') {
+          delete payload[key]
+        }
+      })
+
+      // Inject @odata.type so OData knows which derived subclass type to instantiate on creation/update
+      if (payload.itemType && payload.itemType !== "ArmoryItem") {
+        payload['@odata.type'] = `#Chambered.Data.Models.${payload.itemType}`
+      }
 
       const res = await fetch(url, {
         method,
@@ -837,7 +848,7 @@ export default function Armory() {
   const handleDeleteConfirm = async () => {
     if (!deleteConfirmId) return;
     try {
-      const res = await fetch(`/api/armory/${deleteConfirmId}`, {
+      const res = await fetch(`/api/v1/Armory/${deleteConfirmId}`, {
         method: "DELETE",
       });
       if (res.ok) {

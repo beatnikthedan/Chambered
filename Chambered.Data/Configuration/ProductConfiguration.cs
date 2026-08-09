@@ -14,6 +14,8 @@ namespace Chambered.Data.Configuration
         {
             builder.ToTable("Products");
 
+            builder.HasKey(c => c.Id);
+
             builder.Property(v => v.Name)
                 .IsRequired()
                 .HasMaxLength(100);

@@ -25,23 +25,7 @@ namespace Chambered.Api.Data
             if (!await roleManager.RoleExistsAsync(userRole))
                 await roleManager.CreateAsync(new IdentityRole(userRole));
 
-            // 2. Seed default OIDC Config if none exists
-            if (!await context.OidcConfigs.AnyAsync())
-            {
-                context.OidcConfigs.Add(new OidcConfig
-                {
-                    IsEnabled = false,
-                    ClientId = "",
-                    ClientSecret = "",
-                    IssuerUrl = "",
-                    AuthUrl = "",
-                    TokenUrl = "",
-                    UserinfoUrl = "",
-                    JwksUrl = "",
-                    AutoCreateUser = true
-                });
-                await context.SaveChangesAsync();
-            }
+
 
             // 3. Seed default Products (PewPews) programmatically if none exist
             if (!await context.Products.AnyAsync())
@@ -55,8 +39,7 @@ namespace Chambered.Api.Data
                     Sku = "1103",
                     PewPewCategory = Chambered.Data.Enums.PewPewCategory.Rimfire,
                     ActionType = Chambered.Data.Enums.ActionType.SemiAutomatic,
-                    WebPageUrl = "https://ruger.com/products/1022Carbine/models.html",
-                    ReferenceNotes = "Compatible with all standard BX series magazines."
+                    WebPageUrl = "https://ruger.com/products/1022Carbine/models.html"
                 });
 
                 context.Products.Add(new PewPew

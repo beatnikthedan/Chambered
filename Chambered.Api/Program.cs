@@ -1,5 +1,6 @@
-using Chambered.Api.Authentication;
+using Asp.Versioning;
 using Chambered.Api.BackgroundServices;
+using Chambered.Api.Swagger;
 using Chambered.Core.Services;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
@@ -7,8 +8,10 @@ using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Mail;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -55,21 +58,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = "MixedScheme";
-    options.DefaultChallengeScheme = "MixedScheme";
-})
-.AddScheme<ApiKeyAuthOptions, ApiKeyAuthHandler>("ApiKeyScheme", null)
-.AddPolicyScheme("MixedScheme", "MixedScheme", options =>
-{
-    options.ForwardDefaultSelector = context =>
-    {
-        // Route API Key auth header or fallback to standard Identity Cookie Auth
-        if (context.Request.Headers.ContainsKey("Authorization"))
-        {
-            return "ApiKeyScheme";
-        }
-        return IdentityConstants.ApplicationScheme;
-    };
+    options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
 });
 
 // 4. Configure CORS for frontend dev server
@@ -84,8 +74,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 5. Configure Controllers with camelCase and cycles ignored
+// 5. Configure Controllers with camelCase, cycles ignored, and OData options
 builder.Services.AddControllers()
+    .AddOData(options =>
+    {
+        options.Select().Filter().OrderBy().Expand().Count().SetMaxTop(100);
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -93,8 +87,25 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
     });
 
-// Learn more about configuring OpenAPI
-builder.Services.AddEndpointsApiExplorer();
+// Configure API Versioning + OData Routing integration
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+})
+.AddOData(options =>
+{
+    options.AddRouteComponents("api/v{version:apiVersion}");
+})
+.AddODataApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+// Configure Versioned Swagger Documents generator
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 builder.Services.AddSwaggerGen();
 
 
@@ -131,7 +142,14 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        var provider = app.Services.GetRequiredService<Asp.Versioning.ApiExplorer.IApiVersionDescriptionProvider>();
+        foreach (var description in provider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+        }
+    });
 }
 
 app.UseCors("CorsPolicy");
@@ -203,3 +221,5 @@ app.MapFallbackToFile("index.html");
 
 
 app.Run();
+
+

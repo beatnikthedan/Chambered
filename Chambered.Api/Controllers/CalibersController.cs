@@ -7,7 +7,7 @@ namespace Chambered.Api.Controllers;
 
 [ApiVersion("1.0")]
 [Authorize]
-public class ArsenalsController : ODataControllerBase<Arsenal, int>
+public class CalibersController : ODataControllerBase<Caliber, int>
 {
-    public ArsenalsController(ChamberedDbContext db) : base(db) { }
+    public CalibersController(ChamberedDbContext db) : base(db) { }
 }

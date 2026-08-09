@@ -10,11 +10,20 @@ namespace Chambered.Api.Controllers;
 
 [ApiVersion("1.0")]
 [Authorize]
-public class ArmoryController : ODataControllerBase<ArmoryItem, int>
+public class VaultsController : ODataControllerBase<Vault, int>
 {
-    public ArmoryController(ChamberedDbContext db) : base(db) { }
+    public VaultsController(ChamberedDbContext db) : base(db) { }
 
     #region Navigation Properties
+
+    [EnableQuery]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetStoredItems([FromRoute] int key)
+    {
+        return await GetNavigationPropertyAsync(key);
+    }
 
     [EnableQuery]
     [HttpGet]
@@ -29,34 +38,7 @@ public class ArmoryController : ODataControllerBase<ArmoryItem, int>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetVault([FromRoute] int key)
-    {
-        return await GetNavigationPropertyAsync(key);
-    }
-
-    [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetArsenal([FromRoute] int key)
-    {
-        return await GetNavigationPropertyAsync(key);
-    }
-
-    [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetOwner([FromRoute] int key)
-    {
-        return await GetNavigationPropertyAsync(key);
-    }
-
-    [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetBeneficiary([FromRoute] int key)
     {
         return await GetNavigationPropertyAsync(key);
     }
@@ -64,14 +46,14 @@ public class ArmoryController : ODataControllerBase<ArmoryItem, int>
     #endregion
 
     [HttpGet]
-    public IActionResult GetItemConditions()
+    public IActionResult GetLockTypes()
     {
-        return Ok(GetEnumValues<ItemCondition>());
+        return Ok(GetEnumValues<LockType>());
     }
 
     [HttpGet]
-    public IActionResult GetNfaFormTypes()
+    public IActionResult GetVaultCategories()
     {
-        return Ok(GetEnumValues<NfaFormType>());
+        return Ok(GetEnumValues<VaultCategory>());
     }
 }
