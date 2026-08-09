@@ -15,17 +15,12 @@ namespace Chambered.Data.Configuration
         {
             builder.ToTable("Vaults");
 
-            builder.HasKey(v => v.Id);
-
             builder.Property(v => v.Name)
                 .IsRequired()
                 .HasMaxLength(100);
 
             builder.Property(v => v.Description)
                 .HasMaxLength(500);
-
-            builder.Property(v => v.LockType)
-                .IsRequired();
 
             builder.Property(v => v.EncryptedPasscode)
                 .HasConversion<SymmetricEncryptionConverter>()
@@ -53,17 +48,6 @@ namespace Chambered.Data.Configuration
                 .WithMany()
                 .HasForeignKey(v => v.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            builder.HasData(new Vault
-            {
-                Id = 1,
-                Name = "Main Vault",
-                Description = "Secure storage vault",
-                ArsenalId = 1,
-                VaultCategoryId = 1,
-                LockType = LockType.ElectronicKeypad,
-                HasDehumidifier = false
-            });
         }
     }
 }

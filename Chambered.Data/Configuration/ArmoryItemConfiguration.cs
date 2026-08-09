@@ -14,14 +14,24 @@ namespace Chambered.Data.Configuration
         {
             builder.ToTable("ArmoryItems");
 
-            builder.HasKey(a => a.Id);
-
-            builder.Property(a => a.SerialNumber)
+            builder.Property(v => v.Name)
                 .IsRequired()
-                .HasConversion<SymmetricEncryptionConverter>()
-                .HasMaxLength(512);
+                .HasMaxLength(100);
 
-            #region TPH Discriminator Setup
+            builder.Property(v => v.Description)
+                .HasMaxLength(500);
+
+            builder.Property(a => a.PurchasePrice)
+               .HasPrecision(18, 2);
+
+            builder.Property(a => a.EstimatedValue)
+                .HasPrecision(18, 2);
+
+            builder.Property(a => a.ImageUrl)
+                .HasMaxLength(2048);
+
+            builder.Property(a => a.NotesMarkdown)
+                .HasMaxLength(2048);
 
             var discriminatorBuilder = builder.HasDiscriminator<string>("ItemType");
 
@@ -36,21 +46,6 @@ namespace Chambered.Data.Configuration
                 discriminatorBuilder.HasValue(subtype, subtype.Name);
             }
 
-            #endregion
-
-            builder.Property(a => a.PurchasePrice)
-                .HasPrecision(18, 2);
-
-            builder.Property(a => a.EstimatedValue)
-                .HasPrecision(18, 2);
-
-            builder.Property(a => a.Condition)
-                .IsRequired(false);
-
-            builder.Property(a => a.RoundCount)
-                .IsRequired()
-                .HasDefaultValue(0);
-
             builder.HasOne(a => a.Owner)
                 .WithMany(u => u.OwnedItems)
                 .HasForeignKey(a => a.OwnerId)
@@ -61,9 +56,6 @@ namespace Chambered.Data.Configuration
                 .HasForeignKey(a => a.BeneficiaryId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.Property(a => a.ImageUrl)
-                .HasMaxLength(2048);
-
             builder.HasOne(a => a.ParentItem)
                 .WithMany(a => a.MountedAccessories)
                 .HasForeignKey(a => a.ParentItemId)
@@ -71,26 +63,14 @@ namespace Chambered.Data.Configuration
         }
     }
 
-    public class NfaArmoryItemConfiguration : IEntityTypeConfiguration<NfaArmoryItem>
-    {
-        public void Configure(EntityTypeBuilder<NfaArmoryItem> builder)
-        {
-            builder.Property(a => a.IsNfaItem)
-                .IsRequired()
-                .HasDefaultValue(false);
-
-            builder.Property(a => a.NfaFormType)
-                .IsRequired(false);
-
-            builder.Property(a => a.TaxStampDocumentUrl)
-                .HasMaxLength(2048);
-        }
-    }
-
     public class PewArmoryItemConfiguration : IEntityTypeConfiguration<PewArmoryItem>
     {
         public void Configure(EntityTypeBuilder<PewArmoryItem> builder)
         {
+            builder.Property(a => a.RoundCount)
+                .IsRequired()
+                .HasDefaultValue(0);
+
             builder.Property(a => a.BarrelLengthInches)
                 .HasPrecision(5, 2);
 
@@ -99,6 +79,39 @@ namespace Chambered.Data.Configuration
 
             builder.Property(a => a.ThreadPitch)
                 .HasMaxLength(30);
+
+            builder.Property(a => a.SerialNumber)
+                .IsRequired()
+                .HasConversion<SymmetricEncryptionConverter>()
+                .HasMaxLength(512);
+
+            builder.Property(a => a.TaxStampDocumentUrl)
+                .HasMaxLength(2048);
+        }
+    }
+
+    public class SuppressorArmoryItemConfiguration : IEntityTypeConfiguration<SuppressorArmoryItem>
+    {
+        public void Configure(EntityTypeBuilder<SuppressorArmoryItem> builder)
+        {
+            builder.Property(a => a.SerialNumber)
+                .IsRequired()
+                .HasConversion<SymmetricEncryptionConverter>()
+                .HasMaxLength(512);
+
+            builder.Property(a => a.TaxStampDocumentUrl)
+                .HasMaxLength(2048);
+        }
+    }
+
+    public class SuppressOpticArmoryItemConfiguration : IEntityTypeConfiguration<OpticArmoryItem>
+    {
+        public void Configure(EntityTypeBuilder<OpticArmoryItem> builder)
+        {
+            builder.Property(a => a.SerialNumber)
+                .IsRequired()
+                .HasConversion<SymmetricEncryptionConverter>()
+                .HasMaxLength(512);
         }
     }
 }

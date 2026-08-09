@@ -6,7 +6,7 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents an item in your armory.
     /// </summary>
-    public class ArmoryItem
+    public class ArmoryItem : IItemIdentifier
     {
         #region Primary Identification & Relational Lookups
 
@@ -25,13 +25,17 @@ namespace Chambered.Data.Models
         /// </summary>
         public Product Product { get; set; } = null!;
 
-        /// <summary>
-        /// Gets or sets the manufacturer-stamped unique serial number.
-        /// </summary>
-        public string SerialNumber { get; set; } = string.Empty;
-
         #endregion
 
+        #region IItemIdentifier
+
+        /// <inheritdoc/>
+        public string Name { get; set; } = string.Empty;
+
+        /// <inheritdoc/>
+        public string? Description { get; set; } = string.Empty;
+
+        #endregion
 
         #region Financial & Valuation
 
@@ -53,16 +57,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the physical condition rating of the item.
         /// </summary>
-        public ItemCondition? Condition { get; set; }
-
-        #endregion
-
-        #region Usage & Maintenance Stats
-
-        /// <summary>
-        /// Gets or sets the total cumulative round count fired through this item.
-        /// </summary>
-        public int RoundCount { get; set; } = 0;
+        public ItemCondition Condition { get; set; } = ItemCondition.Unknown;
 
         #endregion
 
@@ -150,31 +145,13 @@ namespace Chambered.Data.Models
         #endregion
     }
 
-    public class NfaArmoryItem : ArmoryItem
+    public class PewArmoryItem : IHasSerialNumber, IHasNfa
     {
         /// <summary>
-        /// Gets or sets a value indicating whether this item falls under NFA regulation (e.g., SBR, Suppressor).
+        /// Gets or sets the total cumulative round count fired through this item.
         /// </summary>
-        public bool IsNfaItem { get; set; } = false;
+        public int RoundCount { get; set; } = 0;
 
-        /// <summary>
-        /// Gets or sets the specific NFA form type for the application.
-        /// </summary>
-        public NfaFormType? NfaFormType { get; set; }
-
-        /// <summary>
-        /// Gets or sets the URL or file path for the approved NFA tax stamp document image or PDF.
-        /// </summary>
-        public string? TaxStampDocumentUrl { get; set; }
-
-        /// <summary>
-        /// Gets or sets the date the NFA tax stamp was officially approved.
-        /// </summary>
-        public DateTime? StampApprovalDate { get; set; }
-    }
-
-    public class PewArmoryItem : NfaArmoryItem
-    {
         /// <summary>
         /// Gets or sets the barrel length measured in inches.
         /// </summary>
@@ -189,36 +166,77 @@ namespace Chambered.Data.Models
         /// Gets or sets the muzzle thread pitch (e.g., "1/2x28", "5/8x24").
         /// </summary>
         public string? ThreadPitch { get; set; }
+
+        #region IHasSerialNumber
+
+        /// <inheritdoc/>
+        public string SerialNumber { get; set; } = string.Empty;
+
+        #endregion
+
+        #region IHasNfa
+
+        /// <inheritdoc/>
+        public NfaFormType NfaFormType { get; set; } = NfaFormType.Unknown;
+
+        /// <inheritdoc/>
+        public string? TaxStampDocumentUrl { get; set; }
+
+        /// <inheritdoc/>
+        public DateTime? StampApprovalDate { get; set; }
+
+        #endregion
     }
 
-    public class SuppressorArmoryItem : NfaArmoryItem
+    public class SuppressorArmoryItem : IHasSerialNumber, IHasNfa
     {
-        // Inherits legal and NFA structures cleanly
+        #region IHasSerialNumber
+
+        /// <inheritdoc/>
+        public string SerialNumber { get; set; } = string.Empty;
+
+        #endregion
+
+        #region IHasNfa
+
+        /// <inheritdoc/>
+        public NfaFormType NfaFormType { get; set; } = NfaFormType.Unknown;
+
+        /// <inheritdoc/>
+        public string? TaxStampDocumentUrl { get; set; }
+
+        /// <inheritdoc/>
+        public DateTime? StampApprovalDate { get; set; }
+
+        #endregion
     }
 
-    public class OpticArmoryItem : ArmoryItem, IHasBattery
+    public class OpticArmoryItem : ArmoryItem, IHasSerialNumber, IHasBattery
     {
-        /// <summary>
-        /// Gets or sets the date the battery was last changed.
-        /// </summary>
+        #region IHasSerialNumber
+
+        /// <inheritdoc/>
+        public string SerialNumber { get; set; } = string.Empty;
+
+        #endregion
+
+        /// <inheritdoc/>
         public DateTime? BatteryLastChangedDate { get; set; }
 
-        /// <summary>
-        /// Gets or sets the battery expiration date.
-        /// </summary>
+        /// <inheritdoc/>
         public DateTime? BatteryExpirationDate { get; set; }
     }
 
     public class LightArmoryItem : ArmoryItem, IHasBattery
     {
-        /// <summary>
-        /// Gets or sets the date the battery was last changed.
-        /// </summary>
+        #region IHasBattery
+
+        /// <inheritdoc/>
         public DateTime? BatteryLastChangedDate { get; set; }
 
-        /// <summary>
-        /// Gets or sets the battery expiration date.
-        /// </summary>
+        /// <inheritdoc/>
         public DateTime? BatteryExpirationDate { get; set; }
+
+        #endregion
     }
 }

@@ -34,7 +34,6 @@ namespace Chambered.Data
 
 
         public DbSet<Vault> Vaults { get; set; }
-        public DbSet<VaultCategory> VaultCategories { get; set; }
 
 
 
@@ -44,7 +43,6 @@ namespace Chambered.Data
         public DbSet<Cartridge> Cartridges { get; set; }
         public DbSet<FactoryAmmo> FactoryAmmo { get; set; }
 
-        public DbSet<ExternalSourceMap> ExternalSourceMaps { get; set; }
         public DbSet<Powder> Powders { get; set; }
 
         public DbSet<CartridgeLot> CartridgeLots { get; set; }
@@ -66,23 +64,20 @@ namespace Chambered.Data
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
             configurationBuilder.Properties<ActionType>().HaveConversion<int>();
+            configurationBuilder.Properties<BatteryType>().HaveConversion<int>();
             configurationBuilder.Properties<DocumentType>().HaveConversion<int>();
             configurationBuilder.Properties<ItemCondition>().HaveConversion<int>();
+            configurationBuilder.Properties<LaserColor>().HaveConversion<int>();
+            configurationBuilder.Properties<LightMountType>().HaveConversion<int>();
             configurationBuilder.Properties<LockType>().HaveConversion<int>();
             configurationBuilder.Properties<NfaFormType>().HaveConversion<int>();
-            configurationBuilder.Properties<PewPewCategory>().HaveConversion<int>();
-
-
-
-            configurationBuilder.Properties<OpticType>().HaveConversion<int>();
-            configurationBuilder.Properties<OpticFocalPlane>().HaveConversion<int>();
-            configurationBuilder.Properties<OpticReticle>().HaveConversion<int>();
             configurationBuilder.Properties<OpticAdjustmentUnit>().HaveConversion<int>();
+            configurationBuilder.Properties<OpticReticle>().HaveConversion<int>();
+            configurationBuilder.Properties<OpticType>().HaveConversion<int>();
+            configurationBuilder.Properties<PewPewCategory>().HaveConversion<int>();
             configurationBuilder.Properties<SuppressorAttachmentType>().HaveConversion<int>();
             configurationBuilder.Properties<SuppressorMaterial>().HaveConversion<int>();
-            configurationBuilder.Properties<LightMountType>().HaveConversion<int>();
-            configurationBuilder.Properties<LaserColor>().HaveConversion<int>();
-            configurationBuilder.Properties<BatteryType>().HaveConversion<int>();
+            configurationBuilder.Properties<VaultCategory>().HaveConversion<int>();
         }
     }
 
@@ -153,18 +148,6 @@ namespace Chambered.Data
         public string Notes { get; set; }
     }
 
-    public class ExternalSourceMap
-    {
-        public int Id { get; set; }
-
-        public string EntityType { get; set; }     // "Projectile", "Cartridge", etc.
-        public int EntityId { get; set; }
-
-        public string SourceName { get; set; }     // "GRT", "Ammolytics"
-        public string SourceId { get; set; }
-
-        public string RawJson { get; set; }        // optional for debugging imports
-    }
 
     public class Powder
     {
@@ -320,25 +303,6 @@ namespace Chambered.Data
         }
     }
 
-    public class ExternalSourceMapConfiguration : IEntityTypeConfiguration<ExternalSourceMap>
-    {
-        public void Configure(EntityTypeBuilder<ExternalSourceMap> builder)
-        {
-            builder.Property(e => e.EntityType)
-                .IsRequired()
-                .HasMaxLength(50);
-
-            builder.Property(e => e.SourceName)
-                .IsRequired()
-                .HasMaxLength(50);
-
-            builder.Property(e => e.SourceId)
-                .HasMaxLength(100);
-
-            builder.Property(e => e.RawJson)
-                .HasMaxLength(4000);
-        }
-    }
 
     public class PowderConfiguration : IEntityTypeConfiguration<Powder>
     {

@@ -4,6 +4,8 @@ namespace Chambered.Data.Enums
 {
     public enum SuppressorAttachmentType
     {
+        [Display(Name = "Unknown")]
+        Unknown,
         [Display(Name = "Direct Thread")]
         DirectThread,
         [Display(Name = "Quick Detach (QD)")]

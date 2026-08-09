@@ -4,6 +4,8 @@ namespace Chambered.Data.Enums
 {
     public enum SuppressorMaterial
     {
+        [Display(Name = "Unknown")]
+        Unknown,
         [Display(Name = "Titanium")]
         Titanium,
         [Display(Name = "Stainless Steel")]

@@ -8,6 +8,12 @@ namespace Chambered.Data.Enums
     public enum NfaFormType
     {
         /// <summary>
+        /// Unknown form type
+        /// </summary>
+        [Display(Name = "Unknown")]
+        Unknown = 0,
+
+        /// <summary>
         /// Application to Make and Register a Firearm.
         /// </summary>
         [Display(Name = "Form 1 (Application to Make/Register)")]

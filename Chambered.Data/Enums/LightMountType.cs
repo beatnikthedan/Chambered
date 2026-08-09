@@ -4,6 +4,8 @@ namespace Chambered.Data.Enums
 {
     public enum LightMountType
     {
+        [Display(Name = "None")]
+        None,
         [Display(Name = "MIL-STD-1913 Picatinny")]
         Picatinny,
         [Display(Name = "M-LOK Slot")]

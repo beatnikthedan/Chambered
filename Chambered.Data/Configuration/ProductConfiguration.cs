@@ -12,23 +12,19 @@ namespace Chambered.Data.Configuration
     {
         public void Configure(EntityTypeBuilder<Product> builder)
         {
-            #region Table & Primary Key Setup
-
             builder.ToTable("Products");
-            builder.HasKey(p => p.Id);
 
-            #endregion
+            builder.Property(v => v.Name)
+                .IsRequired()
+                .HasMaxLength(100);
 
-            #region Base Product Property Configurations
+            builder.Property(v => v.Description)
+                .HasMaxLength(500);
 
-            builder.Property(p => p.Model).IsRequired().HasMaxLength(100);
             builder.Property(p => p.PartNumber).IsRequired().HasMaxLength(100);
             builder.Property(p => p.Sku).HasMaxLength(50);
             builder.Property(p => p.WebPageUrl).HasMaxLength(2048);
             builder.Property(p => p.ImageContentType).HasMaxLength(100);
-            builder.Property(p => p.ReferenceNotes).HasMaxLength(2000);
-
-            #endregion
 
             #region Dynamic Specifications (JSON Mapping)
 
@@ -63,20 +59,8 @@ namespace Chambered.Data.Configuration
     {
         public void Configure(EntityTypeBuilder<Optic> builder)
         {
-            builder.Property(x => x.MinMagnification)
-                .HasPrecision(5, 2);
-
-            builder.Property(x => x.MaxMagnification)
-                .HasPrecision(5, 2);
-
-
-
-            builder.Property(x => x.TubeDiameter)
-                .HasMaxLength(20);
-
-            builder.Property(x => x.Footprint)
-                .HasMaxLength(50);
-
+            builder.Property(x => x.MinMagnification).HasPrecision(5, 2);
+            builder.Property(x => x.MaxMagnification).HasPrecision(5, 2);
             builder.Ignore(x => x.IsVariablePower);
             builder.Ignore(x => x.MagnificationDisplay);
         }
@@ -86,20 +70,7 @@ namespace Chambered.Data.Configuration
     {
         public void Configure(EntityTypeBuilder<Suppressor> builder)
         {
-            #region Property Constraints
-
-            builder.HasOne(s => s.MaxCaliber)
-                .WithMany()
-                .HasForeignKey(s => s.MaxCaliberId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Property(s => s.ThreadPitch)
-                .HasMaxLength(50);
-
-            builder.Property(s => s.SoundReductionDb)
-                .HasPrecision(5, 2);
-
-            #endregion
+            builder.Property(s => s.ThreadPitch).HasMaxLength(50);
         }
     }
 }

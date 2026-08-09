@@ -1,11 +1,12 @@
+using Chambered.Data.Enums;
 using Chambered.Data.Interfaces;
 
 namespace Chambered.Data.Models
-{
+{    
     /// <summary>
     /// Represents a secure container, room, vehicle, or physical location where armory items or ammunition are stored.
     /// </summary>
-    public class Vault : IHasBattery
+    public class Vault : IItemIdentifier, IHasBattery
     {
         #region Primary Identification
 
@@ -24,15 +25,15 @@ namespace Chambered.Data.Models
         /// </summary>
         public Security? Product { get; set; }
 
-        /// <summary>
-        /// Gets or sets the friendly name of the vault (e.g., "Main Gun Safe", "Bedside Vault", "Truck Console Safe").
-        /// </summary>
+        #endregion
+
+        #region IItemIdentifier
+
+        /// <inheritdoc/>
         public string Name { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Gets or sets detailed descriptions or directions to the safe (e.g., "South wall of the basement workshop").
-        /// </summary>
-        public string? Description { get; set; }
+        /// <inheritdoc/>
+        public string? Description { get; set; } = string.Empty;
 
         #endregion
 
@@ -49,14 +50,9 @@ namespace Chambered.Data.Models
         public Arsenal Arsenal { get; set; } = null!;
 
         /// <summary>
-        /// Gets or sets the foreign key for the vault category.
-        /// </summary>
-        public int VaultCategoryId { get; set; }
-
-        /// <summary>
         /// Gets or sets the navigation property for the vault category.
         /// </summary>
-        public VaultCategory VaultCategory { get; set; } = null!;
+        public VaultCategory VaultCategory { get; set; } = VaultCategory.Unknown;
 
         /// <summary>
         /// Gets or sets the foreign key for a parent vault/location if this item is nested inside another (e.g., Lockbox inside a Truck).
@@ -78,11 +74,6 @@ namespace Chambered.Data.Models
         #region Access Controls & Security
 
         /// <summary>
-        /// Gets or sets the primary lock type (e.g., Electronic Keypad, Mechanical Dial, Biometric, Key Lock).
-        /// </summary>
-        public Enums.LockType LockType { get; set; }
-
-        /// <summary>
         /// Gets or sets the AES-encrypted combination or passcode string.
         /// </summary>
         public string? EncryptedPasscode { get; set; }
@@ -102,16 +93,6 @@ namespace Chambered.Data.Models
         /// </summary>
         public string? BackupKeyLocation { get; set; }
 
-        /// <summary>
-        /// Gets or sets the last date electronic lock batteries were replaced.
-        /// </summary>
-        public DateTime? BatteryLastChangedDate { get; set; }
-
-        /// <summary>
-        /// Gets or sets the battery expiration date.
-        /// </summary>
-        public DateTime? BatteryExpirationDate { get; set; }
-
         #endregion
 
         #region Environment & Maintenance Metadata
@@ -130,6 +111,16 @@ namespace Chambered.Data.Models
         /// Gets or sets the target humidity percentage threshold for climate alerts.
         /// </summary>
         public int? TargetMaxHumidityPercent { get; set; }
+
+        #endregion
+
+        #region IHasBattery
+
+        /// <inheritdoc/>
+        public DateTime? BatteryLastChangedDate { get; set; }
+
+        /// <inheritdoc/>
+        public DateTime? BatteryExpirationDate { get; set; }
 
         #endregion
 
