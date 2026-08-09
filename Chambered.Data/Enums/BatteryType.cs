@@ -12,6 +12,8 @@ namespace Chambered.Data.Enums
         Cr2,
         [Display(Name = "CR2032 Coin Cell")]
         Cr2032,
+        [Display(Name = "9V Alkaline/Lithium")]
+        NineV,
         [Display(Name = "AA Alkaline/Lithium")]
         Aa,
         [Display(Name = "AAA Alkaline/Lithium")]

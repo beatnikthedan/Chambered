@@ -382,12 +382,10 @@ export default function Vaults() {
                     <button className="btn btn-secondary btn-small" onClick={fetchVaults}>Retry</button>
                 </div>
             ) : vaults.length === 0 ? (
-                <div className="vaults-empty-state">
-                    <div className="empty-state-symbol">🔒</div>
-                    <h3>No Vaults Configured</h3>
-                    <p>Setup safe rooms, portable lockboxes, or heavy steel safes to securely track where inventory items and reloading components reside.</p>
-                    <button className="btn btn-primary" onClick={openCreateModal}>Configure Your First Vault</button>
-                </div>
+                <div className="empty-state panel">
+                        <h3>You have no items in your Vaults.</h3>
+                        <p style={{ marginTop: '4px', color: 'var(--text-muted)' }}>Click 'Add Item' above to add your first item.</p>
+                    </div>
             ) : (
                 <>
                     {/* GRID VIEW */}

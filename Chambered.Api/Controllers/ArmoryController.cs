@@ -132,7 +132,8 @@ namespace Chambered.Api.Controllers
                 suppressorAttachmentTypes = Enum.GetValues<SuppressorAttachmentType>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList(),
                 opticFocalPlanes = Enum.GetValues<OpticFocalPlane>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList(),
                 opticReticles = Enum.GetValues<OpticReticle>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList(),
-                opticAdjustmentUnits = Enum.GetValues<OpticAdjustmentUnit>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList()
+                opticAdjustmentUnits = Enum.GetValues<OpticAdjustmentUnit>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList(),
+                batteryTypes = Enum.GetValues<BatteryType>().OrderBy(e => (int)e).Select(e => new { id = (int)e, name = e.ToString(), label = e.GetDisplayName() }).ToList()
             });
         }
 

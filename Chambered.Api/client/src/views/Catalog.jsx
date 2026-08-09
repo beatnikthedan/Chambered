@@ -14,6 +14,7 @@ export default function Catalog() {
     const [opticFocalPlanes, setOpticFocalPlanes] = useState([])
     const [opticReticles, setOpticReticles] = useState([])
     const [opticAdjustmentUnits, setOpticAdjustmentUnits] = useState([])
+    const [batteryTypes, setBatteryTypes] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -101,6 +102,7 @@ export default function Catalog() {
                 setOpticFocalPlanes(enumsData.opticFocalPlanes || [])
                 setOpticReticles(enumsData.opticReticles || [])
                 setOpticAdjustmentUnits(enumsData.opticAdjustmentUnits || [])
+                setBatteryTypes(enumsData.batteryTypes || [])
             }
 
         } catch (err) {
@@ -195,7 +197,7 @@ export default function Catalog() {
             // PewPewLight fields
             lumens: 500,
             candela: 5000,
-            batteryType: 'CR123A Lithium',
+            batteryType: batteryTypes[0]?.label || 'Unknown Battery', 
             mountType: 'MIL-STD-1913 Picatinny',
             laserColor: 'None',
             hasRemoteSwitchPort: false,
@@ -823,12 +825,9 @@ export default function Catalog() {
                                                         value={form.batteryType}
                                                         onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
                                                     >
-                                                        <option value="CR2032 Coin Cell">CR2032 Coin Cell</option>
-                                                        <option value="CR1632 Coin Cell">CR1632 Coin Cell</option>
-                                                        <option value="CR123A Lithium">CR123A Lithium</option>
-                                                        <option value="AA Alkaline/Lithium">AA Alkaline/Lithium</option>
-                                                        <option value="AAA Alkaline/Lithium">AAA Alkaline/Lithium</option>
-                                                        <option value="Unknown Battery">Unknown Battery / Other</option>
+                                                        {batteryTypes.map(bat => (
+    <option key={bat.id} value={bat.label}>{bat.label}</option>
+))}
                                                     </select>
                                                 </div>
                                             )}
@@ -950,15 +949,9 @@ export default function Catalog() {
                                                     value={form.batteryType}
                                                     onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
                                                 >
-                                                    <option value="Unknown Battery">Unknown Battery</option>
-                                                    <option value="CR123A Lithium">CR123A Lithium</option>
-                                                    <option value="CR2 Lithium">CR2 Lithium</option>
-                                                    <option value="CR2032 Coin Cell">CR2032 Coin Cell</option>
-                                                    <option value="AA Alkaline/Lithium">AA Alkaline/Lithium</option>
-                                                    <option value="AAA Alkaline/Lithium">AAA Alkaline/Lithium</option>
-                                                    <option value="18650 Li-Ion Rechargeable">18650 Li-Ion Rechargeable</option>
-                                                    <option value="18350 Li-Ion Rechargeable">18350 Li-Ion Rechargeable</option>
-                                                    <option value="Integrated USB Rechargeable">Integrated USB Rechargeable</option>
+                                                    {batteryTypes.map(bat => (
+    <option key={bat.id} value={bat.label}>{bat.label}</option>
+))}
                                                 </select>
                                             </div>
 
@@ -1037,11 +1030,9 @@ export default function Catalog() {
                                                         value={form.batteryType}
                                                         onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
                                                     >
-                                                        <option value="CR2032 Coin Cell">CR2032 Coin Cell</option>
-                                                        <option value="CR123A Lithium">CR123A Lithium</option>
-                                                        <option value="AA Alkaline/Lithium">AA Alkaline/Lithium</option>
-                                                        <option value="AAA Alkaline/Lithium">AAA Alkaline/Lithium</option>
-                                                        <option value="Unknown Battery">Unknown Battery / Other</option>
+                                                        {batteryTypes.map(bat => (
+    <option key={bat.id} value={bat.label}>{bat.label}</option>
+))}
                                                     </select>
                                                 </div>
                                             )}
