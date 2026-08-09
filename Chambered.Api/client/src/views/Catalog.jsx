@@ -99,11 +99,8 @@ export default function Catalog() {
         setLoading(true)
         setError('')
         try {
-            const query = buildQuery({
-                expand: ['manufacturer', 'caliber']
-            })
             const [productsRes, mfgRes, calRes] = await Promise.all([
-                fetch(`/api/v1/Products${query}`),
+                fetch('/api/v1/Products?$expand=manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber'),
                 fetch('/api/v1/Manufacturers'),
                 fetch('/api/v1/Calibers')
             ])
@@ -133,9 +130,33 @@ export default function Catalog() {
         fetchCatalogData()
     }, [])
 
+    // Processed products with unified helper keys
+    const processedProducts = useMemo(() => {
+        return products.map(p => {
+            const manufacturer = p.manufacturer || manufacturers.find(m => m.id === p.manufacturerId)
+            const caliber = p.caliber || calibers.find(c => c.id === p.caliberId)
+            const maxCaliber = p.caliber || calibers.find(c => c.id === p.maxCaliberId)
+
+            let type = p.productType
+            if (!type && p['@odata.type']) {
+                const parts = p['@odata.type'].split('.')
+                type = parts[parts.length - 1]
+            }
+            if (!type) type = 'Product'
+
+            return {
+                ...p,
+                productType: type,
+                manufacturerName: manufacturer?.name || '',
+                caliberName: caliber?.name || '',
+                maxCaliberName: maxCaliber?.name || ''
+            }
+        })
+    }, [products, manufacturers, calibers])
+
     // Filtered products list
     const filteredProducts = useMemo(() => {
-        return products.filter(p => {
+        return processedProducts.filter(p => {
             const matchesSearch = 
                 p.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 p.partNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -145,7 +166,7 @@ export default function Catalog() {
             const matchesType = typeFilter === 'All' || p.productType === typeFilter
             return matchesSearch && matchesType
         })
-    }, [products, searchTerm, typeFilter])
+    }, [processedProducts, searchTerm, typeFilter])
 
     // Synchronize specifications dictionary to customSpecs array
     useEffect(() => {
@@ -318,6 +339,18 @@ export default function Catalog() {
             if (payload.productType) {
                 payload['@odata.type'] = `#Chambered.Data.Models.${payload.productType}`
             }
+
+            // Set required Name field to model value (as Name is a required column on the backend)
+            payload.name = payload.model || ""
+
+            // Delete unmapped frontend-only fields so strict OData JSON deserializer doesn't fail
+            delete payload.productType
+            delete payload.referenceNotes
+            delete payload.manufacturerName
+            delete payload.caliberName
+            delete payload.maxCaliberName
+            delete payload.manufacturer
+            delete payload.caliber
 
             const res = await fetch(url, {
                 method,

@@ -7,6 +7,7 @@ using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
 using Chambered.Infrastructure.Services.NotificationServices;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
@@ -75,7 +76,10 @@ builder.Services.AddCors(options =>
 });
 
 // 5. Configure Controllers with camelCase, cycles ignored, and OData options
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ModelStateDebugLoggerFilter>();
+})
     .AddOData(options =>
     {
         options.Select().Filter().OrderBy().Expand().Count().SetMaxTop(100);
@@ -86,6 +90,16 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
     });
+
+builder.Services.AddHttpLogging(l =>
+{
+    l.LoggingFields = HttpLoggingFields.All;
+    //l.RequestHeaders.Add("My-Request-Header");
+    //l.ResponseHeaders.Add("My-Response-Header");
+    //l.MediaTypeOptions.AddText("application/json");
+    l.RequestBodyLogLimit = 4096;
+    l.ResponseBodyLogLimit = 4096;
+});
 
 // Configure API Versioning + OData Routing integration
 builder.Services.AddApiVersioning(options =>
@@ -154,6 +168,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("CorsPolicy");
 
+app.UseHttpLogging();
+
 // Seed and initialize database asynchronously
 using (var scope = app.Services.CreateScope())
 {
@@ -168,6 +184,31 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "An error occurred seeding the database.");
     }
 }
+
+// Custom API Request & ModelState Debug Logger Middleware
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
+    {
+        context.Request.EnableBuffering();
+        var requestBody = "";
+        using (var reader = new StreamReader(context.Request.Body, System.Text.Encoding.UTF8, leaveOpen: true))
+        {
+            requestBody = await reader.ReadToEndAsync();
+            context.Request.Body.Position = 0; // Rewind the stream so downstream binders can read it
+        }
+
+        Console.WriteLine($"\n[ODATA REQUEST] {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
+        Console.WriteLine($"[Payload]: {requestBody}");
+    }
+
+    await next();
+
+    if (context.Response.StatusCode >= 400 && context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
+    {
+        Console.WriteLine($"[ODATA RESPONSE ERROR] Status Code: {context.Response.StatusCode}");
+    }
+});
 
 app.UseRouting();
 
@@ -221,5 +262,38 @@ app.MapFallbackToFile("index.html");
 
 
 app.Run();
+
+
+public class ModelStateDebugLoggerFilter : Microsoft.AspNetCore.Mvc.Filters.IActionFilter
+{
+    public void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
+    {
+        if (!context.ModelState.IsValid)
+        {
+            Console.WriteLine("\n========================================================");
+            Console.WriteLine("[MODELSTATE ERROR DETECTED] OData Model Binding Failed!");
+            Console.WriteLine("========================================================");
+            foreach (var state in context.ModelState)
+            {
+                foreach (var error in state.Value.Errors)
+                {
+                    Console.WriteLine($"Field: {state.Key}");
+                    Console.WriteLine($"Error: {error.ErrorMessage}");
+                    if (error.Exception != null)
+                    {
+                        Console.WriteLine($"Exception Message: {error.Exception.Message}");
+                        if (error.Exception.InnerException != null)
+                        {
+                            Console.WriteLine($"Inner Exception: {error.Exception.InnerException.Message}");
+                        }
+                    }
+                }
+            }
+            Console.WriteLine("========================================================\n");
+        }
+    }
+
+    public void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context) { }
+}
 
 

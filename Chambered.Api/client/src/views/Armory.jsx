@@ -5,18 +5,6 @@ import BatteryTracker from "../components/BatteryTracker";
 import SubmitButton from "../components/SubmitButton";
 import buildQuery from "odata-query";
 
-const BATTERY_TYPES = [
-  { value: "Unknown", label: "Unknown Battery" },
-  { value: "Cr123A", label: "CR123A Lithium" },
-  { value: "Cr2", label: "CR2 Lithium" },
-  { value: "Cr2032", label: "CR2032 Coin Cell" },
-  { value: "Aa", label: "AA Alkaline/Lithium" },
-  { value: "Aaa", label: "AAA Alkaline/Lithium" },
-  { value: "LiIon18650", label: "18650 Li-Ion Rechargeable" },
-  { value: "LiIon18350", label: "18350 Li-Ion Rechargeable" },
-  { value: "IntegratedRechargeable", label: "Integrated USB Rechargeable" },
-];
-
 export default function Armory() {
   const store = useStore();
   const { enums } = store;
@@ -31,7 +19,7 @@ export default function Armory() {
 
   const conditions = useMemo(() => {
     if (enums && enums.itemConditions) {
-      return enums.itemConditions.map((e) => e.label);
+      return enums.itemConditions;
     }
     return [];
   }, [enums]);
@@ -71,17 +59,6 @@ export default function Armory() {
   const [newAccCondition, setNewAccCondition] = useState("Excellent");
   const [isCreatingAcc, setIsCreatingAcc] = useState(false);
 
-  // ATF NFA Form classification definitions
-  const nfaFormTypes = [
-    { value: "Form1", label: "Form 1 (Application to Make/Register)" },
-    { value: "Form2", label: "Form 2 (Notice of Manufacture/Import)" },
-    { value: "Form3", label: "Form 3 (Tax-Exempt Dealer Transfer)" },
-    { value: "Form4", label: "Form 4 (Tax-Paid Individual Transfer)" },
-    { value: "Form5", label: "Form 5 (Tax-Exempt Individual/Gov Transfer)" },
-    { value: "Form9", label: "Form 9 (Authorization to Export)" },
-    { value: "Form10", label: "Form 10 (Government Acquisition Registration)" },
-  ];
-
   // Form State
   const [form, setForm] = useState({
     id: 0,
@@ -95,6 +72,8 @@ export default function Armory() {
     twistRate: "",
     threadPitch: "",
     actionType: "",
+    name: "",
+    description: "",
     serialNumber: "",
     notes: "",
     purchasePrice: "",
@@ -106,6 +85,7 @@ export default function Armory() {
     beneficiary: "",
     beneficiaryId: "",
     storageLocation: "",
+    vaultId: "",
     notesMarkdown: "",
     opticManufacturer: "",
     opticModel: "",
@@ -154,15 +134,35 @@ export default function Armory() {
     setLoading(true);
     setError("");
     try {
-      const query = buildQuery({
-        filter: store.activeArsenalId ? { arsenalId: store.activeArsenalId } : undefined,
-        expand: ['product', 'vault', 'owner', 'beneficiary']
-      })
+      const query = "?$expand=product($expand=manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber),vault,owner,beneficiary" + 
+        (store.activeArsenalId ? `&$filter=arsenalId eq ${store.activeArsenalId}` : "");
       const url = `/api/v1/Armory${query}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        setArmoryItems(data.value || []);
+        const mappedItems = (data.value || []).map((item) => {
+          const product = item.product || {};
+          const manufacturer = product.manufacturer || {};
+          const caliber = product.caliber || {};
+
+          let derivedType = "ArmoryItem";
+          if (item["@odata.type"]) {
+            const parts = item["@odata.type"].split(".");
+            derivedType = parts[parts.length - 1];
+          }
+
+          return {
+            ...item,
+            itemType: derivedType,
+            manufacturer: manufacturer.name || "",
+            model: product.model || "",
+            caliber: caliber.name || "",
+            actionType: product.actionType || "",
+            storageLocation: item.vault?.name || "",
+            vaultId: item.vaultId || "",
+          };
+        });
+        setArmoryItems(mappedItems);
       } else {
         setError(`Error loading: ${res.status}`);
       }
@@ -207,10 +207,24 @@ export default function Armory() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("/api/v1/Products");
+      const res = await fetch("/api/v1/Products?$expand=manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber");
       if (res.ok) {
         const data = await res.json();
-        setProducts(data.value || []);
+        const rawProducts = data.value || [];
+        const mappedProducts = rawProducts.map((p) => {
+          let type = "Product";
+          if (p["@odata.type"]) {
+            const parts = p["@odata.type"].split(".");
+            type = parts[parts.length - 1];
+          }
+          return {
+            ...p,
+            productType: type,
+            manufacturerName: p.manufacturer?.name || "Unknown Brand",
+            caliberName: p.caliber?.name || "N/A",
+          };
+        });
+        setProducts(mappedProducts);
       }
     } catch (err) {
       console.error("Failed to load products", err);
@@ -416,12 +430,14 @@ export default function Armory() {
       twistRate: "",
       threadPitch: "",
       actionType: "",
+      name: "",
+      description: "",
       serialNumber: "",
       notes: "",
       purchasePrice: "",
       purchaseDateString: "",
       currentValue: "",
-      condition: "Good (90%)",
+      condition: "Good",
       imageUrl: "",
       roundCount: 0,
       owner: "",
@@ -429,6 +445,7 @@ export default function Armory() {
       beneficiary: "",
       beneficiaryId: "",
       storageLocation: "",
+      vaultId: "",
       notesMarkdown: "",
       opticManufacturer: "",
       opticModel: "",
@@ -471,7 +488,8 @@ export default function Armory() {
       ownerId: item.ownerId || "",
       beneficiary: item.beneficiary || "",
       beneficiaryId: item.beneficiaryId || "",
-      storageLocation: item.storageLocation || "",
+      storageLocation: item.vault?.name || item.storageLocation || "",
+      vaultId: item.vaultId || "",
       notesMarkdown: item.notesMarkdown || "",
       opticManufacturer: item.opticManufacturer || "",
       opticModel: item.opticModel || "",
@@ -692,7 +710,23 @@ export default function Armory() {
 
     setIsSaving(true);
     try {
-      const { batteryType, ...restForm } = form;
+      const {
+        batteryType,
+        purchaseDateString,
+        storageLocation,
+        owner,
+        beneficiary,
+        opticManufacturer,
+        opticModel,
+        opticReticle,
+        opticSerial,
+        opticBattery,
+        isOpticMounted,
+        pewpewModelId,
+        firearmModelId,
+        currentValue,
+        ...restForm
+      } = form;
       const url = isEditMode ? `/api/v1/Armory/${form.id}` : "/api/v1/Armory";
       const method = isEditMode ? "PUT" : "POST";
 
@@ -717,7 +751,9 @@ export default function Armory() {
         purchasePrice: form.purchasePrice
           ? parseFloat(form.purchasePrice)
           : null,
-        estimatedValue: form.currentValue ? parseFloat(form.currentValue) : null,
+        estimatedValue: form.currentValue
+          ? parseFloat(form.currentValue)
+          : null,
         purchaseDate: form.purchaseDateString
           ? new Date(form.purchaseDateString).toISOString()
           : null,
@@ -727,29 +763,98 @@ export default function Armory() {
         stampApprovalDate: form.stampApprovalDate
           ? new Date(form.stampApprovalDate).toISOString()
           : null,
+        ownerId: form.ownerId ? parseInt(form.ownerId) : null,
+        beneficiaryId: form.beneficiaryId ? parseInt(form.beneficiaryId) : null,
         arsenalId: parseInt(form.arsenalId) || store.activeArsenalId,
+        vaultId: form.vaultId ? parseInt(form.vaultId) : null,
         accessoriesListJson: JSON.stringify(accessoriesList),
         maintenanceTasksJson: JSON.stringify(maintenanceTasks),
         rangeHistoryJson: JSON.stringify(rangeSessions),
       };
 
-      // Prune navigation property objects and arrays (e.g. storageLocation, owner, beneficiary) to prevent OData deserialization failure
-      Object.keys(payload).forEach(key => {
-        const val = payload[key]
-        if (val !== null && typeof val === 'object') {
-          delete payload[key]
-        }
-      })
+      // Map notes to notesMarkdown for the C# model
+      payload.notesMarkdown = form.notes || form.notesMarkdown || "";
+
+      // Ensure Name property is set (Name is required on ArmoryItem in C#)
+      payload.name = form.name || form.model || "Armory Item";
+
+      // Map empty or falsy nfaFormType to 'Unknown' to satisfy OData enum parsing
+      payload.nfaFormType = form.nfaFormType && form.nfaFormType !== "" ? form.nfaFormType : "Unknown";
+
+      // Resolve dynamic itemType subclass
+      const resolvedItemType = form.itemType || activeItemType || "ArmoryItem";
 
       // Inject @odata.type so OData knows which derived subclass type to instantiate on creation/update
-      if (payload.itemType && payload.itemType !== "ArmoryItem") {
-        payload['@odata.type'] = `#Chambered.Data.Models.${payload.itemType}`
+      if (resolvedItemType && resolvedItemType !== "ArmoryItem") {
+        payload["@odata.type"] = `#Chambered.Data.Models.${resolvedItemType}`;
       }
+
+      // Base properties that exist on the base ArmoryItem class and are valid for all subclasses
+      const baseKeys = [
+        "@odata.type",
+        "id",
+        "productId",
+        "name",
+        "description",
+        "purchasePrice",
+        "purchaseDate",
+        "estimatedValue",
+        "condition",
+        "ownerId",
+        "beneficiaryId",
+        "vaultId",
+        "arsenalId",
+        "parentItemId",
+        "imageUrl",
+        "notesMarkdown"
+      ];
+
+      // Subclass-specific properties mapped precisely to the C# definitions
+      let subclassKeys = [];
+      if (resolvedItemType === "PewArmoryItem") {
+        subclassKeys = [
+          "roundCount",
+          "barrelLengthInches",
+          "twistRate",
+          "threadPitch",
+          "serialNumber",
+          "nfaFormType",
+          "taxStampDocumentUrl",
+          "stampApprovalDate"
+        ];
+      } else if (resolvedItemType === "SuppressorArmoryItem") {
+        subclassKeys = [
+          "serialNumber",
+          "nfaFormType",
+          "taxStampDocumentUrl",
+          "stampApprovalDate"
+        ];
+      } else if (resolvedItemType === "OpticArmoryItem") {
+        subclassKeys = [
+          "serialNumber",
+          "batteryLastChangedDate",
+          "batteryExpirationDate"
+        ];
+      } else if (resolvedItemType === "LightArmoryItem") {
+        subclassKeys = [
+          "batteryLastChangedDate",
+          "batteryExpirationDate"
+        ];
+      }
+
+      const validArmoryKeys = [...baseKeys, ...subclassKeys];
+
+      const cleanPayload = {};
+      validArmoryKeys.forEach((key) => {
+        if (payload[key] !== undefined) {
+          cleanPayload[key] = payload[key];
+        }
+      });
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(cleanPayload),
       });
 
       if (res.ok) {
@@ -769,7 +874,9 @@ export default function Armory() {
           ownerId: savedItem.ownerId || "",
           beneficiary: savedItem.beneficiary || "",
           beneficiaryId: savedItem.beneficiaryId || "",
-          storageLocation: savedItem.storageLocation || "",
+          storageLocation:
+            savedItem.vault?.name || savedItem.storageLocation || "",
+          vaultId: savedItem.vaultId || "",
           notesMarkdown: savedItem.notesMarkdown || "",
           opticManufacturer: savedItem.opticManufacturer || "",
           opticModel: savedItem.opticModel || "",
@@ -1749,6 +1856,35 @@ export default function Armory() {
                       form={form}
                       setForm={setForm}
                     />
+
+                    <div className="form-item">
+                      <label>Name</label>
+                      <input
+                        type="string"
+                        value={form.name || ""}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            name: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="form-item">
+                      <label>Description</label>
+                      <input
+                        type="string"
+                        value={form.description || ""}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            description: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
                     <div className="form-item">
                       <label>
                         Serial Number{" "}
@@ -1785,8 +1921,8 @@ export default function Armory() {
                         }
                       >
                         {conditions.map((p) => (
-                          <option key={p} value={p}>
-                            {p}
+                          <option key={p.id} value={p.name}>
+                            {p.label}
                           </option>
                         ))}
                       </select>
@@ -1856,14 +1992,21 @@ export default function Armory() {
                     <div className="form-item">
                       <label>Vault</label>
                       <select
-                        value={form.storageLocation}
+                        value={form.vaultId || ""}
                         onChange={(e) =>
-                          setForm({ ...form, storageLocation: e.target.value })
+                          setForm({
+                            ...form,
+                            vaultId: e.target.value
+                              ? parseInt(e.target.value)
+                              : "",
+                          })
                         }
                       >
+                        <option value="">None / Standalone</option>
                         {vaultLocations.map((loc) => (
-                          <option key={loc.name} value={loc.name}>
-                            {loc.name} ({loc.securityLevel})
+                          <option key={loc.id} value={loc.id}>
+                            {loc.name} (
+                            {loc.vaultCategory || loc.securityLevel || "N/A"})
                           </option>
                         ))}
                       </select>

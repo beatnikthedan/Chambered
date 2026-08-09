@@ -47,9 +47,8 @@ export default function Vaults() {
     description: "",
     arsenalId: "",
     securityLevel: "Standard",
-    vaultCategoryId: "",
     parentVaultId: "",
-    passcode: "",
+    encryptedPasscode: "",
     passcodeHint: "",
     backupKeyLocation: "",
     productId: "",
@@ -69,7 +68,7 @@ export default function Vaults() {
     try {
       const query = buildQuery({
         filter: store.activeArsenalId ? { arsenalId: store.activeArsenalId } : undefined,
-        expand: ['product', 'storedItems']
+        expand: ['product', 'armoryItem']
       })
       const url = `/api/v1/Vaults${query}`;
       const res = await fetch(url);
@@ -101,11 +100,24 @@ export default function Vaults() {
   const fetchProducts = async () => {
     try {
       const res = await fetch(
-        "/api/v1/Products?$filter=productType eq 'Security'",
+        "/api/v1/Products?$expand=manufacturer",
       );
       if (res.ok) {
         const data = await res.json();
-        setProducts(data.value || []);
+        const rawProducts = data.value || [];
+        const mappedProducts = rawProducts.map((p) => {
+          let type = "Product";
+          if (p["@odata.type"]) {
+            const parts = p["@odata.type"].split(".");
+            type = parts[parts.length - 1];
+          }
+          return {
+            ...p,
+            productType: type,
+            manufacturerName: p.manufacturer?.name || "Unknown Brand",
+          };
+        });
+        setProducts(mappedProducts);
       }
     } catch (err) {
       console.error("Failed to load products", err);
@@ -118,15 +130,33 @@ export default function Vaults() {
     fetchProducts();
   }, [store.activeArsenalId]);
 
+  // Pre-process vaults to dynamically map C# property names to UI-expected names
+  const processedVaults = useMemo(() => {
+    return vaults.map((vault) => {
+      const product = products.find((p) => p.id === vault.productId);
+      const arsenal = store.arsenals.find((a) => a.id === vault.arsenalId);
+      const parentVault = vaults.find((v) => v.id === vault.parentVaultId);
+
+      return {
+        ...vault,
+        storedItems: vault.armoryItem || [],
+        productManufacturerName: product?.manufacturer?.name || "",
+        productModel: product?.model || "",
+        arsenalName: arsenal?.name || "",
+        parentVaultName: parentVault?.name || "",
+      };
+    });
+  }, [vaults, products, store.arsenals, categories]);
+
   // Map flat vault list to a hierarchical tree
   const vaultTree = useMemo(() => {
     const map = {};
-    vaults.forEach((v) => {
+    processedVaults.forEach((v) => {
       map[v.id] = { ...v, children: [] };
     });
 
     const roots = [];
-    vaults.forEach((v) => {
+    processedVaults.forEach((v) => {
       const node = map[v.id];
       if (v.parentVaultId && map[v.parentVaultId]) {
         map[v.parentVaultId].children.push(node);
@@ -135,15 +165,15 @@ export default function Vaults() {
       }
     });
     return roots;
-  }, [vaults]);
+  }, [processedVaults]);
 
   // Filter out current vault and its descendants from the parent vault options list to prevent circular reference loops
   const eligibleParentVaults = useMemo(() => {
-    if (!isEditMode) return vaults;
+    if (!isEditMode) return processedVaults;
 
     const getDescendantIds = (vaultId) => {
       const ids = [];
-      const children = vaults.filter((v) => v.parentVaultId === vaultId);
+      const children = processedVaults.filter((v) => v.parentVaultId === vaultId);
       children.forEach((c) => {
         ids.push(c.id);
         ids.push(...getDescendantIds(c.id));
@@ -152,8 +182,8 @@ export default function Vaults() {
     };
 
     const forbiddenIds = [form.id, ...getDescendantIds(form.id)];
-    return vaults.filter((v) => !forbiddenIds.includes(v.id));
-  }, [vaults, isEditMode, form.id]);
+    return processedVaults.filter((v) => !forbiddenIds.includes(v.id));
+  }, [processedVaults, isEditMode, form.id]);
 
   // Node toggle helpers
   const toggleNode = (id) => {
@@ -170,9 +200,8 @@ export default function Vaults() {
       description: "",
       arsenalId: store.activeArsenalId || store.arsenals[0]?.id || 1,
       securityLevel: "Electronic Keypad",
-      vaultCategoryId: categories[0]?.id || "",
       parentVaultId: "",
-      passcode: "",
+      encryptedPasscode: "",
       passcodeHint: "",
       backupKeyLocation: "",
       productId: "",
@@ -213,9 +242,8 @@ export default function Vaults() {
       description: vault.description || "",
       arsenalId: vault.arsenalId,
       securityLevel: vault.securityLevel || "Standard",
-      vaultCategoryId: vault.vaultCategoryId || "",
       parentVaultId: vault.parentVaultId || "",
-      passcode: vault.passcode || "",
+      encryptedPasscode: vault.encryptedPasscode || "",
       passcodeHint: vault.passcodeHint || "",
       backupKeyLocation: vault.backupKeyLocation || "",
       productId: vault.productId || "",
@@ -225,7 +253,7 @@ export default function Vaults() {
       hasDehumidifier: vault.hasDehumidifier || false,
       dehumidifierLastServiced: dehumidifierDate,
       targetMaxHumidityPercent: vault.targetMaxHumidityPercent || 45,
-      storedItems: vault.storedItems || [],
+      storedItems: vault.armoryItem || [],
     });
     setShowModal(true);
   };
@@ -235,41 +263,38 @@ export default function Vaults() {
     if (!form.name.trim()) return;
 
     setIsSaving(true);
-    const { batteryType, ...restForm } = form;
+    const targetArsenalId = parseInt(form.arsenalId) || store.activeArsenalId || 1;
     const payload = {
-      ...restForm,
-      parentVaultId: restForm.parentVaultId
-        ? parseInt(restForm.parentVaultId)
+      name: form.name,
+      description: form.description || null,
+      parentVaultId: form.parentVaultId ? parseInt(form.parentVaultId) : null,
+      encryptedPasscode: form.encryptedPasscode || null,
+      passcodeHint: form.passcodeHint || null,
+      backupKeyLocation: form.backupKeyLocation || null,
+      productId: form.productId ? parseInt(form.productId) : null,
+      arsenalId: targetArsenalId,
+      batteryLastChangedDate: form.batteryLastChangedDate
+        ? new Date(form.batteryLastChangedDate).toISOString()
         : null,
-      vaultCategoryId: restForm.vaultCategoryId
-        ? parseInt(restForm.vaultCategoryId)
+      batteryExpirationDate: form.batteryExpirationDate
+        ? new Date(form.batteryExpirationDate).toISOString()
         : null,
-      productId: restForm.productId ? parseInt(restForm.productId) : null,
-      batteryLastChangedDate: restForm.batteryLastChangedDate
-        ? new Date(restForm.batteryLastChangedDate).toISOString()
+      hasDehumidifier: !!form.hasDehumidifier,
+      dehumidifierLastServiced: form.dehumidifierLastServiced
+        ? new Date(form.dehumidifierLastServiced).toISOString()
         : null,
-      batteryExpirationDate: restForm.batteryExpirationDate
-        ? new Date(restForm.batteryExpirationDate).toISOString()
-        : null,
-      dehumidifierLastServiced: restForm.dehumidifierLastServiced
-        ? new Date(restForm.dehumidifierLastServiced).toISOString()
-        : null,
-      targetMaxHumidityPercent: restForm.hasDehumidifier
-        ? parseInt(restForm.targetMaxHumidityPercent)
+      targetMaxHumidityPercent: form.hasDehumidifier
+        ? parseInt(form.targetMaxHumidityPercent)
         : null,
     };
-    
-    // Prune navigation property objects and arrays (e.g. storedItems, product, arsenal) to prevent OData deserialization failure
-    Object.keys(payload).forEach(key => {
-        const val = payload[key]
-        if (val !== null && typeof val === 'object') {
-            delete payload[key]
-        }
-    })
+
+    if (isEditMode) {
+      payload.id = parseInt(form.id);
+    }
 
     try {
       const url = isEditMode ? `/api/v1/Vaults/${form.id}` : "/api/v1/Vaults";
-      const method = isEditMode ? "PUT" : "POST";
+      const method = isEditMode ? "PATCH" : "POST";
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -278,42 +303,54 @@ export default function Vaults() {
 
       if (res.ok) {
         fetchVaults();
-        const savedItem = await res.json();
-        setIsEditMode(true);
-
-        let batteryDate = "";
-        if (savedItem.batteryLastChangedDate) {
-          batteryDate = savedItem.batteryLastChangedDate.split("T")[0];
-        }
-        let batteryExpDate = "";
-        if (savedItem.batteryExpirationDate) {
-          batteryExpDate = savedItem.batteryExpirationDate.split("T")[0];
-        }
-        let dehumidifierDate = "";
-        if (savedItem.dehumidifierLastServiced) {
-          dehumidifierDate = savedItem.dehumidifierLastServiced.split("T")[0];
+        let savedItem = null;
+        if (res.status !== 204) {
+          try {
+            savedItem = await res.json();
+          } catch (e) {
+            console.error("No JSON response body", e);
+          }
         }
 
-        setForm({
-          id: savedItem.id,
-          name: savedItem.name,
-          description: savedItem.description || "",
-          arsenalId: savedItem.arsenalId,
-          securityLevel: savedItem.securityLevel || "Standard",
-          vaultCategoryId: savedItem.vaultCategoryId || "",
-          parentVaultId: savedItem.parentVaultId || "",
-          passcode: savedItem.passcode || "",
-          passcodeHint: savedItem.passcodeHint || "",
-          backupKeyLocation: savedItem.backupKeyLocation || "",
-          productId: savedItem.productId || "",
-          batteryLastChangedDate: batteryDate,
-          batteryExpirationDate: batteryExpDate,
-          batteryType: savedItem.batteryType || "Unknown",
-          hasDehumidifier: savedItem.hasDehumidifier || false,
-          dehumidifierLastServiced: dehumidifierDate,
-          targetMaxHumidityPercent: savedItem.targetMaxHumidityPercent || 45,
-          storedItems: savedItem.storedItems || [],
-        });
+        if (savedItem) {
+          setIsEditMode(true);
+          let batteryDate = "";
+          if (savedItem.batteryLastChangedDate) {
+            batteryDate = savedItem.batteryLastChangedDate.split("T")[0];
+          }
+
+          let batteryExpDate = "";
+          if (savedItem.batteryExpirationDate) {
+            batteryExpDate = savedItem.batteryExpirationDate.split("T")[0];
+          }
+
+          let dehumidifierDate = "";
+          if (savedItem.dehumidifierLastServiced) {
+            dehumidifierDate = savedItem.dehumidifierLastServiced.split("T")[0];
+          }
+
+          setForm({
+            id: savedItem.id,
+            name: savedItem.name,
+            description: savedItem.description || "",
+            arsenalId: savedItem.arsenalId,
+            securityLevel: savedItem.securityLevel || "Standard",
+            parentVaultId: savedItem.parentVaultId || "",
+            encryptedPasscode: savedItem.encryptedPasscode || "",
+            passcodeHint: savedItem.passcodeHint || "",
+            backupKeyLocation: savedItem.backupKeyLocation || "",
+            productId: savedItem.productId || "",
+            batteryLastChangedDate: batteryDate,
+            batteryExpirationDate: batteryExpDate,
+            batteryType: savedItem.batteryType || "Unknown",
+            hasDehumidifier: savedItem.hasDehumidifier || false,
+            dehumidifierLastServiced: dehumidifierDate,
+            targetMaxHumidityPercent: savedItem.targetMaxHumidityPercent || 45,
+            storedItems: savedItem.armoryItem || [],
+          });
+        } else {
+          setShowModal(false);
+        }
 
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
@@ -401,7 +438,7 @@ export default function Vaults() {
             Retry
           </button>
         </div>
-      ) : vaults.length === 0 ? (
+      ) : processedVaults.length === 0 ? (
         <div className="empty-state panel">
           <h3>You have no items in your Vaults.</h3>
           <p style={{ marginTop: "4px", color: "var(--text-muted)" }}>
@@ -413,7 +450,7 @@ export default function Vaults() {
           {/* GRID VIEW */}
           {viewMode === "grid" && (
             <section className="vaults-grid-layout">
-              {vaults.map((vault) => {
+              {processedVaults.map((vault) => {
                 return (
                   <div
                     key={vault.id}
@@ -669,27 +706,6 @@ export default function Vaults() {
                     </div>
 
                     <div className="form-item">
-                      <label>Category</label>
-                      <select
-                        value={form.vaultCategoryId}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            vaultCategoryId: e.target.value,
-                          }))
-                        }
-                        required
-                      >
-                        <option value="">-- Choose Category --</option>
-                        {categories.map((cat) => (
-                          <option key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-item full-row">
                       <label>Parent Vault</label>
                       <select
                         value={form.parentVaultId}
@@ -703,7 +719,7 @@ export default function Vaults() {
                         <option value="">None</option>
                         {eligibleParentVaults.map((v) => (
                           <option key={v.id} value={v.id}>
-                            🔗 {v.name} ({v.vaultCategoryName})
+                            🔗 {v.name}
                           </option>
                         ))}
                       </select>
@@ -742,25 +758,7 @@ export default function Vaults() {
               {activeTab === "security" && (
                 <div className="tab-pane">
                   <div className="form-grid-columns">
-                    <div className="form-item">
-                      <label>Security Type</label>
-                      <select
-                        value={form.securityLevel}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            securityLevel: e.target.value,
-                          }))
-                        }
-                      >
-                        {lockTypePresets.map((preset) => (
-                          <option key={preset} value={preset}>
-                            {preset}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
+                    
                     <div className="form-item">
                       <label>
                         Combination/Passcode{" "}
@@ -773,11 +771,11 @@ export default function Vaults() {
                           type={showPassword ? "text" : "password"}
                           className="passcode-field"
                           placeholder="Decrypted key preview..."
-                          value={form.passcode}
+                          value={form.encryptedPasscode}
                           onChange={(e) =>
                             setForm((prev) => ({
                               ...prev,
-                              passcode: e.target.value,
+                              encryptedPasscode: e.target.value,
                             }))
                           }
                         />
@@ -1017,18 +1015,6 @@ export default function Vaults() {
             )}
           </div>
 
-          <div className="tree-node-info-col">
-            <span className="tree-hub-icon">
-              {node.vaultCategoryName === "Heavy Safe" ? "🔒" : "📦"}
-            </span>
-            <span className="tree-hub-name">{node.name}</span>
-            <span className="tree-hub-cat">({node.vaultCategoryName})</span>
-            {node.storedItems?.length > 0 && (
-              <span className="tree-hub-inventory-count">
-                🎯 {node.storedItems.length} stored items
-              </span>
-            )}
-          </div>
         </div>
 
         {hasChildren && isExpanded && (

@@ -47,7 +47,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the navigation property for the owning arsenal context.
         /// </summary>
-        public Arsenal Arsenal { get; set; } = null!;
+        public Arsenal? Arsenal { get; set; }
 
         /// <summary>
         /// Gets or sets the navigation property for the vault category.

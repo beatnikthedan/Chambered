@@ -23,7 +23,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the navigation property for the catalog product model.
         /// </summary>
-        public Product Product { get; set; } = null!;
+        public Product? Product { get; set; }
 
         #endregion
 
