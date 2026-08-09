@@ -371,3 +371,4 @@ FodyWeavers.xsd
 appsettings.Development.json
 appsettings.Local.json
 appsettings.*.json
+/Chambered.Api/appsettings.Development.json
