@@ -14,7 +14,8 @@ export default function SubmitButton({
   successLabel = '✓ Saved!',
   disabled = false,
   className = 'btn btn-primary',
-  style = {}
+  style = {},
+  ...props
 }) {
   // Automatically swap primary class to success class to change background color on success
   const resolvedClassName = saveSuccess 
@@ -35,6 +36,7 @@ export default function SubmitButton({
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         ...style
       }}
+      {...props}
     >
       {isSaving ? (
         <>

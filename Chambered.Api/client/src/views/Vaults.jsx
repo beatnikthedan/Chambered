@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../StoreContext'
 import './Vaults.css'
+import BatteryTracker from '../components/BatteryTracker'
+import SubmitButton from '../components/SubmitButton'
 
 const BATTERY_TYPES = [
     { value: 'Unknown', label: 'Unknown Battery' },
@@ -329,14 +331,8 @@ export default function Vaults() {
         }
     }
 
-    // Warning calculations
-    const needsBatteryChange = (dateStr) => {
-        if (!dateStr) return false
-        const changeDate = new Date(dateStr)
-        const oneYearAgo = new Date()
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
-        return changeDate < oneYearAgo
-    }
+    const selectedProduct = products.find(p => p.id === parseInt(form.productId));
+    const needsBattery = selectedProduct?.hasBattery || false;
 
     return (
         <div className="vaults-container">
@@ -392,7 +388,6 @@ export default function Vaults() {
                     {viewMode === 'grid' && (
                         <section className="vaults-grid-layout">
                             {vaults.map((vault) => {
-                                 const isBatteryLow = needsBatteryChange(vault.batteryLastChangedDate)
                                 return (
                                     <div key={vault.id} className="vault-card-node" onClick={() => openEditModal(vault)}>
                                         {/* Colored Top Accent Bar based on Arsenal context color */}
@@ -472,21 +467,13 @@ export default function Vaults() {
                                             </div>
 
                                             {/* Warnings Banner */}
-                                            {(isBatteryLow || (vault.hasDehumidifier && !vault.dehumidifierLastServiced)) && (
-                                                <div className="vault-card-alerts">
-                                                    {isBatteryLow && (
-                                                        <div className="v-alert warning">
-                                                            🔋 Lock battery requires replacement! (Over 1 yr)
-                                                        </div>
-                                                    )}
-                                                    {vault.hasDehumidifier && !vault.dehumidifierLastServiced && (
-                                                        <div className="v-alert info">
-                                                            💨 Dehumidifier needs service log check!
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
+{(vault.hasDehumidifier && !vault.dehumidifierLastServiced) && (
+    <div className="vault-card-alerts">
+        <div className="v-alert info">
+            💨 Dehumidifier needs service log check!
+        </div>
+    </div>
+)}
                                             <div className="vault-card-actions">
                                                 <button
                                                     className="btn btn-danger btn-small"
@@ -699,44 +686,11 @@ export default function Vaults() {
                                             />
                                         </div>
 
-                                        {(() => {
-                                             const selectedProduct = products.find(p => p.id === parseInt(form.productId));
-                                             const hasBattery = !!selectedProduct?.hasBattery;
-                                             return hasBattery && (
-                                                 <div className="form-item-group-container" style={{ gridColumn: 'span 2', background: 'rgba(58, 190, 240, 0.03)', border: '1px solid rgba(58, 190, 240, 0.15)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginTop: '4px', marginBottom: '12px' }}>
-                                                     <h4 style={{ color: '#3abef0', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 14px 0', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                         <span style={{ fontSize: '15px' }}>🔋</span> Power & Battery Specifications
-                                                     </h4>
-                                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-                                                         <div className="form-item">
-                                                             <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Battery Type</label>
-                                                             <input
-                                                                 type="text"
-                                                                 style={{ opacity: 0.8, cursor: 'not-allowed', backgroundColor: 'rgba(255,255,255,0.05)' }}
-                                                                 value={selectedProduct ? (selectedProduct.batteryType || 'Unknown') : 'N/A (No Product Linked)'}
-                                                                 readOnly
-                                                             />
-                                                         </div>
-                                                         <div className="form-item">
-                                                             <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Battery Last Changed</label>
-                                                             <input
-                                                                 type="date"
-                                                                 value={form.batteryLastChangedDate || ''}
-                                                                 onChange={(e) => setForm(prev => ({ ...prev, batteryLastChangedDate: e.target.value }))}
-                                                             />
-                                                         </div>
-                                                         <div className="form-item">
-                                                             <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Battery Expiration Date</label>
-                                                             <input
-                                                                 type="date"
-                                                                 value={form.batteryExpirationDate || ''}
-                                                                 onChange={(e) => setForm(prev => ({ ...prev, batteryExpirationDate: e.target.value }))}
-                                                             />
-                                                         </div>
-                                                     </div>
-                                                 </div>
-                                             );
-                                         })()}
+                                        <BatteryTracker 
+    hasBattery={needsBattery}
+    form={form}
+    setForm={setForm}
+/>
 
                                         {/* ENVIRONMENT / DEHUMIDIFIER */}
                                         <div className="form-item full-row env-boundary-decorator">
@@ -812,22 +766,13 @@ export default function Vaults() {
 
                         {/* Modal Footer Controls */}
                         <div className="modal-footer-row-container">
-                            <button
-                                type="button"
-                                className="btn btn-secondary"
-                                onClick={() => setShowModal(false)}
-                                disabled={isSaving}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`}
-                                onClick={handleSave}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? 'Saving...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Update' : 'Create'}
-                            </button>
+                            <SubmitButton 
+    type="button"
+    isSaving={isSaving}
+    saveSuccess={saveSuccess}
+    isEditMode={isEditMode}
+    onClick={handleSave}
+/>
                         </div>
                     </div>
                 </div>

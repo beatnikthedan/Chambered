@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../StoreContext'
 import './Catalog.css'
+import SubmitButton from '../components/SubmitButton'
 
 export default function Catalog() {
     const store = useStore()
@@ -401,6 +402,39 @@ export default function Catalog() {
         }
     }
 
+            // Reusable control that renders BOTH the checkbox and the battery dropdown
+    const renderBatteryControl = (checkboxLabel = "Requires Battery") => {
+        return (
+            <>
+                <div className="form-item checkbox-row full-row" style={{ marginBottom: '14px' }}>
+                    <label className="checkbox-container">
+                        <input 
+                            type="checkbox" 
+                            checked={form.hasBattery || false}
+                            onChange={(e) => setForm({ ...form, hasBattery: e.target.checked })}
+                        />
+                        <span className="checkmark"></span>
+                        <span>{checkboxLabel}</span>
+                    </label>
+                </div>
+
+                {form.hasBattery && (
+                    <div className="form-item">
+                        <label>Battery Type</label>
+                        <select 
+                            value={form.batteryType}
+                            onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
+                        >
+                            {batteryTypes.map(bat => (
+                                <option key={bat.id} value={bat.label}>{bat.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+            </>
+        )
+    }
+        
     return (
         <div className="catalog-view">
             <div className="view-actions">
@@ -542,7 +576,7 @@ export default function Catalog() {
                                             <option value="Optic">Optic / Scope</option>
                                             <option value="Suppressor">Suppressor</option>
                                             <option value="PewPewLight">PewPew Light</option>
-                                            <option value="Security">Security / Vault Product</option>
+                                            <option value="Security">Security</option>
                                         </select>
                                     </div>
 
@@ -806,31 +840,7 @@ export default function Catalog() {
                                                 </label>
                                             </div>
 
-                                            <div className="form-item checkbox-row full-row" style={{ marginTop: '10px' }}>
-                                                <label className="checkbox-container">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        checked={form.hasBattery}
-                                                        onChange={(e) => setForm({ ...form, hasBattery: e.target.checked })}
-                                                    />
-                                                    <span className="checkmark"></span>
-                                                    <span>Requires Battery Power (Illuminated Reticle / Dial)</span>
-                                                </label>
-                                            </div>
-
-                                            {form.hasBattery && (
-                                                <div className="form-item">
-                                                    <label>Battery Type</label>
-                                                    <select 
-                                                        value={form.batteryType}
-                                                        onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
-                                                    >
-                                                        {batteryTypes.map(bat => (
-    <option key={bat.id} value={bat.label}>{bat.label}</option>
-))}
-                                                    </select>
-                                                </div>
-                                            )}
+                                            {renderBatteryControl("Requires Battery Power (Illuminated Reticle / Dial)")}
                                         </>
                                     )}
 
@@ -944,18 +954,6 @@ export default function Catalog() {
                                             </div>
 
                                             <div className="form-item">
-                                                <label>Battery Type</label>
-                                                <select 
-                                                    value={form.batteryType}
-                                                    onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
-                                                >
-                                                    {batteryTypes.map(bat => (
-    <option key={bat.id} value={bat.label}>{bat.label}</option>
-))}
-                                                </select>
-                                            </div>
-
-                                            <div className="form-item">
                                                 <label>Mount Base Interface</label>
                                                 <select 
                                                     value={form.mountType}
@@ -1005,37 +1003,15 @@ export default function Catalog() {
                                                     <span>Features IR Illuminator / Night Vision Mode</span>
                                                 </label>
                                             </div>
+
+                                            {renderBatteryControl("Requires Battery Power")}
                                         </>
                                     )}
 
                                     {/* Security Subclass Form Controls */}
                                     {form.productType === 'Security' && (
                                         <>
-                                            <div className="form-item checkbox-row full-row" style={{ marginBottom: '14px' }}>
-                                                <label className="checkbox-container">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        checked={form.hasBattery}
-                                                        onChange={(e) => setForm({ ...form, hasBattery: e.target.checked })}
-                                                    />
-                                                    <span className="checkmark"></span>
-                                                    <span>Requires Battery Power (Electronic Keypad or Biometric Lock)</span>
-                                                </label>
-                                            </div>
-
-                                            {form.hasBattery && (
-                                                <div className="form-item">
-                                                    <label>Lock Battery Type</label>
-                                                    <select 
-                                                        value={form.batteryType}
-                                                        onChange={(e) => setForm({ ...form, batteryType: e.target.value })}
-                                                    >
-                                                        {batteryTypes.map(bat => (
-    <option key={bat.id} value={bat.label}>{bat.label}</option>
-))}
-                                                    </select>
-                                                </div>
-                                            )}
+                                            {renderBatteryControl("Requires Battery Power (For locking nechanisms or electronic keypads)")}
                                         </>
                                     )}
 
@@ -1111,13 +1087,11 @@ export default function Catalog() {
                                 >
                                     Cancel
                                 </button>
-                                <button
-                                    type="submit"
-                                    className={`btn ${saveSuccess ? 'btn-success' : 'btn-primary'}`}
-                                    disabled={isSaving}
-                                >
-                                    {isSaving ? 'Saving...' : saveSuccess ? '✓ Saved!' : isEditMode ? 'Update' : 'Create'}
-                                </button>
+                                <SubmitButton 
+                                    isSaving={isSaving}
+                                    saveSuccess={saveSuccess}
+                                    isEditMode={isEditMode}
+                                />
                             </div>
 
                         </form>
