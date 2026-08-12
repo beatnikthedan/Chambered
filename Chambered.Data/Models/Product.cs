@@ -26,11 +26,6 @@ namespace Chambered.Data.Models
         public int Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the product model.
-        /// </summary>
-        public string Model { get; set; } = string.Empty;
-
-        /// <summary>
         /// Gets or sets the product part number.
         /// </summary>
         public string PartNumber { get; set; } = string.Empty;
@@ -91,6 +86,11 @@ namespace Chambered.Data.Models
         /// </summary>
         public ICollection<Document> Documents { get; set; } = new List<Document>();
 
+        /// <summary>
+        /// Gets or sets individual inventory items belonging to this firearm model.
+        /// </summary>
+        public ICollection<ArmoryItem> ArmoryItems { get; set; } = new List<ArmoryItem>();
+
         #endregion
     }
 
@@ -115,11 +115,6 @@ namespace Chambered.Data.Models
         /// Gets or sets the mechanical operating action type for this product line.
         /// </summary>
         public ActionType ActionType { get; set; } = ActionType.Unknown;
-
-        /// <summary>
-        /// Gets or sets individual inventory items belonging to this firearm model.
-        /// </summary>
-        public ICollection<ArmoryItem> ArmoryItems { get; set; } = new List<ArmoryItem>();
 
         #region IIsNfaItem
         
@@ -164,7 +159,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Main body tube diameter or mounting interface in millimeters.
         /// </summary>
-        public int TubeDiameter { get; set; }
+        public string TubeDiameter { get; set; }
 
         /// <summary>
         /// Indicates whether the reticle or dot features electronic illumination.

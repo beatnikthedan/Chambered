@@ -28,34 +28,34 @@ namespace Chambered.Api.Data
 
 
             // 3. Seed default Products (PewPews) programmatically if none exist
-            if (!await context.Products.AnyAsync())
-            {
-                context.Products.Add(new PewPew
-                {
-                    ManufacturerId = 2,
-                    CaliberId = 11,
-                    Model = "10/22 Carbine",
-                    PartNumber = "1103",
-                    Sku = "1103",
-                    PewPewCategory = Chambered.Data.Enums.PewPewCategory.Rimfire,
-                    ActionType = Chambered.Data.Enums.ActionType.SemiAutomatic,
-                    WebPageUrl = "https://ruger.com/products/1022Carbine/models.html"
-                });
+            //if (!await context.Products.AnyAsync())
+            //{
+            //    context.Products.Add(new PewPew
+            //    {
+            //        ManufacturerId = 2,
+            //        CaliberId = 11,
+            //        Model = "10/22 Carbine",
+            //        PartNumber = "1103",
+            //        Sku = "1103",
+            //        PewPewCategory = Chambered.Data.Enums.PewPewCategory.Rimfire,
+            //        ActionType = Chambered.Data.Enums.ActionType.SemiAutomatic,
+            //        WebPageUrl = "https://ruger.com/products/1022Carbine/models.html"
+            //    });
 
-                context.Products.Add(new PewPew
-                {
-                    ManufacturerId = 1,
-                    CaliberId = 1,
-                    Model = "19 Gen 5",
-                    PartNumber = "PA1950203",
-                    Sku = "PA1950203",
-                    PewPewCategory = Chambered.Data.Enums.PewPewCategory.Handgun,
-                    ActionType = Chambered.Data.Enums.ActionType.SemiAutomatic,
-                    WebPageUrl = "https://us.glock.com/en/pistols/g19-gen5"
-                });
+            //    context.Products.Add(new PewPew
+            //    {
+            //        ManufacturerId = 1,
+            //        CaliberId = 1,
+            //        Model = "19 Gen 5",
+            //        PartNumber = "PA1950203",
+            //        Sku = "PA1950203",
+            //        PewPewCategory = Chambered.Data.Enums.PewPewCategory.Handgun,
+            //        ActionType = Chambered.Data.Enums.ActionType.SemiAutomatic,
+            //        WebPageUrl = "https://us.glock.com/en/pistols/g19-gen5"
+            //    });
 
-                await context.SaveChangesAsync();
-            }
+            //    await context.SaveChangesAsync();
+            //}
 
             // 4. Self-heal and fix legacy/orphan records with missing ArsenalIds
             var defaultArsenal = await context.Arsenals.FirstOrDefaultAsync();
