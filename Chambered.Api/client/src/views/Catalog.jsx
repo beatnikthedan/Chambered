@@ -264,21 +264,9 @@ export default function Catalog() {
     setActiveTab("general");
     setSaveSuccess(false);
 
-    // Map legacy array specifications back to dictionary format for editing
-    let specsDict = {};
-    if (Array.isArray(p.specifications)) {
-      p.specifications.forEach((item) => {
-        if (item && item.key) {
-          specsDict[item.key] = item.value || "";
-        }
-      });
-    } else if (p.specifications && typeof p.specifications === "object") {
-      specsDict = p.specifications;
-    }
-
     setForm({
       ...p,
-      specifications: specsDict,
+      specifications: p.specifications || {},
     });
     setShowModal(true);
   };
@@ -302,10 +290,7 @@ export default function Catalog() {
         manufacturerId: parseInt(form.manufacturerId, 10) || 0,
         description: form.description || "",
         webPageUrl: form.webPageUrl || "",
-        specifications: Object.entries(form.specifications || {}).map(([k, v]) => ({
-          key: k.trim(),
-          value: v || "",
-        })),
+        specifications: form.specifications || {},
       };
 
       const resolvedProductType = form.productType || activeType || "Product";
@@ -384,6 +369,9 @@ export default function Catalog() {
         }
       }
 
+      // Omit specifications from payload on POST/PUT to prevent strict OData deserialization of Dictionary properties
+      delete payload.specifications;
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -402,24 +390,12 @@ export default function Catalog() {
           }
         }
 
-        // Map legacy array specifications back to dictionary format for editing
-        let specsDict = {};
-        if (Array.isArray(savedItem.specifications)) {
-          savedItem.specifications.forEach((item) => {
-            if (item && item.key) {
-              specsDict[item.key] = item.value || "";
-            }
-          });
-        } else if (savedItem.specifications && typeof savedItem.specifications === "object") {
-          specsDict = savedItem.specifications;
-        }
-
         setIsEditMode(true);
         setForm({
           ...savedItem,
           manufacturerId: savedItem.manufacturerId || "",
           productType: resolvedProductType,
-          specifications: specsDict,
+          specifications: savedItem.specifications || {},
         });
 
         setSaveSuccess(true);
