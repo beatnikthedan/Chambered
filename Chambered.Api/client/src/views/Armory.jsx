@@ -84,8 +84,8 @@ export default function Armory() {
     serialNumber: "",
     notes: "",
     purchasePrice: "",
+    estimatedValue: "",
     purchaseDateString: "",
-    currentValue: "",
     condition: "",
     imageUrl: "",
     roundCount: 0,
@@ -476,8 +476,8 @@ export default function Armory() {
       serialNumber: "",
       notes: "",
       purchasePrice: "",
+      estimatedValue: "",
       purchaseDateString: "",
-      currentValue: "",
       condition: "Good",
       imageUrl: "",
       roundCount: 0,
@@ -742,234 +742,108 @@ export default function Armory() {
   };
 
   // CRUD actions
-  const handleSave = async () => {
-    if (!form.pewpewModelId || form.pewpewModelId <= 0) {
-      alert("Please select a product before saving.");
+  const handleSave = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    if (!form.pewpewModelId && !form.productId) {
+      alert("Please select a catalog product.");
       return;
     }
 
     setIsSaving(true);
     try {
-      const {
-        batteryType,
-        purchaseDateString,
-        storageLocation,
-        owner,
-        beneficiary,
-        opticManufacturer,
-        opticModel,
-        opticReticle,
-        opticSerial,
-        opticBattery,
-        isOpticMounted,
-        pewpewModelId,
-        firearmModelId,
-        currentValue,
-        ...restForm
-      } = form;
-      const url = isEditMode ? `/api/v1/Armory/${form.id}` : "/api/v1/Armory";
-      const method = isEditMode ? "PUT" : "POST";
+      const isEdit = isEditMode;
+      const url = isEdit ? `/api/v1/Armory/${form.id}` : "/api/v1/Armory";
+      const method = isEdit ? "PUT" : "POST";
 
-      let finalMfg = form.manufacturer;
-      if (finalMfg === "Custom" && customManufacturer) {
-        finalMfg = customManufacturer.trim();
-      }
-
-      let finalMod = form.model;
-      if (finalMod === "Custom" && customModel) {
-        finalMod = customModel.trim();
-      }
-
+      // 1. Build a clean payload matching the C# ArmoryItem base properties exactly
       const payload = {
-        ...restForm,
-        productId: form.pewpewModelId || form.productId || 0,
-        manufacturer: finalMfg,
-        model: finalMod,
-        barrelLengthInches: form.barrelLengthInches
-          ? parseFloat(form.barrelLengthInches)
-          : null,
-        purchasePrice: form.purchasePrice
-          ? parseFloat(form.purchasePrice)
-          : null,
-        estimatedValue: form.currentValue
-          ? parseFloat(form.currentValue)
-          : null,
-        purchaseDate: form.purchaseDateString
-          ? new Date(form.purchaseDateString).toISOString()
-          : null,
-        batteryLastChangedDate: form.batteryLastChangedDate
-          ? new Date(form.batteryLastChangedDate).toISOString()
-          : null,
-        stampApprovalDate: form.stampApprovalDate
-          ? new Date(form.stampApprovalDate).toISOString()
-          : null,
-        ownerId: form.ownerId ? parseInt(form.ownerId) : null,
-        beneficiaryId: form.beneficiaryId ? parseInt(form.beneficiaryId) : null,
-        arsenalId: parseInt(form.arsenalId) || store.activeArsenalId,
+        id: form.id || 0,
+        productId: form.productId || form.pewpewModelId || form.firearmModelId || 0,
+        name: form.name || form.model || "Armory Item",
+        description: form.description || "",
+        condition: form.condition || "Unknown",
+        imageUrl: form.imageUrl || "",
+        notesMarkdown: form.notes || form.notesMarkdown || "",
+        
+        // Numerical and Date conversions
+        purchasePrice: form.purchasePrice ? parseFloat(form.purchasePrice) : null,
+        estimatedValue: form.estimatedValue ? parseFloat(form.estimatedValue) : null,
+        purchaseDate: form.purchaseDateString ? new Date(form.purchaseDateString).toISOString() : null,
+        
+        // Relational constraints (must map raw foreign keys)
+        ownerId: form.ownerId || null,
+        beneficiaryId: form.beneficiaryId || null,
         vaultId: form.vaultId ? parseInt(form.vaultId) : null,
-        accessoriesListJson: JSON.stringify(accessoriesList),
-        maintenanceTasksJson: JSON.stringify(maintenanceTasks),
-        rangeHistoryJson: JSON.stringify(rangeSessions),
+        arsenalId: parseInt(form.arsenalId) || store.activeArsenalId,
+        parentItemId: form.parentItemId ? parseInt(form.parentItemId) : null,
       };
 
-      // Map notes to notesMarkdown for the C# model
-      payload.notesMarkdown = form.notes || form.notesMarkdown || "";
-
-      // Ensure Name property is set (Name is required on ArmoryItem in C#)
-      payload.name = form.name || form.model || "Armory Item";
-
-      // Map empty or falsy nfaFormType to 'Unknown' to satisfy OData enum parsing
-      payload.nfaFormType = form.nfaFormType && form.nfaFormType !== "" ? form.nfaFormType : "Unknown";
-
-      // Resolve dynamic itemType subclass
+      // 2. Determine concrete subclass and attach ONLY its specific database fields
       const resolvedItemType = form.itemType || activeItemType || "ArmoryItem";
-
-      // Inject @odata.type so OData knows which derived subclass type to instantiate on creation/update
       if (resolvedItemType && resolvedItemType !== "ArmoryItem") {
         payload["@odata.type"] = `#Chambered.Data.Models.${resolvedItemType}`;
       }
 
-      // Base properties that exist on the base ArmoryItem class and are valid for all subclasses
-      const baseKeys = [
-        "@odata.type",
-        "id",
-        "productId",
-        "name",
-        "description",
-        "purchasePrice",
-        "purchaseDate",
-        "estimatedValue",
-        "condition",
-        "ownerId",
-        "beneficiaryId",
-        "vaultId",
-        "arsenalId",
-        "parentItemId",
-        "imageUrl",
-        "notesMarkdown"
-      ];
-
-      // Subclass-specific properties mapped precisely to the C# definitions
-      let subclassKeys = [];
-      if (resolvedItemType === "PewArmoryItem") {
-        subclassKeys = [
-          "roundCount",
-          "barrelLengthInches",
-          "twistRate",
-          "threadPitch",
-          "serialNumber",
-          "nfaFormType",
-          "taxStampDocumentUrl",
-          "stampApprovalDate"
-        ];
-      } else if (resolvedItemType === "SuppressorArmoryItem") {
-        subclassKeys = [
-          "serialNumber",
-          "nfaFormType",
-          "taxStampDocumentUrl",
-          "stampApprovalDate"
-        ];
-      } else if (resolvedItemType === "OpticArmoryItem") {
-        subclassKeys = [
-          "serialNumber",
-          "batteryLastChangedDate",
-          "batteryExpirationDate"
-        ];
-      } else if (resolvedItemType === "LightArmoryItem") {
-        subclassKeys = [
-          "batteryLastChangedDate",
-          "batteryExpirationDate"
-        ];
+      // Add Serial Number fields if the subclass supports it
+      if (["PewArmoryItem", "SuppressorArmoryItem", "OpticArmoryItem"].includes(resolvedItemType)) {
+        payload.serialNumber = form.serialNumber || "";
       }
 
-      const validArmoryKeys = [...baseKeys, ...subclassKeys];
+      // Add NFA-specific fields if subclass implements IHasNfa
+      if (["PewArmoryItem", "SuppressorArmoryItem"].includes(resolvedItemType)) {
+        payload.nfaFormType = form.nfaFormType && form.nfaFormType !== "" ? form.nfaFormType : "Unknown";
+        payload.taxStampDocumentUrl = form.taxStampDocumentUrl || "";
+        payload.stampApprovalDate = form.stampApprovalDate ? new Date(form.stampApprovalDate).toISOString() : null;
+      }
 
-      const cleanPayload = {};
-      validArmoryKeys.forEach((key) => {
-        if (payload[key] !== undefined) {
-          cleanPayload[key] = payload[key];
-        }
-      });
+      // Add Battery-specific fields if subclass implements IHasBattery
+      if (["OpticArmoryItem", "LightArmoryItem"].includes(resolvedItemType)) {
+        payload.batteryLastChangedDate = form.batteryLastChangedDate ? new Date(form.batteryLastChangedDate).toISOString() : null;
+        payload.batteryExpirationDate = form.batteryExpirationDate ? new Date(form.batteryExpirationDate).toISOString() : null;
+      }
 
+      // Add PewPew custom subclass specifications
+      if (resolvedItemType === "PewArmoryItem") {
+        payload.roundCount = parseInt(form.roundCount) || 0;
+        payload.barrelLengthInches = form.barrelLengthInches ? parseFloat(form.barrelLengthInches) : null;
+        payload.twistRate = form.twistRate || "";
+        payload.threadPitch = form.threadPitch || "";
+      }
+
+      // 3. Perform the API Request
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cleanPayload),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         await fetchArmoryItems();
-        const savedItem = await res.json();
-        setIsEditMode(true);
-
-        let dateString = "";
-        if (savedItem.purchaseDate) {
-          dateString = savedItem.purchaseDate.split("T")[0];
+        
+        // Bypasses JSON parsing completely for 204 No Content success responses
+        let savedItem = form;
+        if (res.status !== 204) {
+          try {
+            savedItem = await res.json();
+          } catch (jsonErr) {
+            console.warn("Could not parse response JSON:", jsonErr);
+          }
         }
 
+        setIsEditMode(true);
+        
+        // Map saved entity values cleanly back into the form state
         setForm({
           ...savedItem,
-          purchaseDateString: dateString,
-          owner: savedItem.owner || "",
+          purchaseDateString: savedItem.purchaseDate ? savedItem.purchaseDate.split("T")[0] : "",
           ownerId: savedItem.ownerId || "",
-          beneficiary: savedItem.beneficiary || "",
           beneficiaryId: savedItem.beneficiaryId || "",
-          storageLocation:
-            savedItem.vault?.name || savedItem.storageLocation || "",
           vaultId: savedItem.vaultId || "",
-          notesMarkdown: savedItem.notesMarkdown || "",
-          opticManufacturer: savedItem.opticManufacturer || "",
-          opticModel: savedItem.opticModel || "",
-          opticReticle: savedItem.opticReticle || "",
-          opticSerial: savedItem.opticSerial || "",
-          opticBattery: savedItem.opticBattery || "",
-          isOpticMounted: savedItem.isOpticMounted || false,
-          threadPitch: savedItem.threadPitch || "",
-          isNfaItem: savedItem.isNfaItem || false,
-          nfaFormType: savedItem.nfaFormType || "",
-          taxStampDocumentUrl: savedItem.taxStampDocumentUrl || "",
-          stampApprovalDate: savedItem.stampApprovalDate
-            ? savedItem.stampApprovalDate.split("T")[0]
-            : "",
-          batteryLastChangedDate: savedItem.batteryLastChangedDate
-            ? savedItem.batteryLastChangedDate.split("T")[0]
-            : "",
-          itemType: savedItem.itemType || "",
+          isNfaItem: !!savedItem.product?.isNfaItem,
+          stampApprovalDate: savedItem.stampApprovalDate ? savedItem.stampApprovalDate.split("T")[0] : "",
+          batteryLastChangedDate: savedItem.batteryLastChangedDate ? savedItem.batteryLastChangedDate.split("T")[0] : "",
         });
-
-        try {
-          setAccessoriesList(
-            savedItem.accessoriesListJson
-              ? JSON.parse(savedItem.accessoriesListJson)
-              : [],
-          );
-        } catch (err) {
-          setAccessoriesList([]);
-        }
-
-        try {
-          setMaintenanceTasks(
-            savedItem.maintenanceTasksJson
-              ? JSON.parse(savedItem.maintenanceTasksJson)
-              : [],
-          );
-        } catch (err) {
-          setMaintenanceTasks([]);
-        }
-
-        try {
-          setRangeSessions(
-            savedItem.rangeHistoryJson
-              ? JSON.parse(savedItem.rangeHistoryJson)
-              : [],
-          );
-        } catch (err) {
-          setRangeSessions([]);
-        }
-
-        setAttachments([]);
-        setCustomManufacturer("");
-        setCustomModel("");
 
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
@@ -978,7 +852,7 @@ export default function Armory() {
         alert(`Save failed: ${text || res.statusText}`);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Save connection/network error:", err);
       alert("Failed to connect to the backend server.");
     } finally {
       setIsSaving(false);
@@ -1894,7 +1768,7 @@ export default function Armory() {
                     />
 
                     <div className="form-item">
-                      <label>Name</label>
+                      <label>Name<span className="req">*</span></label>
                       <input
                         type="string"
                         value={form.name || ""}
@@ -1905,21 +1779,7 @@ export default function Armory() {
                           })
                         }
                       />
-                    </div>
-
-                    <div className="form-item">
-                      <label>Description</label>
-                      <input
-                        type="string"
-                        value={form.description || ""}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            description: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
+                    </div>   
 
                     <div className="form-item">
                       <label>
@@ -1948,21 +1808,17 @@ export default function Armory() {
                       </div>
                     </div>
 
-                    <div className="form-item">
-                      <label>Condition</label>
-                      <select
-                        value={form.condition}
+                    <div className="form-item full-row">
+                      <label>Description</label>
+                      <textarea
+                        rows="3"
+                        value={form.description || ""}
                         onChange={(e) =>
-                          setForm({ ...form, condition: e.target.value })
+                          setForm({ ...form, description: e.target.value })
                         }
-                      >
-                        {conditions.map((p) => (
-                          <option key={p.id} value={p.name}>
-                            {p.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                        placeholder="Enter product description..."
+                      />
+                    </div> 
 
                     <div className="form-item">
                       <label>Purchase Price</label>
@@ -1989,6 +1845,35 @@ export default function Armory() {
                           })
                         }
                       />
+                    </div>
+
+                    <div className="form-item">
+                      <label>Estimated Value</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="Estimated current value"
+                        value={form.estimatedValue || ""}
+                        onChange={(e) =>
+                          setForm({ ...form, estimatedValue: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div className="form-item">
+                      <label>Condition</label>
+                      <select
+                        value={form.condition}
+                        onChange={(e) =>
+                          setForm({ ...form, condition: e.target.value })
+                        }
+                      >
+                        {conditions.map((p) => (
+                          <option key={p.id} value={p.name}>
+                            {p.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="form-item">

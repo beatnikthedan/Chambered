@@ -264,10 +264,21 @@ export default function Catalog() {
     setActiveTab("general");
     setSaveSuccess(false);
 
-    // Map types safely
+    // Map legacy array specifications back to dictionary format for editing
+    let specsDict = {};
+    if (Array.isArray(p.specifications)) {
+      p.specifications.forEach((item) => {
+        if (item && item.key) {
+          specsDict[item.key] = item.value || "";
+        }
+      });
+    } else if (p.specifications && typeof p.specifications === "object") {
+      specsDict = p.specifications;
+    }
+
     setForm({
       ...p,
-      specifications: p.specifications || {},
+      specifications: specsDict,
     });
     setShowModal(true);
   };
@@ -282,116 +293,96 @@ export default function Catalog() {
       const url = isNew ? "/api/v1/Products" : `/api/v1/Products/${form.id}`;
       const method = isNew ? "POST" : "PUT";
 
-      // Sanitize payload integers and types to avoid invalid JSON types (like NaN) causing model binding failure.
-      const payload = { ...form };
-      payload.manufacturerId = parseInt(payload.manufacturerId, 10) || 0;
+      // 1. Build a clean payload matching the C# Product base properties exactly
+      const payload = {
+        id: form.id || 0,
+        name: form.name || "",
+        partNumber: form.partNumber || "",
+        sku: form.sku || "",
+        manufacturerId: parseInt(form.manufacturerId, 10) || 0,
+        description: form.description || "",
+        webPageUrl: form.webPageUrl || "",
+        specifications: Object.entries(form.specifications || {}).map(([k, v]) => ({
+          key: k.trim(),
+          value: v || "",
+        })),
+      };
 
-      // Prune fields based on type to ensure the specific DTO is perfectly formed
-      if (payload.productType === "PewPew") {
-        payload.caliberId = parseInt(payload.caliberId, 10) || 0;
-        if (!payload.pewPewCategory) delete payload.pewPewCategory;
-        if (!payload.actionType) delete payload.actionType;
-      } else {
-        delete payload.pewPewCategory;
-        delete payload.actionType;
+      const resolvedProductType = form.productType || activeType || "Product";
+      if (resolvedProductType && resolvedProductType !== "Product") {
+        payload["@odata.type"] = `#Chambered.Data.Models.${resolvedProductType}`;
       }
 
-      if (payload.productType === "Optic") {
-        payload.minMagnification = parseFloat(payload.minMagnification) || 0;
-        payload.maxMagnification = parseFloat(payload.maxMagnification) || 0;
-        payload.objectiveDiameterMm = parseInt(payload.objectiveDiameterMm, 10) || 0;
-        payload.tubeDiameter = parseInt(payload.tubeDiameter, 10) || 0;
-        payload.isIlluminated = !!payload.isIlluminated;
-        if (!payload.opticType) delete payload.opticType;
-        if (!payload.reticle) delete payload.reticle;
-        if (!payload.adjustmentUnits) delete payload.adjustmentUnits;
-      } else {
-        delete payload.minMagnification;
-        delete payload.maxMagnification;
-        delete payload.objectiveDiameterMm;
-        delete payload.opticType;
-        delete payload.reticle;
-        delete payload.adjustmentUnits;
-        delete payload.tubeDiameter;
-        delete payload.isIlluminated;
-      }
-
-      if (payload.productType === "Suppressor") {
-        payload.caliberId = parseInt(payload.caliberId, 10) || 0;
-        payload.soundReductionDb = parseInt(payload.soundReductionDb, 10) || 0;
-        payload.isFullAutoRated = !!payload.isFullAutoRated;
-        payload.isUserServiceable = !!payload.isUserServiceable;
-        if (!payload.attachmentType) delete payload.attachmentType;
-        if (!payload.material) delete payload.material;
-      } else {
-        delete payload.threadPitch;
-        delete payload.attachmentType;
-        delete payload.material;
-        delete payload.soundReductionDb;
-        delete payload.isFullAutoRated;
-        delete payload.isUserServiceable;
-      }
-
-      if (payload.productType === "PewPewLight") {
-        payload.lumens = parseInt(payload.lumens, 10) || 0;
-        payload.candela = parseInt(payload.candela, 10) || 0;
-        payload.hasRemoteSwitchPort = !!payload.hasRemoteSwitchPort;
-        payload.isInfraredCapable = !!payload.isInfraredCapable;
-        if (!payload.mountType) delete payload.mountType;
-        if (!payload.laserColor) delete payload.laserColor;
-      } else {
-        delete payload.lumens;
-        delete payload.candela;
-        delete payload.mountType;
-        delete payload.laserColor;
-        delete payload.hasRemoteSwitchPort;
-        delete payload.isInfraredCapable;
-      }
-
-      if (payload.productType === "Security") {
-        if (!payload.lockType) delete payload.lockType;
-      } else {
-        delete payload.lockType;
-      }
-
-      // If neither PewPew nor Suppressor, delete caliberId and isNfaItem
-      if (payload.productType !== "PewPew" && payload.productType !== "Suppressor") {
-        delete payload.caliberId;
-        delete payload.isNfaItem;
-      }
-
-      // Handle battery fields for INeedsBattery subclasses
-      const needsBattery = ["Optic", "PewPewLight", "Security"].includes(payload.productType);
-      if (needsBattery) {
-        payload.hasBattery = !!payload.hasBattery;
-        if (!payload.batteryType) delete payload.batteryType;
-      } else {
-        delete payload.hasBattery;
-        delete payload.batteryType;
-      }
-
-      // Prune navigation property objects and arrays (e.g. manufacturer, caliber) to prevent OData deserialization failure
-      Object.keys(payload).forEach((key) => {
-        const val = payload[key];
-        if (val !== null && typeof val === "object") {
-          delete payload[key];
+      // 2. Add subclass-specific fields based on concrete class definition
+      if (resolvedProductType === "PewPew") {
+        payload.caliberId = parseInt(form.caliberId, 10) || 0;
+        if (form.pewPewCategory && form.pewPewCategory !== "") {
+          payload.pewPewCategory = form.pewPewCategory;
         }
-      });
-
-
-
-      // Inject @odata.type so OData knows which derived subclass type to instantiate on creation/update
-      if (payload.productType) {
-        payload["@odata.type"] =
-          `#Chambered.Data.Models.${payload.productType}`;
+        if (form.actionType && form.actionType !== "") {
+          payload.actionType = form.actionType;
+        }
+        payload.isNfaItem = !!form.isNfaItem;
       }
 
-      // Set required Name field (ensuring fallback to empty string if missing)
-      payload.name = payload.name || "";
+      if (resolvedProductType === "Optic") {
+        payload.minMagnification = parseFloat(form.minMagnification) || 1.0;
+        payload.maxMagnification = parseFloat(form.maxMagnification) || 1.0;
+        payload.objectiveDiameterMm = parseInt(form.objectiveDiameterMm, 10) || 0;
+        if (form.opticType && form.opticType !== "") {
+          payload.opticType = form.opticType;
+        }
+        if (form.reticle && form.reticle !== "") {
+          payload.reticle = form.reticle;
+        }
+        if (form.adjustmentUnits && form.adjustmentUnits !== "") {
+          payload.adjustmentUnits = form.adjustmentUnits;
+        }
+        payload.tubeDiameter = form.tubeDiameter || "";
+        payload.isIlluminated = !!form.isIlluminated;
+      }
 
-      delete payload.productType;
-      delete payload.manufacturerName;
-      delete payload.caliberName;
+      if (resolvedProductType === "Suppressor") {
+        payload.caliberId = parseInt(form.caliberId, 10) || 0;
+        payload.threadPitch = form.threadPitch || "";
+        if (form.attachmentType && form.attachmentType !== "") {
+          payload.attachmentType = form.attachmentType;
+        }
+        if (form.material && form.material !== "") {
+          payload.material = form.material;
+        }
+        payload.soundReductionDb = parseInt(form.soundReductionDb, 10) || 0;
+        payload.isFullAutoRated = !!form.isFullAutoRated;
+        payload.isUserServiceable = !!form.isUserServiceable;
+        payload.isNfaItem = !!form.isNfaItem;
+      }
+
+      if (resolvedProductType === "PewPewLight") {
+        payload.lumens = parseInt(form.lumens, 10) || 0;
+        payload.candela = parseInt(form.candela, 10) || 0;
+        if (form.mountType && form.mountType !== "") {
+          payload.mountType = form.mountType;
+        }
+        if (form.laserColor && form.laserColor !== "") {
+          payload.laserColor = form.laserColor;
+        }
+        payload.hasRemoteSwitchPort = !!form.hasRemoteSwitchPort;
+        payload.isInfraredCapable = !!form.isInfraredCapable;
+      }
+
+      if (resolvedProductType === "Security") {
+        if (form.lockType && form.lockType !== "") {
+          payload.lockType = form.lockType;
+        }
+      }
+
+      // Add battery fields if product implements INeedsBattery
+      if (["Optic", "PewPewLight", "Security"].includes(resolvedProductType)) {
+        payload.hasBattery = !!form.hasBattery;
+        if (form.batteryType && form.batteryType !== "") {
+          payload.batteryType = form.batteryType;
+        }
+      }
 
       const res = await fetch(url, {
         method,
@@ -400,9 +391,39 @@ export default function Catalog() {
       });
 
       if (res.ok) {
+        await fetchCatalogData();
+
+        let savedItem = form;
+        if (res.status !== 204) {
+          try {
+            savedItem = await res.json();
+          } catch (jsonErr) {
+            console.warn("Could not parse response JSON:", jsonErr);
+          }
+        }
+
+        // Map legacy array specifications back to dictionary format for editing
+        let specsDict = {};
+        if (Array.isArray(savedItem.specifications)) {
+          savedItem.specifications.forEach((item) => {
+            if (item && item.key) {
+              specsDict[item.key] = item.value || "";
+            }
+          });
+        } else if (savedItem.specifications && typeof savedItem.specifications === "object") {
+          specsDict = savedItem.specifications;
+        }
+
+        setIsEditMode(true);
+        setForm({
+          ...savedItem,
+          manufacturerId: savedItem.manufacturerId || "",
+          productType: resolvedProductType,
+          specifications: specsDict,
+        });
+
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
-        fetchCatalogData();
       } else {
         let errorMsg = "Failed to save product information.";
         try {
@@ -422,10 +443,11 @@ export default function Catalog() {
         } catch (jsonErr) {
           errorMsg = `Server error ${res.status}: ${res.statusText}`;
         }
-        setError(errorMsg);
+        alert(errorMsg);
       }
     } catch (err) {
-      setError("API call failed.");
+      console.error("Save connection/network error:", err);
+      alert("Failed to connect to the backend server.");
     } finally {
       setIsSaving(false);
     }

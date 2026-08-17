@@ -273,14 +273,14 @@ export default function Vaults() {
       backupKeyLocation: form.backupKeyLocation || null,
       productId: form.productId ? parseInt(form.productId) : null,
       arsenalId: targetArsenalId,
-      batteryLastChangedDate: form.batteryLastChangedDate
+      batteryLastChangedDate: form.batteryLastChangedDate && form.batteryLastChangedDate.trim()
         ? new Date(form.batteryLastChangedDate).toISOString()
         : null,
-      batteryExpirationDate: form.batteryExpirationDate
+      batteryExpirationDate: form.batteryExpirationDate && form.batteryExpirationDate.trim()
         ? new Date(form.batteryExpirationDate).toISOString()
         : null,
       hasDehumidifier: !!form.hasDehumidifier,
-      dehumidifierLastServiced: form.dehumidifierLastServiced
+      dehumidifierLastServiced: form.dehumidifierLastServiced && form.dehumidifierLastServiced.trim()
         ? new Date(form.dehumidifierLastServiced).toISOString()
         : null,
       targetMaxHumidityPercent: form.hasDehumidifier
@@ -349,7 +349,8 @@ export default function Vaults() {
             storedItems: savedItem.armoryItem || [],
           });
         } else {
-          setShowModal(false);
+          // Transition/stay in edit mode on 204 No Content update responses
+          setIsEditMode(true);
         }
 
         setSaveSuccess(true);

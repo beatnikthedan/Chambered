@@ -122,6 +122,15 @@ namespace Chambered.Data.Models
 
         #endregion
 
+        #region Dynamic Specifications
+
+        /// <summary>
+        /// Gets or sets ad-hoc key-value specifications mapped to a JSON column in SQL.
+        /// </summary>
+        public Dictionary<string, string> Specifications { get; set; } = new();
+
+        #endregion
+
         #region Supplemental Notes & Media
 
         /// <summary>
