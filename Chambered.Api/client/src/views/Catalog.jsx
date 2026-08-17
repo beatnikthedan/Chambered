@@ -354,9 +354,10 @@ export default function Catalog() {
         delete payload.lockType;
       }
 
-      // If neither PewPew nor Suppressor, delete caliberId
+      // If neither PewPew nor Suppressor, delete caliberId and isNfaItem
       if (payload.productType !== "PewPew" && payload.productType !== "Suppressor") {
         delete payload.caliberId;
+        delete payload.isNfaItem;
       }
 
       // Handle battery fields for INeedsBattery subclasses
@@ -377,11 +378,7 @@ export default function Catalog() {
         }
       });
 
-      // Inject minimal dummy objects with corresponding IDs for required non-nullable navigation properties to satisfy ASP.NET Core MVC model validation
-      payload.manufacturer = { id: parseInt(payload.manufacturerId, 10) || 0 };
-      if (payload.productType === "PewPew" || payload.productType === "Suppressor") {
-        payload.caliber = { id: parseInt(payload.caliberId, 10) || 0 };
-      }
+
 
       // Inject @odata.type so OData knows which derived subclass type to instantiate on creation/update
       if (payload.productType) {
@@ -512,8 +509,10 @@ export default function Catalog() {
         return "🤫 Suppressor";
       case "PewPewLight":
         return "🔦 PewPew Light";
+      case "Security":
+        return "Security";
       default:
-        return "📦 Base Product";
+        return "📦 General";
     }
   };
 
@@ -581,7 +580,7 @@ export default function Catalog() {
             <option value="Suppressor">Suppressors</option>
             <option value="PewPewLight">PewPew Lights</option>
             <option value="Security">Security / Vaults</option>
-            <option value="Product">Base Products</option>
+            <option value="Product">General</option>
           </select>
         </div>
         <button className="add-btn" onClick={openAddModal}>
@@ -734,7 +733,7 @@ export default function Catalog() {
                         }
                         disabled={isEditMode}
                       >
-                        <option value="Product">Base Product (Generic)</option>
+                        <option value="Product">General</option>
                         <option value="PewPew">PewPew</option>
                         <option value="Optic">Optic / Scope</option>
                         <option value="Suppressor">Suppressor</option>
@@ -765,7 +764,7 @@ export default function Catalog() {
                     </div>
 
                     <div className="form-item full-row">
-                      <label>Product Model Name</label>
+                      <label>Product Model Name<span className="req">*</span></label>
                       <input
                         type="text"
                         value={form.name}
@@ -778,7 +777,7 @@ export default function Catalog() {
                     </div>
 
                     <div className="form-item">
-                      <label>Manufacturer Part Number (MPN)</label>
+                      <label>Manufacturer Part Number (MPN)<span className="req">*</span></label>
                       <input
                         type="text"
                         value={form.partNumber}
@@ -1228,6 +1227,23 @@ export default function Catalog() {
                             <span>
                               User Serviceable (Disassembles for cleaning)
                             </span>
+                          </label>
+                        </div>
+
+                        <div className="form-item checkbox-row">
+                          <label className="checkbox-container">
+                            <input
+                              type="checkbox"
+                              checked={form.isNfaItem || false}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  isNfaItem: e.target.checked,
+                                })
+                              }
+                            />
+                            <span className="checkmark"></span>
+                            <span>Is NFA Item</span>
                           </label>
                         </div>
                       </>

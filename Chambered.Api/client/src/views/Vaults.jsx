@@ -657,7 +657,7 @@ export default function Vaults() {
                   <div className="form-grid-columns">
                     <div className="form-item full-row">
                       <label>
-                        Name <span className="req">*</span>
+                        Name<span className="req">*</span>
                       </label>
                       <input
                         type="text"
@@ -746,7 +746,7 @@ export default function Vaults() {
                         {products.map((prod) => (
                           <option key={prod.id} value={prod.id}>
                             [{prod.productType}] {prod.manufacturerName} -{" "}
-                            {prod.model}
+                            {prod.name}
                           </option>
                         ))}
                       </select>
@@ -1015,6 +1015,16 @@ export default function Vaults() {
             )}
           </div>
 
+          <div className="tree-node-info-col">
+            <span className="tree-hub-icon">
+              {node.securityLevel === "High" ? "🛡️" : node.securityLevel === "Medium" ? "🔒" : "📂"}
+            </span>
+            <span className="tree-hub-name">{node.name}</span>
+            {node.securityLevel && <span className="tree-hub-cat">({node.securityLevel})</span>}
+            <span className="tree-hub-inventory-count">
+              {node.storedItems ? node.storedItems.length : 0} items
+            </span>
+          </div>
         </div>
 
         {hasChildren && isExpanded && (

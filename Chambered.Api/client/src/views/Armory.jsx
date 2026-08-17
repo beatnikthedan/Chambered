@@ -24,6 +24,13 @@ export default function Armory() {
     return [];
   }, [enums]);
 
+  const nfaFormTypes = useMemo(() => {
+    if (enums && enums.nfaFormTypes) {
+      return enums.nfaFormTypes;
+    }
+    return [];
+  }, [enums]);
+
   // State lists
   const [armoryItems, setArmoryItems] = useState([]);
   const [vaultLocations, setVaultLocations] = useState([]);
@@ -160,6 +167,7 @@ export default function Armory() {
             actionType: product.actionType || "",
             storageLocation: item.vault?.name || "",
             vaultId: item.vaultId || "",
+            isNfaItem: !!product.isNfaItem,
           };
         });
         setArmoryItems(mappedItems);
@@ -319,10 +327,17 @@ export default function Armory() {
     if (!accessoryItem) return;
 
     try {
+      const payload = {
+        parentItemId: form.id,
+      };
+      if (accessoryItem["@odata.type"]) {
+        payload["@odata.type"] = accessoryItem["@odata.type"];
+      }
+
       const res = await fetch(`/api/v1/Armory/${accessoryId}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...accessoryItem, parentItemId: form.id }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         await fetchArmoryItems();
@@ -340,10 +355,17 @@ export default function Armory() {
     if (!accessoryItem) return;
 
     try {
+      const payload = {
+        parentItemId: null,
+      };
+      if (accessoryItem["@odata.type"]) {
+        payload["@odata.type"] = accessoryItem["@odata.type"];
+      }
+
       const res = await fetch(`/api/v1/Armory/${accessoryId}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...accessoryItem, parentItemId: null }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         await fetchArmoryItems();
@@ -371,17 +393,36 @@ export default function Armory() {
         return;
       }
 
+      const resolvedItemType =
+        p.productType === "PewPew"
+          ? "PewArmoryItem"
+          : p.productType === "Suppressor"
+            ? "SuppressorArmoryItem"
+            : p.productType === "Optic"
+              ? "OpticArmoryItem"
+              : p.productType === "PewPewLight"
+                ? "LightArmoryItem"
+                : "ArmoryItem";
+
       const payload = {
         productId: p.id,
         parentItemId: form.id,
-        manufacturer: p.manufacturerName || "",
-        model: p.model || "",
-        caliber: p.caliberName || "",
         condition: newAccCondition,
-        serialNumber: newAccSerialNumber || "",
-        storageLocation: form.storageLocation || "",
         arsenalId: form.arsenalId || store.activeArsenalId || 1,
+        name: `${p.manufacturerName} ${p.name || ""}`.trim() || "Accessory",
       };
+
+      if (resolvedItemType !== "ArmoryItem") {
+        payload["@odata.type"] = `#Chambered.Data.Models.${resolvedItemType}`;
+      }
+
+      if (
+        ["PewArmoryItem", "SuppressorArmoryItem", "OpticArmoryItem"].includes(
+          resolvedItemType,
+        )
+      ) {
+        payload.serialNumber = newAccSerialNumber || "";
+      }
 
       const res = await fetch("/api/v1/Armory", {
         method: "POST",
@@ -480,8 +521,8 @@ export default function Armory() {
 
     setForm({
       ...item,
-      pewpewModelId: item.pewpewModelId || item.firearmModelId || 0,
-      firearmModelId: item.firearmModelId || item.pewpewModelId || 0,
+      pewpewModelId: item.productId || item.pewpewModelId || item.firearmModelId || 0,
+      firearmModelId: item.productId || item.firearmModelId || item.pewpewModelId || 0,
       arsenalId: item.arsenalId || store.activeArsenalId || 1,
       purchaseDateString: dateString,
       owner: item.owner || "",
@@ -556,8 +597,7 @@ export default function Armory() {
           model: p.model || "",
           caliber: p.caliberName || "",
           actionType: p.actionType || "",
-          isNfaItem:
-            p.pewPewCategory === "NfaItem" || p.productType === "Suppressor",
+          isNfaItem: !!p.isNfaItem,
           itemType:
             p.productType === "PewPew"
               ? "PewArmoryItem"
@@ -1109,10 +1149,7 @@ export default function Armory() {
     })();
 
   const isPewPew = activeItemType === "PewArmoryItem";
-  const isNfa =
-    activeItemType === "NfaArmoryItem" ||
-    activeItemType === "SuppressorArmoryItem" ||
-    (isPewPew && form.isNfaItem);
+  const isNfa = !!form.isNfaItem;
   const needsBattery = (() => {
     if (
       activeItemType === "OpticArmoryItem" ||
@@ -1410,11 +1447,10 @@ export default function Armory() {
                         }}
                       >
                         <option value="">-- Choose product --</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.manufacturerName} {p.model}{" "}
-                            {p.partNumber ? `[PN: ${p.partNumber}]` : ""} (
-                            {p.caliberName}) — {p.actionType}
+                        {products.map((prod) => (
+                          <option key={prod.id} value={prod.id}>
+                            [{prod.productType}] {prod.manufacturerName} -{" "}
+                            {prod.name}
                           </option>
                         ))}
                       </select>

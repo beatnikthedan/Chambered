@@ -79,6 +79,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ModelStateDebugLoggerFilter>();
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
 })
     .AddOData(options =>
     {
