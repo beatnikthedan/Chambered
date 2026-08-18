@@ -111,7 +111,10 @@ builder.Services.AddApiVersioning(options =>
 })
 .AddOData(options =>
 {
-    options.AddRouteComponents("api/v{version:apiVersion}");
+    options.AddRouteComponents("api/v{version:apiVersion}", routeBuilder =>
+    {
+        routeBuilder.AddSingleton<Microsoft.AspNetCore.OData.Formatter.Serialization.IODataSerializerProvider, Chambered.Api.Configuration.CustomODataSerializerProvider>();
+    });
 })
 .AddODataApiExplorer(options =>
 {
