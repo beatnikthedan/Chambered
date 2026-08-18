@@ -1,4 +1,5 @@
 using Chambered.Data.Models;
+using Chambered.Data.Utility;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Reflection;
@@ -30,11 +31,9 @@ namespace Chambered.Data.Configuration
 
             #region Dynamic Specifications (JSON Mapping)
 
-            builder.Property(p => p.Specifications)
-                .HasConversion(
-                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions)null),
-                    v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(v, (System.Text.Json.JsonSerializerOptions)null) ?? new Dictionary<string, string>()
-                );
+            builder.Property(e => e.Specifications)
+                .HasMaxLength(1024)
+                .HasConversion<DictionaryToJsonValueConverter<string, object>>(new DictionaryValueComparer<string, object>());
 
             #endregion
 

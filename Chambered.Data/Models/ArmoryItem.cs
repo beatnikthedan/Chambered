@@ -127,7 +127,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets ad-hoc key-value specifications mapped to a JSON column in SQL.
         /// </summary>
-        public Dictionary<string, string> Specifications { get; set; } = new();
+        public Dictionary<string, object> Specifications { get; set; } = new();
 
         #endregion
 
