@@ -13,63 +13,22 @@ export default function Vaults() {
   );
   const activeArsenalColor = activeArsenal?.colorHex || "#2563eb";
 
-  // Memoized dynamic lock types strictly loaded from the database
-  const lockTypePresets = useMemo(() => {
-    if (enums && enums.lockTypes) {
-      return enums.lockTypes.map((e) => e.label);
-    }
-    return [];
-  }, [enums]);
-
   const [vaults, setVaults] = useState([]);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // View state
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'tree'
-  const [expandedNodes, setExpandedNodes] = useState({}); // track expanded nodes in tree view
-
-  // Form & modal state
-  const [showModal, setShowModal] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState("general"); // 'general' | 'security' | 'inventory'
-  const [showPassword, setShowPassword] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-
-  // Form state
-  const [form, setForm] = useState({
-    id: 0,
-    name: "",
-    description: "",
-    arsenalId: "",
-    securityLevel: "Standard",
-    parentVaultId: "",
-    encryptedPasscode: "",
-    passcodeHint: "",
-    backupKeyLocation: "",
-    productId: "",
-    batteryLastChangedDate: "",
-    batteryExpirationDate: "",
-    batteryType: "Unknown",
-    hasDehumidifier: false,
-    dehumidifierLastServiced: "",
-    targetMaxHumidityPercent: 45,
-    storedItems: [],
-  });
-
-  // Fetch all vaults and categories
   const fetchVaults = async () => {
     setLoading(true);
     setError("");
     try {
       const query = buildQuery({
-        filter: store.activeArsenalId ? { arsenalId: store.activeArsenalId } : undefined,
-        expand: ['product', 'armoryItem']
-      })
+        filter: store.activeArsenalId
+          ? { arsenalId: store.activeArsenalId }
+          : undefined,
+        expand: ["product", "armoryItem"],
+      });
       const url = `/api/v1/Vaults${query}`;
       const res = await fetch(url);
       if (res.ok) {
@@ -97,40 +56,11 @@ export default function Vaults() {
     }
   };
 
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch(
-        "/api/v1/Products?$expand=manufacturer",
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const rawProducts = data.value || [];
-        const mappedProducts = rawProducts.map((p) => {
-          let type = "Product";
-          if (p["@odata.type"]) {
-            const parts = p["@odata.type"].split(".");
-            type = parts[parts.length - 1];
-          }
-          return {
-            ...p,
-            productType: type,
-            manufacturerName: p.manufacturer?.name || "Unknown Brand",
-          };
-        });
-        setProducts(mappedProducts);
-      }
-    } catch (err) {
-      console.error("Failed to load products", err);
-    }
-  };
-
   useEffect(() => {
     fetchVaults();
     fetchCategories();
-    fetchProducts();
   }, [store.activeArsenalId]);
 
-  // Pre-process vaults to dynamically map C# property names to UI-expected names
   const processedVaults = useMemo(() => {
     return vaults.map((vault) => {
       const product = products.find((p) => p.id === vault.productId);
@@ -148,7 +78,6 @@ export default function Vaults() {
     });
   }, [vaults, products, store.arsenals, categories]);
 
-  // Map flat vault list to a hierarchical tree
   const vaultTree = useMemo(() => {
     const map = {};
     processedVaults.forEach((v) => {
@@ -167,25 +96,6 @@ export default function Vaults() {
     return roots;
   }, [processedVaults]);
 
-  // Filter out current vault and its descendants from the parent vault options list to prevent circular reference loops
-  const eligibleParentVaults = useMemo(() => {
-    if (!isEditMode) return processedVaults;
-
-    const getDescendantIds = (vaultId) => {
-      const ids = [];
-      const children = processedVaults.filter((v) => v.parentVaultId === vaultId);
-      children.forEach((c) => {
-        ids.push(c.id);
-        ids.push(...getDescendantIds(c.id));
-      });
-      return ids;
-    };
-
-    const forbiddenIds = [form.id, ...getDescendantIds(form.id)];
-    return processedVaults.filter((v) => !forbiddenIds.includes(v.id));
-  }, [processedVaults, isEditMode, form.id]);
-
-  // Node toggle helpers
   const toggleNode = (id) => {
     setExpandedNodes((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -263,7 +173,8 @@ export default function Vaults() {
     if (!form.name.trim()) return;
 
     setIsSaving(true);
-    const targetArsenalId = parseInt(form.arsenalId) || store.activeArsenalId || 1;
+    const targetArsenalId =
+      parseInt(form.arsenalId) || store.activeArsenalId || 1;
     const payload = {
       name: form.name,
       description: form.description || null,
@@ -273,16 +184,19 @@ export default function Vaults() {
       backupKeyLocation: form.backupKeyLocation || null,
       productId: form.productId ? parseInt(form.productId) : null,
       arsenalId: targetArsenalId,
-      batteryLastChangedDate: form.batteryLastChangedDate && form.batteryLastChangedDate.trim()
-        ? new Date(form.batteryLastChangedDate).toISOString()
-        : null,
-      batteryExpirationDate: form.batteryExpirationDate && form.batteryExpirationDate.trim()
-        ? new Date(form.batteryExpirationDate).toISOString()
-        : null,
+      batteryLastChangedDate:
+        form.batteryLastChangedDate && form.batteryLastChangedDate.trim()
+          ? new Date(form.batteryLastChangedDate).toISOString()
+          : null,
+      batteryExpirationDate:
+        form.batteryExpirationDate && form.batteryExpirationDate.trim()
+          ? new Date(form.batteryExpirationDate).toISOString()
+          : null,
       hasDehumidifier: !!form.hasDehumidifier,
-      dehumidifierLastServiced: form.dehumidifierLastServiced && form.dehumidifierLastServiced.trim()
-        ? new Date(form.dehumidifierLastServiced).toISOString()
-        : null,
+      dehumidifierLastServiced:
+        form.dehumidifierLastServiced && form.dehumidifierLastServiced.trim()
+          ? new Date(form.dehumidifierLastServiced).toISOString()
+          : null,
       targetMaxHumidityPercent: form.hasDehumidifier
         ? parseInt(form.targetMaxHumidityPercent)
         : null,
@@ -397,6 +311,7 @@ export default function Vaults() {
   return (
     <div className="vaults-container">
       {/* View Header */}
+
       <header className="vaults-header">
         <div className="header-left">
           <span className="section-title-icon">🔒</span>
@@ -426,6 +341,7 @@ export default function Vaults() {
       </header>
 
       {/* Main Content Area */}
+
       {loading ? (
         <div className="loading-spinner-box">
           <div className="spinner"></div>
@@ -449,6 +365,7 @@ export default function Vaults() {
       ) : (
         <>
           {/* GRID VIEW */}
+
           {viewMode === "grid" && (
             <section className="vaults-grid-layout">
               {processedVaults.map((vault) => {
@@ -590,6 +507,7 @@ export default function Vaults() {
           )}
 
           {/* TREE VIEW (Hierarchy) */}
+
           {viewMode === "tree" && (
             <div className="vaults-tree-sheet">
               <div className="tree-sheet-header">
@@ -759,7 +677,6 @@ export default function Vaults() {
               {activeTab === "security" && (
                 <div className="tab-pane">
                   <div className="form-grid-columns">
-                    
                     <div className="form-item">
                       <label>
                         Combination/Passcode{" "}
@@ -984,7 +901,6 @@ export default function Vaults() {
     </div>
   );
 
-  // Recursive Tree Node Renderer
   function renderTreeNode(node, depth = 0) {
     const isExpanded = expandedNodes[node.id] !== false; // default to expanded
     const hasChildren = node.children && node.children.length > 0;
@@ -1018,10 +934,16 @@ export default function Vaults() {
 
           <div className="tree-node-info-col">
             <span className="tree-hub-icon">
-              {node.securityLevel === "High" ? "🛡️" : node.securityLevel === "Medium" ? "🔒" : "📂"}
+              {node.securityLevel === "High"
+                ? "🛡️"
+                : node.securityLevel === "Medium"
+                  ? "🔒"
+                  : "📂"}
             </span>
             <span className="tree-hub-name">{node.name}</span>
-            {node.securityLevel && <span className="tree-hub-cat">({node.securityLevel})</span>}
+            {node.securityLevel && (
+              <span className="tree-hub-cat">({node.securityLevel})</span>
+            )}
             <span className="tree-hub-inventory-count">
               {node.storedItems ? node.storedItems.length : 0} items
             </span>

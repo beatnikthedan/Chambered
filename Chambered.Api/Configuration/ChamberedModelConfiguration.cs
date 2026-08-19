@@ -128,7 +128,7 @@ public class ChamberedModelConfiguration : IModelConfiguration
         var document = builder.EntityType<Document>();
         document.Property(d => d.Title).IsRequired();
         document.Property(d => d.Title).MaxLength = 150;
-        document.Property(d => d.Type).IsRequired();
+        //document.Property(d => d.Type).IsRequired();
         document.Property(d => d.FileData).IsRequired();
         document.Property(d => d.FileName).IsRequired();
         document.Property(d => d.FileName).MaxLength = 255;
