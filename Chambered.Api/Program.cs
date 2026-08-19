@@ -9,11 +9,14 @@ using Chambered.Infrastructure.Services.EmailServices;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -126,25 +129,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.OperationFilter<ODataSwaggerFilter>();
     c.DocumentFilter<ODataSwaggerFilter>();
-
-    c.CustomOperationIds(apiDesc =>
-    {
-        var controller = apiDesc.ActionDescriptor.RouteValues["controller"];
-        var action = apiDesc.ActionDescriptor.RouteValues["action"];
-        var method = apiDesc.HttpMethod;
-
-        var relativePath = apiDesc.RelativePath ?? "";
-        if (relativePath.Contains("{key}"))
-        {
-            return $"{controller}_{action}ByKey_{method}";
-        }
-        if (relativePath.Contains("$count"))
-        {
-            return $"{controller}_{action}Count_{method}";
-        }
-
-        return $"{controller}_{action}_{method}";
-    });
+    c.CustomOperationIds((controller, verb, action) => $"{verb}{controller}{action}");
 });
 
 
@@ -349,4 +334,112 @@ public class ODataSwaggerFilter : IOperationFilter, IDocumentFilter
         }
     }
 }
+
+
+
+public static class SwaggerGenOptionsExtensions
+{
+        public static SwaggerGenOptions CustomOperationIds(this SwaggerGenOptions swaggerGenOptions, Func<string, string, string, string> operationIdFormat)
+    {
+        Func<string, string, string, string> operationIdFormat2 = operationIdFormat;
+        string controller = string.Empty;
+        string verb = string.Empty;
+        string action = string.Empty;
+        swaggerGenOptions.CustomOperationIds(delegate (ApiDescription a)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            controller = a.ActionDescriptor.RouteValues["controller"];
+            action = a.ActionDescriptor.RouteValues["action"];
+            foreach (string item in new List<string> { "Get", "Put", "Post", "Patch", "Delete", "Upsert" })
+            {
+                if (action.Contains(item))
+                {
+                    verb = item;
+                    action = action.Replace(item, "");
+                }
+            }
+
+            stringBuilder.Append(operationIdFormat2(controller, verb, action));
+            if (a.RelativePath.Contains("$count"))
+            {
+                stringBuilder.Append("Count");
+            }
+
+            // Get standard path parameters (works for standard controllers like ATSPM)
+            var pathParams = a.ParameterDescriptions.Where((ApiParameterDescription w) => w.Source == BindingSource.Path).ToList();
+
+            // FALLBACK FOR ODATA KEY ROUTING:
+            // If standard routing did not expose path parameters, but the OData route contains '{key}' or '({key})'
+            if (pathParams.Count == 0 && (a.RelativePath.Contains("{key}") || a.RelativePath.Contains("({key})")))
+            {
+                stringBuilder.Append("FromKey");
+            }
+            else
+            {
+                // Your standard ATSPM parameter mapping
+                foreach (ApiParameterDescription item2 in pathParams)
+                {
+                    if (!stringBuilder.ToString().Contains("From"))
+                    {
+                        stringBuilder.Append("From");
+                    }
+                    else
+                    {
+                        stringBuilder.Append("And");
+                    }
+
+                    stringBuilder.Append(item2.Name.Capitalize());
+                }
+            }
+
+            return stringBuilder.ToString();
+        });
+        return swaggerGenOptions;
+    }
+
+    public static SwaggerGenOptions AddJwtAuthorization(this SwaggerGenOptions swaggerGenOptions)
+    {
+        OpenApiSecurityScheme openApiSecurityScheme = new OpenApiSecurityScheme
+        {
+            BearerFormat = "JWT",
+            Name = "JWT Authentication",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "Bearer",
+            Description = "Put **_ONLY_** your JWT Bearer token on textbox below!",
+            Reference = new OpenApiReference
+            {
+                Id = "Bearer",
+                Type = ReferenceType.SecurityScheme
+            }
+        };
+        swaggerGenOptions.AddSecurityDefinition(openApiSecurityScheme.Reference.Id, openApiSecurityScheme);
+        swaggerGenOptions.AddSecurityRequirement(new OpenApiSecurityRequirement {
+        {
+            openApiSecurityScheme,
+            Array.Empty<string>()
+        } });
+        return swaggerGenOptions;
+    }
+
+    public static string Capitalize(this string input)
+{
+    if (input != null)
+    {
+        if (input == "")
+        {
+            throw new ArgumentException("input cannot be empty", "input");
+        }
+
+        return $"{input[0].ToString().ToUpper()}{input.AsSpan(1)}";
+    }
+
+    throw new ArgumentNullException("input");
+}
+}
+
+
+
+
+
 

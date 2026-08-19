@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 // - useArmoryGetGET: Hook for pulling multiple records (collection-get)
 // - useArmoryPatchByKeyPATCH: Hook for partially updating a single record by its key (PATCH)
 // ==========================================
-import { useArmoryGetGET, useArmoryPatchByKeyPATCH } from "../api/endpoints";
+import { useGetArmory, usePatchArmoryFromKey } from "../api/endpoints";
 
 export default function Munitions() {
   // ==========================================
@@ -22,13 +22,13 @@ export default function Munitions() {
   // ==========================================
   // [UI & LOCAL STATE] - Component state to hold local form/input values and UI feedback.
   // ==========================================
-  
+
   // Holds the editable text of the item name in the textbox.
   const [itemName, setItemName] = useState("");
-  
+
   // Holds the database ID of the currently loaded item (needed so we know WHICH record to update on save).
   const [itemId, setItemId] = useState(null);
-  
+
   // Boolean to toggle the visibility of the green success banner after a successful save.
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -39,7 +39,7 @@ export default function Munitions() {
   // - select: "id,name" -> only load the 'id' and 'name' fields from the DB.
   // - filter: "product/manufacturer/name eq 'Glock'" -> only load items made by Glock.
   // ==========================================
-  const { data, isLoading, error } = useArmoryGetGET({
+  const { data, isLoading, error } = useGetArmory({
     top: 1,
     select: "id,name",
     filter: "product/manufacturer/name eq 'Glock'",
@@ -50,7 +50,7 @@ export default function Munitions() {
   // This configures a PATCH request to /api/v1/Armory/{key}.
   // We pass an options object containing an 'onSuccess' callback.
   // ==========================================
-  const saveMutation = useArmoryPatchByKeyPATCH({
+  const saveMutation = usePatchArmoryFromKey({
     mutation: {
       onSuccess: () => {
         // [UI FEEDBACK] - Show success notification banner
@@ -65,8 +65,8 @@ export default function Munitions() {
       },
       onError: (err) => {
         alert("Failed to save changes: " + (err.message || "Unknown error"));
-      }
-    }
+      },
+    },
   });
 
   // ==========================================
@@ -99,8 +99,8 @@ export default function Munitions() {
     saveMutation.mutate({
       key: itemId,
       data: {
-        name: itemName
-      }
+        name: itemName,
+      },
     });
   };
 
@@ -129,14 +129,16 @@ export default function Munitions() {
 
       {/* [UI & FEEDBACK] - Shows a green confirmation banner after saving is completed */}
       {saveSuccess && (
-        <div style={{
-          padding: "10px",
-          backgroundColor: "#2e7d32",
-          color: "white",
-          borderRadius: "4px",
-          marginBottom: "15px",
-          maxWidth: "400px"
-        }}>
+        <div
+          style={{
+            padding: "10px",
+            backgroundColor: "#2e7d32",
+            color: "white",
+            borderRadius: "4px",
+            marginBottom: "15px",
+            maxWidth: "400px",
+          }}
+        >
           ✓ Item name successfully updated in the database!
         </div>
       )}
@@ -191,7 +193,7 @@ export default function Munitions() {
             backgroundColor: saveMutation.isPending ? "#555" : "#0056b3",
             border: "none",
             borderRadius: "4px",
-            cursor: saveMutation.isPending ? "not-allowed" : "pointer"
+            cursor: saveMutation.isPending ? "not-allowed" : "pointer",
           }}
         >
           {/* Changes the button text dynamically while saving */}
