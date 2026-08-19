@@ -133,6 +133,16 @@ builder.Services.AddSwaggerGen(c =>
         var action = apiDesc.ActionDescriptor.RouteValues["action"];
         var method = apiDesc.HttpMethod;
 
+        var relativePath = apiDesc.RelativePath ?? "";
+        if (relativePath.Contains("{key}"))
+        {
+            return $"{controller}_{action}ByKey_{method}";
+        }
+        if (relativePath.Contains("$count"))
+        {
+            return $"{controller}_{action}Count_{method}";
+        }
+
         return $"{controller}_{action}_{method}";
     });
 });
@@ -326,14 +336,14 @@ public class ODataSwaggerFilter : IOperationFilter, IDocumentFilter
         }
     }
 
-    // Removes unusable parenthesis OData routes like /Products({key})
+    // Removes unusable parenthesis OData routes like /Products({key}) and namespace-prefixed duplicate routes containing "/Default."
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
-        var parenthesesPaths = swaggerDoc.Paths.Keys
-            .Where(k => k.Contains("({key})"))
+        var pathsToRemove = swaggerDoc.Paths.Keys
+            .Where(k => k.Contains("({key})") || k.Contains("/Default."))
             .ToList();
 
-        foreach (var path in parenthesesPaths)
+        foreach (var path in pathsToRemove)
         {
             swaggerDoc.Paths.Remove(path);
         }

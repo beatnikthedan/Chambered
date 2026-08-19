@@ -15,18 +15,3 @@ top?: number;
 skip?: number;
 count?: boolean;
 };
-
-export type ArsenalsGetGETParams = {
-select?: string;
-expand?: string;
-filter?: string;
-orderby?: string;
-top?: number;
-skip?: number;
-count?: boolean;
-};
-
-export type ArsenalsGetGETParams = {
-select?: string;
-expand?: string;
-};

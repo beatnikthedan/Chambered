@@ -10,8 +10,3 @@ export type ArmoryGetItemConditionsGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ArmoryGetItemConditionsGETParams = {
-select?: string;
-expand?: string;
-};

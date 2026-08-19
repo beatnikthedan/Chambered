@@ -10,8 +10,3 @@ export type ProductsGetLightMountTypesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ProductsGetLightMountTypesGETParams = {
-select?: string;
-expand?: string;
-};

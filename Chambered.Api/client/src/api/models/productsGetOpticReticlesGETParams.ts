@@ -10,8 +10,3 @@ export type ProductsGetOpticReticlesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ProductsGetOpticReticlesGETParams = {
-select?: string;
-expand?: string;
-};

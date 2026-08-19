@@ -10,8 +10,3 @@ export type VaultsGetLockTypesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type VaultsGetLockTypesGETParams = {
-select?: string;
-expand?: string;
-};

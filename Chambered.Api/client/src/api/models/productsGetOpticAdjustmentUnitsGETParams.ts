@@ -10,8 +10,3 @@ export type ProductsGetOpticAdjustmentUnitsGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ProductsGetOpticAdjustmentUnitsGETParams = {
-select?: string;
-expand?: string;
-};

@@ -10,8 +10,3 @@ export type ArmoryGetNfaFormTypesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ArmoryGetNfaFormTypesGETParams = {
-select?: string;
-expand?: string;
-};

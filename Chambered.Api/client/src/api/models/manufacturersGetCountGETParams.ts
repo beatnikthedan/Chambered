@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type ProductsGetGETParams = {
+export type ManufacturersGetCountGETParams = {
 select?: string;
 expand?: string;
 filter?: string;

@@ -19,6 +19,37 @@ export default function Vaults() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "tree"
+  const [showModal, setShowModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [activeTab, setActiveTab] = useState("general"); // "general", "security", "inventory"
+  const [showPassword, setShowPassword] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [expandedNodes, setExpandedNodes] = useState({});
+
+  // Form state
+  const [form, setForm] = useState({
+    id: 0,
+    name: "",
+    description: "",
+    arsenalId: "",
+    securityLevel: "Standard",
+    parentVaultId: "",
+    encryptedPasscode: "",
+    passcodeHint: "",
+    backupKeyLocation: "",
+    productId: "",
+    batteryLastChangedDate: "",
+    batteryExpirationDate: "",
+    batteryType: "Unknown",
+    hasDehumidifier: false,
+    dehumidifierLastServiced: "",
+    targetMaxHumidityPercent: 45,
+    storedItems: [],
+  });
+
   const fetchVaults = async () => {
     setLoading(true);
     setError("");
@@ -56,9 +87,35 @@ export default function Vaults() {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch("/api/v1/Products?$expand=manufacturer");
+      if (res.ok) {
+        const data = await res.json();
+        const rawProducts = data.value || [];
+        const mappedProducts = rawProducts.map((p) => {
+          let type = "Product";
+          if (p["@odata.type"]) {
+            const parts = p["@odata.type"].split(".");
+            type = parts[parts.length - 1];
+          }
+          return {
+            ...p,
+            productType: type,
+            manufacturerName: p.manufacturer?.name || "Unknown Brand",
+          };
+        });
+        setProducts(mappedProducts);
+      }
+    } catch (err) {
+      console.error("Failed to load products", err);
+    }
+  };
+
   useEffect(() => {
     fetchVaults();
     fetchCategories();
+    fetchProducts();
   }, [store.activeArsenalId]);
 
   const processedVaults = useMemo(() => {
@@ -95,6 +152,24 @@ export default function Vaults() {
     });
     return roots;
   }, [processedVaults]);
+
+  // Filter out current vault and its descendants from the parent vault options list to prevent circular reference loops
+  const eligibleParentVaults = useMemo(() => {
+    if (!isEditMode) return processedVaults;
+
+    const getDescendantIds = (vaultId) => {
+      const ids = [];
+      const children = processedVaults.filter((v) => v.parentVaultId === vaultId);
+      children.forEach((c) => {
+        ids.push(c.id);
+        ids.push(...getDescendantIds(c.id));
+      });
+      return ids;
+    };
+
+    const forbiddenIds = [form.id, ...getDescendantIds(form.id)];
+    return processedVaults.filter((v) => !forbiddenIds.includes(v.id));
+  }, [processedVaults, isEditMode, form.id]);
 
   const toggleNode = (id) => {
     setExpandedNodes((prev) => ({ ...prev, [id]: !prev[id] }));

@@ -15,18 +15,3 @@ top?: number;
 skip?: number;
 count?: boolean;
 };
-
-export type DocumentsGetGETParams = {
-select?: string;
-expand?: string;
-filter?: string;
-orderby?: string;
-top?: number;
-skip?: number;
-count?: boolean;
-};
-
-export type DocumentsGetGETParams = {
-select?: string;
-expand?: string;
-};

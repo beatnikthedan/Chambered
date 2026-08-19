@@ -10,8 +10,3 @@ export type ProductsGetActionTypesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ProductsGetActionTypesGETParams = {
-select?: string;
-expand?: string;
-};

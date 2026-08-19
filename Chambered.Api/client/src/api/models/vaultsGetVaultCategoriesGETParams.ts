@@ -10,8 +10,3 @@ export type VaultsGetVaultCategoriesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type VaultsGetVaultCategoriesGETParams = {
-select?: string;
-expand?: string;
-};

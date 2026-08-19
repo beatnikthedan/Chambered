@@ -10,8 +10,3 @@ export type ProductsGetLaserColorsGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ProductsGetLaserColorsGETParams = {
-select?: string;
-expand?: string;
-};

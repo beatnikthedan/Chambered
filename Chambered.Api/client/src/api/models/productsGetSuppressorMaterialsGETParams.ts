@@ -10,8 +10,3 @@ export type ProductsGetSuppressorMaterialsGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ProductsGetSuppressorMaterialsGETParams = {
-select?: string;
-expand?: string;
-};

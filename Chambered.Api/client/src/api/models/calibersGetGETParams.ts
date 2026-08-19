@@ -15,18 +15,3 @@ top?: number;
 skip?: number;
 count?: boolean;
 };
-
-export type CalibersGetGETParams = {
-select?: string;
-expand?: string;
-filter?: string;
-orderby?: string;
-top?: number;
-skip?: number;
-count?: boolean;
-};
-
-export type CalibersGetGETParams = {
-select?: string;
-expand?: string;
-};

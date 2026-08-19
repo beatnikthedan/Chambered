@@ -10,8 +10,3 @@ export type ProductsGetBatteryTypesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ProductsGetBatteryTypesGETParams = {
-select?: string;
-expand?: string;
-};

@@ -10,8 +10,3 @@ export type ProductsGetSuppressorAttachmentTypesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ProductsGetSuppressorAttachmentTypesGETParams = {
-select?: string;
-expand?: string;
-};

@@ -10,8 +10,3 @@ export type DocumentsGetDocumentTypesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type DocumentsGetDocumentTypesGETParams = {
-select?: string;
-expand?: string;
-};

@@ -6,12 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type ProductsGetGETParams = {
+export type DocumentsGetByKeyGETParams = {
 select?: string;
 expand?: string;
-filter?: string;
-orderby?: string;
-top?: number;
-skip?: number;
-count?: boolean;
 };

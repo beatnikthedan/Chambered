@@ -10,8 +10,3 @@ export type ProductsGetPewPewCategoriesGETParams = {
 select?: string;
 expand?: string;
 };
-
-export type ProductsGetPewPewCategoriesGETParams = {
-select?: string;
-expand?: string;
-};
