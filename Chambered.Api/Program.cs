@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -121,7 +122,20 @@ builder.Services.AddApiVersioning(options =>
 
 // Configure Versioned Swagger Documents generator
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.OperationFilter<ODataSwaggerFilter>();
+    c.DocumentFilter<ODataSwaggerFilter>();
+
+    c.CustomOperationIds(apiDesc =>
+    {
+        var controller = apiDesc.ActionDescriptor.RouteValues["controller"];
+        var action = apiDesc.ActionDescriptor.RouteValues["action"];
+        var method = apiDesc.HttpMethod;
+
+        return $"{controller}_{action}_{method}";
+    });
+});
 
 
 
@@ -297,4 +311,32 @@ public class ModelStateDebugLoggerFilter : Microsoft.AspNetCore.Mvc.Filters.IAct
     public void OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext context) { }
 }
 
+
+
+public class ODataSwaggerFilter : IOperationFilter, IDocumentFilter
+{
+    // Fixes parameter binding from "query" to "path"
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        var keyParam = operation.Parameters?.FirstOrDefault(p => p.Name == "key");
+        if (keyParam != null)
+        {
+            keyParam.In = ParameterLocation.Path;
+            keyParam.Required = true;
+        }
+    }
+
+    // Removes unusable parenthesis OData routes like /Products({key})
+    public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
+    {
+        var parenthesesPaths = swaggerDoc.Paths.Keys
+            .Where(k => k.Contains("({key})"))
+            .ToList();
+
+        foreach (var path in parenthesesPaths)
+        {
+            swaggerDoc.Paths.Remove(path);
+        }
+    }
+}
 
