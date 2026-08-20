@@ -114,11 +114,10 @@ export default function BackupSettings() {
               margin: 0,
               fontSize: "1.25rem",
               fontWeight: "bold",
-              color: autoBackups ? "#48bb78" : "#a0aec0",
             }}
           >
             {autoBackups
-              ? "Automatic Backups Active"
+              ? "Automatic Backups Enabled"
               : "Enable Automatic Backups"}
           </label>
         </div>
@@ -156,19 +155,8 @@ export default function BackupSettings() {
           transition: "opacity 0.2s ease-in-out",
         }}
       >
-        Backups include users, user progress, item details, server settings, and
-        stored images in{" "}
-        <code
-          className="text-mono"
-          style={{
-            background: "rgba(255,255,255,0.08)",
-            padding: "2px 6px",
-            borderRadius: "4px",
-          }}
-        >
-          /metadata/items
-        </code>
-        .
+        Backups are copy of the database and currently, backups can only be
+        configured through secrets.
       </p>
 
       {/* FORM INPUTS & TABLE (GRAYED OUT WHEN AUTOMATIC BACKUPS ARE DISABLED) */}

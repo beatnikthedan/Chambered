@@ -16,7 +16,7 @@ export default function Settings() {
   return (
     <div className="layout-grid">
       {/* ASIDE ON THE LEFT */}
-      <aside className="sidebar">
+      <aside className="settings-sidebar">
         {/* DATA Group */}
         <div className="menu-group">
           <div className="menu-title">DATA</div>
