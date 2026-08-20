@@ -15,11 +15,11 @@ namespace Chambered.Data.Configuration
 
             builder.HasKey(a => a.Id);
 
-            builder.Property(a => a.Name)
+            builder.Property(v => v.Name)
                 .IsRequired()
                 .HasMaxLength(100);
 
-            builder.Property(a => a.Description)
+            builder.Property(v => v.Description)
                 .HasMaxLength(500);
 
             builder.Property(a => a.IconName)
@@ -32,7 +32,9 @@ namespace Chambered.Data.Configuration
             {
                 Id = 1,
                 Name = "Primary Arsenal",
-                Description = "Default system owner arsenal"
+                Description = "Default system owner arsenal",
+                IconName = "Shield",
+                ColorHex = "#2563EB"
             });
         }
     }
