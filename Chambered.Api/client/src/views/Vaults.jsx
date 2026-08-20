@@ -335,62 +335,519 @@ export default function Vaults() {
         </div>
       ) : (
         <>
-          {/* GRID VIEW */}
           {viewMode === "grid" && (
-            <section
-              className="vaults-grid-layout"
+            <div
               style={{
                 display: "flex",
-                flexDirection: "column", // STACKS CARDS VERTICALLY
-                alignItems: "flex-start",
-                gap: "20px",
+                width: "100%",
+                height: "calc(100vh - 80px)", // Adjust height to account for top navbar
+                backgroundColor: "#0b0d14",
+                color: "#d1d6e3",
+                boxSizing: "border-box",
               }}
             >
-              {vaults.map((vault, index) => {
-                const isSelected = vault.id === selectedVault?.id ?? 1;
+              {/* ====================================================
+          LEFT PANE: Scrolling Vault Cards List (~380px wide)
+         ==================================================== */}
+              <aside
+                style={{
+                  width: "400px",
+                  minWidth: "400px",
+                  height: "100%",
+                  overflowY: "auto", // Allows independent vertical scrolling
+                  padding: "20px",
+                  borderRight: "1px solid #292c39",
+                  boxSizing: "border-box",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                {vaults.map((vault, index) => {
+                  const isSelected = vault.id === selectedVault?.id ?? 1;
 
-                return (
-                  <VaultCard
-                    key={vault.id || vault.key || vault.name || index}
-                    title={vault.name}
-                    subtitle={vault.description}
-                    currentCount={vault.armoryItems?.length ?? 0}
-                    totalCount={isSelected ? (vault.capacity ?? 12) : 4}
-                    unit={"items"}
-                    temp={vault.temperature ?? (isSelected ? 68 : 74)}
-                    humidity={vault.humidity ?? (isSelected ? 44 : 63)}
-                    value={
-                      Array.isArray(vault.armoryItems)
-                        ? vault.armoryItems.reduce(
-                            (sum, item) =>
-                              sum +
-                              (Number(
-                                item.estimatedValue ?? item.purchasePrice,
-                              ) || 0),
-                            0, // CRITICAL: Starting accumulator value
-                          )
-                        : 0
-                    }
-                    // Status & Alerts Filler
-                    statusText={isSelected ? "NORMAL" : "RH HIGH"}
-                    statusColor={isSelected ? "#10B981" : "#F97316"}
-                    // Selection & Outline Colors
-                    selected={isSelected}
-                    onClick={() => openEditModal(vault)}
-                    arsenalColor={vault.arsenal?.colorHex ?? "#ffffff"}
-                    // Metrics Colors
-                    tempColor={isSelected ? "#10B981" : "#F87171"}
-                    humidityColor={isSelected ? "#10B981" : "#F97316"}
-                    // Warning Banner
-                    warningText={
-                      isSelected
-                        ? null
-                        : "Above 60% for 6 days — add a dehumidifier rod"
-                    }
-                  />
-                );
-              })}
-            </section>
+                  return (
+                    <VaultCard
+                      key={vault.id || vault.key || vault.name || index}
+                      title={vault.name}
+                      subtitle={vault.description}
+                      currentCount={vault.armoryItems?.length ?? 0}
+                      totalCount={isSelected ? (vault.capacity ?? 12) : 4}
+                      unit={"items"}
+                      temp={vault.temperature ?? (isSelected ? 68 : 74)}
+                      humidity={vault.humidity ?? (isSelected ? 44 : 63)}
+                      value={
+                        Array.isArray(vault.armoryItems)
+                          ? vault.armoryItems.reduce(
+                              (sum, item) =>
+                                sum +
+                                (Number(
+                                  item.estimatedValue ?? item.purchasePrice,
+                                ) || 0),
+                              0,
+                            )
+                          : 0
+                      }
+                      // Status & Alerts Filler
+                      statusText={isSelected ? "NORMAL" : "RH HIGH"}
+                      statusColor={isSelected ? "#10B981" : "#F97316"}
+                      // Selection & Outline Colors
+                      selected={isSelected}
+                      onClick={() => setSelectedVault(vault)}
+                      arsenalColor={vault.arsenal?.colorHex ?? "#ffffff"}
+                      // Metrics Colors
+                      tempColor={isSelected ? "#10B981" : "#F87171"}
+                      humidityColor={isSelected ? "#10B981" : "#F97316"}
+                      // Warning Banner
+                      warningText={
+                        isSelected
+                          ? null
+                          : "Above 60% for 6 days — add a dehumidifier rod"
+                      }
+                    />
+                  );
+                })}
+              </aside>
+
+              {/* ====================================================
+          RIGHT CONTAINER: Stacks Edit Form (Top) & List (Bottom)
+         ==================================================== */}
+              {/* 2. RIGHT CONTAINER: TOP FORM + BOTTOM LIST */}
+              {!selectedVault ? (
+                <main
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                    backgroundColor: "#0d0f19",
+                    color: "#6b7280",
+                  }}
+                >
+                  <div style={{ textAlign: "center", padding: "40px" }}>
+                    <span
+                      style={{
+                        fontSize: "50px",
+                        display: "block",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      🔒
+                    </span>
+                    <h3 style={{ color: "#9ca3af", marginBottom: "8px" }}>
+                      No Vault Selected
+                    </h3>
+                    <p style={{ margin: 0, fontSize: "14px" }}>
+                      Select a vault from the list on the left to view or edit
+                      details,
+                    </p>
+                    <p style={{ margin: "4px 0 0 0", fontSize: "14px" }}>
+                      or click{" "}
+                      <strong style={{ color: "#3abef0" }}>Add Item</strong>{" "}
+                      above to create a new vault.
+                    </p>
+                  </div>
+                </main>
+              ) : (
+                <main
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* TOP RIGHT: EDIT FORM SECTION */}
+                  <section
+                    style={{
+                      flex: "0 0 50%",
+                      padding: "24px",
+                      overflowY: "auto",
+                      borderBottom: "1px solid #292c39",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    {/* Title Bar (Close Button Removed) */}
+                    {/* Header */}
+                    <div className="modal-title-bar">
+                      <div className="title-left">
+                        <h3>
+                          {isEditMode
+                            ? `${selectedVault.name}`
+                            : "Add New Vault"}
+                        </h3>
+                      </div>
+                      <button
+                        className="modal-close-x-btn"
+                        onClick={() => setShowModal(false)}
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    {/* Tabs Row */}
+                    <div className="modal-tabs-header-row">
+                      <button
+                        className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
+                        onClick={() => setActiveTab("general")}
+                      >
+                        General
+                      </button>
+                      <button
+                        className={`tab-btn ${activeTab === "security" ? "active" : ""}`}
+                        onClick={() => setActiveTab("security")}
+                      >
+                        Security & Climate
+                      </button>
+                      <button
+                        className={`tab-btn ${activeTab === "inventory" ? "active" : ""}`}
+                        onClick={() => setActiveTab("inventory")}
+                        disabled={!isEditMode}
+                        title={
+                          !isEditMode
+                            ? "Save vault to view inventory list."
+                            : ""
+                        }
+                      >
+                        Inventory ({selectedVault.armoryItems?.length || 0})
+                      </button>
+                    </div>
+
+                    {/* Tab Contents */}
+                    <div className="modal-tabs-body-content">
+                      {activeTab === "general" && (
+                        <div className="tab-pane">
+                          <div className="form-grid-columns">
+                            <div className="form-item full-row">
+                              <label>Catalog Product Link</label>
+                              <select
+                                value={selectedVault.productId || ""}
+                                onChange={(e) => {
+                                  const pId = e.target.value
+                                    ? parseInt(e.target.value)
+                                    : null;
+                                  const p =
+                                    products.find((prod) => prod.id === pId) ||
+                                    null;
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    productId: pId,
+                                    product: p,
+                                  }));
+                                }}
+                              >
+                                <option value="">
+                                  -- No Linked Catalog Product --
+                                </option>
+                                {products.map((prod) => (
+                                  <option
+                                    key={prod.id}
+                                    value={prod.id}
+                                    title={
+                                      prod.description ||
+                                      "No description available"
+                                    }
+                                  >
+                                    {prod.manufacturer?.name} {prod.name} (
+                                    {prod.partNumber})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="form-item full-row">
+                              <label>
+                                Name<span className="req">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Bedside Gun Box, Basement Safe, Truck Vault"
+                                value={selectedVault.name}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    name: e.target.value,
+                                  }))
+                                }
+                                required
+                              />
+                            </div>
+
+                            <div className="form-item full-row">
+                              <label>Description</label>
+                              <textarea
+                                rows="3"
+                                placeholder="Describe where it is hidden or physical details..."
+                                value={selectedVault.description}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    description: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+
+                            <div className="form-item">
+                              <label>Arsenal</label>
+                              <select
+                                value={selectedVault.arsenalId}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    arsenalId: e.target.value,
+                                  }))
+                                }
+                                required
+                              >
+                                {store.arsenals.map((ars) => (
+                                  <option key={ars.id} value={ars.id}>
+                                    {ars.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="form-item">
+                              <label>Parent Vault</label>
+                              <select
+                                value={selectedVault.parentVaultId}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    parentVaultId: e.target.value,
+                                  }))
+                                }
+                              >
+                                <option value="">None</option>
+                                {eligibleParentVaults.map((v) => (
+                                  <option key={v.id} value={v.id}>
+                                    🔗 {v.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeTab === "security" && (
+                        <div className="tab-pane">
+                          <div className="form-grid-columns">
+                            <div className="form-item">
+                              <label>
+                                Combination/Passcode{" "}
+                                <span style={{ color: "green" }}>
+                                  (256-AES Encryption)
+                                </span>
+                              </label>
+                              <div className="passcode-input-wrapper">
+                                <input
+                                  type={showPassword ? "text" : "password"}
+                                  className="passcode-field"
+                                  placeholder="Decrypted key preview..."
+                                  value={selectedVault.encryptedPasscode}
+                                  onChange={(e) =>
+                                    setSelectedVault((prev) => ({
+                                      ...prev,
+                                      encryptedPasscode: e.target.value,
+                                    }))
+                                  }
+                                />
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary passcode-reveal-btn"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                >
+                                  {showPassword ? "Hide 🔒" : "Show 👁️"}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="form-item">
+                              <label>Passcode Reminder Hint</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Anniversary or zip..."
+                                value={selectedVault.passcodeHint}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    passcodeHint: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+
+                            <div className="form-item">
+                              <label>Backup Keys Location</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Safe deposit box, hidden hook..."
+                                value={selectedVault.backupKeyLocation}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    backupKeyLocation: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+
+                            <BatteryTracker
+                              hasBattery={
+                                selectedVault.product?.hasBattery || false
+                              }
+                              form={selectedVault}
+                              setForm={setSelectedVault}
+                            />
+
+                            {/* ENVIRONMENT / DEHUMIDIFIER
+                    <div className="form-item full-row env-boundary-decorator">
+                      <div className="checkbox-toggle-switch-row">
+                        <input
+                          type="checkbox"
+                          id="hasDehumidifier"
+                          checked={selectedVault.hasDehumidifier}
+                          onChange={(e) =>
+                            setSelectedVault((prev) => ({
+                              ...prev,
+                              hasDehumidifier: e.target.checked,
+                            }))
+                          }
+                        />
+                        <label
+                          htmlFor="hasDehumidifier"
+                          className="checkbox-switch-label"
+                        >
+                          <strong>Active Environment Control</strong> (Has
+                          active dehumidifier or silica desiccant packs)
+                        </label>
+                      </div>
+                    </div>
+
+                    {selectedVault.hasDehumidifier && (
+                      <>
+                        <div className="form-item">
+                          <label>Desiccant Last Replaced / Serviced</label>
+                          <input
+                            type="date"
+                            value={selectedVault.dehumidifierLastServiced}
+                            onChange={(e) =>
+                              setSelectedVault((prev) => ({
+                                ...prev,
+                                dehumidifierLastServiced: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="form-item">
+                          <label>
+                            Alert Max Humidity:{" "}
+                            <strong className="gold-text">
+                              {selectedVault.targetMaxHumidityPercent}%
+                            </strong>
+                          </label>
+                          <input
+                            type="range"
+                            min="25"
+                            max="65"
+                            className="form-range-slider"
+                            value={selectedVault.targetMaxHumidityPercent}
+                            onChange={(e) =>
+                              setSelectedVault((prev) => ({
+                                ...prev,
+                                targetMaxHumidityPercent: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </>
+                    )} */}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Modal Footer Controls */}
+                      <div className="modal-footer-row-container">
+                        <SubmitButton
+                          type="button"
+                          isSaving={isSaving}
+                          saveSuccess={saveSuccess}
+                          isEditMode={isEditMode}
+                          onClick={handleSave}
+                        />
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* BOTTOM RIGHT: INVENTORY SCROLLING LIST */}
+                  <section
+                    style={{
+                      flex: 1,
+                      padding: "24px",
+                      overflowY: "auto",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <div
+                      className="vault-inventory-wrapper"
+                      style={{
+                        maxHeight: "350px", // Limits container height
+                        overflowY: "auto", // Forces vertical scrollbar when content exceeds maxHeight
+                        paddingRight: "8px", // Prevents scrollbar from overlapping text
+                      }}
+                    >
+                      <h4 className="inventory-subheading">Inventory</h4>
+                      {selectedVault?.armoryItems &&
+                      selectedVault.armoryItems.length > 0 ? (
+                        <div className="inventory-grid-table">
+                          <div className="table-header-row">
+                            <span>Serial Number</span>
+                            <span>Name</span>
+                            <span>Manufacturer</span>
+                            <span>Model</span>
+                          </div>
+                          {selectedVault.armoryItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className="table-body-row"
+                              title={item.description || "N/A"}
+                            >
+                              <strong className="table-mono font-mono">
+                                {item.serialNumber}
+                              </strong>
+                              <span className="table-mono font-mono">
+                                {item.name || "N/A"}
+                              </span>
+                              <span className="table-mono font-mono">
+                                {item.description || "N/A"}
+                              </span>
+                              <span className="table-mono font-mono">
+                                {item.model || "N/A"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="empty-inventory-box">
+                          <span className="empty-box-symbol">🛡️</span>
+                          <h5>No Stored Items</h5>
+                          <p>
+                            To inventory an item here, select this safe as the
+                            "Vault" on the item's armory card form.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </main>
+              )}
+            </div>
           )}
 
           {/* TREE VIEW (Hierarchy) */}

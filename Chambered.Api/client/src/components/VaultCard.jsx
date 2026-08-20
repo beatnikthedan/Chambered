@@ -16,7 +16,7 @@ export default function VaultCard({
   arsenalColor = "#d9ac3a",
   selected = false,
   warningText = null,
-  onClick, // MUST BE ATTACHED BELOW
+  onClick,
 }) {
   const safeCurrent = Number(currentCount) || 0;
   const safeTotal = Number(totalCount) || 1;
@@ -30,7 +30,7 @@ export default function VaultCard({
 
   return (
     <div
-      onClick={onClick} // ATTACHED TO ROOT CONTAINER
+      onClick={onClick}
       style={{
         position: "relative",
         width: "100%",
@@ -110,124 +110,133 @@ export default function VaultCard({
         </div>
       </div>
 
-      <div style={{ marginBottom: "20px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
-            marginBottom: "8px",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              letterSpacing: "1.2px",
-              color: "#7e879b",
-            }}
-          >
-            CAPACITY
-          </span>
-          <span style={{ fontFamily: "monospace", fontSize: "0.9rem" }}>
-            <strong style={{ color: "#d1d6e3" }}>{safeCurrent}</strong>
-            <span style={{ color: "#7e879b" }}> / </span>
-            <strong style={{ color: "#d1d6e3" }}>{safeTotal}</strong>
-            <span
-              style={{ color: "#7e879b", fontFamily: "system-ui, sans-serif" }}
+      {selected && (
+        <section>
+          <div style={{ marginBottom: "20px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                marginBottom: "8px",
+              }}
             >
-              {" "}
-              {unit}
-            </span>
-          </span>
-        </div>
-        <div
-          style={{
-            width: "100%",
-            height: "8px",
-            backgroundColor: "#222530",
-            borderRadius: "999px",
-            overflow: "hidden",
-          }}
-        >
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  letterSpacing: "1.2px",
+                  color: "#7e879b",
+                }}
+              >
+                CAPACITY
+              </span>
+              <span style={{ fontFamily: "monospace", fontSize: "0.9rem" }}>
+                <strong style={{ color: "#d1d6e3" }}>{safeCurrent}</strong>
+                <span style={{ color: "#7e879b" }}> / </span>
+                <strong style={{ color: "#d1d6e3" }}>{safeTotal}</strong>
+                <span
+                  style={{
+                    color: "#7e879b",
+                    fontFamily: "system-ui, sans-serif",
+                  }}
+                >
+                  {" "}
+                  {unit}
+                </span>
+              </span>
+            </div>
+            <div
+              style={{
+                width: "100%",
+                height: "8px",
+                backgroundColor: "#222530",
+                borderRadius: "999px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${fillPercentage}%`,
+                  height: "100%",
+                  backgroundColor: arsenalColor,
+                  borderRadius: "999px",
+                  transition: "width 0.3s",
+                }}
+              />
+            </div>
+          </div>
+
           <div
             style={{
-              width: `${fillPercentage}%`,
-              height: "100%",
-              backgroundColor: arsenalColor,
-              borderRadius: "999px",
-              transition: "width 0.3s",
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "12px",
             }}
-          />
-        </div>
-      </div>
+          >
+            <div
+              style={{
+                backgroundColor: selected ? "#374151" : "#1c1e27",
+                border: "1px solid #292c39",
+                borderRadius: "10px",
+                padding: "12px",
+                textAlign: "center",
+                fontSize: "0.85rem",
+              }}
+            >
+              <span style={{ color: "#7e879b" }}>Temp </span>
+              <span style={{ color: tempColor, fontWeight: 700 }}>{temp} </span>
+              <span style={{ color: "#7e879b" }}>°F</span>
+            </div>
+            <div
+              style={{
+                backgroundColor: selected ? "#374151" : "#1c1e27",
+                border: "1px solid #292c39",
+                borderRadius: "10px",
+                padding: "12px",
+                textAlign: "center",
+                fontSize: "0.85rem",
+              }}
+            >
+              <span style={{ color: "#7e879b" }}>RH </span>
+              <span style={{ color: humidityColor, fontWeight: 700 }}>
+                {humidity}%
+              </span>
+            </div>
+            <div
+              style={{
+                backgroundColor: selected ? "#374151" : "#1c1e27",
+                border: "1px solid #292c39",
+                borderRadius: "10px",
+                padding: "12px",
+                textAlign: "center",
+                fontSize: "0.85rem",
+              }}
+            >
+              <span style={{ color: "#7e879b" }}>Value </span>
+              <span style={{ color: arsenalColor, fontWeight: 700 }}>
+                ${value}
+              </span>
+            </div>
+          </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "12px",
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: selected ? "#374151" : "#1c1e27",
-            border: "1px solid #292c39",
-            borderRadius: "10px",
-            padding: "12px",
-            textAlign: "center",
-            fontSize: "0.85rem",
-          }}
-        >
-          <span style={{ color: "#7e879b" }}>Temp </span>
-          <span style={{ color: tempColor, fontWeight: 700 }}>{temp} </span>
-          <span style={{ color: "#7e879b" }}>°F</span>
-        </div>
-        <div
-          style={{
-            backgroundColor: selected ? "#374151" : "#1c1e27",
-            border: "1px solid #292c39",
-            borderRadius: "10px",
-            padding: "12px",
-            textAlign: "center",
-            fontSize: "0.85rem",
-          }}
-        >
-          <span style={{ color: "#7e879b" }}>RH </span>
-          <span style={{ color: humidityColor, fontWeight: 700 }}>
-            {humidity}%
-          </span>
-        </div>
-        <div
-          style={{
-            backgroundColor: selected ? "#374151" : "#1c1e27",
-            border: "1px solid #292c39",
-            borderRadius: "10px",
-            padding: "12px",
-            textAlign: "center",
-            fontSize: "0.85rem",
-          }}
-        >
-          <span style={{ color: "#7e879b" }}>Value </span>
-          <span style={{ color: arsenalColor, fontWeight: 700 }}>${value}</span>
-        </div>
-      </div>
-
-      {warningText && (
-        <div
-          style={{
-            marginTop: "16px",
-            backgroundColor: "#2b1d16",
-            border: "1px solid #f9731644",
-            color: "#f97316",
-            borderRadius: "8px",
-            padding: "10px 14px",
-            fontSize: "0.85rem",
-            lineHeight: "1.4",
-          }}
-        >
-          {warningText}
-        </div>
+          {warningText && (
+            <div
+              style={{
+                marginTop: "16px",
+                backgroundColor: "#2b1d16",
+                border: "1px solid #f9731644",
+                color: "#f97316",
+                borderRadius: "8px",
+                padding: "10px 14px",
+                fontSize: "0.85rem",
+                lineHeight: "1.4",
+              }}
+            >
+              {warningText}
+            </div>
+          )}
+        </section>
       )}
     </div>
   );
