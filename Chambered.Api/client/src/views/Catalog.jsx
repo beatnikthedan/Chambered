@@ -508,21 +508,20 @@ export default function Catalog() {
     e.preventDefault();
     if (!form.name.trim()) return;
 
-    const payload = {
-      id: form.id || 0,
-      name: form.name || "",
-      partNumber: form.partNumber || "",
-      sku: form.sku || "",
-      manufacturerId: parseInt(form.manufacturerId, 10) || 0,
-      description: form.description || null,
-      webPageUrl: form.webPageUrl || null,
-      specifications: form.specifications || {},
-    };
-
     const type = form.productType || "Product";
+    const payload = {};
     if (type !== "Product") {
       payload["@odata.type"] = `#Chambered.Data.Models.${type}`;
     }
+
+    payload.id = form.id || 0;
+    payload.name = form.name || "";
+    payload.partNumber = form.partNumber || "";
+    payload.sku = form.sku || "";
+    payload.manufacturerId = parseInt(form.manufacturerId, 10) || 0;
+    payload.description = form.description || null;
+    payload.webPageUrl = form.webPageUrl || null;
+    // payload.specifications = form.specifications || {};
 
     if (type === "PewPew") {
       payload.caliberId = parseInt(form.caliberId, 10) || null;

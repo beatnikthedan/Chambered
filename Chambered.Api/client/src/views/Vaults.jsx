@@ -281,7 +281,6 @@ export default function Vaults() {
 
       <header className="vaults-header">
         <div className="header-left">
-          <span className="section-title-icon">🔒</span>
           <h2>Vaults</h2>
         </div>
         <div className="header-actions">
@@ -360,9 +359,20 @@ export default function Vaults() {
                     unit={"items"}
                     temp={vault.temperature ?? (isSelected ? 68 : 74)}
                     humidity={vault.humidity ?? (isSelected ? 44 : 63)}
-                    value={vault.totalValue ?? (isSelected ? "19k" : "4.2k")}
+                    value={
+                      Array.isArray(vault.armoryItems)
+                        ? vault.armoryItems.reduce(
+                            (sum, item) =>
+                              sum +
+                              (Number(
+                                item.estimatedValue ?? item.purchasePrice,
+                              ) || 0),
+                            0, // CRITICAL: Starting accumulator value
+                          )
+                        : 0
+                    }
                     // Status & Alerts Filler
-                    statusText={isSelected ? "ONLINE" : "RH HIGH"}
+                    statusText={isSelected ? "NORMAL" : "RH HIGH"}
                     statusColor={isSelected ? "#10B981" : "#F97316"}
                     // Selection & Outline Colors
                     selected={isSelected}
@@ -628,7 +638,7 @@ export default function Vaults() {
                     </div>
 
                     <BatteryTracker
-                      hasBattery={selectedVault.product.hasBattery}
+                      hasBattery={selectedVault.product?.hasBattery || false}
                       form={selectedVault}
                       setForm={setSelectedVault}
                     />
