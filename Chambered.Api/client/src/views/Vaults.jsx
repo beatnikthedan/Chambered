@@ -796,8 +796,8 @@ export default function Vaults() {
                 <div className="tab-pane">
                   <div className="vault-inventory-wrapper">
                     <h4 className="inventory-subheading">Inventory</h4>
-                    {selectedVault.armoryItem &&
-                    selectedVault.armoryItem.length > 0 ? (
+                    {selectedVault.armoryItems &&
+                    selectedVault.armoryItems.length > 0 ? (
                       <div className="inventory-grid-table">
                         <div className="table-header-row">
                           <span>Serial Number</span>
@@ -805,7 +805,7 @@ export default function Vaults() {
                           <span>Manufacturer</span>
                           <span>Model</span>
                         </div>
-                        {selectedVault.armoryItem.map((item) => (
+                        {selectedVault.armoryItems.map((item) => (
                           <div
                             key={item.id}
                             className="table-body-row"

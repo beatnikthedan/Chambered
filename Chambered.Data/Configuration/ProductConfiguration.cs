@@ -39,7 +39,11 @@ namespace Chambered.Data.Configuration
 
             #region Reflection Discriminator Setup
 
-            var discriminatorBuilder = builder.HasDiscriminator<string>("ProductType");
+            builder.Property(p => p.ProductType)
+                .HasMaxLength(32)
+                .HasConversion(new TypeConverter(typeof(Product).Namespace.ToString(), typeof(Product).Assembly.ToString()));
+
+            var discriminatorBuilder = builder.HasDiscriminator(d => d.ProductType);
 
             var productSubtypes = Assembly.GetAssembly(typeof(Product))!
                 .GetTypes()
@@ -49,7 +53,7 @@ namespace Chambered.Data.Configuration
 
             foreach (var subtype in productSubtypes)
             {
-                discriminatorBuilder.HasValue(subtype, subtype.Name);
+                discriminatorBuilder.HasValue(subtype, subtype);
             }
 
             #endregion

@@ -6,7 +6,7 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents a secure container, room, vehicle, or physical location where armory items or ammunition are stored.
     /// </summary>
-    public class Vault : IItemIdentifier, IHasBattery
+    public class Vault : IItemIdentifier, IHasBattery, ICurrentCapcity
     {
         #region Primary Identification
 
@@ -114,6 +114,13 @@ namespace Chambered.Data.Models
 
         #endregion
 
+        #region ICurrentCapacity
+
+        /// <inheritdoc/>
+        public int CurrentCapacity { get; set; }
+
+        #endregion
+
         #region IHasBattery
 
         /// <inheritdoc/>
@@ -129,7 +136,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the items currently stored in this vault.
         /// </summary>
-        public ICollection<ArmoryItem> ArmoryItem { get; set; } = new List<ArmoryItem>();
+        public ICollection<ArmoryItem> ArmoryItems { get; set; } = new List<ArmoryItem>();
 
         /// <summary>
         /// Gets or sets the ammunition inventory stored in this vault.

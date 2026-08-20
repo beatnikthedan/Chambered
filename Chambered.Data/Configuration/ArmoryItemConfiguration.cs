@@ -2,6 +2,7 @@ using Chambered.Data.Models;
 using Chambered.Data.Utility;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Reflection;
 
 namespace Chambered.Data.Configuration
 {
@@ -43,18 +44,26 @@ namespace Chambered.Data.Configuration
 
             #endregion
 
-            var discriminatorBuilder = builder.HasDiscriminator<string>("ItemType");
+            #region Reflection Discriminator Setup
 
-            var armorySubtypes = System.Reflection.Assembly.GetAssembly(typeof(ArmoryItem))!
+            builder.Property(p => p.ItemType)
+                .HasMaxLength(32)
+                .HasConversion(new TypeConverter(typeof(ArmoryItem).Namespace.ToString(), typeof(ArmoryItem).Assembly.ToString()));
+
+            var discriminatorBuilder = builder.HasDiscriminator(d => d.ItemType);
+
+            var productSubtypes = Assembly.GetAssembly(typeof(ArmoryItem))!
                 .GetTypes()
                 .Where(t => t.IsClass
                          && !t.IsAbstract
                          && t.IsSubclassOf(typeof(ArmoryItem)));
 
-            foreach (var subtype in armorySubtypes)
+            foreach (var subtype in productSubtypes)
             {
-                discriminatorBuilder.HasValue(subtype, subtype.Name);
+                discriminatorBuilder.HasValue(subtype, subtype);
             }
+
+            #endregion
 
             builder.HasOne(a => a.Owner)
                 .WithMany(u => u.OwnedItems)
