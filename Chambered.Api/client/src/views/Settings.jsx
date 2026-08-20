@@ -7,6 +7,7 @@ import AresenalSettings from "../components/ArsenalSettings";
 import ApiKeysSettings from "../components/ApiKeysSettings";
 import BackupSettings from "../components/BackupSettings";
 import AuthSettings from "../components/AuthSettings";
+import ImportExportSettings from "../components/ImportExportSettings";
 
 import {
   ARSENAL_ICONS,
@@ -413,10 +414,10 @@ export default function Settings() {
               <span>Backup</span>
             </li>
             <li
-              className={`menu-item ${activeView === "export" ? "active" : ""}`}
-              onClick={() => setActiveView("backup")}
+              className={`menu-item ${activeView === "import-export" ? "active" : ""}`}
+              onClick={() => setActiveView("import-export")}
             >
-              <span>Export</span>
+              <span>Import/Export</span>
             </li>
           </ul>
         </div>
@@ -464,6 +465,10 @@ export default function Settings() {
         )}
 
         {activeView === "backup" && <BackupSettings />}
+
+        {activeView === "import-export" && (
+          <ImportExportSettings store={store} />
+        )}
 
         {activeView === "users" && <UserSettings currentUserId={1} />}
 
