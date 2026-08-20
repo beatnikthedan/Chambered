@@ -406,6 +406,22 @@ export default function App() {
                   {!isSidebarCollapsed ? "Catalog" : ""}
                 </span>
               </Link>
+              {!isSidebarCollapsed && location.pathname.startsWith("/catalog") && (
+                <div className="nav-sub-items">
+                  <Link
+                    to="/catalog"
+                    className={`sub-nav-item ${location.pathname === "/catalog" || location.pathname === "/catalog/products" ? "active" : ""}`}
+                  >
+                    <span className="sub-text">Products</span>
+                  </Link>
+                  <Link
+                    to="/catalog/manufacturers"
+                    className={`sub-nav-item ${location.pathname === "/catalog/manufacturers" ? "active" : ""}`}
+                  >
+                    <span className="sub-text">Manufacturers</span>
+                  </Link>
+                </div>
+              )}
             </div>
           </nav>
 
@@ -625,7 +641,7 @@ export default function App() {
                 }
               />
               <Route
-                path="/catalog"
+                path="/catalog/*"
                 element={
                   <ProtectedRoute>
                     <Catalog />

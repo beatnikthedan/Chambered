@@ -98,7 +98,7 @@ export default function Vaults() {
     filter: store.activeArsenalId
       ? `arsenalId eq ${store.activeArsenalId}`
       : undefined,
-    expand: "product($expand=manufacturer),armoryItem,arsenal",
+    expand: "product($expand=manufacturer),armoryItems,arsenal",
   });
 
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function Vaults() {
     isLoading: productsAreLoading,
     error: productsError,
   } = useGetProducts({
-    filter: "productType eq Security",
+    filter: "productType eq 'Security'",
     expand: "manufacturer",
   });
 
@@ -422,7 +422,7 @@ export default function Vaults() {
                         <div className="metric-row">
                           <span className="met-lbl">Secured Items</span>
                           <span className="met-val gold-text font-bold">
-                            {vault.armoryItem?.length || 0} items
+                            {vault.armoryItems?.length || 0} items
                           </span>
                         </div>
                         {vault.hasDehumidifier && (
@@ -540,7 +540,7 @@ export default function Vaults() {
                 disabled={!isEditMode}
                 title={!isEditMode ? "Save vault to view inventory list." : ""}
               >
-                Inventory ({selectedVault.armoryItem?.length || 0})
+                Inventory ({selectedVault.armoryItems?.length || 0})
               </button>
             </div>
 
@@ -552,14 +552,17 @@ export default function Vaults() {
                     <div className="form-item full-row">
                       <label>Catalog Product Link</label>
                       <select
-                        value={selectedVault.productId}
+                        value={selectedVault.productId || ""}
                         onChange={(e) => {
-                          const pId = e.target.value;
-                          const p = selectedVault.product;
+                          const pId = e.target.value
+                            ? parseInt(e.target.value)
+                            : null;
+                          const p =
+                            products.find((prod) => prod.id === pId) || null;
                           setSelectedVault((prev) => ({
                             ...prev,
                             productId: pId,
-                            batteryType: p?.batteryType || "Unknown",
+                            product: p,
                           }));
                         }}
                       >
@@ -721,12 +724,12 @@ export default function Vaults() {
                     </div>
 
                     <BatteryTracker
-                      hasBattery={needsBattery}
+                      hasBattery={selectedVault.product.hasBattery}
                       form={selectedVault}
                       setForm={setSelectedVault}
                     />
 
-                    {/* ENVIRONMENT / DEHUMIDIFIER */}
+                    {/* ENVIRONMENT / DEHUMIDIFIER
                     <div className="form-item full-row env-boundary-decorator">
                       <div className="checkbox-toggle-switch-row">
                         <input
@@ -788,7 +791,7 @@ export default function Vaults() {
                           />
                         </div>
                       </>
-                    )}
+                    )} */}
                   </div>
                 </div>
               )}
