@@ -4,6 +4,7 @@ import { useStore } from "../StoreContext";
 import "./Vaults.css";
 import BatteryTracker from "../components/BatteryTracker";
 import SubmitButton from "../components/SubmitButton";
+import VaultCard from "../components/VaultCard";
 
 import {
   useGetVaults,
@@ -336,144 +337,47 @@ export default function Vaults() {
       ) : (
         <>
           {/* GRID VIEW */}
-
           {viewMode === "grid" && (
-            <section className="vaults-grid-layout">
-              {vaults.map((vault) => {
+            <section
+              className="vaults-grid-layout"
+              style={{
+                display: "flex",
+                flexDirection: "column", // STACKS CARDS VERTICALLY
+                alignItems: "flex-start",
+                gap: "20px",
+              }}
+            >
+              {vaults.map((vault, index) => {
+                const isSelected = vault.id === selectedVault?.id ?? 1;
+
                 return (
-                  <div
-                    key={vault.id}
-                    className="vault-card-node"
+                  <VaultCard
+                    key={vault.id || vault.key || vault.name || index}
+                    title={vault.name}
+                    subtitle={vault.description}
+                    currentCount={vault.armoryItems?.length ?? 0}
+                    totalCount={isSelected ? (vault.capacity ?? 12) : 4}
+                    unit={"items"}
+                    temp={vault.temperature ?? (isSelected ? 68 : 74)}
+                    humidity={vault.humidity ?? (isSelected ? 44 : 63)}
+                    value={vault.totalValue ?? (isSelected ? "19k" : "4.2k")}
+                    // Status & Alerts Filler
+                    statusText={isSelected ? "ONLINE" : "RH HIGH"}
+                    statusColor={isSelected ? "#10B981" : "#F97316"}
+                    // Selection & Outline Colors
+                    selected={isSelected}
                     onClick={() => openEditModal(vault)}
-                  >
-                    {/* Colored Top Accent Bar based on Arsenal context color */}
-                    <div
-                      className="card-top-accent"
-                      style={{
-                        height: "4px",
-                        width: "100%",
-                        backgroundColor: vault.arsenal.colorHex || "#000000",
-                        boxShadow: `0 2px 8px ${vault.arsenal.colorHex || "#000000"}80`,
-                      }}
-                    />
-
-                    <div className="vault-card-contents">
-                      <h4 className="vault-name">
-                        <span className="v-symbol">📂</span> {vault.name}
-                      </h4>
-                      <p className="vault-desc">{vault.description || ""}</p>
-                      {vault.product?.name || vault.product?.partNumber ? (
-                        <div
-                          className="vault-make-model"
-                          style={{
-                            fontSize: "16px",
-                            fontFamily: "var(--font-heading)",
-                            fontWeight: "700",
-                            marginTop: "4px",
-                            marginBottom: "16px",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          <span style={{ color: "#ffffff" }}>
-                            {vault.product.manufacturer.name || ""}
-                          </span>
-                          <span
-                            style={{ color: "var(--color-primary, #d4af37)" }}
-                          >
-                            {vault.product.name || ""}
-                          </span>
-                        </div>
-                      ) : (
-                        <p
-                          className="vault-make-model"
-                          style={{
-                            fontSize: "11px",
-                            color: "var(--text-muted)",
-                            marginTop: "4px",
-                            marginBottom: "16px",
-                            fontStyle: "italic",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          No Model Linked
-                        </p>
-                      )}
-
-                      <div className="vault-meta-metrics">
-                        {vault.parentVaultName && (
-                          <div className="metric-row">
-                            <span className="met-lbl">Parent Vault</span>
-                            <span className="met-val text-muted">
-                              🔗 {vault.parentVaultName}
-                            </span>
-                          </div>
-                        )}
-                        <div className="metric-row">
-                          <span className="met-lbl">Access Type</span>
-                          <span className="met-val">
-                            {vault.product.lockType}
-                          </span>
-                        </div>
-                        <div className="metric-row">
-                          <span className="met-lbl">Secured Items</span>
-                          <span className="met-val gold-text font-bold">
-                            {vault.armoryItems?.length || 0} items
-                          </span>
-                        </div>
-                        {vault.hasDehumidifier && (
-                          <div className="metric-row">
-                            <span className="met-lbl">Desiccant</span>
-                            <span className="met-val active-green">
-                              Active (Max {vault.targetMaxHumidityPercent}%)
-                            </span>
-                          </div>
-                        )}
-                        <div
-                          className="metric-row"
-                          style={{
-                            borderTop: "1px solid rgba(255,255,255,0.04)",
-                            paddingTop: "6px",
-                            marginTop: "4px",
-                          }}
-                        >
-                          <span className="met-lbl">Arsenal</span>
-                          <span
-                            className="met-val"
-                            style={{
-                              color: "var(--accent-color)",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            {" "}
-                            {vault.arsenal.name || "N/A"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Warnings Banner */}
-                      {vault.hasDehumidifier &&
-                        !vault.dehumidifierLastServiced && (
-                          <div className="vault-card-alerts">
-                            <div className="v-alert info">
-                              💨 Dehumidifier needs service log check!
-                            </div>
-                          </div>
-                        )}
-                      <div className="vault-card-actions">
-                        <button
-                          className="btn btn-danger btn-small"
-                          onClick={(e) => handleDeleteClick(vault.id, e)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                    arsenalColor={vault.arsenal?.colorHex ?? "#ffffff"}
+                    // Metrics Colors
+                    tempColor={isSelected ? "#10B981" : "#F87171"}
+                    humidityColor={isSelected ? "#10B981" : "#F97316"}
+                    // Warning Banner
+                    warningText={
+                      isSelected
+                        ? null
+                        : "Above 60% for 6 days — add a dehumidifier rod"
+                    }
+                  />
                 );
               })}
             </section>
