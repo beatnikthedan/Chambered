@@ -39,13 +39,18 @@ namespace Chambered.Data.Configuration
 
             #region Reflection Discriminator Setup
 
-            var discriminatorBuilder = builder.HasDiscriminator<string>("ProductType");
+            builder.Property(p => p.ProductType)
+                .HasMaxLength(32);
+
+            var discriminatorBuilder = builder.HasDiscriminator(d => d.ProductType);
 
             var productSubtypes = Assembly.GetAssembly(typeof(Product))!
                 .GetTypes()
                 .Where(t => t.IsClass
                          && !t.IsAbstract
                          && t.IsSubclassOf(typeof(Product)));
+
+            discriminatorBuilder.HasValue<Product>(nameof(Product));
 
             foreach (var subtype in productSubtypes)
             {

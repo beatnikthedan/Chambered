@@ -1,162 +1,133 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useStore } from "../StoreContext";
 import "./Vaults.css";
 import BatteryTracker from "../components/BatteryTracker";
 import SubmitButton from "../components/SubmitButton";
-import buildQuery from "odata-query";
+import VaultCard from "../components/VaultCard";
+
+import {
+  useGetVaults,
+  useGetProducts,
+  usePostVaults,
+  usePatchVaultsFromKey,
+  useDeleteVaultsFromKey,
+} from "../api/endpoints";
 
 export default function Vaults() {
+  const queryClient = useQueryClient();
+
+  //global state store
   const store = useStore();
   const { enums } = store;
   const activeArsenal = store.arsenals.find(
     (a) => a.id === store.activeArsenalId,
   );
-  const activeArsenalColor = activeArsenal?.colorHex || "#2563eb";
 
-  // Memoized dynamic lock types strictly loaded from the database
-  const lockTypePresets = useMemo(() => {
-    if (enums && enums.lockTypes) {
-      return enums.lockTypes.map((e) => e.label);
-    }
-    return [];
-  }, [enums]);
-
+  // Local state
   const [vaults, setVaults] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
-  // View state
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'tree'
-  const [expandedNodes, setExpandedNodes] = useState({}); // track expanded nodes in tree view
-
-  // Form & modal state
+  // UI state
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "tree"
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState("general"); // 'general' | 'security' | 'inventory'
+  const [activeTab, setActiveTab] = useState("general"); // "general", "security", "inventory"
   const [showPassword, setShowPassword] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [expandedNodes, setExpandedNodes] = useState({});
 
-  // Form state
-  const [form, setForm] = useState({
-    id: 0,
-    name: "",
-    description: "",
-    arsenalId: "",
-    securityLevel: "Standard",
-    parentVaultId: "",
-    encryptedPasscode: "",
-    passcodeHint: "",
-    backupKeyLocation: "",
-    productId: "",
-    batteryLastChangedDate: "",
-    batteryExpirationDate: "",
-    batteryType: "Unknown",
-    hasDehumidifier: false,
-    dehumidifierLastServiced: "",
-    targetMaxHumidityPercent: 45,
-    storedItems: [],
+  const [selectedVault, setSelectedVault] = useState(null);
+
+  const updateVaultMutation = usePatchVaultsFromKey({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] });
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2000);
+      },
+      onError: (err) => {
+        alert("Failed to save changes: " + (err?.message || "Unknown error"));
+      },
+    },
   });
 
-  // Fetch all vaults and categories
-  const fetchVaults = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const query = buildQuery({
-        filter: store.activeArsenalId ? { arsenalId: store.activeArsenalId } : undefined,
-        expand: ['product', 'armoryItem']
-      })
-      const url = `/api/v1/Vaults${query}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setVaults(data.value || []);
-      } else {
-        setError(`Failed to load vaults: ${res.status}`);
+  const createVaultMutation = usePostVaults({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] });
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2000);
+      },
+      onError: (err) => {
+        alert("Failed to create vault: " + (err?.message || "Unknown error"));
+      },
+    },
+  });
+
+  const deleteVaultMutation = useDeleteVaultsFromKey({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] });
+        setDeleteConfirmId(null);
+        setShowModal(false);
+      },
+      onError: (err) => {
+        alert(
+          "Failed to delete vault. Make sure no items or sub-vaults depend on it.",
+        );
+      },
+    },
+  });
+
+  const handleDelete = async () => {
+    if (selectedVault?.id) {
+      try {
+        await deleteVaultMutation.mutateAsync({ key: selectedVault.id });
+      } catch (err) {
+        console.error("Error deleting vault", err);
       }
-    } catch (err) {
-      setError("Failed to fetch vaults.");
-    } finally {
-      setLoading(false);
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const res = await fetch("/api/v1/Vaults/GetVaultCategories()");
-      if (res.ok) {
-        const data = await res.json();
-        setCategories(data.value || []);
-      }
-    } catch (err) {
-      console.error("Failed to load categories", err);
-    }
-  };
-
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch(
-        "/api/v1/Products?$expand=manufacturer",
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const rawProducts = data.value || [];
-        const mappedProducts = rawProducts.map((p) => {
-          let type = "Product";
-          if (p["@odata.type"]) {
-            const parts = p["@odata.type"].split(".");
-            type = parts[parts.length - 1];
-          }
-          return {
-            ...p,
-            productType: type,
-            manufacturerName: p.manufacturer?.name || "Unknown Brand",
-          };
-        });
-        setProducts(mappedProducts);
-      }
-    } catch (err) {
-      console.error("Failed to load products", err);
-    }
-  };
+  const {
+    data: vaultsData,
+    isLoading: vaultsAreLoading,
+    error: vaultsError,
+  } = useGetVaults({
+    filter: store.activeArsenalId
+      ? `arsenalId eq ${store.activeArsenalId}`
+      : undefined,
+    expand: "product($expand=manufacturer),armoryItems,arsenal",
+  });
 
   useEffect(() => {
-    fetchVaults();
-    fetchCategories();
-    fetchProducts();
-  }, [store.activeArsenalId]);
+    if (vaultsData?.data?.value) {
+      setVaults(vaultsData.data.value);
+    }
+  }, [vaultsData]);
 
-  // Pre-process vaults to dynamically map C# property names to UI-expected names
-  const processedVaults = useMemo(() => {
-    return vaults.map((vault) => {
-      const product = products.find((p) => p.id === vault.productId);
-      const arsenal = store.arsenals.find((a) => a.id === vault.arsenalId);
-      const parentVault = vaults.find((v) => v.id === vault.parentVaultId);
+  const {
+    data: productData,
+    isLoading: productsAreLoading,
+    error: productsError,
+  } = useGetProducts({
+    filter: "productType eq 'Security'",
+    expand: "manufacturer",
+  });
 
-      return {
-        ...vault,
-        storedItems: vault.armoryItem || [],
-        productManufacturerName: product?.manufacturer?.name || "",
-        productModel: product?.model || "",
-        arsenalName: arsenal?.name || "",
-        parentVaultName: parentVault?.name || "",
-      };
-    });
-  }, [vaults, products, store.arsenals, categories]);
+  const products = productData?.data?.value || [];
+  const error = vaultsError?.message || productsError?.message || "";
 
-  // Map flat vault list to a hierarchical tree
   const vaultTree = useMemo(() => {
     const map = {};
-    processedVaults.forEach((v) => {
+    vaults.forEach((v) => {
       map[v.id] = { ...v, children: [] };
     });
 
     const roots = [];
-    processedVaults.forEach((v) => {
+    vaults.forEach((v) => {
       const node = map[v.id];
       if (v.parentVaultId && map[v.parentVaultId]) {
         map[v.parentVaultId].children.push(node);
@@ -165,15 +136,15 @@ export default function Vaults() {
       }
     });
     return roots;
-  }, [processedVaults]);
+  }, [vaults]);
 
   // Filter out current vault and its descendants from the parent vault options list to prevent circular reference loops
   const eligibleParentVaults = useMemo(() => {
-    if (!isEditMode) return processedVaults;
+    if (!isEditMode || !selectedVault) return vaults;
 
     const getDescendantIds = (vaultId) => {
       const ids = [];
-      const children = processedVaults.filter((v) => v.parentVaultId === vaultId);
+      const children = vaults.filter((v) => v.parentVaultId === vaultId);
       children.forEach((c) => {
         ids.push(c.id);
         ids.push(...getDescendantIds(c.id));
@@ -181,11 +152,13 @@ export default function Vaults() {
       return ids;
     };
 
-    const forbiddenIds = [form.id, ...getDescendantIds(form.id)];
-    return processedVaults.filter((v) => !forbiddenIds.includes(v.id));
-  }, [processedVaults, isEditMode, form.id]);
+    const forbiddenIds = [
+      selectedVault.id,
+      ...getDescendantIds(selectedVault.id),
+    ];
+    return vaults.filter((v) => !forbiddenIds.includes(v.id));
+  }, [vaults, isEditMode, selectedVault?.id]);
 
-  // Node toggle helpers
   const toggleNode = (id) => {
     setExpandedNodes((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -194,24 +167,21 @@ export default function Vaults() {
     setIsEditMode(false);
     setActiveTab("general");
     setShowPassword(false);
-    setForm({
+    setSelectedVault({
       id: 0,
       name: "",
       description: "",
       arsenalId: store.activeArsenalId || store.arsenals[0]?.id || 1,
-      securityLevel: "Electronic Keypad",
-      parentVaultId: "",
+      parentVaultId: null,
+      productId: null,
       encryptedPasscode: "",
       passcodeHint: "",
       backupKeyLocation: "",
-      productId: "",
-      batteryLastChangedDate: "",
-      batteryExpirationDate: "",
-      batteryType: "Unknown",
+      batteryLastChangedDate: null,
+      batteryExpirationDate: null,
       hasDehumidifier: false,
-      dehumidifierLastServiced: "",
+      dehumidifierLastServiced: null,
       targetMaxHumidityPercent: 45,
-      storedItems: [],
     });
     setShowModal(true);
   };
@@ -220,144 +190,68 @@ export default function Vaults() {
     setIsEditMode(true);
     setActiveTab("general");
     setShowPassword(false);
-
-    let batteryDate = "";
-    if (vault.batteryLastChangedDate) {
-      batteryDate = vault.batteryLastChangedDate.split("T")[0];
-    }
-
-    let batteryExpDate = "";
-    if (vault.batteryExpirationDate) {
-      batteryExpDate = vault.batteryExpirationDate.split("T")[0];
-    }
-
-    let dehumidifierDate = "";
-    if (vault.dehumidifierLastServiced) {
-      dehumidifierDate = vault.dehumidifierLastServiced.split("T")[0];
-    }
-
-    setForm({
-      id: vault.id,
-      name: vault.name,
-      description: vault.description || "",
-      arsenalId: vault.arsenalId,
-      securityLevel: vault.securityLevel || "Standard",
-      parentVaultId: vault.parentVaultId || "",
-      encryptedPasscode: vault.encryptedPasscode || "",
-      passcodeHint: vault.passcodeHint || "",
-      backupKeyLocation: vault.backupKeyLocation || "",
-      productId: vault.productId || "",
-      batteryLastChangedDate: batteryDate,
-      batteryExpirationDate: batteryExpDate,
-      batteryType: vault.batteryType || "Unknown",
-      hasDehumidifier: vault.hasDehumidifier || false,
-      dehumidifierLastServiced: dehumidifierDate,
-      targetMaxHumidityPercent: vault.targetMaxHumidityPercent || 45,
-      storedItems: vault.armoryItem || [],
-    });
+    setSelectedVault(vault);
     setShowModal(true);
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) return;
+    if (!selectedVault?.name?.trim()) return;
 
     setIsSaving(true);
-    const targetArsenalId = parseInt(form.arsenalId) || store.activeArsenalId || 1;
+    const targetArsenalId =
+      parseInt(selectedVault.arsenalId) || store.activeArsenalId || 1;
+
+    const {
+      product,
+      arsenal,
+      parentVault,
+      childVaults,
+      armoryItem,
+      ...cleanVault
+    } = selectedVault;
+
     const payload = {
-      name: form.name,
-      description: form.description || null,
-      parentVaultId: form.parentVaultId ? parseInt(form.parentVaultId) : null,
-      encryptedPasscode: form.encryptedPasscode || null,
-      passcodeHint: form.passcodeHint || null,
-      backupKeyLocation: form.backupKeyLocation || null,
-      productId: form.productId ? parseInt(form.productId) : null,
+      ...cleanVault,
+      description: cleanVault.description || null,
+      parentVaultId: cleanVault.parentVaultId
+        ? parseInt(cleanVault.parentVaultId)
+        : null,
+      encryptedPasscode: cleanVault.encryptedPasscode || null,
+      passcodeHint: cleanVault.passcodeHint || null,
+      backupKeyLocation: cleanVault.backupKeyLocation || null,
+      productId: cleanVault.productId ? parseInt(cleanVault.productId) : null,
       arsenalId: targetArsenalId,
-      batteryLastChangedDate: form.batteryLastChangedDate && form.batteryLastChangedDate.trim()
-        ? new Date(form.batteryLastChangedDate).toISOString()
-        : null,
-      batteryExpirationDate: form.batteryExpirationDate && form.batteryExpirationDate.trim()
-        ? new Date(form.batteryExpirationDate).toISOString()
-        : null,
-      hasDehumidifier: !!form.hasDehumidifier,
-      dehumidifierLastServiced: form.dehumidifierLastServiced && form.dehumidifierLastServiced.trim()
-        ? new Date(form.dehumidifierLastServiced).toISOString()
-        : null,
-      targetMaxHumidityPercent: form.hasDehumidifier
-        ? parseInt(form.targetMaxHumidityPercent)
+      batteryLastChangedDate:
+        cleanVault.batteryLastChangedDate &&
+        String(cleanVault.batteryLastChangedDate).trim()
+          ? new Date(cleanVault.batteryLastChangedDate).toISOString()
+          : null,
+      batteryExpirationDate:
+        cleanVault.batteryExpirationDate &&
+        String(cleanVault.batteryExpirationDate).trim()
+          ? new Date(cleanVault.batteryExpirationDate).toISOString()
+          : null,
+      hasDehumidifier: !!cleanVault.hasDehumidifier,
+      dehumidifierLastServiced:
+        cleanVault.dehumidifierLastServiced &&
+        String(cleanVault.dehumidifierLastServiced).trim()
+          ? new Date(cleanVault.dehumidifierLastServiced).toISOString()
+          : null,
+      targetMaxHumidityPercent: cleanVault.hasDehumidifier
+        ? parseInt(cleanVault.targetMaxHumidityPercent)
         : null,
     };
 
-    if (isEditMode) {
-      payload.id = parseInt(form.id);
-    }
-
     try {
-      const url = isEditMode ? `/api/v1/Vaults/${form.id}` : "/api/v1/Vaults";
-      const method = isEditMode ? "PATCH" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        fetchVaults();
-        let savedItem = null;
-        if (res.status !== 204) {
-          try {
-            savedItem = await res.json();
-          } catch (e) {
-            console.error("No JSON response body", e);
-          }
-        }
-
-        if (savedItem) {
-          setIsEditMode(true);
-          let batteryDate = "";
-          if (savedItem.batteryLastChangedDate) {
-            batteryDate = savedItem.batteryLastChangedDate.split("T")[0];
-          }
-
-          let batteryExpDate = "";
-          if (savedItem.batteryExpirationDate) {
-            batteryExpDate = savedItem.batteryExpirationDate.split("T")[0];
-          }
-
-          let dehumidifierDate = "";
-          if (savedItem.dehumidifierLastServiced) {
-            dehumidifierDate = savedItem.dehumidifierLastServiced.split("T")[0];
-          }
-
-          setForm({
-            id: savedItem.id,
-            name: savedItem.name,
-            description: savedItem.description || "",
-            arsenalId: savedItem.arsenalId,
-            securityLevel: savedItem.securityLevel || "Standard",
-            parentVaultId: savedItem.parentVaultId || "",
-            encryptedPasscode: savedItem.encryptedPasscode || "",
-            passcodeHint: savedItem.passcodeHint || "",
-            backupKeyLocation: savedItem.backupKeyLocation || "",
-            productId: savedItem.productId || "",
-            batteryLastChangedDate: batteryDate,
-            batteryExpirationDate: batteryExpDate,
-            batteryType: savedItem.batteryType || "Unknown",
-            hasDehumidifier: savedItem.hasDehumidifier || false,
-            dehumidifierLastServiced: dehumidifierDate,
-            targetMaxHumidityPercent: savedItem.targetMaxHumidityPercent || 45,
-            storedItems: savedItem.armoryItem || [],
-          });
-        } else {
-          // Transition/stay in edit mode on 204 No Content update responses
-          setIsEditMode(true);
-        }
-
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
+      if (isEditMode) {
+        payload.id = parseInt(selectedVault.id);
+        await updateVaultMutation.mutateAsync({
+          key: payload.id,
+          data: payload,
+        });
       } else {
-        const txt = await res.text();
-        alert(`Save failed: ${txt}`);
+        await createVaultMutation.mutateAsync({ data: payload });
       }
     } catch (err) {
       console.error("Error saving vault", err);
@@ -372,34 +266,21 @@ export default function Vaults() {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
-      const res = await fetch(`/api/v1/Vaults/${deleteConfirmId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        fetchVaults();
-        setDeleteConfirmId(null);
-      } else {
-        alert(
-          "Failed to delete vault. Make sure no items or other sub-vaults depend on it.",
-        );
+    if (deleteConfirmId) {
+      try {
+        await deleteVaultMutation.mutateAsync({ key: deleteConfirmId });
+      } catch (err) {
+        console.error("Error deleting vault", err);
       }
-    } catch (err) {
-      console.error("Error deleting vault", err);
     }
   };
-
-  const selectedProduct = products.find(
-    (p) => p.id === parseInt(form.productId),
-  );
-  const needsBattery = selectedProduct?.hasBattery || false;
 
   return (
     <div className="vaults-container">
       {/* View Header */}
+
       <header className="vaults-header">
         <div className="header-left">
-          <span className="section-title-icon">🔒</span>
           <h2>Vaults</h2>
         </div>
         <div className="header-actions">
@@ -426,7 +307,8 @@ export default function Vaults() {
       </header>
 
       {/* Main Content Area */}
-      {loading ? (
+
+      {vaultsAreLoading ? (
         <div className="loading-spinner-box">
           <div className="spinner"></div>
           <p>Analyzing vaults...</p>
@@ -435,11 +317,16 @@ export default function Vaults() {
         <div className="vaults-error-card">
           <span className="err-icon">⚠️</span>
           <p>{error}</p>
-          <button className="btn btn-secondary btn-small" onClick={fetchVaults}>
+          <button
+            className="btn btn-secondary btn-small"
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] })
+            }
+          >
             Retry
           </button>
         </div>
-      ) : processedVaults.length === 0 ? (
+      ) : vaults.length === 0 ? (
         <div className="empty-state panel">
           <h3>You have no items in your Vaults.</h3>
           <p style={{ marginTop: "4px", color: "var(--text-muted)" }}>
@@ -448,148 +335,523 @@ export default function Vaults() {
         </div>
       ) : (
         <>
-          {/* GRID VIEW */}
           {viewMode === "grid" && (
-            <section className="vaults-grid-layout">
-              {processedVaults.map((vault) => {
-                return (
-                  <div
-                    key={vault.id}
-                    className="vault-card-node"
-                    onClick={() => openEditModal(vault)}
-                  >
-                    {/* Colored Top Accent Bar based on Arsenal context color */}
-                    <div
-                      className="card-top-accent"
-                      style={{
-                        height: "4px",
-                        width: "100%",
-                        backgroundColor: activeArsenalColor,
-                        boxShadow: `0 2px 8px ${activeArsenalColor}80`,
-                      }}
+            <div
+              style={{
+                display: "flex",
+                width: "100%",
+                height: "calc(100vh - 80px)", // Adjust height to account for top navbar
+                backgroundColor: "#0b0d14",
+                color: "#d1d6e3",
+                boxSizing: "border-box",
+              }}
+            >
+              {/* ====================================================
+          LEFT PANE: Scrolling Vault Cards List (~380px wide)
+         ==================================================== */}
+              <aside
+                style={{
+                  width: "400px",
+                  minWidth: "400px",
+                  height: "100%",
+                  overflowY: "auto", // Allows independent vertical scrolling
+                  padding: "20px",
+                  borderRight: "1px solid #292c39",
+                  boxSizing: "border-box",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                {vaults.map((vault, index) => {
+                  const isSelected = vault.id === selectedVault?.id ?? 1;
+
+                  return (
+                    <VaultCard
+                      key={vault.id || vault.key || vault.name || index}
+                      title={vault.name}
+                      subtitle={vault.description}
+                      currentCount={vault.armoryItems?.length ?? 0}
+                      totalCount={isSelected ? (vault.capacity ?? 12) : 4}
+                      unit={"items"}
+                      temp={vault.temperature ?? (isSelected ? 68 : 74)}
+                      humidity={vault.humidity ?? (isSelected ? 44 : 63)}
+                      value={
+                        Array.isArray(vault.armoryItems)
+                          ? vault.armoryItems.reduce(
+                              (sum, item) =>
+                                sum +
+                                (Number(
+                                  item.estimatedValue ?? item.purchasePrice,
+                                ) || 0),
+                              0,
+                            )
+                          : 0
+                      }
+                      // Status & Alerts Filler
+                      statusText={isSelected ? "NORMAL" : "RH HIGH"}
+                      statusColor={isSelected ? "#10B981" : "#F97316"}
+                      // Selection & Outline Colors
+                      selected={isSelected}
+                      onClick={() => setSelectedVault(vault)}
+                      arsenalColor={vault.arsenal?.colorHex ?? "#ffffff"}
+                      // Metrics Colors
+                      tempColor={isSelected ? "#10B981" : "#F87171"}
+                      humidityColor={isSelected ? "#10B981" : "#F97316"}
+                      // Warning Banner
+                      warningText={
+                        isSelected
+                          ? null
+                          : "Above 60% for 6 days — add a dehumidifier rod"
+                      }
                     />
+                  );
+                })}
+              </aside>
 
-                    <div className="vault-card-contents">
-                      <h4 className="vault-name">
-                        <span className="v-symbol">📂</span> {vault.name}
-                      </h4>
-                      <p className="vault-desc">{vault.description || ""}</p>
-                      {vault.productManufacturerName || vault.productModel ? (
-                        <div
-                          className="vault-make-model"
-                          style={{
-                            fontSize: "16px",
-                            fontFamily: "var(--font-heading)",
-                            fontWeight: "700",
-                            marginTop: "4px",
-                            marginBottom: "16px",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          <span style={{ color: "#ffffff" }}>
-                            {vault.productManufacturerName || ""}
-                          </span>
-                          <span
-                            style={{ color: "var(--color-primary, #d4af37)" }}
-                          >
-                            {vault.productModel || ""}
-                          </span>
-                        </div>
-                      ) : (
-                        <p
-                          className="vault-make-model"
-                          style={{
-                            fontSize: "11px",
-                            color: "var(--text-muted)",
-                            marginTop: "4px",
-                            marginBottom: "16px",
-                            fontStyle: "italic",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          No Model Linked
-                        </p>
-                      )}
-
-                      <div className="vault-meta-metrics">
-                        {vault.parentVaultName && (
-                          <div className="metric-row">
-                            <span className="met-lbl">Parent Vault</span>
-                            <span className="met-val text-muted">
-                              🔗 {vault.parentVaultName}
-                            </span>
-                          </div>
-                        )}
-                        <div className="metric-row">
-                          <span className="met-lbl">Access Type</span>
-                          <span className="met-val">{vault.securityLevel}</span>
-                        </div>
-                        <div className="metric-row">
-                          <span className="met-lbl">Secured Items</span>
-                          <span className="met-val gold-text font-bold">
-                            {vault.storedItems?.length || 0} items
-                          </span>
-                        </div>
-                        {vault.hasDehumidifier && (
-                          <div className="metric-row">
-                            <span className="met-lbl">Desiccant</span>
-                            <span className="met-val active-green">
-                              Active (Max {vault.targetMaxHumidityPercent}%)
-                            </span>
-                          </div>
-                        )}
-                        <div
-                          className="metric-row"
-                          style={{
-                            borderTop: "1px solid rgba(255,255,255,0.04)",
-                            paddingTop: "6px",
-                            marginTop: "4px",
-                          }}
-                        >
-                          <span className="met-lbl">Arsenal</span>
-                          <span
-                            className="met-val"
-                            style={{
-                              color: "var(--accent-color)",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            {" "}
-                            {vault.arsenalName || "N/A"}
-                          </span>
-                        </div>
+              {/* ====================================================
+          RIGHT CONTAINER: Stacks Edit Form (Top) & List (Bottom)
+         ==================================================== */}
+              {/* 2. RIGHT CONTAINER: TOP FORM + BOTTOM LIST */}
+              {!selectedVault ? (
+                <main
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                    backgroundColor: "#0d0f19",
+                    color: "#6b7280",
+                  }}
+                >
+                  <div style={{ textAlign: "center", padding: "40px" }}>
+                    <span
+                      style={{
+                        fontSize: "50px",
+                        display: "block",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      🔒
+                    </span>
+                    <h3 style={{ color: "#9ca3af", marginBottom: "8px" }}>
+                      No Vault Selected
+                    </h3>
+                    <p style={{ margin: 0, fontSize: "14px" }}>
+                      Select a vault from the list on the left to view or edit
+                      details,
+                    </p>
+                    <p style={{ margin: "4px 0 0 0", fontSize: "14px" }}>
+                      or click{" "}
+                      <strong style={{ color: "#3abef0" }}>Add Item</strong>{" "}
+                      above to create a new vault.
+                    </p>
+                  </div>
+                </main>
+              ) : (
+                <main
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* TOP RIGHT: EDIT FORM SECTION */}
+                  <section
+                    style={{
+                      flex: "0 0 50%",
+                      padding: "24px",
+                      overflowY: "auto",
+                      borderBottom: "1px solid #292c39",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    {/* Title Bar (Close Button Removed) */}
+                    {/* Header */}
+                    <div className="modal-title-bar">
+                      <div className="title-left">
+                        <h3>
+                          {isEditMode
+                            ? `${selectedVault.name}`
+                            : "Add New Vault"}
+                        </h3>
                       </div>
+                      <button
+                        className="modal-close-x-btn"
+                        onClick={() => setShowModal(false)}
+                      >
+                        ×
+                      </button>
+                    </div>
 
-                      {/* Warnings Banner */}
-                      {vault.hasDehumidifier &&
-                        !vault.dehumidifierLastServiced && (
-                          <div className="vault-card-alerts">
-                            <div className="v-alert info">
-                              💨 Dehumidifier needs service log check!
+                    {/* Tabs Row */}
+                    <div className="modal-tabs-header-row">
+                      <button
+                        className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
+                        onClick={() => setActiveTab("general")}
+                      >
+                        General
+                      </button>
+                      <button
+                        className={`tab-btn ${activeTab === "security" ? "active" : ""}`}
+                        onClick={() => setActiveTab("security")}
+                      >
+                        Security & Climate
+                      </button>
+                      <button
+                        className={`tab-btn ${activeTab === "inventory" ? "active" : ""}`}
+                        onClick={() => setActiveTab("inventory")}
+                        disabled={!isEditMode}
+                        title={
+                          !isEditMode
+                            ? "Save vault to view inventory list."
+                            : ""
+                        }
+                      >
+                        Inventory ({selectedVault.armoryItems?.length || 0})
+                      </button>
+                    </div>
+
+                    {/* Tab Contents */}
+                    <div className="modal-tabs-body-content">
+                      {activeTab === "general" && (
+                        <div className="tab-pane">
+                          <div className="form-grid-columns">
+                            <div className="form-item full-row">
+                              <label>Catalog Product Link</label>
+                              <select
+                                value={selectedVault.productId || ""}
+                                onChange={(e) => {
+                                  const pId = e.target.value
+                                    ? parseInt(e.target.value)
+                                    : null;
+                                  const p =
+                                    products.find((prod) => prod.id === pId) ||
+                                    null;
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    productId: pId,
+                                    product: p,
+                                  }));
+                                }}
+                              >
+                                <option value="">
+                                  -- No Linked Catalog Product --
+                                </option>
+                                {products.map((prod) => (
+                                  <option
+                                    key={prod.id}
+                                    value={prod.id}
+                                    title={
+                                      prod.description ||
+                                      "No description available"
+                                    }
+                                  >
+                                    {prod.manufacturer?.name} {prod.name} (
+                                    {prod.partNumber})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="form-item full-row">
+                              <label>
+                                Name<span className="req">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Bedside Gun Box, Basement Safe, Truck Vault"
+                                value={selectedVault.name}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    name: e.target.value,
+                                  }))
+                                }
+                                required
+                              />
+                            </div>
+
+                            <div className="form-item full-row">
+                              <label>Description</label>
+                              <textarea
+                                rows="3"
+                                placeholder="Describe where it is hidden or physical details..."
+                                value={selectedVault.description}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    description: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+
+                            <div className="form-item">
+                              <label>Arsenal</label>
+                              <select
+                                value={selectedVault.arsenalId}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    arsenalId: e.target.value,
+                                  }))
+                                }
+                                required
+                              >
+                                {store.arsenals.map((ars) => (
+                                  <option key={ars.id} value={ars.id}>
+                                    {ars.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="form-item">
+                              <label>Parent Vault</label>
+                              <select
+                                value={selectedVault.parentVaultId}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    parentVaultId: e.target.value,
+                                  }))
+                                }
+                              >
+                                <option value="">None</option>
+                                {eligibleParentVaults.map((v) => (
+                                  <option key={v.id} value={v.id}>
+                                    🔗 {v.name}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </div>
-                        )}
-                      <div className="vault-card-actions">
-                        <button
-                          className="btn btn-danger btn-small"
-                          onClick={(e) => handleDeleteClick(vault.id, e)}
+                        </div>
+                      )}
+
+                      {activeTab === "security" && (
+                        <div className="tab-pane">
+                          <div className="form-grid-columns">
+                            <div className="form-item">
+                              <label>
+                                Combination/Passcode{" "}
+                                <span style={{ color: "green" }}>
+                                  (256-AES Encryption)
+                                </span>
+                              </label>
+                              <div className="passcode-input-wrapper">
+                                <input
+                                  type={showPassword ? "text" : "password"}
+                                  className="passcode-field"
+                                  placeholder="Decrypted key preview..."
+                                  value={selectedVault.encryptedPasscode}
+                                  onChange={(e) =>
+                                    setSelectedVault((prev) => ({
+                                      ...prev,
+                                      encryptedPasscode: e.target.value,
+                                    }))
+                                  }
+                                />
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary passcode-reveal-btn"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                >
+                                  {showPassword ? "Hide 🔒" : "Show 👁️"}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="form-item">
+                              <label>Passcode Reminder Hint</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Anniversary or zip..."
+                                value={selectedVault.passcodeHint}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    passcodeHint: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+
+                            <div className="form-item">
+                              <label>Backup Keys Location</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Safe deposit box, hidden hook..."
+                                value={selectedVault.backupKeyLocation}
+                                onChange={(e) =>
+                                  setSelectedVault((prev) => ({
+                                    ...prev,
+                                    backupKeyLocation: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+
+                            <BatteryTracker
+                              hasBattery={
+                                selectedVault.product?.hasBattery || false
+                              }
+                              form={selectedVault}
+                              setForm={setSelectedVault}
+                            />
+
+                            {/* ENVIRONMENT / DEHUMIDIFIER
+                    <div className="form-item full-row env-boundary-decorator">
+                      <div className="checkbox-toggle-switch-row">
+                        <input
+                          type="checkbox"
+                          id="hasDehumidifier"
+                          checked={selectedVault.hasDehumidifier}
+                          onChange={(e) =>
+                            setSelectedVault((prev) => ({
+                              ...prev,
+                              hasDehumidifier: e.target.checked,
+                            }))
+                          }
+                        />
+                        <label
+                          htmlFor="hasDehumidifier"
+                          className="checkbox-switch-label"
                         >
-                          Remove
-                        </button>
+                          <strong>Active Environment Control</strong> (Has
+                          active dehumidifier or silica desiccant packs)
+                        </label>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </section>
+
+                    {selectedVault.hasDehumidifier && (
+                      <>
+                        <div className="form-item">
+                          <label>Desiccant Last Replaced / Serviced</label>
+                          <input
+                            type="date"
+                            value={selectedVault.dehumidifierLastServiced}
+                            onChange={(e) =>
+                              setSelectedVault((prev) => ({
+                                ...prev,
+                                dehumidifierLastServiced: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="form-item">
+                          <label>
+                            Alert Max Humidity:{" "}
+                            <strong className="gold-text">
+                              {selectedVault.targetMaxHumidityPercent}%
+                            </strong>
+                          </label>
+                          <input
+                            type="range"
+                            min="25"
+                            max="65"
+                            className="form-range-slider"
+                            value={selectedVault.targetMaxHumidityPercent}
+                            onChange={(e) =>
+                              setSelectedVault((prev) => ({
+                                ...prev,
+                                targetMaxHumidityPercent: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </>
+                    )} */}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Modal Footer Controls */}
+                      <div className="modal-footer-row-container">
+                        <SubmitButton
+                          type="button"
+                          isSaving={isSaving}
+                          saveSuccess={saveSuccess}
+                          isEditMode={isEditMode}
+                          onClick={handleSave}
+                        />
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* BOTTOM RIGHT: INVENTORY SCROLLING LIST */}
+                  <section
+                    style={{
+                      flex: 1,
+                      padding: "24px",
+                      overflowY: "auto",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <div
+                      className="vault-inventory-wrapper"
+                      style={{
+                        maxHeight: "350px", // Limits container height
+                        overflowY: "auto", // Forces vertical scrollbar when content exceeds maxHeight
+                        paddingRight: "8px", // Prevents scrollbar from overlapping text
+                      }}
+                    >
+                      <h4 className="inventory-subheading">Inventory</h4>
+                      {selectedVault?.armoryItems &&
+                      selectedVault.armoryItems.length > 0 ? (
+                        <div className="inventory-grid-table">
+                          <div className="table-header-row">
+                            <span>Serial Number</span>
+                            <span>Name</span>
+                            <span>Manufacturer</span>
+                            <span>Model</span>
+                          </div>
+                          {selectedVault.armoryItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className="table-body-row"
+                              title={item.description || "N/A"}
+                            >
+                              <strong className="table-mono font-mono">
+                                {item.serialNumber}
+                              </strong>
+                              <span className="table-mono font-mono">
+                                {item.name || "N/A"}
+                              </span>
+                              <span className="table-mono font-mono">
+                                {item.description || "N/A"}
+                              </span>
+                              <span className="table-mono font-mono">
+                                {item.model || "N/A"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="empty-inventory-box">
+                          <span className="empty-box-symbol">🛡️</span>
+                          <h5>No Stored Items</h5>
+                          <p>
+                            To inventory an item here, select this safe as the
+                            "Vault" on the item's armory card form.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </main>
+              )}
+            </div>
           )}
 
           {/* TREE VIEW (Hierarchy) */}
+
           {viewMode === "tree" && (
             <div className="vaults-tree-sheet">
               <div className="tree-sheet-header">
@@ -617,7 +879,9 @@ export default function Vaults() {
             {/* Header */}
             <div className="modal-title-bar">
               <div className="title-left">
-                <h3>{isEditMode ? `${form.name}` : "Add New Vault"}</h3>
+                <h3>
+                  {isEditMode ? `${selectedVault.name}` : "Add New Vault"}
+                </h3>
               </div>
               <button
                 className="modal-close-x-btn"
@@ -647,7 +911,7 @@ export default function Vaults() {
                 disabled={!isEditMode}
                 title={!isEditMode ? "Save vault to view inventory list." : ""}
               >
-                Inventory ({form.storedItems?.length || 0})
+                Inventory ({selectedVault.armoryItems?.length || 0})
               </button>
             </div>
 
@@ -657,15 +921,53 @@ export default function Vaults() {
                 <div className="tab-pane">
                   <div className="form-grid-columns">
                     <div className="form-item full-row">
+                      <label>Catalog Product Link</label>
+                      <select
+                        value={selectedVault.productId || ""}
+                        onChange={(e) => {
+                          const pId = e.target.value
+                            ? parseInt(e.target.value)
+                            : null;
+                          const p =
+                            products.find((prod) => prod.id === pId) || null;
+                          setSelectedVault((prev) => ({
+                            ...prev,
+                            productId: pId,
+                            product: p,
+                          }));
+                        }}
+                      >
+                        <option value="">
+                          -- No Linked Catalog Product --
+                        </option>
+                        {products.map((prod) => (
+                          <option
+                            key={prod.id}
+                            value={prod.id}
+                            title={
+                              prod.description || "No description available"
+                            }
+                          >
+                            {prod.manufacturer?.name} {prod.name} (
+                            {prod.partNumber})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-item full-row">
                       <label>
                         Name<span className="req">*</span>
                       </label>
                       <input
                         type="text"
                         placeholder="e.g. Bedside Gun Box, Basement Safe, Truck Vault"
-                        value={form.name}
+                        value={selectedVault.name}
                         onChange={(e) =>
-                          setForm((prev) => ({ ...prev, name: e.target.value }))
+                          setSelectedVault((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
                         }
                         required
                       />
@@ -676,9 +978,9 @@ export default function Vaults() {
                       <textarea
                         rows="3"
                         placeholder="Describe where it is hidden or physical details..."
-                        value={form.description}
+                        value={selectedVault.description}
                         onChange={(e) =>
-                          setForm((prev) => ({
+                          setSelectedVault((prev) => ({
                             ...prev,
                             description: e.target.value,
                           }))
@@ -689,9 +991,9 @@ export default function Vaults() {
                     <div className="form-item">
                       <label>Arsenal</label>
                       <select
-                        value={form.arsenalId}
+                        value={selectedVault.arsenalId}
                         onChange={(e) =>
-                          setForm((prev) => ({
+                          setSelectedVault((prev) => ({
                             ...prev,
                             arsenalId: e.target.value,
                           }))
@@ -709,9 +1011,9 @@ export default function Vaults() {
                     <div className="form-item">
                       <label>Parent Vault</label>
                       <select
-                        value={form.parentVaultId}
+                        value={selectedVault.parentVaultId}
                         onChange={(e) =>
-                          setForm((prev) => ({
+                          setSelectedVault((prev) => ({
                             ...prev,
                             parentVaultId: e.target.value,
                           }))
@@ -725,33 +1027,6 @@ export default function Vaults() {
                         ))}
                       </select>
                     </div>
-                    <div className="form-item full-row">
-                      <label>Catalog Product Link</label>
-                      <select
-                        value={form.productId}
-                        onChange={(e) => {
-                          const pId = e.target.value;
-                          const p = products.find(
-                            (prod) => prod.id === parseInt(pId),
-                          );
-                          setForm((prev) => ({
-                            ...prev,
-                            productId: pId,
-                            batteryType: p?.batteryType || "Unknown",
-                          }));
-                        }}
-                      >
-                        <option value="">
-                          -- No Linked Catalog Product --
-                        </option>
-                        {products.map((prod) => (
-                          <option key={prod.id} value={prod.id}>
-                            [{prod.productType}] {prod.manufacturerName} -{" "}
-                            {prod.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
                   </div>
                 </div>
               )}
@@ -759,7 +1034,6 @@ export default function Vaults() {
               {activeTab === "security" && (
                 <div className="tab-pane">
                   <div className="form-grid-columns">
-                    
                     <div className="form-item">
                       <label>
                         Combination/Passcode{" "}
@@ -772,9 +1046,9 @@ export default function Vaults() {
                           type={showPassword ? "text" : "password"}
                           className="passcode-field"
                           placeholder="Decrypted key preview..."
-                          value={form.encryptedPasscode}
+                          value={selectedVault.encryptedPasscode}
                           onChange={(e) =>
-                            setForm((prev) => ({
+                            setSelectedVault((prev) => ({
                               ...prev,
                               encryptedPasscode: e.target.value,
                             }))
@@ -795,9 +1069,9 @@ export default function Vaults() {
                       <input
                         type="text"
                         placeholder="e.g. Anniversary or zip..."
-                        value={form.passcodeHint}
+                        value={selectedVault.passcodeHint}
                         onChange={(e) =>
-                          setForm((prev) => ({
+                          setSelectedVault((prev) => ({
                             ...prev,
                             passcodeHint: e.target.value,
                           }))
@@ -810,9 +1084,9 @@ export default function Vaults() {
                       <input
                         type="text"
                         placeholder="e.g. Safe deposit box, hidden hook..."
-                        value={form.backupKeyLocation}
+                        value={selectedVault.backupKeyLocation}
                         onChange={(e) =>
-                          setForm((prev) => ({
+                          setSelectedVault((prev) => ({
                             ...prev,
                             backupKeyLocation: e.target.value,
                           }))
@@ -821,20 +1095,20 @@ export default function Vaults() {
                     </div>
 
                     <BatteryTracker
-                      hasBattery={needsBattery}
-                      form={form}
-                      setForm={setForm}
+                      hasBattery={selectedVault.product?.hasBattery || false}
+                      form={selectedVault}
+                      setForm={setSelectedVault}
                     />
 
-                    {/* ENVIRONMENT / DEHUMIDIFIER */}
+                    {/* ENVIRONMENT / DEHUMIDIFIER
                     <div className="form-item full-row env-boundary-decorator">
                       <div className="checkbox-toggle-switch-row">
                         <input
                           type="checkbox"
                           id="hasDehumidifier"
-                          checked={form.hasDehumidifier}
+                          checked={selectedVault.hasDehumidifier}
                           onChange={(e) =>
-                            setForm((prev) => ({
+                            setSelectedVault((prev) => ({
                               ...prev,
                               hasDehumidifier: e.target.checked,
                             }))
@@ -850,15 +1124,15 @@ export default function Vaults() {
                       </div>
                     </div>
 
-                    {form.hasDehumidifier && (
+                    {selectedVault.hasDehumidifier && (
                       <>
                         <div className="form-item">
                           <label>Desiccant Last Replaced / Serviced</label>
                           <input
                             type="date"
-                            value={form.dehumidifierLastServiced}
+                            value={selectedVault.dehumidifierLastServiced}
                             onChange={(e) =>
-                              setForm((prev) => ({
+                              setSelectedVault((prev) => ({
                                 ...prev,
                                 dehumidifierLastServiced: e.target.value,
                               }))
@@ -870,7 +1144,7 @@ export default function Vaults() {
                           <label>
                             Alert Max Humidity:{" "}
                             <strong className="gold-text">
-                              {form.targetMaxHumidityPercent}%
+                              {selectedVault.targetMaxHumidityPercent}%
                             </strong>
                           </label>
                           <input
@@ -878,9 +1152,9 @@ export default function Vaults() {
                             min="25"
                             max="65"
                             className="form-range-slider"
-                            value={form.targetMaxHumidityPercent}
+                            value={selectedVault.targetMaxHumidityPercent}
                             onChange={(e) =>
-                              setForm((prev) => ({
+                              setSelectedVault((prev) => ({
                                 ...prev,
                                 targetMaxHumidityPercent: e.target.value,
                               }))
@@ -888,7 +1162,7 @@ export default function Vaults() {
                           />
                         </div>
                       </>
-                    )}
+                    )} */}
                   </div>
                 </div>
               )}
@@ -897,17 +1171,32 @@ export default function Vaults() {
                 <div className="tab-pane">
                   <div className="vault-inventory-wrapper">
                     <h4 className="inventory-subheading">Inventory</h4>
-                    {form.storedItems && form.storedItems.length > 0 ? (
+                    {selectedVault.armoryItems &&
+                    selectedVault.armoryItems.length > 0 ? (
                       <div className="inventory-grid-table">
                         <div className="table-header-row">
-                          <span>Item ID</span>
                           <span>Serial Number</span>
+                          <span>Name</span>
+                          <span>Manufacturer</span>
+                          <span>Model</span>
                         </div>
-                        {form.storedItems.map((item) => (
-                          <div key={item.id} className="table-body-row">
-                            <strong>Armory Item #{item.id}</strong>
-                            <span className="serial-mono font-mono">
-                              {item.serialNumber || "N/A"}
+                        {selectedVault.armoryItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className="table-body-row"
+                            title={item.description || "N/A"}
+                          >
+                            <strong className="table-mono font-mono">
+                              {item.serialNumber}
+                            </strong>
+                            <span className="table-mono font-mono">
+                              {item.name || "N/A"}
+                            </span>
+                            <span className="table-mono font-mono">
+                              {item.description || "N/A"}
+                            </span>
+                            <span className="table-mono font-mono">
+                              {item.name || "N/A"}
                             </span>
                           </div>
                         ))}
@@ -984,7 +1273,6 @@ export default function Vaults() {
     </div>
   );
 
-  // Recursive Tree Node Renderer
   function renderTreeNode(node, depth = 0) {
     const isExpanded = expandedNodes[node.id] !== false; // default to expanded
     const hasChildren = node.children && node.children.length > 0;
@@ -1018,10 +1306,16 @@ export default function Vaults() {
 
           <div className="tree-node-info-col">
             <span className="tree-hub-icon">
-              {node.securityLevel === "High" ? "🛡️" : node.securityLevel === "Medium" ? "🔒" : "📂"}
+              {node.securityLevel === "High"
+                ? "🛡️"
+                : node.securityLevel === "Medium"
+                  ? "🔒"
+                  : "📂"}
             </span>
             <span className="tree-hub-name">{node.name}</span>
-            {node.securityLevel && <span className="tree-hub-cat">({node.securityLevel})</span>}
+            {node.securityLevel && (
+              <span className="tree-hub-cat">({node.securityLevel})</span>
+            )}
             <span className="tree-hub-inventory-count">
               {node.storedItems ? node.storedItems.length : 0} items
             </span>

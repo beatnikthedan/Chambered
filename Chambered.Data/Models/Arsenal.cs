@@ -3,7 +3,7 @@
     /// <summary>
     /// Represents an isolated collection.
     /// </summary>
-    public class Arsenal
+    public class Arsenal : IItemIdentifier
     {
         #region Primary Identification
 
@@ -12,15 +12,15 @@
         /// </summary>
         public int Id { get; set; }
 
-        /// <summary>
-        /// Gets or sets the display name of the arsenal (e.g., "Main Collection", "Cabin Armory", "Dad's Estate").
-        /// </summary>
+        #region IItemIdentifier
+
+        /// <inheritdoc/>
         public string Name { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Gets or sets an optional summary or description of this arsenal context.
-        /// </summary>
-        public string? Description { get; set; }
+        /// <inheritdoc/>
+        public string? Description { get; set; } = string.Empty;
+
+        #endregion
 
         /// <summary>
         /// Gets or sets the string identifier for the UI icon (e.g., "Shield", "Home", "Trees", "Truck").

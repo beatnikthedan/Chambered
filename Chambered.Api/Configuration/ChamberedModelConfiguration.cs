@@ -69,7 +69,7 @@ public class ChamberedModelConfiguration : IModelConfiguration
 
         // 1. Product & Subclasses
         var product = builder.EntityType<Product>();
-        product.Ignore(p => p.Specifications);
+        product.Property(p => p.ProductType).MaxLength = 32;
         product.Property(p => p.Name).IsRequired();
         product.Property(p => p.Name).MaxLength = 100;
         product.Property(p => p.Description).MaxLength = 500;
@@ -88,7 +88,7 @@ public class ChamberedModelConfiguration : IModelConfiguration
 
         // 2. ArmoryItem & Subclasses
         var armoryItem = builder.EntityType<ArmoryItem>();
-        armoryItem.Ignore(a => a.Specifications);
+        armoryItem.Property(a => a.ItemType).MaxLength = 32;
         armoryItem.Property(a => a.Name).IsRequired();
         armoryItem.Property(a => a.Name).MaxLength = 100;
         armoryItem.Property(a => a.Description).MaxLength = 500;
@@ -130,6 +130,7 @@ public class ChamberedModelConfiguration : IModelConfiguration
         var document = builder.EntityType<Document>();
         document.Property(d => d.Title).IsRequired();
         document.Property(d => d.Title).MaxLength = 150;
+        //document.Property(d => d.Type).IsRequired();
         document.Property(d => d.FileData).IsRequired();
         document.Property(d => d.FileName).IsRequired();
         document.Property(d => d.FileName).MaxLength = 255;

@@ -26,6 +26,11 @@ namespace Chambered.Data.Models
         public int Id { get; set; }
 
         /// <summary>
+        /// Gets or sets the discriminator value for the product type (used for TPH inheritance mapping).
+        /// </summary>
+        public string ProductType { get; set; }
+
+        /// <summary>
         /// Gets or sets the product part number.
         /// </summary>
         public string PartNumber { get; set; } = string.Empty;
@@ -318,12 +323,22 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents a security, safe, lock, or secure container product catalog entry.
     /// </summary>
-    public class Security : Product, INeedsBattery
+    public class Security : Product, INeedsBattery, IHasCapacity
     {
         /// <summary>
         /// Gets or sets the primary lock type (e.g., Electronic Keypad, Mechanical Dial, Biometric, Key Lock).
         /// </summary>
         public LockType LockType { get; set; } = LockType.None;
+
+        #region IHasCapacity
+
+        /// <inheritdoc/>
+        public bool IsCapacityLimited { get; set; }
+
+        /// <inheritdoc/>
+        public int MaxCapacity { get; set; }
+
+        #endregion
 
         #region INeedsBattery
 

@@ -9,8 +9,14 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Header styling */
@@ -97,7 +103,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .vaults-error-card {
@@ -184,7 +192,7 @@
 }
 
 .vault-status-indicator.active::before {
-  content: '';
+  content: "";
   display: inline-block;
   width: 7px;
   height: 7px;
@@ -403,8 +411,6 @@
   gap: 8px;
 }
 
-
-
 .passcode-input-wrapper {
   display: flex;
   gap: 8px;
@@ -487,7 +493,7 @@
 
 .table-header-row {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr;
   padding: 10px 16px;
   background-color: rgba(255, 255, 255, 0.03);
   font-size: 0.78rem;
@@ -499,7 +505,7 @@
 
 .table-body-row {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr;
   padding: 12px 16px;
   font-size: 0.85rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
@@ -519,7 +525,7 @@
   padding: 2px 8px !important;
 }
 
-.serial-mono {
+.table-mono {
   font-size: 0.78rem;
   color: var(--text-muted, #888888);
 }
