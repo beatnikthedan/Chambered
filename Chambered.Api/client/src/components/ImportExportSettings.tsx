@@ -1,43 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function ImportExportSettings({
-  store = {
-    arsenals: [
-      { id: "a1", name: "Hunting Vault", count: 12 },
-      { id: "a2", name: "Tactical Locker", count: 8 },
-    ],
-  },
-}) {
+export default function ImportExportSettings({ usersList = [], store = {} }) {
+  // 1. Loading state (matches ApiKeysSettings)
+  const [loading, setLoading] = useState(true);
   const [exportingId, setExportingId] = useState(null);
   const [exportingAll, setExportingAll] = useState(false);
   const [importingType, setImportingType] = useState(null);
 
-  // Individual Arsenal Export Handler
-  const handleExportArsenal = (arsenalId, arsenalName) => {
-    setExportingId(arsenalId);
-    setTimeout(() => {
-      setExportingId(null);
-      alert(`Exported "${arsenalName}" data archive (.json) successfully!`);
-    }, 500);
-  };
+  // 2. Simulate initial mount load cycle (matches ApiKeysSettings behavior)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
-  // Full System Export Handler
-  const handleExportAll = () => {
-    setExportingAll(true);
-    setTimeout(() => {
-      setExportingAll(false);
-      alert("Full system backup package (.json) downloaded!");
-    }, 800);
-  };
-
-  // File Import Simulator
-  const handleFileImport = (type) => {
-    setImportingType(type);
-    setTimeout(() => {
-      setImportingType(null);
-      alert(`Imported ${type} catalog records successfully!`);
-    }, 600);
-  };
+  const arsenals = store?.arsenals || [];
 
   return (
     <section className="settings-sec">
@@ -45,12 +23,13 @@ export default function ImportExportSettings({
         <h3 className="sec-title">Data Import & Export</h3>
         <button
           className="btn btn-primary"
-          onClick={handleExportAll}
+          onClick={() => {
+            setExportingAll(true);
+            setTimeout(() => setExportingAll(false), 500);
+          }}
           disabled={exportingAll}
         >
-          {exportingAll
-            ? "Generating Export..."
-            : "Export Complete System (.JSON)"}
+          {exportingAll ? "Exporting..." : "Export Complete System"}
         </button>
       </div>
       <p className="sec-subtitle">
@@ -59,164 +38,46 @@ export default function ImportExportSettings({
         definitions.
       </p>
 
-      {/* SECTION 1: ARSENAL EXPORTS */}
-      <div style={{ margin: "1.5rem 0" }}>
-        <h4
-          style={{
-            fontSize: "0.9rem",
-            color: "var(--text-muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            marginBottom: "0.75rem",
-          }}
-        >
-          Selective Arsenal Exports
-        </h4>
+      {/* MATCHES APIKEYS CONDITIONAL LOADING RENDER BLOCK */}
+      {loading ? (
+        <div className="loading-inline">
+          <div className="spinner"></div>
+        </div>
+      ) : (
         <div className="table-container">
-          <table
-            className="settings-table"
-            style={{ tableLayout: "fixed", width: "100%" }}
-          >
+          <table className="settings-table">
             <thead>
               <tr>
-                <th style={{ width: "auto" }}>Arsenal Name</th>
-                <th style={{ width: "auto" }}>Description</th>
-                <th style={{ width: "15%" }}>Total Tracked Items</th>
-                <th style={{ width: "30%", textAlign: "center" }}>Actions</th>
+                <th>Arsenal Name</th>
+                <th>Description</th>
+                <th>Tracked Items</th>
+                <th style={{ width: "100px" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {store.arsenals.map((ars) => (
-                <tr key={ars.id}>
-                  <td
-                    className="text-bold"
-                    style={{ color: ars.colorHex || "#ffffff" }}
-                  >
-                    {ars.name}
-                  </td>
-                  <td className="text-normal">{ars.description}</td>
-                  <td>{ars.count || 0} Items</td>
-                  {/* Group both buttons inside ONE <td> with Flexbox */}
+              {arsenals.map((key) => (
+                <tr key={key.id}>
+                  <td className="text-bold">{key.name}</td>
+                  <td>{key.description || "N/A"}</td>
+                  <td className="text-mono">{key.count || 0} Items</td>
                   <td>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "8px",
-                        justifyContent: "flex-end",
-                        alignItems: "center",
+                    <button
+                      className="btn btn-danger btn-mini"
+                      disabled={exportingId === key.id}
+                      onClick={() => {
+                        setExportingId(key.id);
+                        setTimeout(() => setExportingId(null), 500);
                       }}
                     >
-                      <button
-                        className="btn btn-secondary btn-mini"
-                        style={{ whiteSpace: "nowrap" }}
-                        onClick={() => handleExportJson(ars.id)}
-                      >
-                        Export JSON
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-mini"
-                        style={{ whiteSpace: "nowrap" }}
-                        onClick={() => handleExportCsv(ars.id)}
-                      >
-                        Export CSV
-                      </button>
-                    </div>
+                      Export
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* SECTION 2: CATALOG DATA IMPORTS */}
-      <div style={{ marginTop: "2rem" }}>
-        <h4
-          style={{
-            fontSize: "0.9rem",
-            color: "var(--text-muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            marginBottom: "0.75rem",
-          }}
-        >
-          Reference Catalog Imports
-        </h4>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "1rem",
-          }}
-        >
-          {/* Manufacturers Import Box */}
-          <div
-            style={{
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.05)",
-              padding: "1.25rem",
-              borderRadius: "8px",
-            }}
-          >
-            <h5 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>
-              Import Manufacturer Data
-            </h5>
-            <p
-              style={{
-                fontSize: "0.85rem",
-                color: "#5e6673",
-                marginBottom: "1rem",
-              }}
-            >
-              Import community-maintained manufacturer registries, calibers, and
-              factory brand definitions.
-            </p>
-            <button
-              className="btn btn-secondary"
-              onClick={() => handleFileImport("Manufacturers")}
-              disabled={importingType === "Manufacturers"}
-            >
-              {importingType === "Manufacturers"
-                ? "Importing..."
-                : "Import Manufacturers (.CSV / .JSON)"}
-            </button>
-          </div>
-
-          {/* Products Import Box */}
-          <div
-            style={{
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.05)",
-              padding: "1.25rem",
-              borderRadius: "8px",
-            }}
-          >
-            <h5 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>
-              Import Product Catalog
-            </h5>
-            <p
-              style={{
-                fontSize: "0.85rem",
-                color: "#5e6673",
-                marginBottom: "1rem",
-              }}
-            >
-              Bulk load pre-configured bullet weights, optic specs, cartridge
-              dimensions, and factory SKUs.
-            </p>
-            <button
-              className="btn btn-secondary"
-              onClick={() => handleFileImport("Products")}
-              disabled={importingType === "Products"}
-            >
-              {importingType === "Products"
-                ? "Importing..."
-                : "Import Products (.CSV / .JSON)"}
-            </button>
-          </div>
-        </div>
-      </div>
+      )}
     </section>
   );
 }

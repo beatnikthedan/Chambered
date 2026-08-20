@@ -299,6 +299,7 @@
 }
 
 .main-content {
+  min-width: 0;
   padding: 2rem;
 }
 
