@@ -1,122 +1,145 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useStore } from "../StoreContext";
 
-// Fallback constants if not imported externally
-const DEFAULT_PRESET_COLORS = [
-  "#2563EB",
-  "#DC2626",
-  "#16A34A",
-  "#D97706",
-  "#9333EA",
-  "#06B6D4",
-];
+import {
+  ARSENAL_ICONS,
+  ARSENAL_PRESET_COLORS,
+} from "../components/ArsenalIcons";
+import SubmitButton from "../components/SubmitButton";
 
-const DEFAULT_ICONS = {
-  shield: (color, size = 16) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
-    </svg>
-  ),
-  vault: (color, size = 16) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-6 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
-    </svg>
-  ),
-};
+import {
+  useGetArsenals,
+  usePostArsenals,
+  usePatchArsenalsFromKey,
+  useDeleteArsenalsFromKey,
+} from "../api/endpoints";
 
-// Fallback SubmitButton if not defined elsewhere
-const FallbackSubmitButton = ({ isSaving, saveSuccess, isEditMode }) => (
-  <button type="submit" className="btn btn-primary" disabled={isSaving}>
-    {isSaving
-      ? "Saving..."
-      : saveSuccess
-        ? "Saved!"
-        : isEditMode
-          ? "Update"
-          : "Create"}
-  </button>
-);
-
-export default function ArsenalSettings({
-  store = { arsenals: [], activeArsenalId: null, selectArsenal: () => {} },
-  ARSENAL_ICONS = DEFAULT_ICONS,
-  ARSENAL_PRESET_COLORS = DEFAULT_PRESET_COLORS,
-  SubmitButton = FallbackSubmitButton,
-}) {
-  // Modal & Form States
+export default function ArsenalSettings() {
+  const store = useStore();
+  const queryClient = useQueryClient();
+  const [arsenals, setArsenals] = useState([]);
+  const [selectedArsenal, setSelectedArsenal] = useState(null);
   const [showArsenalForm, setShowArsenalForm] = useState(false);
   const [isEditArsenalMode, setIsEditArsenalMode] = useState(false);
-  const [editingArsenalId, setEditingArsenalId] = useState(null);
-  const [savingArsenal, setSavingArsenal] = useState(false);
   const [arsenalSaveSuccess, setArsenalSaveSuccess] = useState(false);
 
-  const [arsenalForm, setArsenalForm] = useState({
-    name: "",
-    description: "",
-    iconName: "shield",
-    colorHex: "#2563EB",
+  const updateArsenalMutation = usePatchArsenalsFromKey({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Arsenals"] });
+        setArsenalSaveSuccess(true);
+        setTimeout(() => setArsenalSaveSuccess(false), 2000);
+      },
+      onError: (err) => {
+        alert("Failed to save changes: " + (err?.message || "Unknown error"));
+      },
+    },
   });
 
-  // Modal Reset Handler
-  const resetForm = () => {
-    setShowArsenalForm(false);
-    setIsEditArsenalMode(false);
-    setEditingArsenalId(null);
-    setArsenalForm({
-      name: "",
-      description: "",
-      iconName: "shield",
-      colorHex: "#2563EB",
-    });
+  const createArsenalMutation = usePostArsenals({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Arsenals"] });
+        setArsenalSaveSuccess(true);
+        setTimeout(() => setArsenalSaveSuccess(false), 2000);
+      },
+      onError: (err) => {
+        alert("Failed to create arsenal: " + (err?.message || "Unknown error"));
+      },
+    },
+  });
+
+  const deleteArsenalMutation = useDeleteArsenalsFromKey({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Arsenals"] });
+      },
+      onError: (err) => {
+        alert(
+          "Failed to delete arsenal. Make sure no items or sub-arsenals depend on it.",
+        );
+      },
+    },
+  });
+
+  const handleDelete = async (arsenalId) => {
+    if (arsenalId > 0) {
+      try {
+        await deleteArsenalMutation.mutateAsync({ key: arsenalId });
+      } catch (err) {
+        console.error("Error deleting arsenal", err);
+      }
+    }
   };
 
-  // Open Edit Mode
-  const openEditArsenalModal = (arsenal) => {
-    setEditingArsenalId(arsenal.id);
-    setIsEditArsenalMode(true);
-    setArsenalForm({
-      name: arsenal.name || "",
-      description: arsenal.description || "",
-      iconName: arsenal.iconName || "shield",
-      colorHex: arsenal.colorHex || "#2563EB",
+  const handleSaveArsenal = async (e) => {
+    e.preventDefault();
+    if (!selectedArsenal || !selectedArsenal.name.trim()) return;
+
+    const payload = {
+      id: selectedArsenal.id || 0,
+      name: selectedArsenal.name || "",
+      description: selectedArsenal.description || null,
+      colorHex: selectedArsenal.colorHex || "#2563eb",
+      iconName: selectedArsenal.iconName || "shield",
+    };
+
+    try {
+      if (isEditArsenalMode) {
+        await updateArsenalMutation.mutateAsync({
+          key: selectedArsenal.id,
+          data: payload,
+        });
+      } else {
+        await createArsenalMutation.mutateAsync({
+          data: payload,
+        });
+      }
+      setShowArsenalForm(false);
+    } catch (err) {
+      console.error("Error saving arsenal", err);
+    }
+  };
+
+  const {
+    data: arsenalsData,
+    isLoading: arsenalsAreLoading,
+    error: arsenalsError,
+  } = useGetArsenals();
+
+  useEffect(() => {
+    if (arsenalsData?.data?.value) {
+      setArsenals(arsenalsData.data.value);
+    }
+  }, [arsenalsData]);
+
+  const openCreateModal = () => {
+    setIsEditArsenalMode(false);
+    setSelectedArsenal({
+      id: 0,
+      name: "",
+      description: "",
+      colorHex: "#2563eb",
+      iconName: "shield",
     });
     setShowArsenalForm(true);
   };
 
-  // Action Placeholders
-  const handleDeleteArsenal = (id) => {
-    if (window.confirm("Are you sure you want to delete this arsenal?")) {
-      store.deleteArsenal?.(id);
-    }
+  const openEditModal = (arsenal) => {
+    setIsEditArsenalMode(true);
+    setSelectedArsenal({ ...arsenal });
+    setShowArsenalForm(true);
   };
 
-  const handleSaveArsenal = (e) => {
-    e.preventDefault();
-    setSavingArsenal(true);
-
-    // Mock API Save Execution
-    setTimeout(() => {
-      if (isEditArsenalMode) {
-        store.updateArsenal?.(editingArsenalId, arsenalForm);
-      } else {
-        store.createArsenal?.(arsenalForm);
-      }
-      setSavingArsenal(false);
-      setArsenalSaveSuccess(true);
-      setTimeout(() => {
-        setArsenalSaveSuccess(false);
-        resetForm();
-      }, 500);
-    }, 400);
-  };
+  const savingArsenal =
+    createArsenalMutation.isPending || updateArsenalMutation.isPending;
 
   return (
     <section className="settings-sec">
       <div className="sec-header">
         <h3 className="sec-title">Manage Arsenals</h3>
-        <button
-          className="btn btn-primary"
-          onClick={() => setShowArsenalForm(true)}
-        >
+        <button className="btn btn-primary" onClick={() => openCreateModal()}>
           Create New Arsenal
         </button>
       </div>
@@ -124,10 +147,30 @@ export default function ArsenalSettings({
         Create and organize isolated Arsenals. Each Arsenal contains its own
         independent armory items and ammunition lots.
       </p>
-
-      {store.arsenals.length === 0 ? (
-        <div className="loading-inline">
+      {arsenalsAreLoading ? (
+        <div className="loading-spinner-box">
           <div className="spinner"></div>
+          <p>Analyzing arsenals...</p>
+        </div>
+      ) : arsenalsError ? (
+        <div className="arsenals-error-card">
+          <span className="err-icon">⚠️</span>
+          <p>{arsenalsError?.message || "Failed to load arsenals"}</p>
+          <button
+            className="btn btn-secondary btn-small"
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ["/api/v1/Arsenals"] })
+            }
+          >
+            Retry
+          </button>
+        </div>
+      ) : arsenals.length === 0 ? (
+        <div className="empty-state panel">
+          <h3>You have no items in your Arsenals.</h3>
+          <p style={{ marginTop: "4px", color: "var(--text-muted)" }}>
+            Click 'Add Item' above to add your first item.
+          </p>
         </div>
       ) : (
         <div className="table-container">
@@ -136,13 +179,13 @@ export default function ArsenalSettings({
               <tr>
                 <th>Arsenal Name</th>
                 <th>Description</th>
-                <th>Status / Context</th>
+                <th>Status</th>
                 <th style={{ width: "120px" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {store.arsenals.map((ars) => (
-                <tr key={ars.id}>
+              {arsenals.map((arsenal) => (
+                <tr key={arsenal.id}>
                   <td
                     className="text-bold"
                     style={{
@@ -159,18 +202,18 @@ export default function ArsenalSettings({
                         width: "32px",
                         height: "32px",
                         borderRadius: "50%",
-                        background: `${ars.colorHex || "#2563eb"}1A`,
+                        background: `${arsenal.colorHex || "#000000"}ff`,
                       }}
                     >
-                      {ARSENAL_ICONS[ars.iconName || "shield"]?.(
-                        ars.colorHex || "#2563eb",
+                      {ARSENAL_ICONS[arsenal.iconName || "shield"]?.(
+                        arsenal.colorHex || "#2563eb",
                       )}
                     </span>
-                    {ars.name}
+                    {arsenal.name}
                   </td>
-                  <td>{ars.description || "No description provided"}</td>
+                  <td>{arsenal.description || "No description provided"}</td>
                   <td>
-                    {ars.id === store.activeArsenalId ? (
+                    {arsenal.id === store.activeArsenalId ? (
                       <span className="badge badge-success">
                         Active Arsenal
                       </span>
@@ -178,7 +221,7 @@ export default function ArsenalSettings({
                       <span
                         className="badge badge-secondary"
                         style={{ cursor: "pointer" }}
-                        onClick={() => store.selectArsenal(ars.id)}
+                        onClick={() => store.selectArsenal(arsenal.id)}
                       >
                         Click to Switch
                       </span>
@@ -194,7 +237,7 @@ export default function ArsenalSettings({
                     >
                       <button
                         className="btn btn-secondary"
-                        onClick={() => openEditArsenalModal(ars)}
+                        onClick={() => openEditModal(arsenal)}
                         style={{
                           width: "74px",
                           height: "32px",
@@ -212,7 +255,7 @@ export default function ArsenalSettings({
                       <button
                         className="btn btn-danger"
                         disabled={store.arsenals.length <= 1}
-                        onClick={() => handleDeleteArsenal(ars.id)}
+                        onClick={() => handleDelete(arsenal.id)}
                         title="Remove arsenal and all its items"
                         style={{
                           width: "74px",
@@ -238,8 +281,8 @@ export default function ArsenalSettings({
       )}
 
       {/* Create/Edit collection modal form */}
-      {showArsenalForm && (
-        <div className="dialog-overlay" onClick={resetForm}>
+      {showArsenalForm && selectedArsenal && (
+        <div className="dialog-overlay">
           <div className="dialog-card" onClick={(e) => e.stopPropagation()}>
             <h4 className="dialog-title">
               {isEditArsenalMode ? "Edit Arsenal" : "Create New Arsenal"}
@@ -249,24 +292,24 @@ export default function ArsenalSettings({
                 <label>Arsenal Name</label>
                 <input
                   type="text"
-                  value={arsenalForm.name}
+                  value={selectedArsenal.name}
                   onChange={(e) =>
-                    setArsenalForm({
-                      ...arsenalForm,
+                    setSelectedArsenal({
+                      ...selectedArsenal,
                       name: e.target.value,
                     })
                   }
-                  placeholder="e.g. Hunting Vault, Tactical Vault"
+                  placeholder="e.g. Hunting Arsenal, Tactical Arsenal"
                   required
                 />
               </div>
               <div className="form-group">
                 <label>Description (Optional)</label>
                 <textarea
-                  value={arsenalForm.description}
+                  value={selectedArsenal.description || ""}
                   onChange={(e) =>
-                    setArsenalForm({
-                      ...arsenalForm,
+                    setSelectedArsenal({
+                      ...selectedArsenal,
                       description: e.target.value,
                     })
                   }
@@ -291,8 +334,8 @@ export default function ArsenalSettings({
                     <div
                       key={col}
                       onClick={() =>
-                        setArsenalForm({
-                          ...arsenalForm,
+                        setSelectedArsenal({
+                          ...selectedArsenal,
                           colorHex: col,
                         })
                       }
@@ -303,11 +346,11 @@ export default function ArsenalSettings({
                         backgroundColor: col,
                         cursor: "pointer",
                         border:
-                          arsenalForm.colorHex === col
+                          selectedArsenal.colorHex === col
                             ? "3px solid var(--text-primary)"
                             : "2px solid rgba(255,255,255,0.1)",
                         boxShadow:
-                          arsenalForm.colorHex === col
+                          selectedArsenal.colorHex === col
                             ? "0 0 8px " + col
                             : "none",
                         transition: "all 0.2s ease",
@@ -326,10 +369,10 @@ export default function ArsenalSettings({
                   >
                     <input
                       type="color"
-                      value={arsenalForm.colorHex}
+                      value={selectedArsenal.colorHex || "#2563eb"}
                       onChange={(e) =>
-                        setArsenalForm({
-                          ...arsenalForm,
+                        setSelectedArsenal({
+                          ...selectedArsenal,
                           colorHex: e.target.value,
                         })
                       }
@@ -370,8 +413,8 @@ export default function ArsenalSettings({
                     <div
                       key={iconKey}
                       onClick={() =>
-                        setArsenalForm({
-                          ...arsenalForm,
+                        setSelectedArsenal({
+                          ...selectedArsenal,
                           iconName: iconKey,
                         })
                       }
@@ -383,24 +426,24 @@ export default function ArsenalSettings({
                         padding: "10px",
                         borderRadius: "var(--radius-sm)",
                         background:
-                          arsenalForm.iconName === iconKey
+                          selectedArsenal.iconName === iconKey
                             ? "rgba(255, 255, 255, 0.05)"
                             : "transparent",
                         border:
-                          arsenalForm.iconName === iconKey
-                            ? `1px solid ${arsenalForm.colorHex}`
+                          selectedArsenal.iconName === iconKey
+                            ? `1px solid ${selectedArsenal.colorHex}`
                             : "1px solid rgba(255,255,255,0.05)",
                         cursor: "pointer",
                         color:
-                          arsenalForm.iconName === iconKey
-                            ? arsenalForm.colorHex
+                          selectedArsenal.iconName === iconKey
+                            ? selectedArsenal.colorHex
                             : "var(--text-muted)",
                         transition: "all 0.2s",
                       }}
                     >
                       {ARSENAL_ICONS[iconKey](
-                        arsenalForm.iconName === iconKey
-                          ? arsenalForm.colorHex
+                        selectedArsenal.iconName === iconKey
+                          ? selectedArsenal.colorHex
                           : "var(--text-muted)",
                         20,
                       )}
@@ -427,7 +470,7 @@ export default function ArsenalSettings({
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={resetForm}
+                  onClick={() => setShowArsenalForm(false)}
                 >
                   Cancel
                 </button>
