@@ -112,7 +112,7 @@ export default function Vaults() {
     isLoading: productsAreLoading,
     error: productsError,
   } = useGetProducts({
-    filter: "isof('Chambered.Data.Models.Security')",
+    filter: "productType eq Security",
     expand: "manufacturer",
   });
 
@@ -550,6 +550,38 @@ export default function Vaults() {
                 <div className="tab-pane">
                   <div className="form-grid-columns">
                     <div className="form-item full-row">
+                      <label>Catalog Product Link</label>
+                      <select
+                        value={selectedVault.productId}
+                        onChange={(e) => {
+                          const pId = e.target.value;
+                          const p = selectedVault.product;
+                          setSelectedVault((prev) => ({
+                            ...prev,
+                            productId: pId,
+                            batteryType: p?.batteryType || "Unknown",
+                          }));
+                        }}
+                      >
+                        <option value="">
+                          -- No Linked Catalog Product --
+                        </option>
+                        {products.map((prod) => (
+                          <option
+                            key={prod.id}
+                            value={prod.id}
+                            title={
+                              prod.description || "No description available"
+                            }
+                          >
+                            {prod.manufacturer?.name} {prod.name} (
+                            {prod.partNumber})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-item full-row">
                       <label>
                         Name<span className="req">*</span>
                       </label>
@@ -617,37 +649,6 @@ export default function Vaults() {
                         {eligibleParentVaults.map((v) => (
                           <option key={v.id} value={v.id}>
                             🔗 {v.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-item full-row">
-                      <label>Catalog Product Link</label>
-                      <select
-                        value={selectedVault.productId}
-                        onChange={(e) => {
-                          const pId = e.target.value;
-                          const p = selectedVault.product;
-                          setSelectedVault((prev) => ({
-                            ...prev,
-                            productId: pId,
-                            batteryType: p?.batteryType || "Unknown",
-                          }));
-                        }}
-                      >
-                        <option value="">
-                          -- No Linked Catalog Product --
-                        </option>
-                        {products.map((prod) => (
-                          <option
-                            key={prod.id}
-                            value={prod.id}
-                            title={
-                              prod.description || "No description available"
-                            }
-                          >
-                            {prod.manufacturer?.name} {prod.name} (
-                            {prod.partNumber})
                           </option>
                         ))}
                       </select>

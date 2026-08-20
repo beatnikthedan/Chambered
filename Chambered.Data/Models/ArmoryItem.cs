@@ -18,7 +18,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the discriminator value for the item type (used for TPH inheritance mapping).
         /// </summary>
-        public Type ItemType { get; set; }
+        public string ItemType { get; set; }
 
         /// <summary>
         /// Gets or sets the foreign key for the catalog product model.

@@ -45,10 +45,8 @@ namespace Chambered.Data.Configuration
             #endregion
 
             #region Reflection Discriminator Setup
-
             builder.Property(p => p.ItemType)
-                .HasMaxLength(32)
-                .HasConversion(new TypeConverter(typeof(ArmoryItem).Namespace.ToString(), typeof(ArmoryItem).Assembly.ToString()));
+                .HasMaxLength(32);
 
             var discriminatorBuilder = builder.HasDiscriminator(d => d.ItemType);
 
@@ -58,9 +56,11 @@ namespace Chambered.Data.Configuration
                          && !t.IsAbstract
                          && t.IsSubclassOf(typeof(ArmoryItem)));
 
+            discriminatorBuilder.HasValue<ArmoryItem>(nameof(ArmoryItem));
+
             foreach (var subtype in productSubtypes)
             {
-                discriminatorBuilder.HasValue(subtype, subtype);
+                discriminatorBuilder.HasValue(subtype, subtype.Name);
             }
 
             #endregion

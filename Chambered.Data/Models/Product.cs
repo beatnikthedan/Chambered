@@ -28,7 +28,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the discriminator value for the product type (used for TPH inheritance mapping).
         /// </summary>
-        public Type ProductType { get; set; }
+        public string ProductType { get; set; }
 
         /// <summary>
         /// Gets or sets the product part number.
