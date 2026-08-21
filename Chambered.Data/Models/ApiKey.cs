@@ -31,12 +31,12 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the date and time when the API key was created. 
         /// </summary>
-        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Gets or sets the expiration date and time for the API key. 
         /// </summary>
-        public DateTimeOffset? ExpiresAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the API key has been manually revoked.

@@ -66,6 +66,15 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromDays(7); // Set your desired expiration window
+    options.SlidingExpiration = true;              // Reset window when user is active
+    options.Cookie.HttpOnly = true;                 // Protects completely against XSS token theft
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Requires HTTPS
+    options.Cookie.SameSite = SameSiteMode.Strict;  // Protects against CSRF
+});
+
 // 5. Configure Controllers with camelCase, cycles ignored, and OData options
 builder.Services.AddControllers(options =>
 {

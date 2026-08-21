@@ -43,11 +43,12 @@ namespace Chambered.Infrastructure.Security
             string providedKey = extractedKey.ToString();
             string hashedKey = ApiKeyGenerator.HashKey(providedKey);
 
+            var now = DateTime.UtcNow;
             var apiKey = await _context.Set<ApiKey>()
                 .Include(k => k.Claims)
                 .FirstOrDefaultAsync(k => k.KeyHash == hashedKey
                                        && !k.IsRevoked
-                                       && (k.ExpiresAt == null || k.ExpiresAt > DateTime.UtcNow))
+                                       && (k.ExpiresAt == null || k.ExpiresAt > now))
                 .ConfigureAwait(false);
 
             if (apiKey == null)

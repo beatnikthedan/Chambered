@@ -58,7 +58,7 @@ namespace Chambered.Tests.Services.Identity
                 new Claim(ClaimTypes.Role, "Admin")
             }));
 
-            var createDto = new CreateApiKeyDto("Test Key", DateTimeOffset.UtcNow.AddDays(30), new List<string> { "Read", "Write" }, null);
+            var createDto = new CreateApiKeyDto("Test Key", DateTime.UtcNow.AddDays(30), new List<string> { "Read", "Write" }, null);
 
             _userManagerMock.Setup(u => u.GetUserAsync(claimsPrincipal))
                 .ReturnsAsync(user);
@@ -96,8 +96,8 @@ namespace Chambered.Tests.Services.Identity
                 OwnerId = "user-123",
                 IsRevoked = false,
                 KeyHash = "somehash",
-                CreatedAt = DateTimeOffset.UtcNow,
-                ExpiresAt = DateTimeOffset.UtcNow.AddDays(1)
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(1)
             };
 
             _db.ApiKeys.Add(apiKey);
@@ -131,8 +131,8 @@ namespace Chambered.Tests.Services.Identity
                 OwnerId = "user-123",
                 IsRevoked = false,
                 KeyHash = "somehash",
-                CreatedAt = DateTimeOffset.UtcNow,
-                ExpiresAt = DateTimeOffset.UtcNow.AddDays(1)
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(1)
             };
 
             _db.ApiKeys.Add(apiKey);

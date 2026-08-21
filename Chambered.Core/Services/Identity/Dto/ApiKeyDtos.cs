@@ -8,7 +8,7 @@ namespace Chambered.Core.Services.Identity.Dto
     /// </summary>
     public record CreateApiKeyDto(
         string Name,
-        DateTimeOffset? ExpiresAt,
+        DateTime? ExpiresAt,
         IEnumerable<string> Claims,
         string? UserId
     );
@@ -19,8 +19,8 @@ namespace Chambered.Core.Services.Identity.Dto
     public record ApiKeyCreatedResponseDto(
         string Name,
         string PlainTextKey,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? ExpiresAt
+        DateTime CreatedAt,
+        DateTime? ExpiresAt
     );
 
     /// <summary>
@@ -29,8 +29,8 @@ namespace Chambered.Core.Services.Identity.Dto
     public record ApiKeySummaryDto(
         int Id,
         string Name,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? ExpiresAt
+        DateTime CreatedAt,
+        DateTime? ExpiresAt
     );
 
     /// <summary>
@@ -40,8 +40,8 @@ namespace Chambered.Core.Services.Identity.Dto
         int Id,
         string Name,
         string OwnerId,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? ExpiresAt,
+        DateTime CreatedAt,
+        DateTime? ExpiresAt,
         IEnumerable<string> Claims
     );
 }
