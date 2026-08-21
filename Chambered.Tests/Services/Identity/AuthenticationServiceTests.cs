@@ -124,7 +124,8 @@ namespace Chambered.Tests.Services.Identity
             Assert.NotNull(response);
             Assert.Equal(user.Id, response.UserId);
             Assert.Equal(user.Email, response.Email);
-            Assert.NotEmpty(response.AccessToken);
+            Assert.Empty(response.AccessToken);
+            _signInManagerMock.Verify(s => s.SignInAsync(user, false, null), Times.Once);
             Assert.Contains("User", response.Roles);
         }
 

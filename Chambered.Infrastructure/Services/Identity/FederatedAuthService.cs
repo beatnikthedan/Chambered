@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -13,7 +12,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Chambered.Infrastructure.Services.Identity
 {
@@ -195,13 +193,12 @@ namespace Chambered.Infrastructure.Services.Identity
 
             await _signInManager.SignInAsync(user, isPersistent: false).ConfigureAwait(false);
 
-            var token = await GenerateJwtTokenInternalAsync(user).ConfigureAwait(false);
             var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
             var permissions = await GetPermissionsForUserInternalAsync(user, roles).ConfigureAwait(false);
 
             _logger.LogInformation("SSO Callback processed successfully: Provider={Provider}, Email={Email}", providerName, email);
 
-            return new FederatedLoginResponseDto(true, string.Empty, token, permissions);
+            return new FederatedLoginResponseDto(true, string.Empty, string.Empty, permissions);
         }
 
         private static IEnumerable<string> ParseStringListClaims(IDictionary<string, string> userClaims, string claimType)
@@ -274,61 +271,7 @@ namespace Chambered.Infrastructure.Services.Identity
             return _federatedOptions.Value?.Providers?.Select(p => p.ProviderName) ?? Enumerable.Empty<string>();
         }
 
-        private async Task<string> GenerateJwtTokenInternalAsync(ChamberedUser user)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
-                new Claim(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
-            };
 
-            var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
-            if (roles.Contains("Admin"))
-            {
-                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-            }
-            else
-            {
-                foreach (var roleName in roles)
-                {
-                    var role = await _roleManager.FindByNameAsync(roleName).ConfigureAwait(false);
-                    if (role != null)
-                    {
-                        var roleClaims = await _roleManager.GetClaimsAsync(role).ConfigureAwait(false);
-                        foreach (var roleClaim in roleClaims)
-                        {
-                            claims.Add(new Claim(roleClaim.Type, roleClaim.Value));
-                        }
-                    }
-                }
-            }
-
-            var keyString = _configuration["Jwt:Key"] ?? "AntigravitySuperSecureDevSecretKey123!";
-            var keyBytes = Encoding.UTF8.GetBytes(keyString);
-            if (keyBytes.Length < 32)
-            {
-                var padded = new byte[32];
-                Array.Copy(keyBytes, padded, Math.Min(keyBytes.Length, 32));
-                keyBytes = padded;
-            }
-
-            var key = new SymmetricSecurityKey(keyBytes);
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expireDays = Convert.ToDouble(_configuration["Jwt:ExpireDays"] ?? "7");
-            var expires = DateTime.Now.AddDays(expireDays);
-
-            var token = new JwtSecurityToken(
-                _configuration["Jwt:Issuer"] ?? "ChamberedServer",
-                null,
-                claims: claims,
-                expires: expires,
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
 
         private async Task<IEnumerable<string>> GetPermissionsForUserInternalAsync(ChamberedUser user, IEnumerable<string> roles)
         {

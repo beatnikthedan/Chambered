@@ -74,11 +74,21 @@ namespace Chambered.Tests.Integration
                 .ReturnsAsync(true);
             services.AddSingleton(mockEmailService.Object);
 
+            // HttpContextAccessor with a real DefaultHttpContext for Cookie writing support
+            var httpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+            var mockHttpContextAccessor = new Mock<Microsoft.AspNetCore.Http.IHttpContextAccessor>();
+            mockHttpContextAccessor.Setup(h => h.HttpContext).Returns(httpContext);
+            services.AddSingleton<Microsoft.AspNetCore.Http.IHttpContextAccessor>(mockHttpContextAccessor.Object);
+
             // 6. Register Services under test
             services.AddScoped<IdentityService>();
             services.AddScoped<AuthenticationService>();
 
             _serviceProvider = services.BuildServiceProvider();
+            
+            // Link HttpContext request services to the built service provider
+            httpContext.RequestServices = _serviceProvider;
+
             _db = _serviceProvider.GetRequiredService<ChamberedDbContext>();
 
             // Ensure schema is fully generated
@@ -148,7 +158,7 @@ namespace Chambered.Tests.Integration
             // Assert
             Assert.NotNull(loginResult);
             Assert.Equal("admin", loginResult.Username);
-            Assert.NotEmpty(loginResult.AccessToken);
+            Assert.Empty(loginResult.AccessToken);
             Assert.Contains("Admin", loginResult.Roles);
 
             // Verify claims assigned to the role

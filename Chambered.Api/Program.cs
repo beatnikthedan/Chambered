@@ -7,8 +7,7 @@ using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
 using Chambered.Core.Services.Identity;
 using Chambered.Infrastructure.Services.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
 using Chambered.Infrastructure.Services.NotificationServices;
@@ -126,6 +125,7 @@ builder.Services.AddSwaggerGen(c =>
     c.OperationFilter<ODataSwaggerFilter>();
     c.DocumentFilter<ODataSwaggerFilter>();
     c.CustomOperationIds((controller, verb, action) => $"{verb}{controller}{action}");
+    c.AddApiKeyAuthorization();
 });
 
 
@@ -394,19 +394,17 @@ public static class SwaggerGenOptionsExtensions
         return swaggerGenOptions;
     }
 
-    public static SwaggerGenOptions AddJwtAuthorization(this SwaggerGenOptions swaggerGenOptions)
+    public static SwaggerGenOptions AddApiKeyAuthorization(this SwaggerGenOptions swaggerGenOptions)
     {
         OpenApiSecurityScheme openApiSecurityScheme = new OpenApiSecurityScheme
         {
-            BearerFormat = "JWT",
-            Name = "JWT Authentication",
+            Name = "X-API-KEY",
             In = ParameterLocation.Header,
-            Type = SecuritySchemeType.Http,
-            Scheme = "Bearer",
-            Description = "Put **_ONLY_** your JWT Bearer token on textbox below!",
+            Type = SecuritySchemeType.ApiKey,
+            Description = "Put your API Key on textbox below!",
             Reference = new OpenApiReference
             {
-                Id = "Bearer",
+                Id = "ApiKey",
                 Type = ReferenceType.SecurityScheme
             }
         };

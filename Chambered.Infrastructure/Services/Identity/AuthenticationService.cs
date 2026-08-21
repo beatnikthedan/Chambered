@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Mail;
 using System.Security.Claims;
@@ -17,7 +16,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Chambered.Infrastructure.Services.Identity
 {
@@ -83,21 +81,18 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new UnauthorizedAccessException("Incorrect username or password");
             }
 
-            var token = await GenerateJwtTokenInternalAsync(user).ConfigureAwait(false);
+            await _signInManager.SignInAsync(user, isPersistent: request.RememberMe).ConfigureAwait(false);
             var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
             var permissions = await GetPermissionsForUserInternalAsync(user, roles).ConfigureAwait(false);
 
             _logger.LogInformation("Login success: Email={Email}, UserId={UserId}", request.Email, user.Id);
 
-            var expireDays = Convert.ToDouble(_configuration["Jwt:ExpireDays"] ?? "7");
-            var expireInSeconds = (int)TimeSpan.FromDays(expireDays).TotalSeconds;
-
             return new AuthenticationResponseDto(
                 user.Id,
                 user.Email ?? string.Empty,
-                token,
-                Guid.NewGuid().ToString("N"),
-                expireInSeconds,
+                string.Empty,
+                string.Empty,
+                0,
                 roles,
                 permissions,
                 user.UserName ?? user.Email,
@@ -243,52 +238,7 @@ namespace Chambered.Infrastructure.Services.Identity
             _logger.LogInformation("Password change success: UserId={UserId}", userId);
         }
 
-        private async Task<string> GenerateJwtTokenInternalAsync(ChamberedUser user)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
-                new Claim(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
-            };
 
-            var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
-            if (roles.Contains("Admin"))
-            {
-                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-            }
-            else
-            {
-                foreach (var roleName in roles)
-                {
-                    var role = await _roleManager.FindByNameAsync(roleName).ConfigureAwait(false);
-                    if (role != null)
-                    {
-                        var roleClaims = await _roleManager.GetClaimsAsync(role).ConfigureAwait(false);
-                        foreach (var roleClaim in roleClaims)
-                        {
-                            claims.Add(new Claim(roleClaim.Type, roleClaim.Value));
-                        }
-                    }
-                }
-            }
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "AntigravitySuperSecureDevSecretKey123!"));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expireDays = Convert.ToDouble(_configuration["Jwt:ExpireDays"] ?? "7");
-            var expires = DateTime.Now.AddDays(expireDays);
-
-            var token = new JwtSecurityToken(
-                _configuration["Jwt:Issuer"] ?? "ChamberedServer",
-                null,
-                claims: claims,
-                expires: expires,
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
 
         private async Task<IEnumerable<string>> GetPermissionsForUserInternalAsync(ChamberedUser user, IEnumerable<string> roles)
         {

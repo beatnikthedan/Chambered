@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Chambered.Core.Security;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
@@ -24,7 +23,7 @@ namespace Chambered.Infrastructure.Authorization
         /// <inheritdoc />
         public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
         {
-            var schemes = new[] { JwtBearerDefaults.AuthenticationScheme, "ApiKey" };
+            var schemes = new[] { Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme, "ApiKey" };
 
             // Handle explicit requests for the Admin-only policy
             if (policyName == ChamberedAuthorization.Roles.Admin)
