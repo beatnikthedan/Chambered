@@ -1,5 +1,4 @@
 using Chambered.Data;
-using Chambered.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

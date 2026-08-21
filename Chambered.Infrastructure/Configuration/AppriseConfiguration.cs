@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Chambered.Infrastructure.Configuration
+﻿namespace Chambered.Infrastructure.Configuration
 {
     /// <summary>
     /// Represents configuration settings for connecting to an Apprise API instance.

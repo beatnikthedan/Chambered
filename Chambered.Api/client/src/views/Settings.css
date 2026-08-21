@@ -38,6 +38,8 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  max-width: 900px;
+  min-width: 0;
 }
 
 .sec-header {
@@ -79,7 +81,8 @@
   font-size: 13px;
 }
 
-.settings-table th, .settings-table td {
+.settings-table th,
+.settings-table td {
   padding: 14px 18px;
   border-bottom: 1px solid var(--border-solid);
 }
@@ -95,7 +98,7 @@
 }
 
 .settings-table tbody tr:hover {
-  background: rgba(255,255,255,0.01);
+  background: rgba(255, 255, 255, 0.01);
 }
 
 .text-bold {
@@ -115,7 +118,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   z-index: 600;
   display: flex;
@@ -134,7 +137,7 @@
   padding: 32px;
   width: 100%;
   max-width: 440px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -268,4 +271,433 @@
 .form-textarea-abs:focus {
   border-color: var(--color-primary);
   outline: none;
+}
+
+/* {this is the new flex grid stuff} */
+
+/* Layout Grid */
+.layout-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+  background-color: #0f1115;
+  color: #cbd5e1;
+  scrollbar-gutter: stable;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+/* Sidebar & Main Containers */
+.settings-sidebar {
+  border-right: 1px solid #1e232d;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.main-content {
+  min-width: 0;
+  padding: 2rem;
+  scrollbar-gutter: stable;
+}
+
+/* Menu Components */
+.menu-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-title {
+  color: #5e6673;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  padding-left: 0.75rem;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.menu-item.active {
+  background-color: #1d2028;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Badges */
+.badge {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.badge-yellow {
+  color: #d97706;
+}
+
+.badge-green {
+  color: #10b981;
+}
+
+.badge-muted {
+  color: #5e6673;
+}
+
+/* User settings upgrade styling */
+
+.users-summary {
+  font-size: 13px;
+  color: #8a96a8;
+  margin-top: 4px;
+}
+
+.invite-btn {
+  background-color: #cca43b !important;
+  color: #0f1115 !important;
+  font-weight: 700 !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.invite-btn:hover {
+  opacity: 0.9;
+}
+
+.avatar-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.avatar-gold {
+  background-color: rgba(204, 164, 59, 0.15);
+  color: #cca43b;
+  border: 1px solid rgba(204, 164, 59, 0.3);
+}
+
+.avatar-grey {
+  background-color: rgba(94, 102, 115, 0.15);
+  color: #cbd5e1;
+  border: 1px solid rgba(94, 102, 115, 0.3);
+}
+
+.user-info-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.username-label {
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.email-label {
+  font-size: 12px;
+  color: #5e6673;
+}
+
+/* Role Badges */
+.badge-role {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-owner {
+  background-color: rgba(217, 119, 6, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+.badge-editor {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.badge-readonly {
+  background-color: transparent;
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* Split Columns Policy Section */
+.policies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.policy-card {
+  background-color: #13161c;
+  border: 1px solid #1e232d;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.policy-card-title {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #1e232d;
+  padding-bottom: 12px;
+}
+
+.policy-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(30, 35, 45, 0.5);
+}
+
+.policy-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.policy-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.policy-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+.policy-sublabel {
+  font-size: 12px;
+  color: #5e6673;
+}
+
+.policy-lifetime-select {
+  background-color: #1e232d;
+  border: 1px solid #2d3545;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+.policy-lifetime-select:focus {
+  border-color: #cca43b;
+}
+
+.policy-length-input {
+  background-color: #1e232d;
+  border: 1px solid #2d3545;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  width: 60px;
+  text-align: center;
+}
+
+.policy-length-input:focus {
+  border-color: #cca43b;
+}
+
+/* Switch styling */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #2a303c;
+  transition: .2s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #94a3b8;
+  transition: .2s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #cca43b;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+  background-color: #0f1115;
+}
+
+/* Password Strength Indicator */
+.strength-container {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.strength-bar-bg {
+  height: 4px;
+  width: 100%;
+  background-color: #1e232d;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-bar-fill {
+  height: 100%;
+  width: 0%;
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.strength-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+/* Action Delete Trash Button */
+.btn-action-delete {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-action-delete:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.btn-action-delete:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.trash-icon {
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  transition: transform 0.2s ease;
+}
+
+.btn-action-delete:hover:not(:disabled) .trash-icon {
+  transform: scale(1.1);
+}
+
+/* Action Edit Pencil Button */
+.btn-action-edit {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin-right: 8px;
+}
+
+.btn-action-edit:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.pencil-icon {
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  transition: transform 0.2s ease;
+}
+
+.btn-action-edit:hover .pencil-icon {
+  transform: scale(1.1);
 }

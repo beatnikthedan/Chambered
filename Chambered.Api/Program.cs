@@ -115,10 +115,7 @@ builder.Services.AddApiVersioning(options =>
 })
 .AddOData(options =>
 {
-    options.AddRouteComponents("api/v{version:apiVersion}", routeBuilder =>
-    {
-        routeBuilder.AddSingleton<Microsoft.AspNetCore.OData.Formatter.Serialization.IODataSerializerProvider, Chambered.Api.Configuration.CustomODataSerializerProvider>();
-    });
+    options.AddRouteComponents("api/v{version:apiVersion}");
 })
 .AddODataApiExplorer(options =>
 {
@@ -342,7 +339,7 @@ public class ODataSwaggerFilter : IOperationFilter, IDocumentFilter
 
 public static class SwaggerGenOptionsExtensions
 {
-        public static SwaggerGenOptions CustomOperationIds(this SwaggerGenOptions swaggerGenOptions, Func<string, string, string, string> operationIdFormat)
+    public static SwaggerGenOptions CustomOperationIds(this SwaggerGenOptions swaggerGenOptions, Func<string, string, string, string> operationIdFormat)
     {
         Func<string, string, string, string> operationIdFormat2 = operationIdFormat;
         string controller = string.Empty;
@@ -426,21 +423,20 @@ public static class SwaggerGenOptionsExtensions
     }
 
     public static string Capitalize(this string input)
-{
-    if (input != null)
     {
-        if (input == "")
+        if (input != null)
         {
-            throw new ArgumentException("input cannot be empty", "input");
+            if (input == "")
+            {
+                throw new ArgumentException("input cannot be empty", "input");
+            }
+
+            return $"{input[0].ToString().ToUpper()}{input.AsSpan(1)}";
         }
 
-        return $"{input[0].ToString().ToUpper()}{input.AsSpan(1)}";
+        throw new ArgumentNullException("input");
     }
-
-    throw new ArgumentNullException("input");
 }
-}
-
 
 
 

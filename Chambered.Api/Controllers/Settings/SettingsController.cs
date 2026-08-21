@@ -89,6 +89,53 @@ namespace Chambered.Api.Controllers.Settings
             });
         }
 
+        [HttpPut("users/{id}")]
+        public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserRequest request)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return NotFound();
+
+            // Update email if provided
+            if (!string.IsNullOrEmpty(request.Email))
+            {
+                user.Email = request.Email;
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest(string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+
+            // Update role
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+            var role = request.IsAdmin ? "Admin" : "User";
+            await _userManager.AddToRoleAsync(user, role);
+
+            // Update password if provided
+            if (!string.IsNullOrEmpty(request.Password))
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var resetResult = await _userManager.ResetPasswordAsync(user, token, request.Password);
+                if (!resetResult.Succeeded)
+                {
+                    return BadRequest(string.Join(", ", resetResult.Errors.Select(e => e.Description)));
+                }
+            }
+
+            return Ok(new UserDto
+            {
+                Id = user.Id,
+                Username = user.UserName ?? "",
+                Email = user.Email ?? "",
+                Roles = new List<string> { role },
+                GravatarUrl = Chambered.Api.Controllers.Auth.AuthController.GetGravatarUrl(user.Email)
+            });
+        }
+
         [HttpDelete("users/{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
@@ -140,6 +187,13 @@ namespace Chambered.Api.Controllers.Settings
         public string Username { get; set; }
         public string Password { get; set; }
         public string Email { get; set; }
+        public bool IsAdmin { get; set; }
+    }
+
+    public class UpdateUserRequest
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
         public bool IsAdmin { get; set; }
     }
 
