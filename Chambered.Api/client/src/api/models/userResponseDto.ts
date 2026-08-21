@@ -17,4 +17,8 @@ export interface UserResponseDto {
   lastName?: string | null;
   /** @nullable */
   roles?: string[] | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  gravatarUrl?: string | null;
 }

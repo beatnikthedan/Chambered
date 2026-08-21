@@ -35,18 +35,16 @@ import type {
   ApiKeyCreatedResponseDto,
   ApiKeyDetailDto,
   ApiKeySummaryDto,
+  AppriseSettingsResponseDto,
   ArmoryItem,
   Arsenal,
   AuthenticationResponseDto,
   Caliber,
   ChallengePropertiesDto,
   CreateApiKeyDto,
-  CreateUserRequest,
   CreateUserRequestDto,
   DashboardStatsDto,
   DeleteRolesRoleFromRoleNameParams,
-  DeleteSettingsUserFromIdParams,
-  DeleteUsersRegisterParams,
   DeleteUsersUserFromIdParams,
   Document,
   ExternalIdentityDto,
@@ -95,10 +93,11 @@ import type {
   GetRolesRolesParams,
   GetRolesSystemPermissionsParams,
   GetRolesUpdateRoleClaimsFromRoleNameParams,
-  GetSettingsCreateUserParams,
-  GetSettingsUpdateUserFromIdParams,
-  GetSettingsUsersParams,
+  GetSettingsAppriseSettingsParams,
+  GetSettingsBackupSettingsParams,
+  GetSettingsPasswordPolicyParams,
   GetUsersProfileParams,
+  GetUsersRegisterParams,
   GetUsersUpdateProfileParams,
   GetUsersUpdateUserFromIdParams,
   GetUsersUsersParams,
@@ -109,6 +108,7 @@ import type {
   GetVaultsVaultCategoriesParams,
   LoginRequestDto,
   Manufacturer,
+  PasswordPolicyResponseDto,
   PatchArmoryFromKeyParams,
   PatchArsenalsFromKeyParams,
   PatchCalibersFromKeyParams,
@@ -134,7 +134,6 @@ import type {
   PutVaultsFromKeyParams,
   ResetPasswordRequestDto,
   RoleResponseDto,
-  UpdateUserRequest,
   UpdateUserRequestDto,
   UserResponseDto,
   Vault
@@ -9344,19 +9343,19 @@ export const useGetRolesUpdateRoleClaimsFromRoleName = <TError = ProblemDetails,
       return useMutation(getGetRolesUpdateRoleClaimsFromRoleNameMutationOptions(options), queryClient);
     }
 
-export type getSettingsUsersResponse200 = {
-  data: void
+export type getSettingsPasswordPolicyResponse200 = {
+  data: PasswordPolicyResponseDto
   status: 200
 }
 
-export type getSettingsUsersResponseSuccess = (getSettingsUsersResponse200) & {
+export type getSettingsPasswordPolicyResponseSuccess = (getSettingsPasswordPolicyResponse200) & {
   headers: Headers;
 };
 ;
 
-export type getSettingsUsersResponse = (getSettingsUsersResponseSuccess)
+export type getSettingsPasswordPolicyResponse = (getSettingsPasswordPolicyResponseSuccess)
 
-export const getGetSettingsUsersUrl = (params?: GetSettingsUsersParams,) => {
+export const getGetSettingsPasswordPolicyUrl = (params?: GetSettingsPasswordPolicyParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -9368,12 +9367,12 @@ export const getGetSettingsUsersUrl = (params?: GetSettingsUsersParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/settings/users?${stringifiedParams}` : `/api/settings/users`
+  return stringifiedParams.length > 0 ? `/api/settings/password-policy?${stringifiedParams}` : `/api/settings/password-policy`
 }
 
-export const getSettingsUsers = async (params?: GetSettingsUsersParams, options?: RequestInit): Promise<getSettingsUsersResponse> => {
+export const getSettingsPasswordPolicy = async (params?: GetSettingsPasswordPolicyParams, options?: RequestInit): Promise<getSettingsPasswordPolicyResponse> => {
 
-  const res = await fetch(getGetSettingsUsersUrl(params),
+  const res = await fetch(getGetSettingsPasswordPolicyUrl(params),
   {
     ...options,
     method: 'GET'
@@ -9385,74 +9384,74 @@ export const getSettingsUsers = async (params?: GetSettingsUsersParams, options?
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getSettingsUsersResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as getSettingsUsersResponse
+  const data: getSettingsPasswordPolicyResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getSettingsPasswordPolicyResponse
 }
 
 
 
 
 
-export const getGetSettingsUsersQueryKey = (params?: GetSettingsUsersParams,) => {
+export const getGetSettingsPasswordPolicyQueryKey = (params?: GetSettingsPasswordPolicyParams,) => {
     return [
-    `/api/settings/users`, ...(params ? [params] : [])
+    `/api/settings/password-policy`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetSettingsUsersQueryOptions = <TData = Awaited<ReturnType<typeof getSettingsUsers>>, TError = unknown>(params?: GetSettingsUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsUsers>>, TError, TData>>, fetch?: RequestInit}
+export const getGetSettingsPasswordPolicyQueryOptions = <TData = Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError = unknown>(params?: GetSettingsPasswordPolicyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSettingsUsersQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsPasswordPolicyQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettingsUsers>>> = ({ signal }) => getSettingsUsers(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettingsPasswordPolicy>>> = ({ signal }) => getSettingsPasswordPolicy(params, { signal, ...fetchOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettingsUsers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetSettingsUsersQueryResult = NonNullable<Awaited<ReturnType<typeof getSettingsUsers>>>
-export type GetSettingsUsersQueryError = unknown
+export type GetSettingsPasswordPolicyQueryResult = NonNullable<Awaited<ReturnType<typeof getSettingsPasswordPolicy>>>
+export type GetSettingsPasswordPolicyQueryError = unknown
 
 
-export function useGetSettingsUsers<TData = Awaited<ReturnType<typeof getSettingsUsers>>, TError = unknown>(
- params: undefined |  GetSettingsUsersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsUsers>>, TError, TData>> & Pick<
+export function useGetSettingsPasswordPolicy<TData = Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError = unknown>(
+ params: undefined |  GetSettingsPasswordPolicyParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSettingsUsers>>,
+          Awaited<ReturnType<typeof getSettingsPasswordPolicy>>,
           TError,
-          Awaited<ReturnType<typeof getSettingsUsers>>
+          Awaited<ReturnType<typeof getSettingsPasswordPolicy>>
         > , 'initialData'
       >, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSettingsUsers<TData = Awaited<ReturnType<typeof getSettingsUsers>>, TError = unknown>(
- params?: GetSettingsUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsUsers>>, TError, TData>> & Pick<
+export function useGetSettingsPasswordPolicy<TData = Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError = unknown>(
+ params?: GetSettingsPasswordPolicyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getSettingsUsers>>,
+          Awaited<ReturnType<typeof getSettingsPasswordPolicy>>,
           TError,
-          Awaited<ReturnType<typeof getSettingsUsers>>
+          Awaited<ReturnType<typeof getSettingsPasswordPolicy>>
         > , 'initialData'
       >, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSettingsUsers<TData = Awaited<ReturnType<typeof getSettingsUsers>>, TError = unknown>(
- params?: GetSettingsUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsUsers>>, TError, TData>>, fetch?: RequestInit}
+export function useGetSettingsPasswordPolicy<TData = Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError = unknown>(
+ params?: GetSettingsPasswordPolicyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetSettingsUsers<TData = Awaited<ReturnType<typeof getSettingsUsers>>, TError = unknown>(
- params?: GetSettingsUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsUsers>>, TError, TData>>, fetch?: RequestInit}
+export function useGetSettingsPasswordPolicy<TData = Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError = unknown>(
+ params?: GetSettingsPasswordPolicyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsPasswordPolicy>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetSettingsUsersQueryOptions(params,options)
+  const queryOptions = getGetSettingsPasswordPolicyQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -9465,19 +9464,19 @@ export function useGetSettingsUsers<TData = Awaited<ReturnType<typeof getSetting
 
 
 
-export type getSettingsCreateUserResponse200 = {
-  data: void
+export type getSettingsAppriseSettingsResponse200 = {
+  data: AppriseSettingsResponseDto
   status: 200
 }
 
-export type getSettingsCreateUserResponseSuccess = (getSettingsCreateUserResponse200) & {
+export type getSettingsAppriseSettingsResponseSuccess = (getSettingsAppriseSettingsResponse200) & {
   headers: Headers;
 };
 ;
 
-export type getSettingsCreateUserResponse = (getSettingsCreateUserResponseSuccess)
+export type getSettingsAppriseSettingsResponse = (getSettingsAppriseSettingsResponseSuccess)
 
-export const getGetSettingsCreateUserUrl = (params?: GetSettingsCreateUserParams,) => {
+export const getGetSettingsAppriseSettingsUrl = (params?: GetSettingsAppriseSettingsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -9489,88 +9488,116 @@ export const getGetSettingsCreateUserUrl = (params?: GetSettingsCreateUserParams
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/settings/users?${stringifiedParams}` : `/api/settings/users`
+  return stringifiedParams.length > 0 ? `/api/settings/apprise-settings?${stringifiedParams}` : `/api/settings/apprise-settings`
 }
 
-export const getSettingsCreateUser = async (createUserRequest?: CreateUserRequest,
-    params?: GetSettingsCreateUserParams, options?: RequestInit): Promise<getSettingsCreateUserResponse> => {
+export const getSettingsAppriseSettings = async (params?: GetSettingsAppriseSettingsParams, options?: RequestInit): Promise<getSettingsAppriseSettingsResponse> => {
 
-  const res = await fetch(getGetSettingsCreateUserUrl(params),
+  const res = await fetch(getGetSettingsAppriseSettingsUrl(params),
   {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json;odata.metadata=minimal;odata.streaming=true', ...options?.headers },
-    body: JSON.stringify(createUserRequest)
+    method: 'GET'
+
+
   }
 )
 
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getSettingsCreateUserResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as getSettingsCreateUserResponse
+  const data: getSettingsAppriseSettingsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getSettingsAppriseSettingsResponse
 }
 
 
 
 
 
-export const getGetSettingsCreateUserMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getSettingsCreateUser>>, TError,{data?: CreateUserRequest;params?: GetSettingsCreateUserParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof getSettingsCreateUser>>, TError,{data?: CreateUserRequest;params?: GetSettingsCreateUserParams}, TContext> => {
-
-const mutationKey = ['getSettingsCreateUser'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof getSettingsCreateUser>>, {data?: CreateUserRequest;params?: GetSettingsCreateUserParams}> = (props) => {
-          const {data,params} = props ?? {};
-
-          return  getSettingsCreateUser(data,params,fetchOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type GetSettingsCreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof getSettingsCreateUser>>>
-    export type GetSettingsCreateUserMutationBody = CreateUserRequest | undefined
-    export type GetSettingsCreateUserMutationError = unknown
-
-    export const useGetSettingsCreateUser = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getSettingsCreateUser>>, TError,{data?: CreateUserRequest;params?: GetSettingsCreateUserParams}, TContext>, fetch?: RequestInit}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof getSettingsCreateUser>>,
-        TError,
-        {data?: CreateUserRequest;params?: GetSettingsCreateUserParams},
-        TContext
-      > => {
-      return useMutation(getGetSettingsCreateUserMutationOptions(options), queryClient);
+export const getGetSettingsAppriseSettingsQueryKey = (params?: GetSettingsAppriseSettingsParams,) => {
+    return [
+    `/api/settings/apprise-settings`, ...(params ? [params] : [])
+    ] as const;
     }
 
-export type getSettingsUpdateUserFromIdResponse200 = {
-  data: void
+
+export const getGetSettingsAppriseSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError = unknown>(params?: GetSettingsAppriseSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsAppriseSettingsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettingsAppriseSettings>>> = ({ signal }) => getSettingsAppriseSettings(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSettingsAppriseSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getSettingsAppriseSettings>>>
+export type GetSettingsAppriseSettingsQueryError = unknown
+
+
+export function useGetSettingsAppriseSettings<TData = Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError = unknown>(
+ params: undefined |  GetSettingsAppriseSettingsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsAppriseSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsAppriseSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsAppriseSettings<TData = Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError = unknown>(
+ params?: GetSettingsAppriseSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsAppriseSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsAppriseSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsAppriseSettings<TData = Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError = unknown>(
+ params?: GetSettingsAppriseSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetSettingsAppriseSettings<TData = Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError = unknown>(
+ params?: GetSettingsAppriseSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsAppriseSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSettingsAppriseSettingsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getSettingsBackupSettingsResponse200 = {
+  data: AppriseSettingsResponseDto
   status: 200
 }
 
-export type getSettingsUpdateUserFromIdResponseSuccess = (getSettingsUpdateUserFromIdResponse200) & {
+export type getSettingsBackupSettingsResponseSuccess = (getSettingsBackupSettingsResponse200) & {
   headers: Headers;
 };
 ;
 
-export type getSettingsUpdateUserFromIdResponse = (getSettingsUpdateUserFromIdResponseSuccess)
+export type getSettingsBackupSettingsResponse = (getSettingsBackupSettingsResponseSuccess)
 
-export const getGetSettingsUpdateUserFromIdUrl = (id: string,
-    params?: GetSettingsUpdateUserFromIdParams,) => {
+export const getGetSettingsBackupSettingsUrl = (params?: GetSettingsBackupSettingsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -9582,110 +9609,15 @@ export const getGetSettingsUpdateUserFromIdUrl = (id: string,
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/settings/users/${id}?${stringifiedParams}` : `/api/settings/users/${id}`
+  return stringifiedParams.length > 0 ? `/api/settings/backup-settings?${stringifiedParams}` : `/api/settings/backup-settings`
 }
 
-export const getSettingsUpdateUserFromId = async (id: string,
-    updateUserRequest?: UpdateUserRequest,
-    params?: GetSettingsUpdateUserFromIdParams, options?: RequestInit): Promise<getSettingsUpdateUserFromIdResponse> => {
+export const getSettingsBackupSettings = async (params?: GetSettingsBackupSettingsParams, options?: RequestInit): Promise<getSettingsBackupSettingsResponse> => {
 
-  const res = await fetch(getGetSettingsUpdateUserFromIdUrl(id,params),
+  const res = await fetch(getGetSettingsBackupSettingsUrl(params),
   {
     ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json;odata.metadata=minimal;odata.streaming=true', ...options?.headers },
-    body: JSON.stringify(updateUserRequest)
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getSettingsUpdateUserFromIdResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as getSettingsUpdateUserFromIdResponse
-}
-
-
-
-
-
-export const getGetSettingsUpdateUserFromIdMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getSettingsUpdateUserFromId>>, TError,{id: string;data?: UpdateUserRequest;params?: GetSettingsUpdateUserFromIdParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof getSettingsUpdateUserFromId>>, TError,{id: string;data?: UpdateUserRequest;params?: GetSettingsUpdateUserFromIdParams}, TContext> => {
-
-const mutationKey = ['getSettingsUpdateUserFromId'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof getSettingsUpdateUserFromId>>, {id: string;data?: UpdateUserRequest;params?: GetSettingsUpdateUserFromIdParams}> = (props) => {
-          const {id,data,params} = props ?? {};
-
-          return  getSettingsUpdateUserFromId(id,data,params,fetchOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type GetSettingsUpdateUserFromIdMutationResult = NonNullable<Awaited<ReturnType<typeof getSettingsUpdateUserFromId>>>
-    export type GetSettingsUpdateUserFromIdMutationBody = UpdateUserRequest | undefined
-    export type GetSettingsUpdateUserFromIdMutationError = unknown
-
-    export const useGetSettingsUpdateUserFromId = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getSettingsUpdateUserFromId>>, TError,{id: string;data?: UpdateUserRequest;params?: GetSettingsUpdateUserFromIdParams}, TContext>, fetch?: RequestInit}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof getSettingsUpdateUserFromId>>,
-        TError,
-        {id: string;data?: UpdateUserRequest;params?: GetSettingsUpdateUserFromIdParams},
-        TContext
-      > => {
-      return useMutation(getGetSettingsUpdateUserFromIdMutationOptions(options), queryClient);
-    }
-
-export type deleteSettingsUserFromIdResponse200 = {
-  data: void
-  status: 200
-}
-
-export type deleteSettingsUserFromIdResponseSuccess = (deleteSettingsUserFromIdResponse200) & {
-  headers: Headers;
-};
-;
-
-export type deleteSettingsUserFromIdResponse = (deleteSettingsUserFromIdResponseSuccess)
-
-export const getDeleteSettingsUserFromIdUrl = (id: string,
-    params?: DeleteSettingsUserFromIdParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/settings/users/${id}?${stringifiedParams}` : `/api/settings/users/${id}`
-}
-
-export const deleteSettingsUserFromId = async (id: string,
-    params?: DeleteSettingsUserFromIdParams, options?: RequestInit): Promise<deleteSettingsUserFromIdResponse> => {
-
-  const res = await fetch(getDeleteSettingsUserFromIdUrl(id,params),
-  {
-    ...options,
-    method: 'DELETE'
+    method: 'GET'
 
 
   }
@@ -9694,76 +9626,106 @@ export const deleteSettingsUserFromId = async (id: string,
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: deleteSettingsUserFromIdResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as deleteSettingsUserFromIdResponse
+  const data: getSettingsBackupSettingsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getSettingsBackupSettingsResponse
 }
 
 
 
 
 
-export const getDeleteSettingsUserFromIdMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSettingsUserFromId>>, TError,{id: string;params?: DeleteSettingsUserFromIdParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteSettingsUserFromId>>, TError,{id: string;params?: DeleteSettingsUserFromIdParams}, TContext> => {
-
-const mutationKey = ['deleteSettingsUserFromId'];
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSettingsUserFromId>>, {id: string;params?: DeleteSettingsUserFromIdParams}> = (props) => {
-          const {id,params} = props ?? {};
-
-          return  deleteSettingsUserFromId(id,params,fetchOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteSettingsUserFromIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSettingsUserFromId>>>
-
-    export type DeleteSettingsUserFromIdMutationError = unknown
-
-    export const useDeleteSettingsUserFromId = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSettingsUserFromId>>, TError,{id: string;params?: DeleteSettingsUserFromIdParams}, TContext>, fetch?: RequestInit}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteSettingsUserFromId>>,
-        TError,
-        {id: string;params?: DeleteSettingsUserFromIdParams},
-        TContext
-      > => {
-      return useMutation(getDeleteSettingsUserFromIdMutationOptions(options), queryClient);
+export const getGetSettingsBackupSettingsQueryKey = (params?: GetSettingsBackupSettingsParams,) => {
+    return [
+    `/api/settings/backup-settings`, ...(params ? [params] : [])
+    ] as const;
     }
 
-export type deleteUsersRegisterResponse200 = {
+
+export const getGetSettingsBackupSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError = unknown>(params?: GetSettingsBackupSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsBackupSettingsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettingsBackupSettings>>> = ({ signal }) => getSettingsBackupSettings(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSettingsBackupSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getSettingsBackupSettings>>>
+export type GetSettingsBackupSettingsQueryError = unknown
+
+
+export function useGetSettingsBackupSettings<TData = Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError = unknown>(
+ params: undefined |  GetSettingsBackupSettingsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsBackupSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsBackupSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsBackupSettings<TData = Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError = unknown>(
+ params?: GetSettingsBackupSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsBackupSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsBackupSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsBackupSettings<TData = Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError = unknown>(
+ params?: GetSettingsBackupSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetSettingsBackupSettings<TData = Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError = unknown>(
+ params?: GetSettingsBackupSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsBackupSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSettingsBackupSettingsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getUsersRegisterResponse200 = {
   data: UserResponseDto
   status: 200
 }
 
-export type deleteUsersRegisterResponse400 = {
+export type getUsersRegisterResponse400 = {
   data: ProblemDetails
   status: 400
 }
 
-export type deleteUsersRegisterResponseSuccess = (deleteUsersRegisterResponse200) & {
+export type getUsersRegisterResponseSuccess = (getUsersRegisterResponse200) & {
   headers: Headers;
 };
-export type deleteUsersRegisterResponseError = (deleteUsersRegisterResponse400) & {
+export type getUsersRegisterResponseError = (getUsersRegisterResponse400) & {
   headers: Headers;
 };
 
-export type deleteUsersRegisterResponse = (deleteUsersRegisterResponseSuccess | deleteUsersRegisterResponseError)
+export type getUsersRegisterResponse = (getUsersRegisterResponseSuccess | getUsersRegisterResponseError)
 
-export const getDeleteUsersRegisterUrl = (params?: DeleteUsersRegisterParams,) => {
+export const getGetUsersRegisterUrl = (params?: GetUsersRegisterParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -9781,10 +9743,10 @@ export const getDeleteUsersRegisterUrl = (params?: DeleteUsersRegisterParams,) =
 /**
  * @summary Registers a brand new user account within the Chambered identity store.
  */
-export const deleteUsersRegister = async (createUserRequestDto?: CreateUserRequestDto,
-    params?: DeleteUsersRegisterParams, options?: RequestInit): Promise<deleteUsersRegisterResponse> => {
+export const getUsersRegister = async (createUserRequestDto?: CreateUserRequestDto,
+    params?: GetUsersRegisterParams, options?: RequestInit): Promise<getUsersRegisterResponse> => {
 
-  const res = await fetch(getDeleteUsersRegisterUrl(params),
+  const res = await fetch(getGetUsersRegisterUrl(params),
   {
     ...options,
     method: 'POST',
@@ -9796,19 +9758,19 @@ export const deleteUsersRegister = async (createUserRequestDto?: CreateUserReque
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: deleteUsersRegisterResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as deleteUsersRegisterResponse
+  const data: getUsersRegisterResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getUsersRegisterResponse
 }
 
 
 
 
 
-export const getDeleteUsersRegisterMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersRegister>>, TError,{data?: CreateUserRequestDto;params?: DeleteUsersRegisterParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteUsersRegister>>, TError,{data?: CreateUserRequestDto;params?: DeleteUsersRegisterParams}, TContext> => {
+export const getGetUsersRegisterMutationOptions = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getUsersRegister>>, TError,{data?: CreateUserRequestDto;params?: GetUsersRegisterParams}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof getUsersRegister>>, TError,{data?: CreateUserRequestDto;params?: GetUsersRegisterParams}, TContext> => {
 
-const mutationKey = ['deleteUsersRegister'];
+const mutationKey = ['getUsersRegister'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -9818,10 +9780,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUsersRegister>>, {data?: CreateUserRequestDto;params?: DeleteUsersRegisterParams}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof getUsersRegister>>, {data?: CreateUserRequestDto;params?: GetUsersRegisterParams}> = (props) => {
           const {data,params} = props ?? {};
 
-          return  deleteUsersRegister(data,params,fetchOptions)
+          return  getUsersRegister(data,params,fetchOptions)
         }
 
 
@@ -9831,22 +9793,22 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DeleteUsersRegisterMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUsersRegister>>>
-    export type DeleteUsersRegisterMutationBody = CreateUserRequestDto | undefined
-    export type DeleteUsersRegisterMutationError = ProblemDetails
+    export type GetUsersRegisterMutationResult = NonNullable<Awaited<ReturnType<typeof getUsersRegister>>>
+    export type GetUsersRegisterMutationBody = CreateUserRequestDto | undefined
+    export type GetUsersRegisterMutationError = ProblemDetails
 
     /**
  * @summary Registers a brand new user account within the Chambered identity store.
  */
-export const useDeleteUsersRegister = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersRegister>>, TError,{data?: CreateUserRequestDto;params?: DeleteUsersRegisterParams}, TContext>, fetch?: RequestInit}
+export const useGetUsersRegister = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getUsersRegister>>, TError,{data?: CreateUserRequestDto;params?: GetUsersRegisterParams}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteUsersRegister>>,
+        Awaited<ReturnType<typeof getUsersRegister>>,
         TError,
-        {data?: CreateUserRequestDto;params?: DeleteUsersRegisterParams},
+        {data?: CreateUserRequestDto;params?: GetUsersRegisterParams},
         TContext
       > => {
-      return useMutation(getDeleteUsersRegisterMutationOptions(options), queryClient);
+      return useMutation(getGetUsersRegisterMutationOptions(options), queryClient);
     }
 
 export type getUsersProfileResponse200 = {
@@ -11549,7 +11511,7 @@ export const useDeleteVaultsFromKey = <TError = void,
     }
 
 
-export const getAccountLoginResponseMock = (overrideResponse: Partial<Extract<AuthenticationResponseDto, object>> = {}): AuthenticationResponseDto => ({userId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), accessToken: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), refreshToken: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), expiresInSeconds: faker.helpers.arrayElement([faker.number.int(), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), permissions: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), ...overrideResponse})
+export const getAccountLoginResponseMock = (overrideResponse: Partial<Extract<AuthenticationResponseDto, object>> = {}): AuthenticationResponseDto => ({userId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), accessToken: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), refreshToken: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), expiresInSeconds: faker.helpers.arrayElement([faker.number.int(), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), permissions: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
 
 export const getAccountPrepareChallengeResponseMock = (overrideResponse: Partial<Extract<ChallengePropertiesDto, object>> = {}): ChallengePropertiesDto => ({scheme: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), redirectUri: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), properties: faker.helpers.arrayElement([faker.helpers.arrayElement([{
         [faker.string.alphanumeric(5)]: faker.string.alpha({length: {min: 10, max: 20}})
@@ -11623,11 +11585,17 @@ export const getGetRolesRolesResponseMock = (): RoleResponseDto[] => (Array.from
 
 export const getGetRolesRoleClaimsFromRoleNameResponseMock = (): string[] => (Array.from({length: faker.number.int({min: 1, max: 10})}, () => faker.word.sample()))
 
-export const getDeleteUsersRegisterResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), ...overrideResponse})
+export const getGetSettingsPasswordPolicyResponseMock = (overrideResponse: Partial<Extract<PasswordPolicyResponseDto, object>> = {}): PasswordPolicyResponseDto => ({minLength: faker.helpers.arrayElement([faker.number.int(), undefined]), requireUpper: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), requireLower: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), requireNumbers: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), requireSpecial: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
 
-export const getGetUsersProfileResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), ...overrideResponse})
+export const getGetSettingsAppriseSettingsResponseMock = (overrideResponse: Partial<Extract<AppriseSettingsResponseDto, object>> = {}): AppriseSettingsResponseDto => ({allowInvalidCertificates: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), hostUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notificationKey: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), targetUrls: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), timeoutSeconds: faker.helpers.arrayElement([faker.number.int(), undefined]), ...overrideResponse})
 
-export const getGetUsersUsersResponseMock = (): UserResponseDto[] => (Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined])})))
+export const getGetSettingsBackupSettingsResponseMock = (overrideResponse: Partial<Extract<AppriseSettingsResponseDto, object>> = {}): AppriseSettingsResponseDto => ({allowInvalidCertificates: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), hostUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notificationKey: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), targetUrls: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), timeoutSeconds: faker.helpers.arrayElement([faker.number.int(), undefined]), ...overrideResponse})
+
+export const getGetUsersRegisterResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
+
+export const getGetUsersProfileResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
+
+export const getGetUsersUsersResponseMock = (): UserResponseDto[] => (Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined])})))
 
 export const getGetVaultsResponseMock = (): Vault[] => (Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), productId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), product: faker.helpers.arrayElement([{lockType: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7,8] as const), undefined]), isCapacityLimited: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), maxCapacity: faker.helpers.arrayElement([faker.number.int(), undefined]), hasBattery: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), batteryType: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7,8,9] as const), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.number.int(), undefined]), productType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), partNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), sku: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), manufacturerId: faker.helpers.arrayElement([faker.number.int(), undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageContentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), manufacturer: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), streetAddress: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), city: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), stateOrProvince: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), postalCode: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), country: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.number.int(), undefined]), productType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), partNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), sku: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), manufacturerId: faker.helpers.arrayElement([faker.number.int(), undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageContentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), documents: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), title: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), type: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7] as const), undefined]), fileData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), contentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileSizeBytes: faker.helpers.arrayElement([faker.number.int(), undefined]), productId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined])})), undefined]), armoryItems: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), itemType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), productId: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), purchasePrice: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), purchaseDate: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), estimatedValue: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), condition: faker.helpers.arrayElement([faker.helpers.arrayElement([0,50,60,70,80,90,95,98,100] as const), undefined]), ownerId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), owner: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), beneficiaryId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), vaultId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), arsenalId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), parentItemId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), imageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notesMarkdown: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), beneficiary: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), arsenal: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), iconName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), colorHex: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), users: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])})), undefined]), vaults: faker.helpers.arrayElement([[], undefined]), armoryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), mountedAccessories: faker.helpers.arrayElement([[], undefined])})), undefined])})), undefined])}, undefined]), documents: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), title: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), type: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7] as const), undefined]), fileData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), contentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileSizeBytes: faker.helpers.arrayElement([faker.number.int(), undefined]), productId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), product: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.number.int(), undefined]), productType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), partNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), sku: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), manufacturerId: faker.helpers.arrayElement([faker.number.int(), undefined]), manufacturer: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), streetAddress: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), city: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), stateOrProvince: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), postalCode: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), country: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([[], undefined])}, undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageContentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), documents: faker.helpers.arrayElement([[], undefined]), armoryItems: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), itemType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), productId: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), purchasePrice: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), purchaseDate: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), estimatedValue: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), condition: faker.helpers.arrayElement([faker.helpers.arrayElement([0,50,60,70,80,90,95,98,100] as const), undefined]), ownerId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), owner: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), beneficiaryId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), vaultId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), arsenalId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), parentItemId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), imageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notesMarkdown: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), beneficiary: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), arsenal: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), iconName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), colorHex: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), users: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])})), undefined]), vaults: faker.helpers.arrayElement([[], undefined]), armoryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), mountedAccessories: faker.helpers.arrayElement([[], undefined])})), undefined])}, undefined])})), undefined]), armoryItems: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), itemType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), productId: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), purchasePrice: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), purchaseDate: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), estimatedValue: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), condition: faker.helpers.arrayElement([faker.helpers.arrayElement([0,50,60,70,80,90,95,98,100] as const), undefined]), ownerId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), owner: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), beneficiaryId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), vaultId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), arsenalId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), parentItemId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), imageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notesMarkdown: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.number.int(), undefined]), productType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), partNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), sku: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), manufacturerId: faker.helpers.arrayElement([faker.number.int(), undefined]), manufacturer: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), streetAddress: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), city: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), stateOrProvince: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), postalCode: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), country: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([[], undefined])}, undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageContentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), documents: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), title: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), type: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7] as const), undefined]), fileData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), contentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileSizeBytes: faker.helpers.arrayElement([faker.number.int(), undefined]), productId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined])})), undefined]), armoryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), beneficiary: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), arsenal: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), iconName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), colorHex: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), users: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])})), undefined]), vaults: faker.helpers.arrayElement([[], undefined]), armoryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), mountedAccessories: faker.helpers.arrayElement([[], undefined])})), undefined])}, undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), arsenalId: faker.helpers.arrayElement([faker.number.int(), undefined]), arsenal: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), iconName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), colorHex: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), users: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), itemType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), productId: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), purchasePrice: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), purchaseDate: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), estimatedValue: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), condition: faker.helpers.arrayElement([faker.helpers.arrayElement([0,50,60,70,80,90,95,98,100] as const), undefined]), ownerId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), beneficiaryId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), vaultId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), arsenalId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), parentItemId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), imageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notesMarkdown: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.number.int(), undefined]), productType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), partNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), sku: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), manufacturerId: faker.helpers.arrayElement([faker.number.int(), undefined]), manufacturer: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), streetAddress: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), city: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), stateOrProvince: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), postalCode: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), country: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([[], undefined])}, undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageContentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), documents: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), title: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), type: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7] as const), undefined]), fileData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), contentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileSizeBytes: faker.helpers.arrayElement([faker.number.int(), undefined]), productId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined])})), undefined]), armoryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), mountedAccessories: faker.helpers.arrayElement([[], undefined])})), undefined]), benificiaryItems: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), itemType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), productId: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), purchasePrice: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), purchaseDate: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), estimatedValue: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), condition: faker.helpers.arrayElement([faker.helpers.arrayElement([0,50,60,70,80,90,95,98,100] as const), undefined]), ownerId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), beneficiaryId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), vaultId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), arsenalId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), parentItemId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), imageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notesMarkdown: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.number.int(), undefined]), productType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), partNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), sku: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), manufacturerId: faker.helpers.arrayElement([faker.number.int(), undefined]), manufacturer: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), streetAddress: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), city: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), stateOrProvince: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), postalCode: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), country: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([[], undefined])}, undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageContentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), documents: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), title: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), type: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7] as const), undefined]), fileData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), contentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileSizeBytes: faker.helpers.arrayElement([faker.number.int(), undefined]), productId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined])})), undefined]), armoryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), mountedAccessories: faker.helpers.arrayElement([[], undefined])})), undefined])})), undefined]), vaults: faker.helpers.arrayElement([[], undefined]), armoryItems: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), itemType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), productId: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), purchasePrice: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), purchaseDate: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), estimatedValue: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), condition: faker.helpers.arrayElement([faker.helpers.arrayElement([0,50,60,70,80,90,95,98,100] as const), undefined]), ownerId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), owner: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), beneficiaryId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), vaultId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), arsenalId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), parentItemId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), imageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notesMarkdown: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.number.int(), undefined]), productType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), partNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), sku: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), manufacturerId: faker.helpers.arrayElement([faker.number.int(), undefined]), manufacturer: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), streetAddress: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), city: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), stateOrProvince: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), postalCode: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), country: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([[], undefined])}, undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageContentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), documents: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), title: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), type: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7] as const), undefined]), fileData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), contentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileSizeBytes: faker.helpers.arrayElement([faker.number.int(), undefined]), productId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined])})), undefined]), armoryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), beneficiary: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), mountedAccessories: faker.helpers.arrayElement([[], undefined])})), undefined])}, undefined]), vaultCategory: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7,8,9,10] as const), undefined]), parentVaultId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), encryptedPasscode: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), encryptionIv: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), passcodeHint: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), backupKeyLocation: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), hasDehumidifier: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), dehumidifierLastServiced: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), targetMaxHumidityPercent: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), currentCapacity: faker.helpers.arrayElement([faker.number.int(), undefined]), batteryLastChangedDate: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), batteryExpirationDate: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), childVaults: faker.helpers.arrayElement([[], undefined]), armoryItems: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), itemType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), productId: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), purchasePrice: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), purchaseDate: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), estimatedValue: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({fractionDigits: 2}), null]), undefined]), condition: faker.helpers.arrayElement([faker.helpers.arrayElement([0,50,60,70,80,90,95,98,100] as const), undefined]), ownerId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), owner: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), beneficiaryId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), vaultId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), arsenalId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), parentItemId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined]), imageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notesMarkdown: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([{name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.number.int(), undefined]), productType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), partNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), sku: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), manufacturerId: faker.helpers.arrayElement([faker.number.int(), undefined]), manufacturer: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), streetAddress: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), city: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), stateOrProvince: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), postalCode: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), country: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), product: faker.helpers.arrayElement([[], undefined])}, undefined]), webPageUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), imageContentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), documents: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement([faker.number.int(), undefined]), title: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), type: faker.helpers.arrayElement([faker.helpers.arrayElement([0,1,2,3,4,5,6,7] as const), undefined]), fileData: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), contentType: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), fileSizeBytes: faker.helpers.arrayElement([faker.number.int(), undefined]), productId: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.int(), null]), undefined])})), undefined]), armoryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), beneficiary: faker.helpers.arrayElement([{firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), arsenal: faker.helpers.arrayElement([{id: faker.helpers.arrayElement([faker.number.int(), undefined]), name: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), description: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), iconName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), colorHex: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), users: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({firstName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), lastName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedUserName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), normalizedEmail: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), emailConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), passwordHash: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), securityStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), concurrencyStamp: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumber: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), phoneNumberConfirmed: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), twoFactorEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), lockoutEnd: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 19) + 'Z', null]), undefined]), lockoutEnabled: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), accessFailedCount: faker.helpers.arrayElement([faker.number.int(), undefined]), ownedItems: faker.helpers.arrayElement([[], undefined]), benificiaryItems: faker.helpers.arrayElement([[], undefined])})), undefined]), vaults: faker.helpers.arrayElement([[], undefined]), armoryItems: faker.helpers.arrayElement([[], undefined])}, undefined]), mountedAccessories: faker.helpers.arrayElement([[], undefined])})), undefined])})))
 
@@ -12460,53 +12428,49 @@ export const getGetRolesUpdateRoleClaimsFromRoleNameMockHandler = (overrideRespo
   }, options)
 }
 
-export const getGetSettingsUsersMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.get('*/api/settings/users', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+export const getGetSettingsPasswordPolicyMockHandler = (overrideResponse?: PasswordPolicyResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PasswordPolicyResponseDto> | PasswordPolicyResponseDto), options?: RequestHandlerOptions) => {
+  return http.get('*/api/settings/password-policy', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
-    return new HttpResponse(null,
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSettingsPasswordPolicyResponseMock(),
       { status: 200
       })
   }, options)
 }
 
-export const getGetSettingsCreateUserMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.post('*/api/settings/users', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+export const getGetSettingsAppriseSettingsMockHandler = (overrideResponse?: AppriseSettingsResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<AppriseSettingsResponseDto> | AppriseSettingsResponseDto), options?: RequestHandlerOptions) => {
+  return http.get('*/api/settings/apprise-settings', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
-    return new HttpResponse(null,
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSettingsAppriseSettingsResponseMock(),
       { status: 200
       })
   }, options)
 }
 
-export const getGetSettingsUpdateUserFromIdMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.put('*/api/settings/users/:id', async (info: Parameters<Parameters<typeof http.put>[1]>[0]) => {
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+export const getGetSettingsBackupSettingsMockHandler = (overrideResponse?: AppriseSettingsResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<AppriseSettingsResponseDto> | AppriseSettingsResponseDto), options?: RequestHandlerOptions) => {
+  return http.get('*/api/settings/backup-settings', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
-    return new HttpResponse(null,
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSettingsBackupSettingsResponseMock(),
       { status: 200
       })
   }, options)
 }
 
-export const getDeleteSettingsUserFromIdMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.delete('*/api/settings/users/:id', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-
-    return new HttpResponse(null,
-      { status: 200
-      })
-  }, options)
-}
-
-export const getDeleteUsersRegisterMockHandler = (overrideResponse?: UserResponseDto | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserResponseDto> | UserResponseDto), options?: RequestHandlerOptions) => {
+export const getGetUsersRegisterMockHandler = (overrideResponse?: UserResponseDto | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserResponseDto> | UserResponseDto), options?: RequestHandlerOptions) => {
   return http.post('*/api/Users/register', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getDeleteUsersRegisterResponseMock(),
+    : getGetUsersRegisterResponseMock(),
       { status: 200
       })
   }, options)
@@ -12739,11 +12703,10 @@ export const getChamberedAPIMock = () => [
   getDeleteRolesRoleFromRoleNameMockHandler(),
   getGetRolesRoleClaimsFromRoleNameMockHandler(),
   getGetRolesUpdateRoleClaimsFromRoleNameMockHandler(),
-  getGetSettingsUsersMockHandler(),
-  getGetSettingsCreateUserMockHandler(),
-  getGetSettingsUpdateUserFromIdMockHandler(),
-  getDeleteSettingsUserFromIdMockHandler(),
-  getDeleteUsersRegisterMockHandler(),
+  getGetSettingsPasswordPolicyMockHandler(),
+  getGetSettingsAppriseSettingsMockHandler(),
+  getGetSettingsBackupSettingsMockHandler(),
+  getGetUsersRegisterMockHandler(),
   getGetUsersProfileMockHandler(),
   getGetUsersUpdateProfileMockHandler(),
   getGetUsersUsersMockHandler(),

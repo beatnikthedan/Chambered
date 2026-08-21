@@ -15,6 +15,7 @@ namespace Chambered.Infrastructure.Services.Identity
     public class IdentityService : IIdentityService
     {
         private readonly UserManager<ChamberedUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ChamberedDbContext _db;
         private readonly ILogger<IdentityService> _logger;
 
@@ -23,12 +24,25 @@ namespace Chambered.Infrastructure.Services.Identity
         /// </summary>
         public IdentityService(
             UserManager<ChamberedUser> userManager,
+            RoleManager<IdentityRole>? roleManager,
             ChamberedDbContext db,
             ILogger<IdentityService> logger)
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            _roleManager = roleManager!;
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IdentityService"/> class without a RoleManager (backward-compatible overload for tests).
+        /// </summary>
+        public IdentityService(
+            UserManager<ChamberedUser> userManager,
+            ChamberedDbContext db,
+            ILogger<IdentityService> logger)
+            : this(userManager, null!, db, logger)
+        {
         }
 
         /// <inheritdoc/>
@@ -64,6 +78,8 @@ namespace Chambered.Infrastructure.Services.Identity
                 ? request.Password
                 : Guid.NewGuid().ToString("N") + "1!Aa";
 
+            var isFirstUser = !await _db.Users.AnyAsync().ConfigureAwait(false);
+
             var createResult = await _userManager.CreateAsync(user, passwordToUse).ConfigureAwait(false);
 
             if (!createResult.Succeeded)
@@ -75,9 +91,28 @@ namespace Chambered.Infrastructure.Services.Identity
 
             try
             {
+                var rolesToAssign = new List<string>();
                 if (request.Roles != null && request.Roles.Any())
                 {
-                    var roleResult = await _userManager.AddToRolesAsync(user, request.Roles).ConfigureAwait(false);
+                    rolesToAssign.AddRange(request.Roles);
+                }
+
+                if (isFirstUser && !rolesToAssign.Contains("Admin"))
+                {
+                    rolesToAssign.Add("Admin");
+                }
+
+                if (rolesToAssign.Any() && _roleManager != null)
+                {
+                    foreach (var roleName in rolesToAssign)
+                    {
+                        if (!await _roleManager.RoleExistsAsync(roleName).ConfigureAwait(false))
+                        {
+                            await _roleManager.CreateAsync(new IdentityRole(roleName)).ConfigureAwait(false);
+                        }
+                    }
+
+                    var roleResult = await _userManager.AddToRolesAsync(user, rolesToAssign).ConfigureAwait(false);
                     if (!roleResult.Succeeded)
                     {
                         var roleErrors = string.Join("; ", roleResult.Errors.Select(e => e.Description));

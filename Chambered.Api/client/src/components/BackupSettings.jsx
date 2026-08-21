@@ -140,9 +140,7 @@ export default function BackupSettings() {
               style={{ display: "none" }}
             />
           </label>
-          <button className="btn btn-primary" onClick={handleCreateBackup}>
-            Create Backup
-          </button>
+          <button className="btn btn-primary">Create Backup</button>
         </div>
       </div>
 

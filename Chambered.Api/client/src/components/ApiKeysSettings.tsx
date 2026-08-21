@@ -1,37 +1,72 @@
 import React, { useState } from "react";
+import SubmitButton from "./SubmitButton";
 import {
   useGetApiKeyMyKeys,
+  useGetApiKeyAllKeys,
   useGetApiKeyCreate,
   useGetApiKeyRevokeFromId,
+  useGetUsersUsers,
 } from "../api/endpoints";
 import { useStore } from "../StoreContext";
 
 export default function ApiKeysSettings({ usersList = [] }) {
   const { user: currentUser } = useStore();
+  const isAdmin = currentUser?.roles?.includes("Admin") || false;
+
+  // Dynamically load all users if Admin
+  const { data: usersResponse } = useGetUsersUsers(undefined, {
+    query: { enabled: isAdmin },
+  });
+  const apiUsers = usersResponse?.data || [];
+
   const users =
-    Array.isArray(usersList) && usersList.length > 0
-      ? usersList
-      : [{ id: currentUser?.id || "1", username: currentUser?.email || "Default User" }];
+    isAdmin && apiUsers.length > 0
+      ? apiUsers.map((usr) => ({
+          id: usr.id || "",
+          username: usr.email || "Unknown User",
+        }))
+      : [
+          {
+            id: currentUser?.id || "1",
+            username: currentUser?.email || "Default User",
+          },
+        ];
+
+  // Dynamically load keys based on Admin role
+  const {
+    data: allKeysResponse,
+    isLoading: loadingAllKeys,
+    refetch: refetchAll,
+  } = useGetApiKeyAllKeys(undefined, {
+    query: { enabled: isAdmin },
+  });
 
   const {
-    data: apiKeysResponse,
-    isLoading: loadingKeys,
-    refetch,
-  } = useGetApiKeyMyKeys();
-  
-  const apiKeys = apiKeysResponse?.data || [];
-  
+    data: myKeysResponse,
+    isLoading: loadingMyKeys,
+    refetch: refetchMy,
+  } = useGetApiKeyMyKeys(undefined, {
+    query: { enabled: !isAdmin },
+  });
+
+  const loadingKeys = isAdmin ? loadingAllKeys : loadingMyKeys;
+  const refetch = isAdmin ? refetchAll : refetchMy;
+  const apiKeys =
+    (isAdmin ? allKeysResponse?.data : myKeysResponse?.data) || [];
+
   const createMutation = useGetApiKeyCreate();
   const revokeMutation = useGetApiKeyRevokeFromId();
 
   const [showKeyForm, setShowKeyForm] = useState(false);
   const [keyForm, setKeyForm] = useState({
     name: "",
-    userId: users[0]?.id || "",
+    userId: "",
+    duration: "365",
   });
 
   const [showRawTokenModal, setShowRawTokenModal] = useState(false);
   const [rawToken, setRawToken] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -44,6 +79,12 @@ export default function ApiKeysSettings({ usersList = [] }) {
     } catch (e) {
       return "N/A";
     }
+  };
+
+  const getUserEmail = (ownerId) => {
+    if (!ownerId) return currentUser?.email || "Current User";
+    const foundUser = apiUsers.find((u) => u.id === ownerId);
+    return foundUser?.email || ownerId;
   };
 
   const handleDeleteApiKey = async (keyId) => {
@@ -60,23 +101,45 @@ export default function ApiKeysSettings({ usersList = [] }) {
   const handleCreateApiKey = async (e) => {
     e.preventDefault();
     try {
+      let expiresAt = null;
+      if (keyForm.duration !== "never") {
+        const days = parseInt(keyForm.duration, 10);
+        expiresAt = new Date(
+          Date.now() + days * 24 * 60 * 60 * 1000,
+        ).toISOString();
+      }
+
       const response = await createMutation.mutateAsync({
         data: {
           name: keyForm.name,
           userId: keyForm.userId || undefined,
-          claims: ["Read", "Write"],
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+          claims: currentUser?.roles || [],
+          expiresAt: expiresAt,
         },
       });
-      
+
+      if (response.status !== 200) {
+        const errorData = response.data;
+        const errorMsg =
+          errorData?.detail ||
+          errorData?.title ||
+          "Failed to generate API key.";
+        throw new Error(errorMsg);
+      }
+
       const plainTextKey = response.data?.plainTextKey || "";
       setRawToken(plainTextKey);
-      setShowRawTokenModal(true);
-      setShowKeyForm(false);
-      setKeyForm({ name: "", userId: users[0]?.id || "" });
-      refetch();
+      setSaveSuccess(true);
+
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setShowRawTokenModal(true);
+        setShowKeyForm(false);
+        setKeyForm({ name: "", userId: "", duration: "365" });
+        refetch();
+      }, 1000);
     } catch (err) {
-      alert("Failed to generate API key.");
+      alert(err.message || "Failed to generate API key.");
     }
   };
 
@@ -98,7 +161,10 @@ export default function ApiKeysSettings({ usersList = [] }) {
         <h3 className="sec-title">Developer Integration Keys</h3>
         <button
           className="btn btn-primary"
-          onClick={() => setShowKeyForm(true)}
+          onClick={() => {
+            setKeyForm((prev) => ({ ...prev, userId: users[0]?.id || "" }));
+            setShowKeyForm(true);
+          }}
         >
           Generate API Key
         </button>
@@ -119,8 +185,8 @@ export default function ApiKeysSettings({ usersList = [] }) {
               <tr>
                 <th>Key Name</th>
                 <th>Assigned User Account</th>
-                <th>Preview Token</th>
-                <th>Date Generated</th>
+                <th>Generated</th>
+                <th>Expires</th>
                 <th style={{ width: "100px" }}>Actions</th>
               </tr>
             </thead>
@@ -128,9 +194,9 @@ export default function ApiKeysSettings({ usersList = [] }) {
               {apiKeys.map((key) => (
                 <tr key={key.id}>
                   <td className="text-bold">{key.name}</td>
-                  <td>{currentUser?.email || "Current User"}</td>
-                  <td className="text-mono">••••••••</td>
+                  <td>{getUserEmail(key.ownerId)}</td>
                   <td>{formatDate(key.createdAt)}</td>
+                  <td>{formatDate(key.expiresAt)}</td>
                   <td>
                     <button
                       className="btn btn-danger btn-mini"
@@ -179,6 +245,21 @@ export default function ApiKeysSettings({ usersList = [] }) {
                   ))}
                 </select>
               </div>
+              <div className="form-group">
+                <label>Key Expiration Window</label>
+                <select
+                  value={keyForm.duration}
+                  onChange={(e) =>
+                    setKeyForm({ ...keyForm, duration: e.target.value })
+                  }
+                  required
+                >
+                  <option value="30">30 Days</option>
+                  <option value="90">90 Days</option>
+                  <option value="365">1 Year (Recommended)</option>
+                  <option value="never">No Expiration (Permanent)</option>
+                </select>
+              </div>
               <div className="dialog-actions">
                 <button
                   type="button"
@@ -187,13 +268,13 @@ export default function ApiKeysSettings({ usersList = [] }) {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={createMutation.isPending}
-                >
-                  Generate Key
-                </button>
+                <SubmitButton
+                  isSaving={createMutation.isPending}
+                  saveSuccess={saveSuccess}
+                  createLabel="Generate Key"
+                  savingLabel="Generating..."
+                  successLabel="✓ Generated!"
+                />
               </div>
             </form>
           </div>
@@ -204,7 +285,7 @@ export default function ApiKeysSettings({ usersList = [] }) {
         <div className="dialog-overlay bg-deep-blur">
           <div className="dialog-card gold-border">
             <h4 className="dialog-title gold-text">
-              ⚠️ API Key Generated Successfully!
+              API Key Generated Successfully!
             </h4>
             <p className="warning-text">
               Copy this token immediately. For secure design protocols, it will{" "}

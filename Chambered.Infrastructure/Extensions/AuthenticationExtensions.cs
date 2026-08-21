@@ -1,5 +1,3 @@
-using System;
-using System.Text;
 using Chambered.Infrastructure.Authorization;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Security;
@@ -8,6 +6,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Text;
 
 namespace Chambered.Infrastructure.Extensions
 {
@@ -41,6 +42,7 @@ namespace Chambered.Infrastructure.Extensions
                     {
                         authBuilder.AddOpenIdConnect(provider.ProviderName, options =>
                         {
+                            options.RequireHttpsMetadata = !environment.IsDevelopment();
                             options.Authority = provider.Authority;
                             options.ClientId = provider.ClientId;
                             options.ClientSecret = provider.ClientSecret;

@@ -6,15 +6,13 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface UpdateUserRequestDto {
+export interface AppriseSettingsResponseDto {
+  allowInvalidCertificates?: boolean;
   /** @nullable */
-  email?: string | null;
+  hostUrl?: string | null;
   /** @nullable */
-  firstName?: string | null;
+  notificationKey?: string | null;
   /** @nullable */
-  lastName?: string | null;
-  /** @nullable */
-  roles?: string[] | null;
-  /** @nullable */
-  password?: string | null;
+  targetUrls?: string | null;
+  timeoutSeconds?: number;
 }

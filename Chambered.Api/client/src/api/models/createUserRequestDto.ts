@@ -15,4 +15,8 @@ export interface CreateUserRequestDto {
   lastName?: string | null;
   /** @nullable */
   roles?: string[] | null;
+  /** @nullable */
+  password?: string | null;
+  /** @nullable */
+  username?: string | null;
 }

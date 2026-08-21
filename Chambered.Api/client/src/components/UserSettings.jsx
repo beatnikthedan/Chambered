@@ -1,70 +1,88 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useStore } from "../StoreContext";
 import SubmitButton from "./SubmitButton";
+import {
+  useGetUsersUsers,
+  useGetUsersProfile,
+  useGetSettingsPasswordPolicy,
+  useGetUsersRegister,
+  useGetUsersUpdateUserFromId,
+  useDeleteUsersUserFromId,
+} from "../api/endpoints";
 
 export default function UserSettings({ currentUserId }) {
   const store = useStore();
-  
-  // State for Users List, Loading & Errors
-  const [users, setUsers] = useState([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [error, setError] = useState(null);
+  const currentUserIsAdmin = store.user?.roles?.includes("Admin") || false;
+
+  // React Query Hooks for loading users and password policy
+  const {
+    data: adminUsersData,
+    isLoading: loadingAdminUsers,
+    error: adminUsersError,
+    refetch: refetchUsersList,
+  } = useGetUsersUsers(undefined, { query: { enabled: currentUserIsAdmin } });
+
+  const {
+    data: profileData,
+    isLoading: loadingProfile,
+    error: profileError,
+    refetch: refetchProfile,
+  } = useGetUsersProfile({ query: { enabled: !currentUserIsAdmin } });
+
+  const {
+    data: policyResponse,
+    isLoading: policiesAreLoading,
+    error: policyError,
+  } = useGetSettingsPasswordPolicy();
+
+  const passwordPolicy = policyResponse?.data;
+
+  // Mutation Hooks for updating, registering, and deleting users
+  const registerMutation = useGetUsersRegister();
+  const updateMutation = useGetUsersUpdateUserFromId();
+  const deleteMutation = useDeleteUsersUserFromId();
+
+  const users = currentUserIsAdmin
+    ? adminUsersData?.data || []
+    : profileData?.data
+      ? [profileData.data]
+      : [];
+
+  const loadingUsers = currentUserIsAdmin ? loadingAdminUsers : loadingProfile;
+  const error = currentUserIsAdmin
+    ? adminUsersError
+      ? "Failed to load users from the database."
+      : null
+    : profileError
+      ? "Failed to load profile."
+      : null;
 
   // Policy Settings States (Visual client-side preview)
   const [sessionPolicy, setSessionPolicy] = useState({
     requireTotp: true,
     autoProvision: false,
     sessionLifetime: "30 days",
-    disableLocal: false
-  });
-
-  const [passwordPolicy, setPasswordPolicy] = useState({
-    minLength: 12,
-    requireUpper: true,
-    requireLower: true,
-    requireNumbers: true,
-    requireSpecial: true
+    disableLocal: false,
   });
 
   // State for Modal Dialog & Form Input
   const [showUserForm, setShowUserForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [userForm, setUserForm] = useState({
     username: "",
     email: "",
     password: "",
-    isAdmin: false
+    isAdmin: false,
   });
-
-  // Fetch Users live from DB API
-  const fetchUsers = async () => {
-    try {
-      setLoadingUsers(true);
-      const res = await fetch("/api/settings/users");
-      if (!res.ok) {
-        throw new Error("Failed to load users from the database.");
-      }
-      const data = await res.json();
-      setUsers(data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
   // Calculate Password Strength in real time
   const getPasswordStrength = (pwd) => {
-    if (!pwd) return { score: 0, text: "None", color: "transparent", percent: 0 };
+    if (!pwd)
+      return { score: 0, text: "None", color: "transparent", percent: 0 };
     let score = 0;
     if (pwd.length >= 6) score += 1;
     if (pwd.length >= 10) score += 1;
@@ -92,7 +110,7 @@ export default function UserSettings({ currentUserId }) {
       username: "",
       email: "",
       password: "",
-      isAdmin: false
+      isAdmin: false,
     });
     setShowUserForm(true);
   };
@@ -105,7 +123,7 @@ export default function UserSettings({ currentUserId }) {
       username: usr.username || "",
       email: usr.email || "",
       password: "", // optional in edit mode
-      isAdmin: usr.roles?.includes("Admin") || false
+      isAdmin: usr.roles?.includes("Admin") || false,
     });
     setShowUserForm(true);
   };
@@ -114,16 +132,14 @@ export default function UserSettings({ currentUserId }) {
   const handleDeleteUser = async (userId, username) => {
     if (window.confirm(`Are you sure you want to remove user "${username}"?`)) {
       try {
-        const res = await fetch(`/api/settings/users/${userId}`, {
-          method: "DELETE",
-        });
-        if (!res.ok) {
-          const errMsg = await res.text();
-          throw new Error(errMsg || `Failed to delete user ${username}.`);
+        await deleteMutation.mutateAsync({ id: userId });
+        if (currentUserIsAdmin) {
+          refetchUsersList();
+        } else {
+          refetchProfile();
         }
-        fetchUsers();
       } catch (err) {
-        alert(err.message);
+        alert(err.message || "Failed to delete user.");
       }
     }
   };
@@ -135,40 +151,35 @@ export default function UserSettings({ currentUserId }) {
     setSaveSuccess(false);
 
     try {
-      const url = isEditMode 
-        ? `/api/settings/users/${selectedUser.id}` 
-        : "/api/settings/users";
-      
-      const method = isEditMode ? "PUT" : "POST";
-      
-      const payload = isEditMode 
-        ? {
+      if (isEditMode) {
+        await updateMutation.mutateAsync({
+          id: selectedUser.id,
+          data: {
             email: userForm.email,
-            password: userForm.password || null, // pass null if empty to skip change
-            isAdmin: userForm.isAdmin
-          }
-        : {
+            firstName: userForm.username,
+            lastName: "",
+            roles: userForm.isAdmin ? ["Admin"] : ["User"],
+          },
+        });
+      } else {
+        await registerMutation.mutateAsync({
+          data: {
             username: userForm.username,
             email: userForm.email || `${userForm.username}@chambered.local`,
+            firstName: userForm.username,
+            lastName: "",
             password: userForm.password,
-            isAdmin: userForm.isAdmin
-          };
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errMsg = await res.text();
-        throw new Error(errMsg || `Failed to ${isEditMode ? "update" : "add"} user.`);
+            roles: userForm.isAdmin ? ["Admin"] : ["User"],
+          },
+        });
       }
 
       setSaveSuccess(true);
-      fetchUsers();
+      if (currentUserIsAdmin) {
+        refetchUsersList();
+      } else {
+        refetchProfile();
+      }
 
       // Delay closing modal slightly so the user sees the success checkmark animation
       setTimeout(() => {
@@ -179,12 +190,11 @@ export default function UserSettings({ currentUserId }) {
           username: "",
           email: "",
           password: "",
-          isAdmin: false
+          isAdmin: false,
         });
       }, 1000);
-
     } catch (err) {
-      alert(err.message);
+      alert(err.message || `Failed to ${isEditMode ? "update" : "add"} user.`);
     } finally {
       setIsSaving(false);
     }
@@ -195,33 +205,48 @@ export default function UserSettings({ currentUserId }) {
   const adminCount = users.filter((u) => u.roles?.includes("Admin")).length;
   const userCount = totalCount - adminCount;
 
-  const summaryText = `${totalCount} account${totalCount !== 1 ? 's' : ''} · ${adminCount} admin${adminCount !== 1 ? 's' : ''}, ${userCount} user${userCount !== 1 ? 's' : ''}`;
+  const summaryText = `${totalCount} account${totalCount !== 1 ? "s" : ""} · ${adminCount} admin${adminCount !== 1 ? "s" : ""}, ${userCount} user${userCount !== 1 ? "s" : ""}`;
 
   return (
     <section className="settings-sec">
       <div className="sec-header">
         <div>
-          <h3 className="sec-title" style={{ margin: 0 }}>Users</h3>
+          <h3 className="sec-title" style={{ margin: 0 }}>
+            Users
+          </h3>
           <div className="users-summary">
             {loadingUsers ? "Loading users database..." : summaryText}
           </div>
         </div>
-        <button
-          className="btn invite-btn"
-          onClick={handleOpenCreateModal}
-        >
+        <button className="btn invite-btn" onClick={handleOpenCreateModal}>
           + Add user
         </button>
       </div>
 
       {error && (
-        <div style={{ padding: "12px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", color: "#ef4444", fontSize: "14px" }}>
+        <div
+          style={{
+            padding: "12px",
+            background: "rgba(239,68,68,0.1)",
+            border: "1px solid rgba(239,68,68,0.2)",
+            borderRadius: "8px",
+            color: "#ef4444",
+            fontSize: "14px",
+          }}
+        >
           Error: {error}
         </div>
       )}
 
       {loadingUsers && users.length === 0 ? (
-        <div className="loading-inline" style={{ padding: "40px 0", display: "flex", justifyContent: "center" }}>
+        <div
+          className="loading-inline"
+          style={{
+            padding: "40px 0",
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
           <div className="spinner"></div>
         </div>
       ) : (
@@ -239,19 +264,18 @@ export default function UserSettings({ currentUserId }) {
             </thead>
             <tbody>
               {users.map((usr) => {
-                const initial = usr.username ? usr.username.charAt(0).toUpperCase() : "U";
+                const initial = usr.username
+                  ? usr.username.charAt(0).toUpperCase()
+                  : "U";
                 const isAdmin = usr.roles?.includes("Admin");
                 const avatarClass = isAdmin ? "avatar-gold" : "avatar-grey";
                 const badgeClass = isAdmin ? "badge-owner" : "badge-readonly";
                 const roleLabel = isAdmin ? "Admin" : "User";
                 const hasGravatar = !!usr.gravatarUrl;
-
-                // Live dynamic columns fallbacks
-                const authVal = isAdmin && sessionPolicy.requireTotp ? "Local + TOTP" : "Local";
-                const arsenalsVal = isAdmin ? "All" : "Primary";
-                
-                const isSelf = store.user && (usr.username === store.user.username || usr.id === store.user.id);
-                const lastSeenVal = isSelf ? "now" : "recently";
+                const isSelf =
+                  store.user &&
+                  (usr.username === store.user.username ||
+                    usr.id === store.user.id);
 
                 return (
                   <tr key={usr.id}>
@@ -265,7 +289,9 @@ export default function UserSettings({ currentUserId }) {
                             style={{ objectFit: "cover" }}
                           />
                         ) : (
-                          <div className={`avatar-circle ${avatarClass}`}>{initial}</div>
+                          <div className={`avatar-circle ${avatarClass}`}>
+                            {initial}
+                          </div>
                         )}
                         <div className="user-info-text">
                           <span className="username-label">{usr.username}</span>
@@ -278,15 +304,20 @@ export default function UserSettings({ currentUserId }) {
                         {roleLabel}
                       </span>
                     </td>
-                    <td>{authVal}</td>
-                    <td>{arsenalsVal}</td>
-                    <td>{lastSeenVal}</td>
+                    <td>N/A</td>
+                    <td>N/A</td>
+                    <td>N/A</td>
                     <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
                       {/* Edit Button (White/Light gray pencil icon) */}
                       <button
                         className="btn-action-edit"
+                        disabled={!currentUserIsAdmin && !isSelf}
                         onClick={() => handleOpenEditModal(usr)}
-                        title={`Edit user account ${usr.username}`}
+                        title={
+                          !currentUserIsAdmin && !isSelf
+                            ? "You can only edit your own profile"
+                            : `Edit user account ${usr.username}`
+                        }
                       >
                         <svg
                           width="18"
@@ -304,7 +335,11 @@ export default function UserSettings({ currentUserId }) {
                         className="btn-action-delete"
                         disabled={isSelf}
                         onClick={() => handleDeleteUser(usr.id, usr.username)}
-                        title={isSelf ? "You cannot delete your own account" : `Delete user account ${usr.username}`}
+                        title={
+                          isSelf
+                            ? "You cannot delete your own account"
+                            : `Delete user account ${usr.username}`
+                        }
                       >
                         <svg
                           width="18"
@@ -326,21 +361,29 @@ export default function UserSettings({ currentUserId }) {
       )}
 
       {/* Policies Split Column Layout */}
+
       <div className="policies-grid">
         {/* Session Policy Card */}
         <div className="policy-card">
           <div className="policy-card-title">Session Policy</div>
-          
+
           <div className="policy-row">
             <div className="policy-info">
               <span className="policy-label">Require TOTP for owners</span>
-              <span className="policy-sublabel">Enforces multi-factor authentication for Owner level roles</span>
+              <span className="policy-sublabel">
+                Enforces multi-factor authentication for Owner level roles
+              </span>
             </div>
             <label className="switch">
               <input
                 type="checkbox"
                 checked={sessionPolicy.requireTotp}
-                onChange={(e) => setSessionPolicy({ ...sessionPolicy, requireTotp: e.target.checked })}
+                onChange={(e) =>
+                  setSessionPolicy({
+                    ...sessionPolicy,
+                    requireTotp: e.target.checked,
+                  })
+                }
               />
               <span className="slider"></span>
             </label>
@@ -349,13 +392,21 @@ export default function UserSettings({ currentUserId }) {
           <div className="policy-row">
             <div className="policy-info">
               <span className="policy-label">Auto-provision OIDC users</span>
-              <span className="policy-sublabel">Automatically create local profile upon successful identity provider login</span>
+              <span className="policy-sublabel">
+                Automatically create local profile upon successful identity
+                provider login
+              </span>
             </div>
             <label className="switch">
               <input
                 type="checkbox"
                 checked={sessionPolicy.autoProvision}
-                onChange={(e) => setSessionPolicy({ ...sessionPolicy, autoProvision: e.target.checked })}
+                onChange={(e) =>
+                  setSessionPolicy({
+                    ...sessionPolicy,
+                    autoProvision: e.target.checked,
+                  })
+                }
               />
               <span className="slider"></span>
             </label>
@@ -364,12 +415,19 @@ export default function UserSettings({ currentUserId }) {
           <div className="policy-row">
             <div className="policy-info">
               <span className="policy-label">Session lifetime</span>
-              <span className="policy-sublabel">Token validity duration for authenticated web sessions</span>
+              <span className="policy-sublabel">
+                Token validity duration for authenticated web sessions
+              </span>
             </div>
             <select
               className="policy-lifetime-select"
               value={sessionPolicy.sessionLifetime}
-              onChange={(e) => setSessionPolicy({ ...sessionPolicy, sessionLifetime: e.target.value })}
+              onChange={(e) =>
+                setSessionPolicy({
+                  ...sessionPolicy,
+                  sessionLifetime: e.target.value,
+                })
+              }
             >
               <option value="1 day">1 day</option>
               <option value="7 days">7 days</option>
@@ -381,13 +439,20 @@ export default function UserSettings({ currentUserId }) {
           <div className="policy-row">
             <div className="policy-info">
               <span className="policy-label">Disable Local Users</span>
-              <span className="policy-sublabel">Restricts logins strictly to integrated OIDC sign-on</span>
+              <span className="policy-sublabel">
+                Restricts logins strictly to integrated OIDC sign-on
+              </span>
             </div>
             <label className="switch">
               <input
                 type="checkbox"
                 checked={sessionPolicy.disableLocal}
-                onChange={(e) => setSessionPolicy({ ...sessionPolicy, disableLocal: e.target.checked })}
+                onChange={(e) =>
+                  setSessionPolicy({
+                    ...sessionPolicy,
+                    disableLocal: e.target.checked,
+                  })
+                }
               />
               <span className="slider"></span>
             </label>
@@ -395,91 +460,130 @@ export default function UserSettings({ currentUserId }) {
         </div>
 
         {/* Password Policy Card */}
-        <div className="policy-card">
-          <div className="policy-card-title">Password Policy</div>
-
-          <div className="policy-row">
-            <div className="policy-info">
-              <span className="policy-label">Minimum length</span>
-              <span className="policy-sublabel">Minimum required character count for local user passwords</span>
-            </div>
-            <input
-              type="number"
-              className="policy-length-input"
-              min="6"
-              max="64"
-              value={passwordPolicy.minLength}
-              onChange={(e) => setPasswordPolicy({ ...passwordPolicy, minLength: parseInt(e.target.value) || 8 })}
-            />
+        {policiesAreLoading ? (
+          <div className="loading-spinner-box">
+            <div className="spinner"></div>
+            <p>Analyzing vaults...</p>
           </div>
+        ) : policyError ? (
+          <div className="vaults-error-card">
+            <span className="err-icon">⚠️</span>
+            <p>{error}</p>
+            {/* <button
+              className="btn btn-secondary btn-small"
+              onClick={() =>
+                queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] })
+              }
+            >
+              Retry
+            </button> */}
+          </div>
+        ) : passwordPolicy === null ? (
+          <div className="empty-state panel">
+            <h3>You have no items in your Vaults.</h3>
+            <p style={{ marginTop: "4px", color: "var(--text-muted)" }}>
+              Click 'Add Item' above to add your first item.
+            </p>
+          </div>
+        ) : (
+          <div className="policy-card">
+            <div className="policy-card-title">Password Policy</div>
 
-          <div className="policy-row">
-            <div className="policy-info">
-              <span className="policy-label">Require uppercase letters</span>
-              <span className="policy-sublabel">Must contain at least one capital letter (A-Z)</span>
-            </div>
-            <label className="switch">
+            <div className="policy-row">
+              <div className="policy-info">
+                <span className="policy-label">Minimum length</span>
+                <span className="policy-sublabel">
+                  Minimum required character count for local user passwords
+                </span>
+              </div>
               <input
-                type="checkbox"
-                checked={passwordPolicy.requireUpper}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, requireUpper: e.target.checked })}
+                type="number"
+                className="policy-length-input"
+                min="6"
+                max="64"
+                value={passwordPolicy.minLength}
+                readOnly
               />
-              <span className="slider"></span>
-            </label>
-          </div>
-
-          <div className="policy-row">
-            <div className="policy-info">
-              <span className="policy-label">Require lowercase letters</span>
-              <span className="policy-sublabel">Must contain at least one small letter (a-z)</span>
             </div>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={passwordPolicy.requireLower}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, requireLower: e.target.checked })}
-              />
-              <span className="slider"></span>
-            </label>
-          </div>
 
-          <div className="policy-row">
-            <div className="policy-info">
-              <span className="policy-label">Require numbers</span>
-              <span className="policy-sublabel">Must contain at least one digit (0-9)</span>
+            <div className="policy-row">
+              <div className="policy-info">
+                <span className="policy-label">Require uppercase letters</span>
+                <span className="policy-sublabel">
+                  Must contain at least one capital letter (A-Z)
+                </span>
+              </div>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={passwordPolicy.requireUpper}
+                  disabled
+                />
+                <span className="slider"></span>
+              </label>
             </div>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={passwordPolicy.requireNumbers}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, requireNumbers: e.target.checked })}
-              />
-              <span className="slider"></span>
-            </label>
-          </div>
 
-          <div className="policy-row">
-            <div className="policy-info">
-              <span className="policy-label">Require special characters</span>
-              <span className="policy-sublabel">Must contain special symbol characters (e.g. @, #, $, !)</span>
+            <div className="policy-row">
+              <div className="policy-info">
+                <span className="policy-label">Require lowercase letters</span>
+                <span className="policy-sublabel">
+                  Must contain at least one small letter (a-z)
+                </span>
+              </div>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={passwordPolicy.requireLower}
+                  disabled
+                />
+                <span className="slider"></span>
+              </label>
             </div>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={passwordPolicy.requireSpecial}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, requireSpecial: e.target.checked })}
-              />
-              <span className="slider"></span>
-            </label>
+
+            <div className="policy-row">
+              <div className="policy-info">
+                <span className="policy-label">Require numbers</span>
+                <span className="policy-sublabel">
+                  Must contain at least one digit (0-9)
+                </span>
+              </div>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={passwordPolicy.requireNumbers}
+                  disabled
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            <div className="policy-row">
+              <div className="policy-info">
+                <span className="policy-label">Require special characters</span>
+                <span className="policy-sublabel">
+                  Must contain special symbol characters (e.g. @, #, $, !)
+                </span>
+              </div>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={passwordPolicy.requireSpecial}
+                  disabled
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* User Create / Edit dialog popup */}
       {showUserForm && (
         <div className="dialog-overlay" onClick={() => setShowUserForm(false)}>
           <div className="dialog-card" onClick={(e) => e.stopPropagation()}>
-            <h4 className="dialog-title">{isEditMode ? "Edit User" : "Add New User"}</h4>
+            <h4 className="dialog-title">
+              {isEditMode ? "Edit User" : "Add New User"}
+            </h4>
             <form onSubmit={handleFormSubmit} className="dialog-form">
               <div className="form-group">
                 <label>Username</label>
@@ -494,7 +598,9 @@ export default function UserSettings({ currentUserId }) {
                   }
                   placeholder="e.g. derek"
                   disabled={isEditMode}
-                  style={isEditMode ? { opacity: 0.6, cursor: "not-allowed" } : {}}
+                  style={
+                    isEditMode ? { opacity: 0.6, cursor: "not-allowed" } : {}
+                  }
                   required
                 />
               </div>
@@ -523,7 +629,11 @@ export default function UserSettings({ currentUserId }) {
                       password: e.target.value,
                     })
                   }
-                  placeholder={isEditMode ? "•••••••• (leave blank to keep unchanged)" : "••••••••"}
+                  placeholder={
+                    isEditMode
+                      ? "•••••••• (leave blank to keep unchanged)"
+                      : "••••••••"
+                  }
                   required={!isEditMode}
                 />
                 {/* Password Strength Indicator */}
@@ -534,11 +644,14 @@ export default function UserSettings({ currentUserId }) {
                         className="strength-bar-fill"
                         style={{
                           width: `${strength.percent}%`,
-                          backgroundColor: strength.color
+                          backgroundColor: strength.color,
                         }}
                       ></div>
                     </div>
-                    <div className="strength-label" style={{ color: strength.color }}>
+                    <div
+                      className="strength-label"
+                      style={{ color: strength.color }}
+                    >
                       {strength.text} Strength
                     </div>
                   </div>
@@ -576,7 +689,8 @@ export default function UserSettings({ currentUserId }) {
                   <option value="Primary">Primary Only</option>
                 </select>
                 <span className="policy-sublabel" style={{ marginTop: "4px" }}>
-                  Multi-arsenal mapping is currently disabled (not supported by the database yet)
+                  Multi-arsenal mapping is currently disabled (not supported by
+                  the database yet)
                 </span>
               </div>
 

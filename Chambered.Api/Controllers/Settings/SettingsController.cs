@@ -1,226 +1,98 @@
-using Chambered.Data;
+using Chambered.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Chambered.Api.Controllers.Settings
 {
     [ApiController]
     [Route("api/settings")]
-    [Authorize(Roles = "Admin")] // Settings management is administrative
-    public class SettingsController : ControllerBase
+    [Authorize]
+    public class SettingsController(
+    IOptions<IdentityOptions> identityOptions,
+    IOptions<AppriseConfiguration> appriseConfiguration,
+    IOptions<BackupConfiguration> backupConfiguration) : ControllerBase
     {
-        private readonly ChamberedDbContext _db;
-        private readonly UserManager<ChamberedUser> _userManager;
+        private readonly IOptions<IdentityOptions> _identityOptions = identityOptions;
+        private readonly IOptions<AppriseConfiguration> _appriseConfiguration = appriseConfiguration;
+        private readonly IOptions<BackupConfiguration> _backupConfiguration = backupConfiguration;
 
-        public SettingsController(ChamberedDbContext db, UserManager<ChamberedUser> userManager)
+        [HttpGet("password-policy")]
+        [Produces("application/json")]
+        [AllowAnonymous]
+        public ActionResult<PasswordPolicyResponseDto> GetPasswordPolicy()
         {
-            _db = db;
-            _userManager = userManager;
+            var opts = _identityOptions.Value.Password;
+
+            var response = new PasswordPolicyResponseDto(
+                MinLength: opts.RequiredLength,
+                RequireUpper: opts.RequireUppercase,
+                RequireLower: opts.RequireLowercase,
+                RequireNumbers: opts.RequireDigit,
+                RequireSpecial: opts.RequireNonAlphanumeric
+            );
+
+            return Ok(response);
         }
 
-        // ==========================================
-        // 1. OIDC CONFIGURATION ENDPOINTS
-        // ==========================================
-
-        // OIDC Config endpoints removed since OidcConfig model was cleaned up.
-
-        // ApiKeys endpoints removed since ApiKeys model was cleaned up.
-
-        // ==========================================
-        // 3. USER MANAGEMENT ENDPOINTS
-        // ==========================================
-
-        [HttpGet("users")]
-        public async Task<IActionResult> GetUsers()
+        [HttpGet("apprise-settings")]
+        [Produces("application/json")]
+        [AllowAnonymous]
+        public ActionResult<AppriseSettingsResponseDto> GetAppriseSettings()
         {
-            var users = await _userManager.Users.ToListAsync();
-            var userDtos = new List<UserDto>();
+            var opts = _appriseConfiguration.Value;
 
-            foreach (var user in users)
-            {
-                userDtos.Add(new UserDto
-                {
-                    Id = user.Id,
-                    Username = user.UserName ?? "",
-                    Email = user.Email ?? "",
-                    Roles = await _userManager.GetRolesAsync(user),
-                    GravatarUrl = GetGravatarUrl(user.Email)
-                });
-            }
+            var response = new AppriseSettingsResponseDto(
+                AllowInvalidCertificates: opts.AllowInvalidCertificates,
+                HostUrl: opts.HostUrl,
+                NotificationKey: opts.NotificationKey,
+                TargetUrls: opts.TargetUrls,
+                TimeoutSeconds: opts.TimeoutSeconds
+            );
 
-            return Ok(userDtos);
+            return Ok(response);
         }
 
-        [HttpPost("users")]
-        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+        [HttpGet("backup-settings")]
+        [Produces("application/json")]
+        [AllowAnonymous]
+        public ActionResult<AppriseSettingsResponseDto> GetBackupSettings()
         {
-            if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
-                return BadRequest("Username and Password are required.");
+            var opts = _backupConfiguration.Value;
 
-            var existing = await _userManager.FindByNameAsync(request.Username);
-            if (existing != null)
-                return BadRequest("Username is already taken.");
+            var response = new ConfigurationSectionResponseDto(
+                Enabled: opts.Enabled,
+                BackupPath: opts.BackupPath,
+                CronSchedule: opts.CronSchedule,
+                RetentionCount: opts.RetentionCount
+            );
 
-            var user = new ChamberedUser
-            {
-                UserName = request.Username,
-                Email = string.IsNullOrEmpty(request.Email) ? $"{request.Username}@chambered.local" : request.Email,
-                EmailConfirmed = true
-            };
-
-            var result = await _userManager.CreateAsync(user, request.Password);
-            if (!result.Succeeded)
-            {
-                return BadRequest(string.Join(", ", result.Errors.Select(e => e.Description)));
-            }
-
-            var role = request.IsAdmin ? "Admin" : "User";
-            await _userManager.AddToRoleAsync(user, role);
-
-            return Ok(new UserDto
-            {
-                Id = user.Id,
-                Username = user.UserName,
-                Email = user.Email,
-                Roles = new List<string> { role },
-                GravatarUrl = GetGravatarUrl(user.Email)
-            });
-        }
-
-        [HttpPut("users/{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserRequest request)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            // Update email if provided
-            if (!string.IsNullOrEmpty(request.Email))
-            {
-                user.Email = request.Email;
-            }
-
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-            {
-                return BadRequest(string.Join(", ", result.Errors.Select(e => e.Description)));
-            }
-
-            // Update role
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            await _userManager.RemoveFromRolesAsync(user, currentRoles);
-
-            var role = request.IsAdmin ? "Admin" : "User";
-            await _userManager.AddToRoleAsync(user, role);
-
-            // Update password if provided
-            if (!string.IsNullOrEmpty(request.Password))
-            {
-                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var resetResult = await _userManager.ResetPasswordAsync(user, token, request.Password);
-                if (!resetResult.Succeeded)
-                {
-                    return BadRequest(string.Join(", ", resetResult.Errors.Select(e => e.Description)));
-                }
-            }
-
-            return Ok(new UserDto
-            {
-                Id = user.Id,
-                Username = user.UserName ?? "",
-                Email = user.Email ?? "",
-                Roles = new List<string> { role },
-                GravatarUrl = GetGravatarUrl(user.Email)
-            });
-        }
-
-        [HttpDelete("users/{id}")]
-        public async Task<IActionResult> DeleteUser(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            // Prevent self-deletion
-            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (currentUserId == user.Id)
-            {
-                return BadRequest("You cannot delete your own account.");
-            }
-
-            var result = await _userManager.DeleteAsync(user);
-            if (!result.Succeeded)
-            {
-                return BadRequest("Failed to delete user.");
-            }
-
-            return Ok();
-        }
-
-        private static string GetGravatarUrl(string? email)
-        {
-            if (string.IsNullOrEmpty(email))
-                return "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
-
-            using var md5 = System.Security.Cryptography.MD5.Create();
-            var inputBytes = System.Text.Encoding.ASCII.GetBytes(email.Trim().ToLower());
-            var hashBytes = md5.ComputeHash(inputBytes);
-
-            var sb = new System.Text.StringBuilder();
-            for (int i = 0; i < hashBytes.Length; i++)
-            {
-                sb.Append(hashBytes[i].ToString("x2"));
-            }
-
-            return $"https://www.gravatar.com/avatar/{sb}?d=mp";
+            return Ok(response);
         }
     }
 
-    public class DiscoverRequest
-    {
-        public string IssuerUrl { get; set; }
-    }
+    public record PasswordPolicyResponseDto(
+    int MinLength,
+    bool RequireUpper,
+    bool RequireLower,
+    bool RequireNumbers,
+    bool RequireSpecial
+);
 
-    public class CreateApiKeyRequest
-    {
-        public string Name { get; set; }
-        public string UserId { get; set; }
-    }
+    public record AppriseSettingsResponseDto(
+        bool AllowInvalidCertificates,
+        string HostUrl,
+        string NotificationKey,
+        string TargetUrls,
+        int TimeoutSeconds
+    );
 
-    public class ApiKeyDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string UserId { get; set; }
-        public string UserName { get; set; }
-        public string TokenPreview { get; set; }
-        public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
+    public record ConfigurationSectionResponseDto(
+        bool Enabled,
+        string BackupPath,
+        string CronSchedule,
+        int RetentionCount
+        );
 
-    public class CreateUserRequest
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string Email { get; set; }
-        public bool IsAdmin { get; set; }
-    }
-
-    public class UpdateUserRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public bool IsAdmin { get; set; }
-    }
-
-    public class UserDto
-    {
-        public string Id { get; set; }
-        public string Username { get; set; }
-        public string Email { get; set; }
-        public IList<string> Roles { get; set; }
-        public string GravatarUrl { get; set; }
-    }
 }

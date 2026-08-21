@@ -82,7 +82,27 @@ namespace Chambered.Infrastructure.Services.Identity
             }
 
             await _signInManager.SignInAsync(user, isPersistent: request.RememberMe).ConfigureAwait(false);
+
+            // Promote Sole User to Admin (Self-Healing Bootstrapper for Existing Setup User)
             var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+            if (!roles.Any())
+            {
+                var totalUsersCount = await _userManager.Users.CountAsync().ConfigureAwait(false);
+                if (totalUsersCount == 1)
+                {
+                    if (!await _roleManager.RoleExistsAsync("Admin").ConfigureAwait(false))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole("Admin")).ConfigureAwait(false);
+                    }
+                    var addResult = await _userManager.AddToRoleAsync(user, "Admin").ConfigureAwait(false);
+                    if (addResult.Succeeded)
+                    {
+                        _logger.LogInformation("Successfully promoted the sole setup user account to Admin: UserId={UserId}", user.Id);
+                        roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+                    }
+                }
+            }
+
             var permissions = await GetPermissionsForUserInternalAsync(user, roles).ConfigureAwait(false);
 
             _logger.LogInformation("Login success: Email={Email}, UserId={UserId}", request.Email, user.Id);

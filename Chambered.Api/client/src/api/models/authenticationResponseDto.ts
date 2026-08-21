@@ -20,4 +20,8 @@ export interface AuthenticationResponseDto {
   roles?: string[] | null;
   /** @nullable */
   permissions?: string[] | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  gravatarUrl?: string | null;
 }

@@ -34,19 +34,28 @@ builder.Services.AddDbContext<ChamberedDbContext>(options =>
     options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api")));
 
 // 2. Configure Identity
+// 1. Add Identity base setup
 builder.Services.AddIdentity<ChamberedUser, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = false;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
+    // Static options like unique email can remain here
     options.User.RequireUniqueEmail = false;
-})
-.AddEntityFrameworkStores<ChamberedDbContext>()
+}).AddEntityFrameworkStores<ChamberedDbContext>()
 .AddDefaultTokenProviders();
 
-// 3. Configure Authentication (JWT Bearer, ApiKey Handler, and Federated OIDC)
+builder.Services.PostConfigure<IdentityOptions>(options =>
+{
+    var policy = builder.Configuration
+        .GetSection(nameof(PasswordPolicyConfiguration))
+        .Get<PasswordPolicyConfiguration>() ?? new PasswordPolicyConfiguration();
+
+    options.Password.RequiredLength = policy.RequiredLength;
+    options.Password.RequireNonAlphanumeric = policy.RequireNonAlphanumeric;
+    options.Password.RequireLowercase = policy.RequireLowercase;
+    options.Password.RequireUppercase = policy.RequireUppercase;
+    options.Password.RequireDigit = policy.RequireDigit;
+});
+
+
 builder.Services.AddChamberedAuthentication(builder.Configuration, builder.Environment);
 
 // Register dynamic claim-based authorization providers (PermissionPolicyProvider, PermissionAuthorizationHandler)
@@ -70,8 +79,34 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromDays(7); // Set your desired expiration window
     options.SlidingExpiration = true;              // Reset window when user is active
     options.Cookie.HttpOnly = true;                 // Protects completely against XSS token theft
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Requires HTTPS
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Allows HTTP locally, requires HTTPS in prod
     options.Cookie.SameSite = SameSiteMode.Strict;  // Protects against CSRF
+
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized;
+        }
+        else
+        {
+            context.Response.Redirect(context.RedirectUri);
+        }
+        return System.Threading.Tasks.Task.CompletedTask;
+    };
+
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status403Forbidden;
+        }
+        else
+        {
+            context.Response.Redirect(context.RedirectUri);
+        }
+        return System.Threading.Tasks.Task.CompletedTask;
+    };
 });
 
 // 5. Configure Controllers with camelCase, cycles ignored, and OData options

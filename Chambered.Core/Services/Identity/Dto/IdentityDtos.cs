@@ -21,7 +21,8 @@ namespace Chambered.Core.Services.Identity.Dto
         string Email,
         string FirstName,
         string LastName,
-        IEnumerable<string> Roles
+        IEnumerable<string> Roles,
+        string? Password = null
     );
 
     /// <summary>
