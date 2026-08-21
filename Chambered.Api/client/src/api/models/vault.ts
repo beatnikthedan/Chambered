@@ -38,6 +38,7 @@ export interface Vault {
   dehumidifierLastServiced?: string | null;
   /** @nullable */
   targetMaxHumidityPercent?: number | null;
+  currentCapacity?: number;
   /** @nullable */
   batteryLastChangedDate?: string | null;
   /** @nullable */
@@ -46,5 +47,5 @@ export interface Vault {
   /** @nullable */
   childVaults?: Vault[] | null;
   /** @nullable */
-  armoryItem?: ArmoryItem[] | null;
+  armoryItems?: ArmoryItem[] | null;
 }

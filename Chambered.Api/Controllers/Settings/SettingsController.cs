@@ -46,7 +46,7 @@ namespace Chambered.Api.Controllers.Settings
                     Username = user.UserName ?? "",
                     Email = user.Email ?? "",
                     Roles = await _userManager.GetRolesAsync(user),
-                    GravatarUrl = Chambered.Api.Controllers.Auth.AuthController.GetGravatarUrl(user.Email)
+                    GravatarUrl = GetGravatarUrl(user.Email)
                 });
             }
 
@@ -85,7 +85,7 @@ namespace Chambered.Api.Controllers.Settings
                 Username = user.UserName,
                 Email = user.Email,
                 Roles = new List<string> { role },
-                GravatarUrl = Chambered.Api.Controllers.Auth.AuthController.GetGravatarUrl(user.Email)
+                GravatarUrl = GetGravatarUrl(user.Email)
             });
         }
 
@@ -132,7 +132,7 @@ namespace Chambered.Api.Controllers.Settings
                 Username = user.UserName ?? "",
                 Email = user.Email ?? "",
                 Roles = new List<string> { role },
-                GravatarUrl = Chambered.Api.Controllers.Auth.AuthController.GetGravatarUrl(user.Email)
+                GravatarUrl = GetGravatarUrl(user.Email)
             });
         }
 
@@ -157,6 +157,24 @@ namespace Chambered.Api.Controllers.Settings
             }
 
             return Ok();
+        }
+
+        private static string GetGravatarUrl(string? email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            var inputBytes = System.Text.Encoding.ASCII.GetBytes(email.Trim().ToLower());
+            var hashBytes = md5.ComputeHash(inputBytes);
+
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < hashBytes.Length; i++)
+            {
+                sb.Append(hashBytes[i].ToString("x2"));
+            }
+
+            return $"https://www.gravatar.com/avatar/{sb}?d=mp";
         }
     }
 

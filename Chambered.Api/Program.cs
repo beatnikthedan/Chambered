@@ -4,6 +4,11 @@ using Chambered.Api.Swagger;
 using Chambered.Core.Services;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
+using Chambered.Infrastructure.Extensions;
+using Chambered.Core.Services.Identity;
+using Chambered.Infrastructure.Services.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
 using Chambered.Infrastructure.Services.NotificationServices;
@@ -42,30 +47,12 @@ builder.Services.AddIdentity<ChamberedUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ChamberedDbContext>()
 .AddDefaultTokenProviders();
 
-// 3. Configure Mixed Authentication (Cookie + API Key)
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.Name = "ChamberedAuth";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.ExpireTimeSpan = TimeSpan.FromDays(30);
-    options.Events.OnRedirectToLogin = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        return Task.CompletedTask;
-    };
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        return Task.CompletedTask;
-    };
-});
+// 3. Configure Authentication (JWT Bearer, ApiKey Handler, and Federated OIDC)
+builder.Services.AddChamberedAuthentication(builder.Configuration, builder.Environment);
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
-    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
-});
+// Register dynamic claim-based authorization providers (PermissionPolicyProvider, PermissionAuthorizationHandler)
+builder.Services.AddChamberedAuthorization();
+
 
 // 4. Configure CORS for frontend dev server
 builder.Services.AddCors(options =>
@@ -141,6 +128,13 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.Configure<AppriseConfiguration>(builder.Configuration.GetSection(nameof(AppriseConfiguration)));
 builder.Services.AddScoped<IAppriseService, AppriseService>();
 
+builder.Services.Configure<IdentityConfiguration>(builder.Configuration.GetSection("Identity"));
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IFederatedAuthService, FederatedAuthService>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(nameof(EmailConfiguration)));
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
@@ -180,20 +174,14 @@ app.UseCors("CorsPolicy");
 
 app.UseHttpLogging();
 
-// Seed and initialize database asynchronously
-using (var scope = app.Services.CreateScope())
+await app.ApplyMigrations<ChamberedDbContext>(async services =>
 {
-    var services = scope.ServiceProvider;
-    try
-    {
-        await Chambered.Api.Data.DbInitializer.InitializeAsync(services);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred seeding the database.");
-    }
-}
+    // 1. Bootstraps default admin user if environment variables are set (Docker)
+    await services.SeedAdminUser();
+
+    // 2. Seeds standard roles & granular permission claims dynamically based on core mapping configuration
+    await services.SeedIdentityData();
+});
 
 // Custom API Request & ModelState Debug Logger Middleware
 app.Use(async (context, next) =>

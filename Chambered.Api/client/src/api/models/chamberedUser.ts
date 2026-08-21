@@ -9,6 +9,10 @@ import type { ArmoryItem } from './armoryItem';
 
 export interface ChamberedUser {
   /** @nullable */
+  firstName?: string | null;
+  /** @nullable */
+  lastName?: string | null;
+  /** @nullable */
   id?: string | null;
   /** @nullable */
   userName?: string | null;

@@ -14,6 +14,8 @@ import type { Vault } from './vault';
 
 export interface ArmoryItem {
   id?: number;
+  /** @nullable */
+  itemType?: string | null;
   productId?: number;
   /** @nullable */
   name?: string | null;

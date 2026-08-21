@@ -13,6 +13,8 @@ import type { Manufacturer } from './manufacturer';
 
 export interface Security {
   lockType?: LockType;
+  isCapacityLimited?: boolean;
+  maxCapacity?: number;
   hasBattery?: boolean;
   batteryType?: BatteryType;
   /** @nullable */
@@ -20,6 +22,8 @@ export interface Security {
   /** @nullable */
   description?: string | null;
   id?: number;
+  /** @nullable */
+  productType?: string | null;
   /** @nullable */
   partNumber?: string | null;
   /** @nullable */

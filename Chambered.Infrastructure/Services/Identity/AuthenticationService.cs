@@ -1,0 +1,344 @@
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Net.Mail;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+using Chambered.Core.Services;
+using Chambered.Core.Services.Identity;
+using Chambered.Core.Services.Identity.Dto;
+using Chambered.Data;
+using Chambered.Infrastructure.Configuration;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Chambered.Infrastructure.Services.Identity
+{
+    /// <inheritdoc cref="IAuthenticationService"/>
+    public class AuthenticationService : IAuthenticationService
+    {
+        private readonly SignInManager<ChamberedUser> _signInManager;
+        private readonly UserManager<ChamberedUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
+        private readonly IOptions<IdentityConfiguration> _identityOptions;
+        private readonly ILogger<AuthenticationService> _logger;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthenticationService"/> class.
+        /// </summary>
+        public AuthenticationService(
+            SignInManager<ChamberedUser> signInManager,
+            UserManager<ChamberedUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            IEmailService emailService,
+            IConfiguration configuration,
+            IOptions<IdentityConfiguration> identityOptions,
+            ILogger<AuthenticationService> logger)
+        {
+            _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
+            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
+            _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _identityOptions = identityOptions ?? throw new ArgumentNullException(nameof(identityOptions));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        /// <inheritdoc/>
+        public async Task<AuthenticationResponseDto> LoginAsync(LoginRequestDto request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            _logger.LogInformation("Login attempt initiated: Email={Email}", request.Email);
+
+            var user = await _userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
+            if (user == null)
+            {
+                // Fallback: search by Username
+                user = await _userManager.FindByNameAsync(request.Email).ConfigureAwait(false);
+            }
+
+            if (user == null)
+            {
+                _logger.LogWarning("Login failure: Email={Email}, Reason=User not found", request.Email);
+                throw new UnauthorizedAccessException("Incorrect username or password");
+            }
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false).ConfigureAwait(false);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Login failure: Email={Email}, Reason=Incorrect password", request.Email);
+                throw new UnauthorizedAccessException("Incorrect username or password");
+            }
+
+            var token = await GenerateJwtTokenInternalAsync(user).ConfigureAwait(false);
+            var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+            var permissions = await GetPermissionsForUserInternalAsync(user, roles).ConfigureAwait(false);
+
+            _logger.LogInformation("Login success: Email={Email}, UserId={UserId}", request.Email, user.Id);
+
+            var expireDays = Convert.ToDouble(_configuration["Jwt:ExpireDays"] ?? "7");
+            var expireInSeconds = (int)TimeSpan.FromDays(expireDays).TotalSeconds;
+
+            return new AuthenticationResponseDto(
+                user.Id,
+                user.Email ?? string.Empty,
+                token,
+                Guid.NewGuid().ToString("N"),
+                expireInSeconds,
+                roles,
+                permissions,
+                user.UserName ?? user.Email,
+                GetGravatarUrl(user.Email)
+            );
+        }
+
+        /// <inheritdoc/>
+        public async Task LogoutAsync(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+            }
+
+            _logger.LogInformation("Logout requested: UserId={UserId}", userId);
+            await _signInManager.SignOutAsync().ConfigureAwait(false);
+        }
+
+        /// <inheritdoc/>
+        public async Task<TokenRefreshResponseDto> RefreshTokenAsync(TokenRefreshRequestDto request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            throw new NotSupportedException("Refresh tokens are currently not configured in the host identity context. Please log in again.");
+        }
+
+        /// <inheritdoc/>
+        public async Task InitiateForgotPasswordAsync(ForgotPasswordRequestDto request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            _logger.LogInformation("Forgot password initiated: Email={Email}", request.Email);
+
+            var user = await _userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
+            if (user == null)
+            {
+                _logger.LogWarning("Forgot password requested for non-existent email: Email={Email}", request.Email);
+                return;
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user).ConfigureAwait(false);
+            var uriEncodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+            var callbackUrl = $"{_identityOptions.Value.Website}/change-password?username={user.UserName}&token={uriEncodedToken}";
+
+            var mailMessage = new MailMessage(
+                _identityOptions.Value.DefaultEmailAddress,
+                request.Email,
+                "Reset Password",
+                $"<p>Please reset your password by clicking <a href=\"{callbackUrl}\">here</a>.</p>"
+            )
+            {
+                IsBodyHtml = true
+            };
+
+            var emailSent = await _emailService.SendEmailAsync(mailMessage).ConfigureAwait(false);
+            if (!emailSent)
+            {
+                _logger.LogError("Forgot password email delivery failed: Email={Email}", request.Email);
+                throw new InvalidOperationException("Password reset email could not be sent because no email service is configured.");
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task ResetPasswordAsync(ResetPasswordRequestDto request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            var user = await _userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
+            if (user == null)
+            {
+                _logger.LogWarning("Password reset failed: Email={Email}, Reason=User not found", request.Email);
+                throw new KeyNotFoundException($"User with email '{request.Email}' was not found.");
+            }
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword).ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                _logger.LogError("Password reset failed: Email={Email}, Errors={Errors}", request.Email, errors);
+                throw new InvalidOperationException($"Password reset failed: {errors}");
+            }
+
+            _logger.LogInformation("Password reset success: Email={Email}", request.Email);
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> VerifyPasswordAsync(string userId, string password)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+            }
+
+            var user = await _userManager.FindByIdAsync(userId).ConfigureAwait(false);
+            if (user == null)
+            {
+                throw new KeyNotFoundException($"User with ID '{userId}' was not found.");
+            }
+
+            return await _userManager.CheckPasswordAsync(user, password).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc/>
+        public async Task ChangePasswordAsync(string userId, ChangePasswordRequestDto request)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+            }
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            var user = await _userManager.FindByIdAsync(userId).ConfigureAwait(false);
+            if (user == null)
+            {
+                _logger.LogWarning("Password change failed: UserId={UserId}, Reason=User not found", userId);
+                throw new KeyNotFoundException($"User with ID '{userId}' was not found.");
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword).ConfigureAwait(false);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                _logger.LogError("Password change failed: UserId={UserId}, Errors={Errors}", userId, errors);
+                throw new InvalidOperationException($"Failed to update password: {errors}");
+            }
+
+            _logger.LogInformation("Password change success: UserId={UserId}", userId);
+        }
+
+        private async Task<string> GenerateJwtTokenInternalAsync(ChamberedUser user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
+            };
+
+            var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+            if (roles.Contains("Admin"))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
+            else
+            {
+                foreach (var roleName in roles)
+                {
+                    var role = await _roleManager.FindByNameAsync(roleName).ConfigureAwait(false);
+                    if (role != null)
+                    {
+                        var roleClaims = await _roleManager.GetClaimsAsync(role).ConfigureAwait(false);
+                        foreach (var roleClaim in roleClaims)
+                        {
+                            claims.Add(new Claim(roleClaim.Type, roleClaim.Value));
+                        }
+                    }
+                }
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "AntigravitySuperSecureDevSecretKey123!"));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expireDays = Convert.ToDouble(_configuration["Jwt:ExpireDays"] ?? "7");
+            var expires = DateTime.Now.AddDays(expireDays);
+
+            var token = new JwtSecurityToken(
+                _configuration["Jwt:Issuer"] ?? "ChamberedServer",
+                null,
+                claims: claims,
+                expires: expires,
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private async Task<IEnumerable<string>> GetPermissionsForUserInternalAsync(ChamberedUser user, IEnumerable<string> roles)
+        {
+            var permissions = new List<string>();
+
+            if (roles.Contains("Admin"))
+            {
+                permissions.Add("Admin");
+            }
+            else
+            {
+                foreach (var roleName in roles)
+                {
+                    var role = await _roleManager.FindByNameAsync(roleName).ConfigureAwait(false);
+                    if (role != null)
+                    {
+                        var roleClaims = await _roleManager.GetClaimsAsync(role).ConfigureAwait(false);
+                        foreach (var claim in roleClaims)
+                        {
+                            permissions.Add(claim.Value);
+                        }
+                    }
+                }
+            }
+
+            return permissions;
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> IsInitializedAsync()
+        {
+            return await _userManager.Users.AnyAsync().ConfigureAwait(false);
+        }
+
+        private static string GetGravatarUrl(string? email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            var inputBytes = System.Text.Encoding.ASCII.GetBytes(email.Trim().ToLower());
+            var hashBytes = md5.ComputeHash(inputBytes);
+
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < hashBytes.Length; i++)
+            {
+                sb.Append(hashBytes[i].ToString("x2"));
+            }
+
+            return $"https://www.gravatar.com/avatar/{sb}?d=mp";
+        }
+    }
+}

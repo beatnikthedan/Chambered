@@ -81,7 +81,7 @@ export default function Login() {
         
         // Attempt regular registration if backend API exists, else display admin-restricted warning
         try {
-          const res = await fetch('/api/auth/register', {
+          const res = await fetch('/api/Users/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password, email })

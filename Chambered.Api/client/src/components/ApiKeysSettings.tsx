@@ -1,35 +1,38 @@
 import React, { useState } from "react";
+import {
+  useGetApiKeyMyKeys,
+  useGetApiKeyCreate,
+  useGetApiKeyRevokeFromId,
+} from "../api/endpoints";
+import { useStore } from "../StoreContext";
 
 export default function ApiKeysSettings({ usersList = [] }) {
-  // 1. Ensure users array is never undefined
+  const { user: currentUser } = useStore();
   const users =
     Array.isArray(usersList) && usersList.length > 0
       ? usersList
-      : [{ id: "1", username: "Default User" }];
+      : [{ id: currentUser?.id || "1", username: currentUser?.email || "Default User" }];
 
-  // 2. States
-  const [loadingKeys, setLoadingKeys] = useState(false);
-  const [apiKeys, setApiKeys] = useState([
-    {
-      id: "k1",
-      name: "Raspberry Pi Reload Script",
-      userName: "johndoe",
-      tokenPreview: "sk_live_...9f2a",
-      createdAt: "2026-03-15T10:30:00Z",
-    },
-  ]);
+  const {
+    data: apiKeysResponse,
+    isLoading: loadingKeys,
+    refetch,
+  } = useGetApiKeyMyKeys();
+  
+  const apiKeys = apiKeysResponse?.data || [];
+  
+  const createMutation = useGetApiKeyCreate();
+  const revokeMutation = useGetApiKeyRevokeFromId();
 
   const [showKeyForm, setShowKeyForm] = useState(false);
-  const [savingKey, setSavingKey] = useState(false);
   const [keyForm, setKeyForm] = useState({
     name: "",
-    userId: users[0].id,
+    userId: users[0]?.id || "",
   });
 
   const [showRawTokenModal, setShowRawTokenModal] = useState(false);
   const [rawToken, setRawToken] = useState("");
 
-  // 3. Helper Functions
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     try {
@@ -43,40 +46,38 @@ export default function ApiKeysSettings({ usersList = [] }) {
     }
   };
 
-  const handleDeleteApiKey = (keyId) => {
+  const handleDeleteApiKey = async (keyId) => {
     if (window.confirm("Are you sure you want to delete this API key?")) {
-      setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
+      try {
+        await revokeMutation.mutateAsync({ id: keyId });
+        refetch();
+      } catch (err) {
+        alert("Failed to revoke API key.");
+      }
     }
   };
 
-  const handleCreateApiKey = (e) => {
+  const handleCreateApiKey = async (e) => {
     e.preventDefault();
-    setSavingKey(true);
-
-    setTimeout(() => {
-      const generatedRawToken = `sk_live_${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`;
-      const selectedUserObj = users.find(
-        (u) => String(u.id) === String(keyForm.userId),
-      );
-      const assignedUser = selectedUserObj
-        ? selectedUserObj.username
-        : "Default User";
-
-      const newKey = {
-        id: `key_${Date.now()}`,
-        name: keyForm.name,
-        userName: assignedUser,
-        tokenPreview: `${generatedRawToken.substring(0, 8)}...${generatedRawToken.slice(-4)}`,
-        createdAt: new Date().toISOString(),
-      };
-
-      setApiKeys((prev) => [newKey, ...prev]);
-      setSavingKey(false);
-      setShowKeyForm(false);
-      setRawToken(generatedRawToken);
+    try {
+      const response = await createMutation.mutateAsync({
+        data: {
+          name: keyForm.name,
+          userId: keyForm.userId || undefined,
+          claims: ["Read", "Write"],
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        },
+      });
+      
+      const plainTextKey = response.data?.plainTextKey || "";
+      setRawToken(plainTextKey);
       setShowRawTokenModal(true);
+      setShowKeyForm(false);
       setKeyForm({ name: "", userId: users[0]?.id || "" });
-    }, 400);
+      refetch();
+    } catch (err) {
+      alert("Failed to generate API key.");
+    }
   };
 
   const copyRawTokenToClipboard = () => {
@@ -127,13 +128,13 @@ export default function ApiKeysSettings({ usersList = [] }) {
               {apiKeys.map((key) => (
                 <tr key={key.id}>
                   <td className="text-bold">{key.name}</td>
-                  <td>{key.userName}</td>
-                  <td className="text-mono">{key.tokenPreview}</td>
+                  <td>{currentUser?.email || "Current User"}</td>
+                  <td className="text-mono">••••••••</td>
                   <td>{formatDate(key.createdAt)}</td>
                   <td>
                     <button
                       className="btn btn-danger btn-mini"
-                      onClick={() => handleDeleteApiKey(key.id)}
+                      onClick={() => handleDeleteApiKey(key.id!)}
                     >
                       Delete
                     </button>
@@ -145,7 +146,6 @@ export default function ApiKeysSettings({ usersList = [] }) {
         </div>
       )}
 
-      {/* Create integration token overlay */}
       {showKeyForm && (
         <div className="dialog-overlay" onClick={() => setShowKeyForm(false)}>
           <div className="dialog-card" onClick={(e) => e.stopPropagation()}>
@@ -190,7 +190,7 @@ export default function ApiKeysSettings({ usersList = [] }) {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={savingKey}
+                  disabled={createMutation.isPending}
                 >
                   Generate Key
                 </button>
@@ -200,7 +200,6 @@ export default function ApiKeysSettings({ usersList = [] }) {
         </div>
       )}
 
-      {/* Secure Token display overlay */}
       {showRawTokenModal && (
         <div className="dialog-overlay bg-deep-blur">
           <div className="dialog-card gold-border">

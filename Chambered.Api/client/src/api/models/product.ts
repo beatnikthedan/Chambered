@@ -16,6 +16,8 @@ export interface Product {
   description?: string | null;
   id?: number;
   /** @nullable */
+  productType?: string | null;
+  /** @nullable */
   partNumber?: string | null;
   /** @nullable */
   sku?: string | null;

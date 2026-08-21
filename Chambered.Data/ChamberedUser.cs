@@ -8,6 +8,9 @@ namespace Chambered.Data
         // Add custom fields later if needed
         // public string DisplayName { get; set; }
 
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+
         public ICollection<ArmoryItem> OwnedItems { get; set; } = new List<ArmoryItem>();
         public ICollection<ArmoryItem> BenificiaryItems { get; set; } = new List<ArmoryItem>();
     }

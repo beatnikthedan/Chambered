@@ -34,6 +34,9 @@ namespace Chambered.Data
 
         public DbSet<Vault> Vaults { get; set; }
 
+        public DbSet<ApiKey> ApiKeys { get; set; }
+        public DbSet<ApiKeyClaim> ApiKeyClaims { get; set; }
+
 
 
 
