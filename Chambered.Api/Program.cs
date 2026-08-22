@@ -11,6 +11,7 @@ using Chambered.Infrastructure.Services.EmailServices;
 using Chambered.Infrastructure.Services.Identity;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -80,7 +81,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;              // Reset window when user is active
     options.Cookie.HttpOnly = true;                 // Protects completely against XSS token theft
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Allows HTTP locally, requires HTTPS in prod
-    options.Cookie.SameSite = SameSiteMode.Strict;  // Protects against CSRF
+    options.Cookie.SameSite = builder.Environment.IsDevelopment()
+        ? SameSiteMode.Lax
+        : SameSiteMode.Strict;
 
     options.Events.OnRedirectToLogin = context =>
     {
@@ -201,6 +204,15 @@ builder.Services.AddHostedService<BackupSchedulerWorker>();
 // 6. Build application
 var app = builder.Build();
 
+var options = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+};
+options.KnownNetworks.Clear(); // Explicitly clears loopback limits
+options.KnownProxies.Clear();  // Explicitly clears loopback limits
+
+app.UseForwardedHeaders(options);
+
 // 7. Configure HTTP Pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -227,6 +239,8 @@ await app.ApplyMigrations<ChamberedDbContext>(async services =>
     // 2. Seeds standard roles & granular permission claims dynamically based on core mapping configuration
     await services.SeedIdentityData();
 });
+
+
 
 // Custom API Request & ModelState Debug Logger Middleware
 // app.Use(async (context, next) =>

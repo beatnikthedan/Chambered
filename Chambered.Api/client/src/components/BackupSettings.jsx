@@ -148,17 +148,12 @@ export default function BackupSettings() {
   };
   /// <summary>
   /// Authenticated binary file download wrapper.
-  /// Because download actions are protected by Auth filters, standard anchor tags cannot
-  /// attach Bearer headers, so we download programmatically via fetch.
+  /// Downloads backup programmatically via fetch relying on automatically attached session cookies.
   /// </summary>
   const handleDownloadBackup = async (fileName) => {
     try {
-      const token = localStorage.getItem("token");
       const response = await fetch(`/api/v1/backups/${fileName}/download`, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

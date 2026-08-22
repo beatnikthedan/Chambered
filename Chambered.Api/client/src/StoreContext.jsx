@@ -39,7 +39,6 @@ export function StoreProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
 
   const [activeArsenalId, setActiveArsenalId] = useState(null);
   const [activeArsenalName, setActiveArsenalName] = useState("Loading...");
@@ -161,14 +160,6 @@ export function StoreProvider({ children }) {
   const checkAuth = useCallback(async () => {
     try {
       await checkInitialization();
-      const currentToken = localStorage.getItem("token");
-      if (!currentToken) {
-        setUser(null);
-        setIsAuthenticated(false);
-        setLoading(false);
-        return;
-      }
-
       const res = await getUsersProfile();
       if (res.status === 200) {
         setUser(res.data);
@@ -176,7 +167,6 @@ export function StoreProvider({ children }) {
         await fetchArsenals();
         await fetchEnums();
       } else {
-        localStorage.removeItem("token");
         setUser(null);
         setIsAuthenticated(false);
       }
@@ -194,8 +184,6 @@ export function StoreProvider({ children }) {
       const res = await postAccountLogin({ email: username, password });
       if (res.status === 200) {
         const authResponse = res.data;
-        localStorage.setItem("token", authResponse.accessToken);
-        setToken(authResponse.accessToken);
         setUser({
           id: authResponse.userId,
           username: authResponse.username || authResponse.email,
@@ -239,8 +227,6 @@ export function StoreProvider({ children }) {
     } catch (err) {
       console.error("Logout error", err);
     } finally {
-      localStorage.removeItem("token");
-      setToken(null);
       setUser(null);
       setIsAuthenticated(false);
       setActiveArsenalId(null);

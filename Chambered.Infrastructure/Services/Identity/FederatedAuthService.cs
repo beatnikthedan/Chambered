@@ -92,6 +92,20 @@ namespace Chambered.Infrastructure.Services.Identity
             {
                 externalInfo.UserClaims.TryGetValue("email", out email);
             }
+            
+            // Smart email fallback if empty or missing
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                externalInfo.UserClaims.TryGetValue("preferred_username", out email);
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    externalInfo.UserClaims.TryGetValue("name", out email);
+                }
+                if (!string.IsNullOrWhiteSpace(email) && !email.Contains("@"))
+                {
+                    email = $"{email}@local.sso";
+                }
+            }
 
             externalInfo.UserClaims.TryGetValue(firstNameClaimKey, out var firstName);
             if (string.IsNullOrWhiteSpace(firstName))
@@ -102,6 +116,14 @@ namespace Chambered.Infrastructure.Services.Identity
             {
                 externalInfo.UserClaims.TryGetValue("givenname", out firstName);
             }
+            if (string.IsNullOrWhiteSpace(firstName))
+            {
+                externalInfo.UserClaims.TryGetValue("name", out firstName);
+                if (string.IsNullOrWhiteSpace(firstName))
+                {
+                    firstName = "SSO";
+                }
+            }
 
             externalInfo.UserClaims.TryGetValue(lastNameClaimKey, out var lastName);
             if (string.IsNullOrWhiteSpace(lastName))
@@ -111,6 +133,10 @@ namespace Chambered.Infrastructure.Services.Identity
             if (string.IsNullOrWhiteSpace(lastName))
             {
                 externalInfo.UserClaims.TryGetValue("surname", out lastName);
+            }
+            if (string.IsNullOrWhiteSpace(lastName))
+            {
+                lastName = "User";
             }
 
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))

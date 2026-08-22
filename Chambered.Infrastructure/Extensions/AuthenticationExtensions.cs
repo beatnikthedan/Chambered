@@ -1,3 +1,5 @@
+using Chambered.Core.Services.Identity;
+using Chambered.Core.Services.Identity.Dto;
 using Chambered.Infrastructure.Authorization;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Security;
@@ -7,8 +9,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Chambered.Infrastructure.Extensions
 {
@@ -48,6 +53,7 @@ namespace Chambered.Infrastructure.Extensions
                             options.ClientSecret = provider.ClientSecret;
                             options.CallbackPath = provider.CallbackPath;
                             options.ResponseType = "code";
+                            options.ResponseMode = "query";
                             options.SaveTokens = true;
                             options.GetClaimsFromUserInfoEndpoint = true;
 
@@ -58,6 +64,63 @@ namespace Chambered.Infrastructure.Extensions
                                     options.Scope.Add(scope);
                                 }
                             }
+
+                            options.Events = new Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents
+                            {
+                                OnRemoteFailure = context =>
+                                {
+                                    var errorMessage = context.Failure?.Message ?? "Remote OIDC authentication failed";
+                                    context.Response.Redirect($"/login?error={System.Net.WebUtility.UrlEncode(errorMessage)}");
+                                    context.HandleResponse();
+                                    return Task.CompletedTask;
+                                },
+                                OnTicketReceived = async context =>
+                                {
+                                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("OidcAuthentication");
+                                    logger.LogInformation("OIDC Ticket Received: Scheme={Scheme}", context.Scheme.Name);
+
+                                    var principal = context.Principal;
+                                    if (principal == null) 
+                                    {
+                                        logger.LogWarning("OIDC Ticket Principal is null!");
+                                        return;
+                                    }
+
+                                    var providerName = context.Scheme.Name;
+                                    var subClaim = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier) 
+                                        ?? principal.FindFirst("sub")
+                                        ?? principal.FindFirst("nameid")
+                                        ?? principal.FindFirst(System.Security.Claims.ClaimTypes.Name);
+
+                                    if (subClaim == null) 
+                                    {
+                                        logger.LogError("OIDC Ticket failed: Could not find NameIdentifier or sub claim!");
+                                        return;
+                                    }
+
+                                    var providerKey = subClaim.Value;
+                                    var claimsDict = principal.Claims
+                                        .GroupBy(c => c.Type)
+                                        .ToDictionary(g => g.Key, g => g.First().Value);
+
+                                    var externalInfo = new ExternalIdentityDto(providerName, providerKey, claimsDict);
+                                    
+                                    var federatedAuthService = context.HttpContext.RequestServices.GetRequiredService<IFederatedAuthService>();
+                                    var loginResult = await federatedAuthService.HandleCallbackAsync(providerName, externalInfo).ConfigureAwait(false);
+
+                                    if (loginResult.IsSuccess)
+                                    {
+                                        logger.LogInformation("OIDC Ticket processed successfully. Issuing Application cookie and redirecting to {ReturnUri}", context.ReturnUri ?? "/");
+                                        context.HandleResponse();
+                                        context.Response.Redirect(context.ReturnUri ?? "/");
+                                    }
+                                    else
+                                    {
+                                        logger.LogError("OIDC Ticket processing failed: {Error}", loginResult.ErrorMessage);
+                                        context.Fail(loginResult.ErrorMessage);
+                                    }
+                                }
+                            };
                         });
                     }
                 }

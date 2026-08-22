@@ -123,7 +123,7 @@ export default function Login() {
   const oidcProviders = providersResponse?.data || [];
 
   const handleOidcLogin = (providerName) => {
-    const redirectUri = `${window.location.origin}/sso-callback`;
+    const redirectUri = `${window.location.origin}/`;
 
     // Dynamically build the versioned URL using Orval's generated builder function
     const challengeUrl = getGetAccountPrepareChallengeUrl({
