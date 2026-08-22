@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./VersionControl.css";
 
+import {} from "../api/endpoints";
+
 export const VersionControl = ({
-  isApiConnected = true,
   environment = "docker",
   currentRelease = null,
   latestRelease = null,
@@ -17,6 +18,30 @@ export const VersionControl = ({
   //     setSelectedRelease(release);
   //     setIsModalOpen(true);
   //   };
+
+  const useApiHealth = (pollIntervalMs = 30000) => {
+    const [isApiConnected, setIsApiConnected] = useState(false);
+
+    useEffect(() => {
+      const checkHealth = async () => {
+        try {
+          const response = await fetch("/health");
+          setIsApiConnected(response.ok);
+        } catch {
+          setIsApiConnected(false);
+        }
+      };
+
+      checkHealth();
+      const intervalId = setInterval(checkHealth, pollIntervalMs);
+
+      return () => clearInterval(intervalId);
+    }, [pollIntervalMs]);
+
+    return isApiConnected;
+  };
+
+  const isApiConnected = useApiHealth(30000);
 
   return (
     <div className="version-control-container">

@@ -432,7 +432,7 @@ export default function App() {
           <div className="sidebar-footer version-footer">
             {!isSidebarCollapsed ? (
               <div className="version-info">
-                <VersionControl isApiConnected:true></VersionControl>
+                <VersionControl />
               </div>
             ) : (
               <div
