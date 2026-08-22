@@ -1,45 +1,69 @@
 import React, { useState, useEffect } from "react";
 import "./VersionControl.css";
 
-import {} from "../api/endpoints";
+import {
+  useGetVersionCurrentVersion,
+  useGetVersionLatestVersionFromPreRelease,
+} from "../api/endpoints";
 
-export const VersionControl = ({
-  environment = "docker",
-  currentRelease = null,
-  latestRelease = null,
-  onFetchLatest = null,
-}) => {
+const useApiHealth = (pollIntervalMs = 30000) => {
+  const [isApiConnected, setIsApiConnected] = useState(false);
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const response = await fetch("/health");
+        setIsApiConnected(response.ok);
+      } catch {
+        setIsApiConnected(false);
+      }
+    };
+
+    checkHealth();
+    const intervalId = setInterval(checkHealth, pollIntervalMs);
+
+    return () => clearInterval(intervalId);
+  }, [pollIntervalMs]);
+
+  return isApiConnected;
+};
+
+export const VersionControl = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState(null);
 
   const hasUpdate = true; //currentRelease && !currentRelease.isLatest && latestRelease;
 
-  //   const handleOpenModal = (release) => {
-  //     setSelectedRelease(release);
-  //     setIsModalOpen(true);
-  //   };
-
-  const useApiHealth = (pollIntervalMs = 30000) => {
-    const [isApiConnected, setIsApiConnected] = useState(false);
-
-    useEffect(() => {
-      const checkHealth = async () => {
-        try {
-          const response = await fetch("/health");
-          setIsApiConnected(response.ok);
-        } catch {
-          setIsApiConnected(false);
-        }
-      };
-
-      checkHealth();
-      const intervalId = setInterval(checkHealth, pollIntervalMs);
-
-      return () => clearInterval(intervalId);
-    }, [pollIntervalMs]);
-
-    return isApiConnected;
+  const handleOpenModal = (release) => {
+    setSelectedRelease(release);
+    setIsModalOpen(true);
   };
+
+  const QUERY_CACHE_OPTIONS = {
+    query: {
+      staleTime: 1000 * 60 * 15, // Treat data as fresh for 15 minutes (no background refetches)
+      gcTime: 1000 * 60 * 30, // Keep in memory for 30 minutes
+      refetchOnWindowFocus: false, // Stop refetching every time the user clicks back onto the browser tab
+      retry: 1, // Don't hammer the API if it fails once
+    },
+  };
+
+  const {
+    data: currentData,
+    isLoading: currentLoading,
+    error: currentError,
+  } = useGetVersionCurrentVersion(QUERY_CACHE_OPTIONS);
+
+  const currentVersion = currentData?.data;
+
+  const {
+    data: latestData,
+    isLoading: latestLoading,
+    error: latestError,
+    refetch: fetchLatest,
+  } = useGetVersionLatestVersionFromPreRelease(false, QUERY_CACHE_OPTIONS);
+
+  const latestVersion = latestData?.data;
 
   const isApiConnected = useApiHealth(30000);
 
@@ -59,11 +83,10 @@ export const VersionControl = ({
         <span className="version-separator">·</span>
 
         <button
-          //   onClick={() => handleOpenModal(currentRelease)}
+          onClick={() => handleOpenModal(currentVersion)}
           className="version-link"
         >
-          {/* {currentRelease?.tagName || "v1.0.0.0"} */}
-          v1.0.0
+          {currentVersion?.tagName}
         </button>
       </div>
 
@@ -72,22 +95,21 @@ export const VersionControl = ({
         <div className="version-update-banner">
           <span>Version </span>
           <button
-            // onClick={() => {
-            //   handleOpenModal(latestRelease);
-            //   if (onFetchLatest) onFetchLatest();
-            // }}
+            onClick={() => {
+              handleOpenModal(latestVersion);
+              fetchLatest;
+            }}
             className="version-banner-link"
           >
             {" "}
-            {/* {latestRelease.tagName} ({latestRelease.name}) */}
-            v1.1.2
+            {latestVersion?.tagName}
           </button>
           is available
         </div>
       )}
 
       {/* Release Info Modal */}
-      {/* {isModalOpen && (
+      {isModalOpen && (
         <div
           className="version-modal-overlay"
           onClick={() => setIsModalOpen(false)}
@@ -102,6 +124,12 @@ export const VersionControl = ({
                   selectedRelease?.tagName ||
                   "Release Info"}
               </h3>
+              <button
+                onClick={() => handleOpenModal(currentVersion)}
+                className="version-link"
+              >
+                {latestVersion?.htmlUrl}
+              </button>
               <button
                 className="version-close-button"
                 onClick={() => setIsModalOpen(false)}
@@ -123,7 +151,7 @@ export const VersionControl = ({
             </div>
           </div>
         </div>
-      )} */}
+      )}
     </div>
   );
 };

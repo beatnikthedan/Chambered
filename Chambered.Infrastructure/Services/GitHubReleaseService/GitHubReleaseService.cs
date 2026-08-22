@@ -2,6 +2,7 @@ using Chambered.Core.Exceptions;
 using Chambered.Core.Services;
 using Chambered.Core.Services.Models;
 using Chambered.Infrastructure.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;
@@ -12,6 +13,7 @@ namespace Chambered.Infrastructure.Services.GitHubReleaseService
     /// <summary>
     /// Provides operations for retrieving release information from a GitHub repository,
     /// including the latest release, release history, and specific tagged releases.
+    /// Uses an in-memory cache to prevent GitHub API rate-limiting issues.
     /// </summary>
     /// <remarks>
     /// This service uses a typed <see cref="HttpClient"/> registered via
@@ -24,7 +26,10 @@ namespace Chambered.Infrastructure.Services.GitHubReleaseService
         private readonly HttpClient _client;
         private readonly IOptions<GitHubReleaseConfiguration> _options;
         private readonly ILogger<GitHubReleaseService> _logger;
+        private readonly IMemoryCache _cache;
         private readonly string _baseUrl;
+
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(15);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GitHubReleaseService"/> class.
@@ -42,127 +47,159 @@ namespace Chambered.Infrastructure.Services.GitHubReleaseService
         /// The logger used to record diagnostic and operational information during
         /// GitHub API interactions.
         /// </param>
+        /// <param name="cache">
+        /// The <see cref="IMemoryCache"/> instance used to store cached GitHub responses.
+        /// </param>
         /// <remarks>
         /// The constructor configures the required GitHub User-Agent header and builds
         /// the base API URL for all subsequent release queries.
         /// </remarks>
-        public GitHubReleaseService(HttpClient client, IOptions<GitHubReleaseConfiguration> options, ILogger<GitHubReleaseService> logger)
+        public GitHubReleaseService(
+            HttpClient client,
+            IOptions<GitHubReleaseConfiguration> options,
+            ILogger<GitHubReleaseService> logger,
+            IMemoryCache cache)
         {
             _options = options;
             _client = client;
             _client.DefaultRequestHeaders.UserAgent.ParseAdd(_options.Value.UserAgengt);
             _logger = logger;
             _baseUrl = $"https://api.github.com/repos/{_options.Value.RepositoryOwner}/{_options.Value.RepositoryName}/releases";
+            _cache = cache;
         }
 
         /// <inheritdoc cref="IGitHubReleaseService.GetReleaseByTag(string)"/>
         public async Task<GitHubRelease> GetReleaseByTag(string tag)
         {
-            _logger.LogInformation("Requesting GitHub release with tag '{Tag}'", tag);
+            string cacheKey = $"github_release_tag_{tag}";
 
-            try
+            return await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
-                var json = await _client.GetStringAsync($"{_baseUrl}/tags/{tag}");
-                var release = JsonSerializer.Deserialize<GitHubRelease>(json);
+                entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+                _logger.LogInformation("Cache miss. Requesting GitHub release with tag '{Tag}' from API", tag);
 
-                var latestJson = await _client.GetStringAsync($"{_baseUrl}/latest");
-                var latestStable = JsonSerializer.Deserialize<GitHubRelease>(latestJson);
-
-                if (release != null)
+                try
                 {
-                    release.IsLatest = !string.IsNullOrEmpty(release.TagName) &&
-                                       string.Equals(release.TagName, latestStable?.TagName, StringComparison.OrdinalIgnoreCase);
-                }
+                    var json = await _client.GetStringAsync($"{_baseUrl}/tags/{tag}");
+                    var release = JsonSerializer.Deserialize<GitHubRelease>(json);
 
-                _logger.LogInformation("Successfully retrieved release '{Tag}'", tag);
-                return release;
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                _logger.LogWarning("GitHub release with tag '{Tag}' was not found", tag);
-                throw new GitHubReleaseNotFoundException(tag);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving GitHub release '{Tag}'", tag);
-                throw new GitHubApiException($"Failed to retrieve release '{tag}': {ex.Message}");
-            }
+                    // Fetch latest release via internal cached call for comparison
+                    var latestStable = await GetLatestRelease(includePrerelease: false);
+
+                    if (release != null)
+                    {
+                        release.IsLatest = !string.IsNullOrEmpty(release.TagName) &&
+                                           string.Equals(release.TagName, latestStable?.TagName, StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    _logger.LogInformation("Successfully retrieved release '{Tag}' from GitHub API", tag);
+                    return release;
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // Do not cache 404 responses
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.Zero;
+                    _logger.LogWarning("GitHub release with tag '{Tag}' was not found", tag);
+                    throw new GitHubReleaseNotFoundException(tag);
+                }
+                catch (Exception ex)
+                {
+                    // Do not cache exceptions
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.Zero;
+                    _logger.LogError(ex, "Error retrieving GitHub release '{Tag}'", tag);
+                    throw new GitHubApiException($"Failed to retrieve release '{tag}': {ex.Message}");
+                }
+            });
         }
 
         /// <inheritdoc cref="IGitHubReleaseService.GetLatestRelease(bool)"/>
         public async Task<GitHubRelease> GetLatestRelease(bool includePrerelease = false)
         {
-            _logger.LogInformation("Requesting latest GitHub release (IncludePrerelease={IncludePrerelease})", includePrerelease);
+            string cacheKey = $"github_release_latest_prerelease_{includePrerelease}";
 
-            try
+            return await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
-                if (!includePrerelease)
-                {
-                    var json = await _client.GetStringAsync($"{_baseUrl}/latest");
-                    var latest = JsonSerializer.Deserialize<GitHubRelease>(json);
+                entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+                _logger.LogInformation("Cache miss. Requesting latest GitHub release (IncludePrerelease={IncludePrerelease}) from API", includePrerelease);
 
-                    if (latest != null)
+                try
+                {
+                    if (!includePrerelease)
                     {
-                        latest.IsLatest = true;
-                        _logger.LogInformation("Successfully retrieved latest stable release '{Tag}'", latest.TagName);
+                        var json = await _client.GetStringAsync($"{_baseUrl}/latest");
+                        var latest = JsonSerializer.Deserialize<GitHubRelease>(json);
+
+                        if (latest != null)
+                        {
+                            latest.IsLatest = true;
+                            _logger.LogInformation("Successfully retrieved latest stable release '{Tag}' from GitHub API", latest.TagName);
+                        }
+
+                        return latest;
                     }
 
-                    return latest;
+                    var allJson = await _client.GetStringAsync(_baseUrl);
+                    var all = JsonSerializer.Deserialize<List<GitHubRelease>>(allJson);
+
+                    var newest = all?.FirstOrDefault();
+                    if (newest != null)
+                    {
+                        newest.IsLatest = true;
+                        _logger.LogInformation("Successfully retrieved latest prerelease '{Tag}' from GitHub API", newest.TagName);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No releases found when requesting latest prerelease from GitHub API");
+                    }
+
+                    return newest;
                 }
-
-                var allJson = await _client.GetStringAsync(_baseUrl);
-                var all = JsonSerializer.Deserialize<List<GitHubRelease>>(allJson);
-
-                var newest = all?.FirstOrDefault();
-                if (newest != null)
+                catch (Exception ex)
                 {
-                    newest.IsLatest = true;
-                    _logger.LogInformation("Successfully retrieved latest prerelease '{Tag}'", newest.TagName);
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.Zero;
+                    _logger.LogError(ex, "Error retrieving latest GitHub release");
+                    throw new GitHubApiException($"Failed to retrieve latest release: {ex.Message}");
                 }
-                else
-                {
-                    _logger.LogWarning("No releases found when requesting latest prerelease");
-                }
-
-                return newest;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving latest GitHub release");
-                throw new GitHubApiException($"Failed to retrieve latest release: {ex.Message}");
-            }
+            });
         }
 
         /// <inheritdoc cref="IGitHubReleaseService.GetReleaseHistory(bool)"/>
         public async Task<List<GitHubRelease>> GetReleaseHistory(bool includePrerelease = false)
         {
-            _logger.LogInformation("Requesting GitHub release history (IncludePrerelease={IncludePrerelease})", includePrerelease);
+            string cacheKey = $"github_release_history_prerelease_{includePrerelease}";
 
-            try
+            return await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
-                var json = await _client.GetStringAsync(_baseUrl);
-                var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json) ?? new List<GitHubRelease>();
+                entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+                _logger.LogInformation("Cache miss. Requesting GitHub release history (IncludePrerelease={IncludePrerelease}) from API", includePrerelease);
 
-                if (!includePrerelease)
+                try
                 {
-                    releases = releases.Where(r => !r.Prerelease).ToList();
-                    _logger.LogInformation("Filtered release history to stable releases only");
-                }
+                    var json = await _client.GetStringAsync(_baseUrl);
+                    var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json) ?? new List<GitHubRelease>();
 
-                var latest = releases.FirstOrDefault();
-                if (latest != null)
+                    if (!includePrerelease)
+                    {
+                        releases = releases.Where(r => !r.Prerelease).ToList();
+                        _logger.LogInformation("Filtered release history to stable releases only");
+                    }
+
+                    var latest = releases.FirstOrDefault();
+                    if (latest != null)
+                    {
+                        latest.IsLatest = true;
+                    }
+
+                    _logger.LogInformation("Successfully retrieved {Count} releases from GitHub API", releases.Count);
+                    return releases;
+                }
+                catch (Exception ex)
                 {
-                    latest.IsLatest = true;
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.Zero;
+                    _logger.LogError(ex, "Error retrieving GitHub release history");
+                    throw new GitHubApiException($"Failed to retrieve release history: {ex.Message}");
                 }
-
-                _logger.LogInformation("Successfully retrieved {Count} releases", releases.Count);
-                return releases;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving GitHub release history");
-                throw new GitHubApiException($"Failed to retrieve release history: {ex.Message}");
-            }
+            });
         }
     }
 }

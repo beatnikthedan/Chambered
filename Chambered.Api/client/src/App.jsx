@@ -439,6 +439,10 @@ export default function App() {
                 className="version-info-collapsed"
                 title="v1.0.0 (Docker) - Up to date"
               >
+                <span
+                  className={`version-dot ${isApiConnected ? "connected" : "disconnected"}`}
+                  title={isApiConnected ? "Online" : "Offline"}
+                />
                 <span className="status-dot green"></span>
               </div>
             )}
