@@ -2,17 +2,17 @@ using Asp.Versioning;
 using Chambered.Api.BackgroundServices;
 using Chambered.Api.Swagger;
 using Chambered.Core.Services;
+using Chambered.Core.Services.Identity;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
-using Chambered.Core.Services.Identity;
-using Chambered.Infrastructure.Services.Identity;
-
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
+using Chambered.Infrastructure.Services.Identity;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.OData;
@@ -112,6 +112,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // 5. Configure Controllers with camelCase, cycles ignored, and OData options
 builder.Services.AddControllers(options =>
 {
+    options.Filters.Add(new ProducesAttribute("application/json"));
     options.Filters.Add<ModelStateDebugLoggerFilter>();
     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
 })

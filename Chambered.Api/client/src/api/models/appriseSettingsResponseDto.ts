@@ -6,13 +6,27 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Data transfer object defining Apprise push notification properties.
+ */
 export interface AppriseSettingsResponseDto {
+  /** Indicates whether self-signed SSL certs are trusted. */
   allowInvalidCertificates?: boolean;
-  /** @nullable */
+  /**
+     * The push notification server URL.
+     * @nullable
+     */
   hostUrl?: string | null;
-  /** @nullable */
+  /**
+     * The secret Apprise decryption key.
+     * @nullable
+     */
   notificationKey?: string | null;
-  /** @nullable */
+  /**
+     * The delivery endpoints payload.
+     * @nullable
+     */
   targetUrls?: string | null;
+  /** The connection timeout parameter. */
   timeoutSeconds?: number;
 }

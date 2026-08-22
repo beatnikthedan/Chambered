@@ -6,10 +6,18 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Data transfer object defining password complexity criteria.
+ */
 export interface PasswordPolicyResponseDto {
+  /** The minimum character length requirement. */
   minLength?: number;
+  /** Indicates whether uppercase characters are mandatory. */
   requireUpper?: boolean;
+  /** Indicates whether lowercase characters are mandatory. */
   requireLower?: boolean;
+  /** Indicates whether numeric digits are mandatory. */
   requireNumbers?: boolean;
+  /** Indicates whether non-alphanumeric characters are mandatory. */
   requireSpecial?: boolean;
 }

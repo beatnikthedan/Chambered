@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 
+import {
+  useGetBackupsBackupSettings,
+  useGetBackupsBackups,
+} from "../api/endpoints";
+
 export default function BackupSettings() {
   const [loading, setLoading] = useState(true);
-
-  // Configuration State
-  const [backupPath] = useState("/metadata/backups");
-  const [autoBackups, setAutoBackups] = useState(true);
-  const [schedule] = useState("Run every Sunday at 1:30");
-  const [backupsToKeep, setBackupsToKeep] = useState(3);
 
   // Table Data State
   const [backupsList, setBackupsList] = useState([
@@ -30,6 +29,29 @@ export default function BackupSettings() {
       size: "125 MB",
     },
   ]);
+
+  const {
+    data: backupSettingsData,
+    isLoading: backupSettingsLoading,
+    error: backupSettingsError,
+    refetch: backupSettingsFetch,
+  } = useGetBackupsBackupSettings();
+
+  const backupSettings = backupSettingsData?.data;
+
+  const [backups, setBackups] = useState([]);
+
+  const {
+    data: backupsData,
+    isLoading: backupsLoading,
+    error: backupsError,
+  } = useGetBackupsBackups();
+
+  useEffect(() => {
+    if (backupsData?.data) {
+      setBackups(backupsData.data);
+    }
+  }, [backupsData]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -98,8 +120,7 @@ export default function BackupSettings() {
           <input
             type="checkbox"
             id="autoBackupsHeader"
-            checked={autoBackups}
-            onChange={(e) => setAutoBackups(e.target.checked)}
+            checked={backupSettings.enabled}
             style={{
               width: "20px",
               height: "20px",
@@ -116,7 +137,7 @@ export default function BackupSettings() {
               fontWeight: "bold",
             }}
           >
-            {autoBackups
+            {backupSettings.enabled
               ? "Automatic Backups Enabled"
               : "Enable Automatic Backups"}
           </label>
@@ -149,7 +170,7 @@ export default function BackupSettings() {
         className="sec-subtitle"
         style={{
           margin: "0.75rem 0 1.5rem 0",
-          opacity: autoBackups ? 1 : 0.4,
+          opacity: backupSettings.enabled ? 1 : 0.4,
           transition: "opacity 0.2s ease-in-out",
         }}
       >
@@ -160,54 +181,83 @@ export default function BackupSettings() {
       {/* FORM INPUTS & TABLE (GRAYED OUT WHEN AUTOMATIC BACKUPS ARE DISABLED) */}
       <div
         style={{
-          opacity: autoBackups ? 1 : 0.4,
-          pointerEvents: autoBackups ? "auto" : "none",
+          opacity: backupSettings ? 1 : 0.4,
+          pointerEvents: backupSettings ? "auto" : "none",
           transition: "opacity 0.2s ease-in-out",
         }}
       >
         {/* STACKED FORM CONFIGURATION */}
-        <div
-          className="form-stacked"
-          style={{
-            margin: "0 0 1.5rem 0",
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.25rem",
-          }}
-        >
-          <div className="form-group">
-            <label>BACKUP LOCATION</label>
-            <input
-              type="text"
-              readOnly
-              value={backupPath}
-              className="text-mono readonly-input"
-            />
-          </div>
 
-          <div className="form-group">
-            <label>SCHEDULE</label>
-            <input
-              type="text"
-              readOnly
-              value={schedule}
-              className="readonly-input"
-            />
+        {backupSettingsLoading ? (
+          <div className="loading-spinner-box">
+            <div className="spinner"></div>
+            <p>Analyzing vaults...</p>
           </div>
+        ) : backupSettingsError ? (
+          <div className="vaults-error-card">
+            <span className="err-icon">⚠️</span>
+            <p>{error}</p>
+            {/* <button
+              className="btn btn-secondary btn-small"
+              onClick={() =>
+                queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] })
+              }
+            >
+              Retry
+            </button> */}
+          </div>
+        ) : backupSettings === null ? (
+          <div className="empty-state panel">
+            <h3>You have no items in your Vaults.</h3>
+            <p style={{ marginTop: "4px", color: "var(--text-muted)" }}>
+              Click 'Add Item' above to add your first item.
+            </p>
+          </div>
+        ) : (
+          <div
+            className="form-stacked"
+            style={{
+              margin: "0 0 1.5rem 0",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1.25rem",
+            }}
+          >
+            <div className="form-group">
+              <label>BACKUP LOCATION</label>
+              <input
+                type="text"
+                readOnly
+                value={backupSettings.backupPath}
+                className="text-mono readonly-input"
+              />
+            </div>
 
-          <div className="form-group">
-            <label>NUMBER OF BACKUPS TO KEEP</label>
-            <input
-              type="number"
-              min="1"
-              value={backupsToKeep}
-              onChange={(e) => setBackupsToKeep(parseInt(e.target.value) || 1)}
-            />
+            <div className="form-group">
+              <label>SCHEDULE</label>
+              <input
+                type="text"
+                readOnly
+                value={backupSettings.cronSchedule}
+                className="readonly-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>NUMBER OF BACKUPS TO KEEP</label>
+              <input
+                type="number"
+                min="1"
+                readOnly
+                value={backupSettings.retentionCount}
+                className="readonly-input"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* TABLE DATA */}
-        {loading ? (
+        {backupsLoading ? (
           <div className="loading-inline">
             <div className="spinner"></div>
           </div>
@@ -225,16 +275,16 @@ export default function BackupSettings() {
                 </tr>
               </thead>
               <tbody>
-                {backupsList.map((b) => (
-                  <tr key={b.id}>
+                {backups.map((b) => (
+                  <tr key={b.fileName}>
                     <td
                       className="text-bold text-mono"
                       style={{ wordBreak: "break-all" }}
                     >
-                      {b.file}
+                      {b.fileName}
                     </td>
-                    <td>{b.datetime}</td>
-                    <td>{b.size}</td>
+                    <td>{b.date}</td>
+                    <td>{b.sizeInBytes}</td>
                     <td>
                       <div
                         style={{

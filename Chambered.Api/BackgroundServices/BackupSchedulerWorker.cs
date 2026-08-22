@@ -1,32 +1,17 @@
-﻿using Chambered.Core.Services;
+using Chambered.Core.Services;
 using Chambered.Infrastructure.Configuration;
+using Chambered.Infrastructure.LogMessages;
 using Cronos;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Chambered.Api.BackgroundServices
 {
-
-    //    // 1. Bind Options Configuration
-    //builder.Services.Configure<BackupConfiguration>(
-    //    builder.Configuration.GetSection("Backup"));
-
-    //// 2. Register Database Backup Implementation (Swap Sqlite for Postgres as needed)
-    //string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-    //    // FOR SQLITE:
-    //    builder.Services.AddScoped<IBackupService>(sp => 
-    //    new SqliteBackupService(connectionString, sp.GetRequiredService<IOptionsSnapshot<BackupConfiguration>>(), sp.GetRequiredService<ILogger<SqliteBackupService>>()));
-
-    //// FOR POSTGRESQL (Uncomment when switching to Postgres):
-    //// builder.Services.AddScoped<IBackupService>(sp => 
-    ////     new PostgresBackupService(connectionString, sp.GetRequiredService<IOptionsSnapshot<BackupConfiguration>>(), sp.GetRequiredService<ILogger<PostgresBackupService>>()));
-
-    //// 3. Register the Scheduled Background Worker
-    //builder.Services.AddHostedService<BackupSchedulerWorker>();
-
-
-
-
     /// <summary>
     /// Background hosted service that periodically triggers backups and handles retention policy cleanup based on CRON expressions.
     /// </summary>
@@ -35,24 +20,29 @@ namespace Chambered.Api.BackgroundServices
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IOptionsMonitor<BackupConfiguration> _optionsMonitor;
         private readonly ILogger<BackupSchedulerWorker> _logger;
+        private readonly BackupSchedulerLogMessages _workerLogger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BackupSchedulerWorker"/> class.
         /// </summary>
+        /// <param name="scopeFactory">The service scope factory used to construct scoped instances of <see cref="IBackupService"/>.</param>
+        /// <param name="optionsMonitor">The configuration monitor for dynamic updates of <see cref="BackupConfiguration"/>.</param>
+        /// <param name="logger">The diagnostic logger instance.</param>
         public BackupSchedulerWorker(
             IServiceScopeFactory scopeFactory,
             IOptionsMonitor<BackupConfiguration> optionsMonitor,
             ILogger<BackupSchedulerWorker> logger)
         {
-            _scopeFactory = scopeFactory;
-            _optionsMonitor = optionsMonitor;
-            _logger = logger;
+            _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
+            _optionsMonitor = optionsMonitor ?? throw new ArgumentNullException(nameof(optionsMonitor));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _workerLogger = new BackupSchedulerLogMessages(_logger);
         }
 
         /// <inheritdoc/>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Backup Scheduler Background Worker initialized.");
+            _workerLogger.WorkerInitialized();
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -60,7 +50,7 @@ namespace Chambered.Api.BackgroundServices
 
                 if (!config.Enabled)
                 {
-                    _logger.LogDebug("Automated backups are currently disabled. Re-checking in 1 minute...");
+                    _workerLogger.BackupsDisabled();
                     await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                     continue;
                 }
@@ -72,7 +62,7 @@ namespace Chambered.Api.BackgroundServices
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Invalid CRON expression '{Cron}'. Worker will retry in 5 minutes.", config.CronSchedule);
+                    _workerLogger.InvalidCronExpression(config.CronSchedule, ex);
                     await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
                     continue;
                 }
@@ -81,7 +71,7 @@ namespace Chambered.Api.BackgroundServices
 
                 if (!nextRunUtc.HasValue)
                 {
-                    _logger.LogWarning("No future occurrences found for CRON expression '{Cron}'. Sleeping for 1 hour.", config.CronSchedule);
+                    _workerLogger.NoCronOccurrences(config.CronSchedule);
                     await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
                     continue;
                 }
@@ -89,9 +79,7 @@ namespace Chambered.Api.BackgroundServices
                 var delay = nextRunUtc.Value - DateTime.UtcNow;
                 if (delay > TimeSpan.Zero)
                 {
-                    _logger.LogInformation("Next backup scheduled for UTC: {NextRun} (in {DelayMinutes:F1} minutes)",
-                        nextRunUtc.Value, delay.TotalMinutes);
-
+                    _workerLogger.BackupScheduled(nextRunUtc.Value, delay.TotalMinutes);
                     await Task.Delay(delay, stoppingToken);
                 }
 
@@ -102,9 +90,14 @@ namespace Chambered.Api.BackgroundServices
             }
         }
 
+        /// <summary>
+        /// Resolves the scoped <see cref="IBackupService"/> and runs a scheduled backup task and retention policy purge.
+        /// </summary>
+        /// <param name="config">The active snapshot configuration settings.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
         private async Task RunBackupJobAsync(BackupConfiguration config, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Triggering scheduled backup job...");
+            _workerLogger.TriggeringBackupJob();
 
             using (var scope = _scopeFactory.CreateScope())
             {
@@ -114,18 +107,17 @@ namespace Chambered.Api.BackgroundServices
                 {
                     var result = await backupService.CreateBackupAsync(config.BackupPath, cancellationToken);
 
-                    _logger.LogInformation("Backup created successfully at {Path} ({Size} bytes).",
-                        result.FilePath, result.SizeInBytes);
+                    _workerLogger.BackupSuccess(result.FilePath, result.SizeInBytes);
 
                     int deleted = backupService.EnforceRetentionPolicy(config.BackupPath, config.RetentionCount);
                     if (deleted > 0)
                     {
-                        _logger.LogInformation("Retention policy purged {Count} old backup files.", deleted);
+                        _workerLogger.RetentionPolicyPurge(deleted);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "An error occurred while executing scheduled backup.");
+                    _workerLogger.BackupJobFailed(ex);
                 }
             }
         }
