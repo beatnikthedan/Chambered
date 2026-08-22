@@ -4,8 +4,8 @@ using Chambered.Core.Services.Models;
 using Chambered.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System.Net;
+using System.Text.Json;
 
 namespace Chambered.Infrastructure.Services.GitHubReleaseService
 {
@@ -63,14 +63,15 @@ namespace Chambered.Infrastructure.Services.GitHubReleaseService
             try
             {
                 var json = await _client.GetStringAsync($"{_baseUrl}/tags/{tag}");
-                var release = JsonConvert.DeserializeObject<GitHubRelease>(json);
+                var release = JsonSerializer.Deserialize<GitHubRelease>(json);
 
                 var latestJson = await _client.GetStringAsync($"{_baseUrl}/latest");
-                var latestStable = JsonConvert.DeserializeObject<GitHubRelease>(latestJson);
+                var latestStable = JsonSerializer.Deserialize<GitHubRelease>(latestJson);
 
-                if (release.TagName == latestStable.TagName)
+                if (release != null)
                 {
-                    release.IsLatest = true;
+                    release.IsLatest = !string.IsNullOrEmpty(release.TagName) &&
+                                       string.Equals(release.TagName, latestStable?.TagName, StringComparison.OrdinalIgnoreCase);
                 }
 
                 _logger.LogInformation("Successfully retrieved release '{Tag}'", tag);
@@ -98,17 +99,21 @@ namespace Chambered.Infrastructure.Services.GitHubReleaseService
                 if (!includePrerelease)
                 {
                     var json = await _client.GetStringAsync($"{_baseUrl}/latest");
-                    var latest = JsonConvert.DeserializeObject<GitHubRelease>(json);
-                    latest.IsLatest = true;
+                    var latest = JsonSerializer.Deserialize<GitHubRelease>(json);
 
-                    _logger.LogInformation("Successfully retrieved latest stable release '{Tag}'", latest.TagName);
+                    if (latest != null)
+                    {
+                        latest.IsLatest = true;
+                        _logger.LogInformation("Successfully retrieved latest stable release '{Tag}'", latest.TagName);
+                    }
+
                     return latest;
                 }
 
                 var allJson = await _client.GetStringAsync(_baseUrl);
-                var all = JsonConvert.DeserializeObject<List<GitHubRelease>>(allJson);
+                var all = JsonSerializer.Deserialize<List<GitHubRelease>>(allJson);
 
-                var newest = all.FirstOrDefault();
+                var newest = all?.FirstOrDefault();
                 if (newest != null)
                 {
                     newest.IsLatest = true;
@@ -136,7 +141,7 @@ namespace Chambered.Infrastructure.Services.GitHubReleaseService
             try
             {
                 var json = await _client.GetStringAsync(_baseUrl);
-                var releases = JsonConvert.DeserializeObject<List<GitHubRelease>>(json);
+                var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json) ?? new List<GitHubRelease>();
 
                 if (!includePrerelease)
                 {

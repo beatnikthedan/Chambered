@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Title>Chambered.Core</Title>
+    <Version>5.2.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

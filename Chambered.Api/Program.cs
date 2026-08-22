@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Chambered.Api.BackgroundServices;
+using Chambered.Api.Mappings;
 using Chambered.Api.Swagger;
 using Chambered.Core.Services;
 using Chambered.Core.Services.Identity;
@@ -8,6 +9,7 @@ using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
+using Chambered.Infrastructure.Services.GitHubReleaseService;
 using Chambered.Infrastructure.Services.Identity;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.HttpLogging;
@@ -73,6 +75,11 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowCredentials();
     });
+});
+
+builder.Services.AddAutoMapper(c =>
+{
+    c.AddProfile<VersionMappingProfile>();
 });
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -170,6 +177,8 @@ builder.Services.AddSwaggerGen(c =>
 
 
 
+builder.Services.AddHttpClient<IGitHubReleaseService, GitHubReleaseService>();
+builder.Services.Configure<GitHubReleaseConfiguration>(builder.Configuration.GetSection(nameof(GitHubReleaseConfiguration)));
 
 
 
