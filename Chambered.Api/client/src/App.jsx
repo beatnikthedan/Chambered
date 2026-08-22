@@ -406,22 +406,23 @@ export default function App() {
                   {!isSidebarCollapsed ? "Catalog" : ""}
                 </span>
               </Link>
-              {!isSidebarCollapsed && location.pathname.startsWith("/catalog") && (
-                <div className="nav-sub-items">
-                  <Link
-                    to="/catalog"
-                    className={`sub-nav-item ${location.pathname === "/catalog" || location.pathname === "/catalog/products" ? "active" : ""}`}
-                  >
-                    <span className="sub-text">Products</span>
-                  </Link>
-                  <Link
-                    to="/catalog/manufacturers"
-                    className={`sub-nav-item ${location.pathname === "/catalog/manufacturers" ? "active" : ""}`}
-                  >
-                    <span className="sub-text">Manufacturers</span>
-                  </Link>
-                </div>
-              )}
+              {!isSidebarCollapsed &&
+                location.pathname.startsWith("/catalog") && (
+                  <div className="nav-sub-items">
+                    <Link
+                      to="/catalog"
+                      className={`sub-nav-item ${location.pathname === "/catalog" || location.pathname === "/catalog/products" ? "active" : ""}`}
+                    >
+                      <span className="sub-text">Products</span>
+                    </Link>
+                    <Link
+                      to="/catalog/manufacturers"
+                      className={`sub-nav-item ${location.pathname === "/catalog/manufacturers" ? "active" : ""}`}
+                    >
+                      <span className="sub-text">Manufacturers</span>
+                    </Link>
+                  </div>
+                )}
             </div>
           </nav>
 
@@ -467,13 +468,16 @@ export default function App() {
 
             {store.user && (
               <div className="header-right">
-                <Link
-                  to="/settings"
-                  className="header-action-btn"
-                  title="Settings Menu"
-                >
-                  <span className="btn-icon">⚙️</span>
-                </Link>
+                {/* Only render Settings link if the user has the Admin role */}
+                {store.user.roles?.includes("Admin") && (
+                  <Link
+                    to="/settings"
+                    className="header-action-btn"
+                    title="Settings Menu"
+                  >
+                    <span className="btn-icon">⚙️</span>
+                  </Link>
+                )}
 
                 {/* Profile dropdown wrapper */}
                 <div
@@ -542,7 +546,6 @@ export default function App() {
             )}
           </header>
         )}
-
         <div className="content-wrapper">
           {store.loading ? (
             <div className="global-loading">

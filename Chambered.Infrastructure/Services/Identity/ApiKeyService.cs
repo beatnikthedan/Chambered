@@ -11,6 +11,7 @@ using Chambered.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Chambered.Infrastructure.LogMessages.Identity;
 
 namespace Chambered.Infrastructure.Services.Identity
 {
@@ -20,6 +21,7 @@ namespace Chambered.Infrastructure.Services.Identity
         private readonly ChamberedDbContext _db;
         private readonly UserManager<ChamberedUser> _userManager;
         private readonly ILogger<ApiKeyService> _logger;
+        private readonly ApiKeyServiceLogMessages _log;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ApiKeyService"/> class.
@@ -32,6 +34,7 @@ namespace Chambered.Infrastructure.Services.Identity
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _log = new ApiKeyServiceLogMessages(logger);
         }
 
         /// <inheritdoc/>
@@ -63,7 +66,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 }
             }
 
-            _logger.LogInformation("API Key creation initiated: Name={Name}, User={UserId}, Creator={CreatorId}", dto.Name, userId, currentUserId);
+            _log.CreationInitiated(dto.Name, userId, currentUserId);
 
             var isGlobalAdmin = currentUser.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "Admin")
                                 || currentUser.IsInRole("Admin");
@@ -74,7 +77,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 {
                     if (!currentUser.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == requestedClaim) && !currentUser.IsInRole(requestedClaim))
                     {
-                        _logger.LogWarning("Unauthorized key permissions delegation: Creator={CreatorId} requested permission={Permission} on key={Name}", currentUserId, requestedClaim, dto.Name);
+                        _log.UnauthorizedDelegation(currentUserId, requestedClaim, dto.Name);
                         throw new UnauthorizedAccessException($"You cannot grant the permission '{requestedClaim}' because you do not possess it.");
                     }
                 }
@@ -99,7 +102,7 @@ namespace Chambered.Infrastructure.Services.Identity
             _db.ApiKeys.Add(apiKey);
             await _db.SaveChangesAsync().ConfigureAwait(false);
 
-            _logger.LogInformation("API Key created successfully: Name={Name}, KeyId={KeyId}, Owner={OwnerId}", apiKey.Name, apiKey.Id, apiKey.OwnerId);
+            _log.KeyCreated(apiKey.Name, apiKey.Id, apiKey.OwnerId);
 
             return new ApiKeyCreatedResponseDto(
                 dto.Name,
@@ -118,7 +121,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new UnauthorizedAccessException("The authenticated user identity could not be resolved.");
             }
 
-            _logger.LogInformation("Retrieving API keys for user: User={UserId}", userId);
+            _log.RetrievingKeys(userId);
 
             var keys = await _db.ApiKeys
                 .AsNoTracking()
@@ -134,7 +137,7 @@ namespace Chambered.Infrastructure.Services.Identity
         {
             var adminId = _userManager.GetUserId(currentUser) ?? "Unknown";
 
-            _logger.LogInformation("Retrieving all active system API keys: Admin={AdminId}", adminId);
+            _log.RetrievingAllKeys(adminId);
 
             var keys = await _db.ApiKeys
                 .AsNoTracking()
@@ -162,7 +165,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new UnauthorizedAccessException("The authenticated user identity could not be resolved.");
             }
 
-            _logger.LogInformation("API Key revocation requested: User={UserId}, KeyId={KeyId}", userId, id);
+            _log.RevocationRequested(userId, id.ToString());
 
             // Admins can revoke any key; users can only revoke their own keys
             var isGlobalAdmin = currentUser.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "Admin")
@@ -179,14 +182,14 @@ namespace Chambered.Infrastructure.Services.Identity
 
             if (apiKey.IsRevoked)
             {
-                _logger.LogWarning("API Key already revoked: KeyId={KeyId}", id);
+                _log.AlreadyRevoked(id.ToString());
                 return false;
             }
 
             apiKey.IsRevoked = true;
             await _db.SaveChangesAsync().ConfigureAwait(false);
 
-            _logger.LogInformation("API Key revoked successfully: KeyId={KeyId}", id);
+            _log.RevocationSuccess(id.ToString());
 
             return true;
         }

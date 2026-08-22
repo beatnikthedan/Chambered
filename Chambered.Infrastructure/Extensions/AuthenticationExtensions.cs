@@ -77,14 +77,23 @@ namespace Chambered.Infrastructure.Extensions
                                 OnTicketReceived = async context =>
                                 {
                                     var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("OidcAuthentication");
+                                    logger.LogInformation("================== SSO SYNC DIAGNOSTICS ==================");
                                     logger.LogInformation("OIDC Ticket Received: Scheme={Scheme}", context.Scheme.Name);
+                                    logger.LogInformation("User Claims Extracted from SSO Token:");
 
                                     var principal = context.Principal;
                                     if (principal == null) 
                                     {
                                         logger.LogWarning("OIDC Ticket Principal is null!");
+                                        logger.LogInformation("=========================================================");
                                         return;
                                     }
+
+                                    foreach (var claim in principal.Claims)
+                                    {
+                                        logger.LogInformation("  [Claim] {Type} = {Value}", claim.Type, claim.Value);
+                                    }
+                                    logger.LogInformation("=========================================================");
 
                                     var providerName = context.Scheme.Name;
                                     var subClaim = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier) 

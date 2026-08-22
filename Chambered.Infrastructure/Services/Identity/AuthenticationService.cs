@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Chambered.Infrastructure.LogMessages.Identity;
 
 namespace Chambered.Infrastructure.Services.Identity
 {
@@ -29,6 +30,7 @@ namespace Chambered.Infrastructure.Services.Identity
         private readonly IConfiguration _configuration;
         private readonly IOptions<IdentityConfiguration> _identityOptions;
         private readonly ILogger<AuthenticationService> _logger;
+        private readonly AuthenticationServiceLogMessages _log;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthenticationService"/> class.
@@ -49,6 +51,7 @@ namespace Chambered.Infrastructure.Services.Identity
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _identityOptions = identityOptions ?? throw new ArgumentNullException(nameof(identityOptions));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _log = new AuthenticationServiceLogMessages(logger);
         }
 
         /// <inheritdoc/>
@@ -59,31 +62,29 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentNullException(nameof(request));
             }
 
-            _logger.LogInformation("Login attempt initiated: Email={Email}", request.Email);
+            _log.LoginAttempted(request.Email);
 
             var user = await _userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
             if (user == null)
             {
-                // Fallback: search by Username
                 user = await _userManager.FindByNameAsync(request.Email).ConfigureAwait(false);
             }
 
             if (user == null)
             {
-                _logger.LogWarning("Login failure: Email={Email}, Reason=User not found", request.Email);
+                _log.LoginFailureUserNotFound(request.Email);
                 throw new UnauthorizedAccessException("Incorrect username or password");
             }
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false).ConfigureAwait(false);
             if (!result.Succeeded)
             {
-                _logger.LogWarning("Login failure: Email={Email}, Reason=Incorrect password", request.Email);
+                _log.LoginFailureIncorrectPassword(request.Email);
                 throw new UnauthorizedAccessException("Incorrect username or password");
             }
 
             await _signInManager.SignInAsync(user, isPersistent: request.RememberMe).ConfigureAwait(false);
 
-            // Promote Sole User to Admin (Self-Healing Bootstrapper for Existing Setup User)
             var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
             if (!roles.Any())
             {
@@ -97,7 +98,7 @@ namespace Chambered.Infrastructure.Services.Identity
                     var addResult = await _userManager.AddToRoleAsync(user, "Admin").ConfigureAwait(false);
                     if (addResult.Succeeded)
                     {
-                        _logger.LogInformation("Successfully promoted the sole setup user account to Admin: UserId={UserId}", user.Id);
+                        _log.PromotedSetupUserToAdmin(user.Id);
                         roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
                     }
                 }
@@ -105,7 +106,7 @@ namespace Chambered.Infrastructure.Services.Identity
 
             var permissions = await GetPermissionsForUserInternalAsync(user, roles).ConfigureAwait(false);
 
-            _logger.LogInformation("Login success: Email={Email}, UserId={UserId}", request.Email, user.Id);
+            _log.LoginSuccess(request.Email, user.Id);
 
             return new AuthenticationResponseDto(
                 user.Id,
@@ -128,7 +129,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
             }
 
-            _logger.LogInformation("Logout requested: UserId={UserId}", userId);
+            _log.LogoutRequested(userId);
             await _signInManager.SignOutAsync().ConfigureAwait(false);
         }
 
@@ -151,12 +152,12 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentNullException(nameof(request));
             }
 
-            _logger.LogInformation("Forgot password initiated: Email={Email}", request.Email);
+            _log.ForgotPasswordInitiated(request.Email);
 
             var user = await _userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
             if (user == null)
             {
-                _logger.LogWarning("Forgot password requested for non-existent email: Email={Email}", request.Email);
+                _log.ForgotPasswordNonExistentEmail(request.Email);
                 return;
             }
 
@@ -178,7 +179,7 @@ namespace Chambered.Infrastructure.Services.Identity
             var emailSent = await _emailService.SendEmailAsync(mailMessage).ConfigureAwait(false);
             if (!emailSent)
             {
-                _logger.LogError("Forgot password email delivery failed: Email={Email}", request.Email);
+                _log.ForgotPasswordEmailFailed(request.Email);
                 throw new InvalidOperationException("Password reset email could not be sent because no email service is configured.");
             }
         }
@@ -194,7 +195,7 @@ namespace Chambered.Infrastructure.Services.Identity
             var user = await _userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
             if (user == null)
             {
-                _logger.LogWarning("Password reset failed: Email={Email}, Reason=User not found", request.Email);
+                _log.PasswordResetFailureUserNotFound(request.Email);
                 throw new KeyNotFoundException($"User with email '{request.Email}' was not found.");
             }
 
@@ -204,11 +205,11 @@ namespace Chambered.Infrastructure.Services.Identity
             if (!result.Succeeded)
             {
                 var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                _logger.LogError("Password reset failed: Email={Email}, Errors={Errors}", request.Email, errors);
+                _log.PasswordResetFailed(request.Email, errors);
                 throw new InvalidOperationException($"Password reset failed: {errors}");
             }
 
-            _logger.LogInformation("Password reset success: Email={Email}", request.Email);
+            _log.PasswordResetSuccess(request.Email);
         }
 
         /// <inheritdoc/>
@@ -243,7 +244,7 @@ namespace Chambered.Infrastructure.Services.Identity
             var user = await _userManager.FindByIdAsync(userId).ConfigureAwait(false);
             if (user == null)
             {
-                _logger.LogWarning("Password change failed: UserId={UserId}, Reason=User not found", userId);
+                _log.PasswordChangeFailureUserNotFound(userId);
                 throw new KeyNotFoundException($"User with ID '{userId}' was not found.");
             }
 
@@ -251,11 +252,11 @@ namespace Chambered.Infrastructure.Services.Identity
             if (!result.Succeeded)
             {
                 var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                _logger.LogError("Password change failed: UserId={UserId}, Errors={Errors}", userId, errors);
+                _log.PasswordChangeFailed(userId, errors);
                 throw new InvalidOperationException($"Failed to update password: {errors}");
             }
 
-            _logger.LogInformation("Password change success: UserId={UserId}", userId);
+            _log.PasswordChangeSuccess(userId);
         }
 
 

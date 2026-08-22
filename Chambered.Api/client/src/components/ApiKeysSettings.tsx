@@ -14,7 +14,7 @@ export default function ApiKeysSettings({ usersList = [] }) {
   const isAdmin = currentUser?.roles?.includes("Admin") || false;
 
   // Dynamically load all users if Admin
-  const { data: usersResponse } = useGetUsersUsers(undefined, {
+  const { data: usersResponse } = useGetUsersUsers({
     query: { enabled: isAdmin },
   });
   const apiUsers = usersResponse?.data || [];
@@ -37,7 +37,7 @@ export default function ApiKeysSettings({ usersList = [] }) {
     data: allKeysResponse,
     isLoading: loadingAllKeys,
     refetch: refetchAll,
-  } = useGetApiKeyAllKeys(undefined, {
+  } = useGetApiKeyAllKeys({
     query: { enabled: isAdmin },
   });
 
@@ -45,7 +45,7 @@ export default function ApiKeysSettings({ usersList = [] }) {
     data: myKeysResponse,
     isLoading: loadingMyKeys,
     refetch: refetchMy,
-  } = useGetApiKeyMyKeys(undefined, {
+  } = useGetApiKeyMyKeys({
     query: { enabled: !isAdmin },
   });
 

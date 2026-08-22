@@ -74,8 +74,7 @@ namespace Chambered.Tests.Services.Identity
                 UserProfileClaims = new UserProfileClaimConfiguration
                 {
                     Email = "email",
-                    FirstName = "given_name",
-                    LastName = "family_name",
+                    UserName = "preferred_username",
                     Roles = "roles"
                 }
             };
@@ -138,11 +137,16 @@ namespace Chambered.Tests.Services.Identity
         {
             var providerName = "Authentik";
             var userEmail = "test@authentik.gov";
+
+            // Configure Role Mappings for delta sync
+            var providerConfig = _fedConfig.Providers.First();
+            providerConfig.RoleMappings["UsageAdmin"] = "UsageAdmin";
+            providerConfig.RoleMappings["DataAdmin"] = "DataAdmin";
+
             var userClaims = new Dictionary<string, string>
             {
                 { "email", userEmail },
-                { "given_name", "Test" },
-                { "family_name", "User" },
+                { "preferred_username", "testuser" },
                 { "roles", "UsageAdmin,DataAdmin" }
             };
 
@@ -150,9 +154,10 @@ namespace Chambered.Tests.Services.Identity
             var user = new ChamberedUser
             {
                 Id = "user-id-999",
+                UserName = "testuser",
                 Email = userEmail,
-                FirstName = "Test",
-                LastName = "User"
+                FirstName = null,
+                LastName = null
             };
 
             _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
@@ -184,6 +189,108 @@ namespace Chambered.Tests.Services.Identity
             _userManagerMock.Verify(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "DataAdmin" }))), Times.Once);
             _userManagerMock.Verify(u => u.RemoveFromRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "Viewer" }))), Times.Once);
             _signInManagerMock.Verify(s => s.SignInAsync(user, false, null), Times.Once);
+        }
+
+        [Fact]
+        public async Task HandleCallbackAsync_ShouldDefaultToUserRole_WhenNoMappedGroupsMatch()
+        {
+            var providerName = "Authentik";
+            var userEmail = "test@authentik.gov";
+            var userClaims = new Dictionary<string, string>
+            {
+                { "email", userEmail },
+                { "preferred_username", "testuser" },
+                { "roles", "UnmappedGroup1,UnmappedGroup2" }
+            };
+
+            var externalInfo = new ExternalIdentityDto(providerName, "authentik-external-key-123", userClaims);
+            var user = new ChamberedUser
+            {
+                Id = "user-id-999",
+                UserName = "testuser",
+                Email = userEmail,
+                FirstName = null,
+                LastName = null
+            };
+
+            _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.FindByLoginAsync(providerName, externalInfo.ProviderKey))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.GetRolesAsync(user))
+                .ReturnsAsync(new List<string> { "Viewer" });
+
+            _userManagerMock.Setup(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "User" }))))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _userManagerMock.Setup(u => u.RemoveFromRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "Viewer" }))))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _signInManagerMock.Setup(s => s.SignInAsync(user, false, null))
+                .Returns(Task.CompletedTask);
+
+            var result = await _federatedAuthService.HandleCallbackAsync(providerName, externalInfo);
+
+            Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+
+            _userManagerMock.Verify(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "User" }))), Times.Once);
+            _userManagerMock.Verify(u => u.RemoveFromRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "Viewer" }))), Times.Once);
+        }
+
+        [Fact]
+        public async Task HandleCallbackAsync_ShouldDefaultToUserRole_WhenRoleSyncIsDisabled()
+        {
+            var providerName = "Authentik";
+            var userEmail = "test@authentik.gov";
+
+            var providerConfig = _fedConfig.Providers.First();
+            providerConfig.EnableRoleSynchronization = false;
+
+            var userClaims = new Dictionary<string, string>
+            {
+                { "email", userEmail },
+                { "preferred_username", "testuser" },
+                { "roles", "UsageAdmin" }
+            };
+
+            var externalInfo = new ExternalIdentityDto(providerName, "authentik-external-key-123", userClaims);
+            var user = new ChamberedUser
+            {
+                Id = "user-id-999",
+                UserName = "testuser",
+                Email = userEmail,
+                FirstName = null,
+                LastName = null
+            };
+
+            _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.FindByLoginAsync(providerName, externalInfo.ProviderKey))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.GetRolesAsync(user))
+                .ReturnsAsync(new List<string> { "Viewer" });
+
+            _userManagerMock.Setup(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "User" }))))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _userManagerMock.Setup(u => u.RemoveFromRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "Viewer" }))))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _signInManagerMock.Setup(s => s.SignInAsync(user, false, null))
+                .Returns(Task.CompletedTask);
+
+            var result = await _federatedAuthService.HandleCallbackAsync(providerName, externalInfo);
+
+            Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+
+            _userManagerMock.Verify(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "User" }))), Times.Once);
+            _userManagerMock.Verify(u => u.RemoveFromRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "Viewer" }))), Times.Once);
         }
     }
 }

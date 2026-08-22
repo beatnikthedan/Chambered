@@ -20,7 +20,7 @@ export default function UserSettings({ currentUserId }) {
     isLoading: loadingAdminUsers,
     error: adminUsersError,
     refetch: refetchUsersList,
-  } = useGetUsersUsers(undefined, { query: { enabled: currentUserIsAdmin } });
+  } = useGetUsersUsers({ query: { enabled: currentUserIsAdmin } });
 
   const {
     data: profileData,
@@ -468,7 +468,7 @@ export default function UserSettings({ currentUserId }) {
         ) : policyError ? (
           <div className="vaults-error-card">
             <span className="err-icon">⚠️</span>
-            <p>{error}</p>
+            <p>{policyError?.message || "Failed to load password policy."}</p>
             {/* <button
               className="btn btn-secondary btn-small"
               onClick={() =>

@@ -54,6 +54,14 @@ namespace Chambered.Infrastructure.Configuration
         public bool EnableRoleSynchronization { get; set; } = true;
 
         /// <summary>
+        /// Gets or sets a dictionary of external group/role names to internal C# roles (e.g. "authentik Admins" -> "Admin").
+        /// </summary>
+        public Dictionary<string, string> RoleMappings { get; set; } = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            { "users", "User" }
+        };
+
+        /// <summary>
         /// Gets or sets the claim mappings that bind OIDC claims to local user profile fields.
         /// </summary>
         public UserProfileClaimConfiguration UserProfileClaims { get; set; } = new();
@@ -70,14 +78,9 @@ namespace Chambered.Infrastructure.Configuration
         public string Email { get; set; } = "email";
 
         /// <summary>
-        /// Gets or sets the claim name for the user's first name.
+        /// Gets or sets the claim name for the user's username.
         /// </summary>
-        public string FirstName { get; set; } = "given_name";
-
-        /// <summary>
-        /// Gets or sets the claim name for the user's last name.
-        /// </summary>
-        public string LastName { get; set; } = "family_name";
+        public string UserName { get; set; } = "preferred_username";
 
         /// <summary>
         /// Gets or sets the claim name containing the user's roles.

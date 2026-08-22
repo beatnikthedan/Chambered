@@ -8,6 +8,7 @@ using Chambered.Core.Services.Identity.Dto;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Chambered.Infrastructure.LogMessages.Identity;
 
 namespace Chambered.Infrastructure.Services.Identity
 {
@@ -16,6 +17,7 @@ namespace Chambered.Infrastructure.Services.Identity
     {
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ILogger<RoleService> _logger;
+        private readonly RoleServiceLogMessages _log;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RoleService"/> class.
@@ -26,6 +28,7 @@ namespace Chambered.Infrastructure.Services.Identity
         {
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _log = new RoleServiceLogMessages(logger);
         }
 
         /// <inheritdoc/>
@@ -36,7 +39,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentException("Role name cannot be null or empty.", nameof(roleName));
             }
 
-            _logger.LogInformation("Role creation initiated: RoleName={RoleName}", roleName);
+            _log.CreationInitiated(roleName);
 
             var existingRole = await _roleManager.FindByNameAsync(roleName).ConfigureAwait(false);
             if (existingRole != null)
@@ -51,7 +54,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new InvalidOperationException($"Failed to create role: {errors}");
             }
 
-            _logger.LogInformation("Role created successfully: RoleName={RoleName}", roleName);
+            _log.CreatedSuccessfully(roleName);
         }
 
         /// <inheritdoc/>
@@ -62,7 +65,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentException("Role name cannot be null or empty.", nameof(roleName));
             }
 
-            _logger.LogInformation("Role deletion initiated: RoleName={RoleName}", roleName);
+            _log.DeletionInitiated(roleName);
 
             var role = await _roleManager.FindByNameAsync(roleName).ConfigureAwait(false);
             if (role == null)
@@ -77,7 +80,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new InvalidOperationException($"Failed to delete role: {errors}");
             }
 
-            _logger.LogInformation("Role deleted successfully: RoleName={RoleName}", roleName);
+            _log.DeletedSuccessfully(roleName);
         }
 
         /// <inheritdoc/>
@@ -131,7 +134,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentNullException(nameof(permissions));
             }
 
-            _logger.LogInformation("Syncing claims to role: RoleName={RoleName}", roleName);
+            _log.SyncingClaimsToRole(roleName);
 
             var role = await _roleManager.FindByNameAsync(roleName).ConfigureAwait(false);
             if (role == null)
@@ -165,7 +168,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 }
             }
 
-            _logger.LogInformation("Role claims synchronized: RoleName={RoleName}, Added={AddedCount}, Removed={RemovedCount}", roleName, claimsToAdd.Count, claimsToRemove.Count);
+            _log.RoleClaimsSynchronized(roleName, claimsToAdd.Count, claimsToRemove.Count);
         }
 
         /// <inheritdoc/>

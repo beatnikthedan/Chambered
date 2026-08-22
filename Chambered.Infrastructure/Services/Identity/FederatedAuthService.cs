@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Chambered.Infrastructure.LogMessages.Identity;
 
 namespace Chambered.Infrastructure.Services.Identity
 {
@@ -24,6 +25,7 @@ namespace Chambered.Infrastructure.Services.Identity
         private readonly IOptions<FederatedAuthenticationConfiguration> _federatedOptions;
         private readonly IConfiguration _configuration;
         private readonly ILogger<FederatedAuthService> _logger;
+        private readonly FederatedAuthServiceLogMessages _log;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FederatedAuthService"/> class.
@@ -42,6 +44,7 @@ namespace Chambered.Infrastructure.Services.Identity
             _federatedOptions = federatedOptions ?? throw new ArgumentNullException(nameof(federatedOptions));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _log = new FederatedAuthServiceLogMessages(logger);
         }
 
         /// <inheritdoc/>
@@ -52,7 +55,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentException("Provider name cannot be null or empty.", nameof(providerName));
             }
 
-            _logger.LogInformation("SSO challenge prepared: Provider={Provider}, RedirectUri={RedirectUri}", providerName, redirectUri);
+            _log.ChallengePrepared(providerName, redirectUri);
 
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(providerName, redirectUri);
             var itemsDict = properties.Items.ToDictionary(kvp => kvp.Key, kvp => kvp.Value ?? string.Empty);
@@ -80,8 +83,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 .FirstOrDefault(p => p.ProviderName.Equals(providerName, StringComparison.OrdinalIgnoreCase));
 
             var emailClaimKey = providerConfig?.UserProfileClaims?.Email ?? "email";
-            var firstNameClaimKey = providerConfig?.UserProfileClaims?.FirstName ?? "given_name";
-            var lastNameClaimKey = providerConfig?.UserProfileClaims?.LastName ?? "family_name";
+            var userNameClaimKey = providerConfig?.UserProfileClaims?.UserName ?? "preferred_username";
 
             externalInfo.UserClaims.TryGetValue(emailClaimKey, out var email);
             if (string.IsNullOrWhiteSpace(email))
@@ -107,41 +109,26 @@ namespace Chambered.Infrastructure.Services.Identity
                 }
             }
 
-            externalInfo.UserClaims.TryGetValue(firstNameClaimKey, out var firstName);
-            if (string.IsNullOrWhiteSpace(firstName))
+            externalInfo.UserClaims.TryGetValue(userNameClaimKey, out var username);
+            if (string.IsNullOrWhiteSpace(username))
             {
-                externalInfo.UserClaims.TryGetValue(ClaimTypes.GivenName, out firstName);
+                externalInfo.UserClaims.TryGetValue(ClaimTypes.NameIdentifier, out username);
             }
-            if (string.IsNullOrWhiteSpace(firstName))
+            if (string.IsNullOrWhiteSpace(username))
             {
-                externalInfo.UserClaims.TryGetValue("givenname", out firstName);
+                externalInfo.UserClaims.TryGetValue("name", out username);
             }
-            if (string.IsNullOrWhiteSpace(firstName))
+            if (string.IsNullOrWhiteSpace(username))
             {
-                externalInfo.UserClaims.TryGetValue("name", out firstName);
-                if (string.IsNullOrWhiteSpace(firstName))
-                {
-                    firstName = "SSO";
-                }
+                username = email;
             }
 
-            externalInfo.UserClaims.TryGetValue(lastNameClaimKey, out var lastName);
-            if (string.IsNullOrWhiteSpace(lastName))
-            {
-                externalInfo.UserClaims.TryGetValue(ClaimTypes.Surname, out lastName);
-            }
-            if (string.IsNullOrWhiteSpace(lastName))
-            {
-                externalInfo.UserClaims.TryGetValue("surname", out lastName);
-            }
-            if (string.IsNullOrWhiteSpace(lastName))
-            {
-                lastName = "User";
-            }
+            var claimsStr = string.Join("; ", externalInfo.UserClaims.Select(c => $"{c.Key}={c.Value}"));
+            _log.ClaimsReceived(providerName, email ?? "Unknown", claimsStr);
 
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(username))
             {
-                _logger.LogError("SSO Callback failed: Provider={Provider}. Required claims (email, givenname, surname) missing from external metadata.", providerName);
+                _log.RequiredClaimsMissing(providerName);
                 return new FederatedLoginResponseDto(false, "Required user claims not returned by the SSO provider.", string.Empty, Enumerable.Empty<string>());
             }
 
@@ -152,10 +139,10 @@ namespace Chambered.Infrastructure.Services.Identity
             {
                 user = new ChamberedUser
                 {
-                    UserName = email,
+                    UserName = username,
                     Email = email,
-                    FirstName = firstName,
-                    LastName = lastName,
+                    FirstName = null,
+                    LastName = null,
                     EmailConfirmed = true
                 };
 
@@ -163,7 +150,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 if (!createResult.Succeeded)
                 {
                     var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
-                    _logger.LogError("SSO Callback failed: Provider={Provider}, Reason=Failed to auto-provision user account: {Errors}", providerName, errors);
+                    _log.AutoProvisionFailed(providerName, errors);
                     return new FederatedLoginResponseDto(false, $"Failed to create user account: {errors}", string.Empty, Enumerable.Empty<string>());
                 }
 
@@ -171,50 +158,68 @@ namespace Chambered.Infrastructure.Services.Identity
                 if (!linkResult.Succeeded)
                 {
                     await _userManager.DeleteAsync(user).ConfigureAwait(false);
-                    _logger.LogError("SSO Callback failed: Provider={Provider}, Reason=Failed to link external SSO credentials to auto-provisioned account.", providerName);
+                    _log.CredentialLinkFailed(providerName);
                     return new FederatedLoginResponseDto(false, "Failed to link SSO login credentials to new user account.", string.Empty, Enumerable.Empty<string>());
                 }
 
-                _logger.LogInformation("New SSO user created: Provider={Provider}, Email={Email}, UserId={UserId}", providerName, email, user.Id);
+                _log.NewUserCreated(providerName, email, user.Id);
             }
             else if (user != null && loginInfo == null)
             {
                 var linkResult = await _userManager.AddLoginAsync(user, new UserLoginInfo(providerName, externalInfo.ProviderKey, providerName)).ConfigureAwait(false);
                 if (!linkResult.Succeeded)
                 {
-                    _logger.LogError("SSO Callback failed: Provider={Provider}, Reason=Failed to link external SSO credentials to existing account.", providerName);
+                    _log.LinkExistingFailed(providerName);
                     return new FederatedLoginResponseDto(false, "Failed to link SSO login credentials to existing user account.", string.Empty, Enumerable.Empty<string>());
                 }
 
-                _logger.LogInformation("SSO account linked successfully: Provider={Provider}, UserId={UserId}", providerName, user.Id);
+                _log.AccountLinked(providerName, user.Id);
             }
 
             if (providerConfig != null)
             {
+                var desiredRoles = new List<string>();
+
                 if (providerConfig.EnableRoleSynchronization && !string.IsNullOrEmpty(providerConfig.UserProfileClaims?.Roles))
                 {
-                    var desiredRoles = ParseStringListClaims(externalInfo.UserClaims, providerConfig.UserProfileClaims.Roles).ToList();
-
-                    // FIXED: Only synchronize roles if the claim actually was present and returned items.
-                    // This prevents resetting/deleting a user's local roles if they log in via an SSO flow that does not return any role claim.
-                    if (desiredRoles.Any())
+                    var externalGroups = ParseStringListClaims(externalInfo.UserClaims, providerConfig.UserProfileClaims.Roles).ToList();
+                    if (externalGroups.Any())
                     {
-                        var currentRoles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
-                        var rolesToAdd = desiredRoles.Except(currentRoles).ToList();
-                        var rolesToRemove = currentRoles.Except(desiredRoles).ToList();
-
-                        if (rolesToAdd.Any())
+                        foreach (var group in externalGroups)
                         {
-                            await _userManager.AddToRolesAsync(user, rolesToAdd).ConfigureAwait(false);
+                            if (providerConfig.RoleMappings != null && providerConfig.RoleMappings.TryGetValue(group, out var mappedRole))
+                            {
+                                desiredRoles.Add(mappedRole);
+                            }
+                            else
+                            {
+                                _log.GroupSkipped(group);
+                            }
                         }
-                        if (rolesToRemove.Any())
-                        {
-                            await _userManager.RemoveFromRolesAsync(user, rolesToRemove).ConfigureAwait(false);
-                        }
-
-                        _logger.LogInformation("Roles synchronized: Email={Email}, Roles={Roles}", user.Email, string.Join(", ", desiredRoles));
                     }
                 }
+
+                if (!desiredRoles.Any())
+                {
+                    desiredRoles.Add(Chambered.Core.Security.ChamberedAuthorization.Roles.User);
+                }
+
+                desiredRoles = desiredRoles.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+                var currentRoles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+                var rolesToAdd = desiredRoles.Except(currentRoles, StringComparer.OrdinalIgnoreCase).ToList();
+                var rolesToRemove = currentRoles.Except(desiredRoles, StringComparer.OrdinalIgnoreCase).ToList();
+
+                if (rolesToAdd.Any())
+                {
+                    await _userManager.AddToRolesAsync(user, rolesToAdd).ConfigureAwait(false);
+                }
+                if (rolesToRemove.Any())
+                {
+                    await _userManager.RemoveFromRolesAsync(user, rolesToRemove).ConfigureAwait(false);
+                }
+
+                _log.RolesSynchronized(user.Email ?? string.Empty, string.Join(", ", desiredRoles));
             }
 
             await _signInManager.SignInAsync(user, isPersistent: false).ConfigureAwait(false);
@@ -222,7 +227,7 @@ namespace Chambered.Infrastructure.Services.Identity
             var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
             var permissions = await GetPermissionsForUserInternalAsync(user, roles).ConfigureAwait(false);
 
-            _logger.LogInformation("SSO Callback processed successfully: Provider={Provider}, Email={Email}", providerName, email);
+            _log.LoginSuccess(providerName, email);
 
             return new FederatedLoginResponseDto(true, string.Empty, string.Empty, permissions);
         }
@@ -284,11 +289,11 @@ namespace Chambered.Infrastructure.Services.Identity
             if (!result.Succeeded)
             {
                 var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                _logger.LogError("SSO account linking failed: Provider={Provider}, User={UserId}, Errors={Errors}", externalInfo.ProviderName, userId, errors);
+                _log.LinkFailedWithErrors(externalInfo.ProviderName, userId, errors);
                 throw new InvalidOperationException($"Failed to link external SSO account: {errors}");
             }
 
-            _logger.LogInformation("SSO account linked successfully: Provider={Provider}, UserId={UserId}", externalInfo.ProviderName, userId);
+            _log.AccountLinked(externalInfo.ProviderName, userId);
         }
 
         /// <inheritdoc/>

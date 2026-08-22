@@ -8,6 +8,7 @@ using Chambered.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Chambered.Infrastructure.LogMessages.Identity;
 
 namespace Chambered.Infrastructure.Services.Identity
 {
@@ -18,6 +19,7 @@ namespace Chambered.Infrastructure.Services.Identity
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ChamberedDbContext _db;
         private readonly ILogger<IdentityService> _logger;
+        private readonly IdentityServiceLogMessages _log;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IdentityService"/> class.
@@ -32,6 +34,7 @@ namespace Chambered.Infrastructure.Services.Identity
             _roleManager = roleManager!;
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _log = new IdentityServiceLogMessages(logger);
         }
 
         /// <summary>
@@ -53,7 +56,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentNullException(nameof(request));
             }
 
-            _logger.LogInformation("User creation initiated: Email={Email}, Username={Username}", request.Email, request.Username);
+            _log.CreationInitiated(request.Email ?? string.Empty, request.Username ?? string.Empty);
 
             var emailToUse = !string.IsNullOrWhiteSpace(request.Email)
                 ? request.Email.Trim()
@@ -85,7 +88,7 @@ namespace Chambered.Infrastructure.Services.Identity
             if (!createResult.Succeeded)
             {
                 var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
-                _logger.LogError("User creation failed: Email={Email}, Errors={Errors}", request.Email, errors);
+                _log.CreationFailed(request.Email ?? string.Empty, errors);
                 throw new InvalidOperationException($"Failed to create user account: {errors}");
             }
 
@@ -122,12 +125,12 @@ namespace Chambered.Infrastructure.Services.Identity
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception assigning roles during user creation: Email={Email}", request.Email);
+                _log.ExceptionAssigningRoles(ex, request.Email ?? string.Empty);
                 await _userManager.DeleteAsync(user).ConfigureAwait(false);
                 throw;
             }
 
-            _logger.LogInformation("User created successfully: Email={Email}, UserId={UserId}", request.Email, user.Id);
+            _log.CreatedSuccessfully(request.Email ?? string.Empty, user.Id);
 
             return new UserResponseDto(
                 user.Id,
@@ -148,7 +151,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentException("User ID cannot be null or empty.", nameof(id));
             }
 
-            _logger.LogInformation("Retrieving user by ID: UserId={UserId}", id);
+            _log.RetrievingUserById(id);
 
             var user = await _userManager.FindByIdAsync(id).ConfigureAwait(false);
             if (user == null)
@@ -172,7 +175,7 @@ namespace Chambered.Infrastructure.Services.Identity
         /// <inheritdoc/>
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
         {
-            _logger.LogInformation("Bulk user query initiated");
+            _log.BulkQueryInitiated();
 
             var users = await _userManager.Users
                 .OrderBy(u => u.UserName)
@@ -207,7 +210,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 ));
             }
 
-            _logger.LogInformation("Bulk user query completed: TotalUsers={Count}", userResponseDtos.Count);
+            _log.BulkQueryCompleted(userResponseDtos.Count);
 
             return userResponseDtos;
         }
@@ -224,7 +227,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentNullException(nameof(request));
             }
 
-            _logger.LogInformation("User update initiated: Email={Email}, UserId={UserId}", request.Email, id);
+            _log.UpdateInitiated(request.Email ?? string.Empty, id);
 
             var user = await _userManager.FindByIdAsync(id).ConfigureAwait(false);
             if (user == null)
@@ -257,7 +260,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 await _userManager.RemoveFromRolesAsync(user, rolesToRemove).ConfigureAwait(false);
             }
 
-            _logger.LogInformation("User update completed: UserId={UserId}", id);
+            _log.UpdateCompleted(id);
         }
 
         /// <inheritdoc/>
@@ -268,7 +271,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new ArgumentException("User ID cannot be null or empty.", nameof(id));
             }
 
-            _logger.LogInformation("User deletion initiated: UserId={UserId}", id);
+            _log.DeletionInitiated(id);
 
             var user = await _userManager.FindByIdAsync(id).ConfigureAwait(false);
             if (user == null)
@@ -283,7 +286,7 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new InvalidOperationException($"Failed to delete user account: {errors}");
             }
 
-            _logger.LogInformation("User deletion completed: UserId={UserId}", id);
+            _log.DeletionCompleted(id);
         }
 
         private static string GetGravatarUrl(string? email)

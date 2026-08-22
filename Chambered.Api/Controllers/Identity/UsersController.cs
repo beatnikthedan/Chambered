@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Chambered.Core.Services.Identity;
 using Chambered.Core.Services.Identity.Dto;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -79,13 +80,21 @@ namespace Chambered.Api.Controllers.Identity
                 return Unauthorized();
             }
 
-            var profile = await _identityService.GetUserByIdAsync(userId).ConfigureAwait(false);
-            if (profile == null)
+            try
             {
-                return NotFound("User profile not found.");
-            }
+                var profile = await _identityService.GetUserByIdAsync(userId).ConfigureAwait(false);
+                if (profile == null)
+                {
+                    return NotFound("User profile not found.");
+                }
 
-            return Ok(profile);
+                return Ok(profile);
+            }
+            catch (KeyNotFoundException)
+            {
+                await HttpContext.SignOutAsync().ConfigureAwait(false);
+                return Unauthorized("Session user no longer exists in the database. Please log in again.");
+            }
         }
 
         /// <summary>
@@ -108,8 +117,15 @@ namespace Chambered.Api.Controllers.Identity
                 return BadRequest("Profile update content cannot be null.");
             }
 
-            await _identityService.UpdateUserAsync(userId, model).ConfigureAwait(false);
-            return Ok();
+            try
+            {
+                await _identityService.UpdateUserAsync(userId, model).ConfigureAwait(false);
+                return Ok();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("User profile not found.");
+            }
         }
 
         /// <summary>
@@ -138,8 +154,15 @@ namespace Chambered.Api.Controllers.Identity
                 return BadRequest("Invalid route parameter or empty user model identity.");
             }
 
-            await _identityService.UpdateUserAsync(id, model).ConfigureAwait(false);
-            return Ok();
+            try
+            {
+                await _identityService.UpdateUserAsync(id, model).ConfigureAwait(false);
+                return Ok();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -156,8 +179,15 @@ namespace Chambered.Api.Controllers.Identity
                 return BadRequest("User ID must be specified.");
             }
 
-            await _identityService.DeleteUserAsync(id).ConfigureAwait(false);
-            return Ok();
+            try
+            {
+                await _identityService.DeleteUserAsync(id).ConfigureAwait(false);
+                return Ok();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }
