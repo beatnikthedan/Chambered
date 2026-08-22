@@ -199,6 +199,7 @@ builder.Services.Configure<BackupConfiguration>(builder.Configuration.GetSection
 builder.Services.AddScoped<IBackupService, SqliteBackupService>();
 
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddHostedService<BackupSchedulerWorker>();
 

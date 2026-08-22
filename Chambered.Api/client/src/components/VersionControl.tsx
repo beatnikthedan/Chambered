@@ -32,8 +32,6 @@ export const VersionControl = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState(null);
 
-  const hasUpdate = true; //currentRelease && !currentRelease.isLatest && latestRelease;
-
   const handleOpenModal = (release) => {
     setSelectedRelease(release);
     setIsModalOpen(true);
@@ -41,10 +39,10 @@ export const VersionControl = () => {
 
   const QUERY_CACHE_OPTIONS = {
     query: {
-      staleTime: 1000 * 60 * 15, // Treat data as fresh for 15 minutes (no background refetches)
-      gcTime: 1000 * 60 * 30, // Keep in memory for 30 minutes
-      refetchOnWindowFocus: false, // Stop refetching every time the user clicks back onto the browser tab
-      retry: 1, // Don't hammer the API if it fails once
+      staleTime: 1000 * 60 * 15,
+      gcTime: 1000 * 60 * 30,
+      refetchOnWindowFocus: false,
+      retry: 1,
     },
   };
 
@@ -52,7 +50,7 @@ export const VersionControl = () => {
     data: currentData,
     isLoading: currentLoading,
     error: currentError,
-  } = useGetVersionCurrentVersion(QUERY_CACHE_OPTIONS);
+  } = useGetVersionCurrentVersion(undefined, QUERY_CACHE_OPTIONS);
 
   const currentVersion = currentData?.data;
 
@@ -61,11 +59,17 @@ export const VersionControl = () => {
     isLoading: latestLoading,
     error: latestError,
     refetch: fetchLatest,
-  } = useGetVersionLatestVersionFromPreRelease(false, QUERY_CACHE_OPTIONS);
+  } = useGetVersionLatestVersionFromPreRelease(
+    false,
+    undefined,
+    QUERY_CACHE_OPTIONS,
+  );
 
   const latestVersion = latestData?.data;
 
   const isApiConnected = useApiHealth(30000);
+
+  const hasUpdate = currentVersion && !currentVersion.isLatest && latestVersion;
 
   return (
     <div className="version-control-container">
@@ -80,14 +84,18 @@ export const VersionControl = () => {
           {isApiConnected ? "online" : "offline"}
         </span>
 
-        <span className="version-separator">·</span>
+        {currentVersion && (
+          <div>
+            <span className="version-separator">·</span>
 
-        <button
-          onClick={() => handleOpenModal(currentVersion)}
-          className="version-link"
-        >
-          {currentVersion?.tagName}
-        </button>
+            <button
+              onClick={() => handleOpenModal(currentVersion)}
+              className="version-link"
+            >
+              {currentVersion?.tagName}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Hidden Banner until an Update is Available */}
@@ -97,7 +105,7 @@ export const VersionControl = () => {
           <button
             onClick={() => {
               handleOpenModal(latestVersion);
-              fetchLatest;
+              fetchLatest();
             }}
             className="version-banner-link"
           >
@@ -119,17 +127,24 @@ export const VersionControl = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="version-modal-header">
-              <h3>
-                {selectedRelease?.name ||
-                  selectedRelease?.tagName ||
-                  "Release Info"}
-              </h3>
-              <button
-                onClick={() => handleOpenModal(currentVersion)}
-                className="version-link"
-              >
-                {latestVersion?.htmlUrl}
-              </button>
+              <div className="version-modal-title-group">
+                <h3>
+                  {selectedRelease?.name ||
+                    selectedRelease?.tagName ||
+                    "Release Info"}
+                </h3>
+                {selectedRelease?.htmlUrl && (
+                  <a
+                    href={selectedRelease.htmlUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="version-link"
+                  >
+                    View on GitHub
+                  </a>
+                )}
+              </div>
+
               <button
                 className="version-close-button"
                 onClick={() => setIsModalOpen(false)}

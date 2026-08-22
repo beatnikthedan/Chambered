@@ -128,7 +128,20 @@
   border-bottom: 1px solid #30363d;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start; /* Aligns close button to the top */
+}
+
+/* Wrapper to stack the title and GitHub link on the left */
+.version-modal-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Space between v5.2.1 and View on GitHub */
+}
+
+.version-modal-title-group h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .version-modal-header h3 {
