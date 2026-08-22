@@ -3,8 +3,8 @@ import SubmitButton from "./SubmitButton";
 import {
   useGetApiKeyMyKeys,
   useGetApiKeyAllKeys,
-  useGetApiKeyCreate,
-  useGetApiKeyRevokeFromId,
+  usePostApiKeyCreate,
+  usePostApiKeyRevokeFromId,
   useGetUsersUsers,
 } from "../api/endpoints";
 import { useStore } from "../StoreContext";
@@ -54,8 +54,8 @@ export default function ApiKeysSettings({ usersList = [] }) {
   const apiKeys =
     (isAdmin ? allKeysResponse?.data : myKeysResponse?.data) || [];
 
-  const createMutation = useGetApiKeyCreate();
-  const revokeMutation = useGetApiKeyRevokeFromId();
+  const createMutation = usePostApiKeyCreate();
+  const revokeMutation = usePostApiKeyRevokeFromId();
 
   const [showKeyForm, setShowKeyForm] = useState(false);
   const [keyForm, setKeyForm] = useState({

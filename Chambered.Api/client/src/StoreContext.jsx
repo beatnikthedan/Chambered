@@ -12,9 +12,9 @@ import {
   putArsenalsFromKey,
   deleteArsenalsFromKey,
   getUsersProfile,
-  accountLogin,
-  accountLogout,
-  getUsersRegister,
+  postAccountLogin,
+  postAccountLogout,
+  postUsersRegister,
   getProductsActionTypes,
   getProductsBatteryTypes,
   getProductsLaserColors,
@@ -191,7 +191,7 @@ export function StoreProvider({ children }) {
 
   const login = useCallback(
     async (username, password) => {
-      const res = await accountLogin({ email: username, password });
+      const res = await postAccountLogin({ email: username, password });
       if (res.status === 200) {
         const authResponse = res.data;
         localStorage.setItem("token", authResponse.accessToken);
@@ -217,7 +217,7 @@ export function StoreProvider({ children }) {
 
   const firstRegister = useCallback(
     async (username, password, email) => {
-      const res = await getUsersRegister({
+      const res = await postUsersRegister({
         username,
         email,
         password,
@@ -235,7 +235,7 @@ export function StoreProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
-      await accountLogout();
+      await postAccountLogout();
     } catch (err) {
       console.error("Logout error", err);
     } finally {

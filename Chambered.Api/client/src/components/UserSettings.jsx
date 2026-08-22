@@ -5,8 +5,8 @@ import {
   useGetUsersUsers,
   useGetUsersProfile,
   useGetSettingsPasswordPolicy,
-  useGetUsersRegister,
-  useGetUsersUpdateUserFromId,
+  usePostUsersRegister,
+  usePutUsersUpdateUserFromId,
   useDeleteUsersUserFromId,
 } from "../api/endpoints";
 
@@ -38,8 +38,8 @@ export default function UserSettings({ currentUserId }) {
   const passwordPolicy = policyResponse?.data;
 
   // Mutation Hooks for updating, registering, and deleting users
-  const registerMutation = useGetUsersRegister();
-  const updateMutation = useGetUsersUpdateUserFromId();
+  const registerMutation = usePostUsersRegister();
+  const updateMutation = usePutUsersUpdateUserFromId();
   const deleteMutation = useDeleteUsersUserFromId();
 
   const users = currentUserIsAdmin

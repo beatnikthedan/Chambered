@@ -375,14 +375,12 @@ public static class SwaggerGenOptionsExtensions
     public static SwaggerGenOptions CustomOperationIds(this SwaggerGenOptions swaggerGenOptions, Func<string, string, string, string> operationIdFormat)
     {
         Func<string, string, string, string> operationIdFormat2 = operationIdFormat;
-        string controller = string.Empty;
-        string verb = string.Empty;
-        string action = string.Empty;
         swaggerGenOptions.CustomOperationIds(delegate (ApiDescription a)
         {
-            StringBuilder stringBuilder = new StringBuilder();
-            controller = a.ActionDescriptor.RouteValues["controller"];
-            action = a.ActionDescriptor.RouteValues["action"];
+            string controller = a.ActionDescriptor.RouteValues["controller"] ?? string.Empty;
+            string action = a.ActionDescriptor.RouteValues["action"] ?? string.Empty;
+            string verb = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(a.HttpMethod?.ToLower() ?? "Get");
+
             foreach (string item in new List<string> { "Get", "Put", "Post", "Patch", "Delete", "Upsert" })
             {
                 if (action.Contains(item))
@@ -392,6 +390,7 @@ public static class SwaggerGenOptionsExtensions
                 }
             }
 
+            StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.Append(operationIdFormat2(controller, verb, action));
             if (a.RelativePath.Contains("$count"))
             {
