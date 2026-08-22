@@ -204,7 +204,7 @@ builder.Services.AddHostedService<BackupSchedulerWorker>();
 
 
 
-
+builder.Services.AddHealthChecks();
 
 
 
@@ -321,7 +321,7 @@ app.MapFallbackToFile("index.html");
 
 
 
-
+app.MapHealthChecks("/health");
 
 
 

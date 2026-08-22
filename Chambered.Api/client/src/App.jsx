@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import { useStore } from "./StoreContext";
 import "./App.css";
+import "./components/VersionControl.tsx";
 
 // Lazy loaded views stubs
 import Dashboard from "./views/Dashboard";
@@ -23,6 +24,7 @@ import Catalog from "./views/Catalog";
 // Route guarding components
 // Route guarding components
 import { ARSENAL_ICONS } from "./components/ArsenalIcons";
+import { VersionControl } from "./components/VersionControl.tsx";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useStore();
@@ -430,21 +432,7 @@ export default function App() {
           <div className="sidebar-footer version-footer">
             {!isSidebarCollapsed ? (
               <div className="version-info">
-                <div className="version-row">
-                  <span className="version-label">v1.0.0</span>
-                  <span className="container-badge">Docker</span>
-                  <div
-                    className="api-signal"
-                    title="Chambered API Connected"
-                    style={{ marginLeft: "8px" }}
-                  >
-                    <span className="status-indicator online"></span>
-                  </div>
-                </div>
-                <div className="update-row">
-                  <span className="status-dot green"></span>
-                  <span className="update-text">Up to date</span>
-                </div>
+                <VersionControl isApiConnected:true></VersionControl>
               </div>
             ) : (
               <div
