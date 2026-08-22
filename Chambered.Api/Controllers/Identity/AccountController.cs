@@ -1,11 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Asp.Versioning;
 using Chambered.Core.Services.Identity;
 using Chambered.Core.Services.Identity.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Chambered.Api.Controllers.Identity
 {
@@ -13,7 +15,8 @@ namespace Chambered.Api.Controllers.Identity
     /// Handles user account operations including authentication, password management, and Single Sign-On (SSO) integration.
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Produces("application/json")]
     public class AccountController : ControllerBase
     {
@@ -111,11 +114,10 @@ namespace Chambered.Api.Controllers.Identity
         }
 
         /// <summary>
-        /// Prepares security metadata for launching an external OIDC Single Sign-On (SSO) challenge.
+        /// Initiates an OIDC Single Sign-On challenge by executing the business logic service and returning a browser challenge redirect.
         /// </summary>
         [HttpGet("external-challenge")]
-        [ProducesResponseType(typeof(ChallengePropertiesDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [AllowAnonymous]
         public async Task<IActionResult> PrepareChallenge([FromQuery] string providerName, [FromQuery] string redirectUri)
         {
             if (string.IsNullOrWhiteSpace(providerName) || string.IsNullOrWhiteSpace(redirectUri))
@@ -123,8 +125,16 @@ namespace Chambered.Api.Controllers.Identity
                 return BadRequest("Provider name and redirect URI are required.");
             }
 
+            // Keep the service call intact
             var result = await _federatedAuthService.PrepareChallengeAsync(providerName, redirectUri).ConfigureAwait(false);
-            return Ok(result);
+
+            // Reconstruct the ASP.NET Core AuthenticationProperties from the DTO returned by the service
+            var properties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties(
+                result.Properties.ToDictionary(kvp => kvp.Key, kvp => (string?)kvp.Value)
+            );
+
+            // Issue the HTTP 302 Redirect to the OIDC provider
+            return Challenge(properties, result.Scheme);
         }
 
         /// <summary>

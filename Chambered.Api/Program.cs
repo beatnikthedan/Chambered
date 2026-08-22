@@ -229,29 +229,29 @@ await app.ApplyMigrations<ChamberedDbContext>(async services =>
 });
 
 // Custom API Request & ModelState Debug Logger Middleware
-app.Use(async (context, next) =>
-{
-    if (context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
-    {
-        context.Request.EnableBuffering();
-        var requestBody = "";
-        using (var reader = new StreamReader(context.Request.Body, System.Text.Encoding.UTF8, leaveOpen: true))
-        {
-            requestBody = await reader.ReadToEndAsync();
-            context.Request.Body.Position = 0; // Rewind the stream so downstream binders can read it
-        }
+// app.Use(async (context, next) =>
+// {
+//     if (context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
+//     {
+//         context.Request.EnableBuffering();
+//         var requestBody = "";
+//         using (var reader = new StreamReader(context.Request.Body, System.Text.Encoding.UTF8, leaveOpen: true))
+//         {
+//             requestBody = await reader.ReadToEndAsync();
+//             context.Request.Body.Position = 0; // Rewind the stream so downstream binders can read it
+//         }
 
-        Console.WriteLine($"\n[ODATA REQUEST] {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
-        Console.WriteLine($"[Payload]: {requestBody}");
-    }
+//         Console.WriteLine($"\n[ODATA REQUEST] {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
+//         Console.WriteLine($"[Payload]: {requestBody}");
+//     }
 
-    await next();
+//     await next();
 
-    if (context.Response.StatusCode >= 400 && context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
-    {
-        Console.WriteLine($"[ODATA RESPONSE ERROR] Status Code: {context.Response.StatusCode}");
-    }
-});
+//     if (context.Response.StatusCode >= 400 && context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
+//     {
+//         Console.WriteLine($"[ODATA RESPONSE ERROR] Status Code: {context.Response.StatusCode}");
+//     }
+// });
 
 app.UseRouting();
 

@@ -40,17 +40,11 @@ import type {
   CreateApiKeyDto,
   CreateUserRequestDto,
   DashboardStatsDto,
-  DeleteRolesRoleFromRoleNameParams,
-  DeleteUsersUserFromIdParams,
   Document,
   ExternalIdentityDto,
   FederatedLoginResponseDto,
   ForgotPasswordRequestDto,
-  GetAccountConfiguredProvidersParams,
-  GetAccountIsInitializedParams,
   GetAccountPrepareChallengeParams,
-  GetApiKeyAllKeysParams,
-  GetApiKeyMyKeysParams,
   GetArmoryCountParams,
   GetArmoryFromKeyParams,
   GetArmoryItemConditionsParams,
@@ -83,11 +77,6 @@ import type {
   GetProductsPewPewCategoriesParams,
   GetProductsSuppressorAttachmentTypesParams,
   GetProductsSuppressorMaterialsParams,
-  GetRolesRoleClaimsFromRoleNameParams,
-  GetRolesRolesParams,
-  GetRolesSystemPermissionsParams,
-  GetUsersProfileParams,
-  GetUsersUsersParams,
   GetVaultsCountParams,
   GetVaultsFromKeyParams,
   GetVaultsLockTypesParams,
@@ -103,14 +92,8 @@ import type {
   PatchManufacturersFromKeyParams,
   PatchProductsFromKeyParams,
   PatchVaultsFromKeyParams,
-  PostAccountForgotPasswordParams,
   PostAccountHandleCallbackParams,
   PostAccountLinkExternalParams,
-  PostAccountLoginParams,
-  PostAccountLogoutParams,
-  PostAccountResetPasswordParams,
-  PostApiKeyCreateParams,
-  PostApiKeyRevokeFromIdParams,
   PostArmoryParams,
   PostArsenalsParams,
   PostBackupsUploadBackupBody,
@@ -118,9 +101,6 @@ import type {
   PostDocumentsParams,
   PostManufacturersParams,
   PostProductsParams,
-  PostRolesCreateRoleFromRoleNameParams,
-  PostRolesUpdateRoleClaimsFromRoleNameParams,
-  PostUsersRegisterParams,
   PostVaultsParams,
   ProblemDetails,
   Product,
@@ -130,8 +110,6 @@ import type {
   PutDocumentsFromKeyParams,
   PutManufacturersFromKeyParams,
   PutProductsFromKeyParams,
-  PutUsersUpdateProfileParams,
-  PutUsersUpdateUserFromIdParams,
   PutVaultsFromKeyParams,
   ResetPasswordRequestDto,
   RestoreResult,
@@ -194,28 +172,20 @@ export type postAccountLoginResponseError = (postAccountLoginResponse401) & {
 
 export type postAccountLoginResponse = (postAccountLoginResponseSuccess | postAccountLoginResponseError)
 
-export const getPostAccountLoginUrl = (params?: PostAccountLoginParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPostAccountLoginUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Account/login?${stringifiedParams}` : `/api/Account/login`
+  return `/api/v1/Account/login`
 }
 
 /**
  * @summary Authenticates a user with a local username and password, returning a JWT token upon success.
  */
-export const postAccountLogin = async (loginRequestDto?: LoginRequestDto,
-    params?: PostAccountLoginParams, options?: RequestInit): Promise<postAccountLoginResponse> => {
+export const postAccountLogin = async (loginRequestDto?: LoginRequestDto, options?: RequestInit): Promise<postAccountLoginResponse> => {
 
-  const res = await fetch(getPostAccountLoginUrl(params),
+  const res = await fetch(getPostAccountLoginUrl(),
   {
     ...options,
     method: 'POST',
@@ -236,8 +206,8 @@ export const postAccountLogin = async (loginRequestDto?: LoginRequestDto,
 
 
 export const getPostAccountLoginMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountLogin>>, TError,{data?: LoginRequestDto;params?: PostAccountLoginParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof postAccountLogin>>, TError,{data?: LoginRequestDto;params?: PostAccountLoginParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountLogin>>, TError,{data?: LoginRequestDto}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountLogin>>, TError,{data?: LoginRequestDto}, TContext> => {
 
 const mutationKey = ['postAccountLogin'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -249,10 +219,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountLogin>>, {data?: LoginRequestDto;params?: PostAccountLoginParams}> = (props) => {
-          const {data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountLogin>>, {data?: LoginRequestDto}> = (props) => {
+          const {data} = props ?? {};
 
-          return  postAccountLogin(data,params,fetchOptions)
+          return  postAccountLogin(data,fetchOptions)
         }
 
 
@@ -270,11 +240,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Authenticates a user with a local username and password, returning a JWT token upon success.
  */
 export const usePostAccountLogin = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountLogin>>, TError,{data?: LoginRequestDto;params?: PostAccountLoginParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountLogin>>, TError,{data?: LoginRequestDto}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postAccountLogin>>,
         TError,
-        {data?: LoginRequestDto;params?: PostAccountLoginParams},
+        {data?: LoginRequestDto},
         TContext
       > => {
       return useMutation(getPostAccountLoginMutationOptions(options), queryClient);
@@ -292,27 +262,20 @@ export type postAccountLogoutResponseSuccess = (postAccountLogoutResponse200) & 
 
 export type postAccountLogoutResponse = (postAccountLogoutResponseSuccess)
 
-export const getPostAccountLogoutUrl = (params?: PostAccountLogoutParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPostAccountLogoutUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Account/logout?${stringifiedParams}` : `/api/Account/logout`
+  return `/api/v1/Account/logout`
 }
 
 /**
  * @summary Revokes the current active session, invalidating the authorization token.
  */
-export const postAccountLogout = async (params?: PostAccountLogoutParams, options?: RequestInit): Promise<postAccountLogoutResponse> => {
+export const postAccountLogout = async ( options?: RequestInit): Promise<postAccountLogoutResponse> => {
 
-  const res = await fetch(getPostAccountLogoutUrl(params),
+  const res = await fetch(getPostAccountLogoutUrl(),
   {
     ...options,
     method: 'POST'
@@ -333,8 +296,8 @@ export const postAccountLogout = async (params?: PostAccountLogoutParams, option
 
 
 export const getPostAccountLogoutMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountLogout>>, TError,{params?: PostAccountLogoutParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof postAccountLogout>>, TError,{params?: PostAccountLogoutParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountLogout>>, TError,void, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountLogout>>, TError,void, TContext> => {
 
 const mutationKey = ['postAccountLogout'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -346,10 +309,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountLogout>>, {params?: PostAccountLogoutParams}> = (props) => {
-          const {params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountLogout>>, void> = () => {
 
-          return  postAccountLogout(params,fetchOptions)
+
+          return  postAccountLogout(fetchOptions)
         }
 
 
@@ -367,11 +330,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Revokes the current active session, invalidating the authorization token.
  */
 export const usePostAccountLogout = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountLogout>>, TError,{params?: PostAccountLogoutParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountLogout>>, TError,void, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postAccountLogout>>,
         TError,
-        {params?: PostAccountLogoutParams},
+        void,
         TContext
       > => {
       return useMutation(getPostAccountLogoutMutationOptions(options), queryClient);
@@ -389,28 +352,20 @@ export type postAccountForgotPasswordResponseSuccess = (postAccountForgotPasswor
 
 export type postAccountForgotPasswordResponse = (postAccountForgotPasswordResponseSuccess)
 
-export const getPostAccountForgotPasswordUrl = (params?: PostAccountForgotPasswordParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPostAccountForgotPasswordUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Account/forgot-password?${stringifiedParams}` : `/api/Account/forgot-password`
+  return `/api/v1/Account/forgot-password`
 }
 
 /**
  * @summary Initiates a secure password reset request, sending a verification link to the specified email address.
  */
-export const postAccountForgotPassword = async (forgotPasswordRequestDto?: ForgotPasswordRequestDto,
-    params?: PostAccountForgotPasswordParams, options?: RequestInit): Promise<postAccountForgotPasswordResponse> => {
+export const postAccountForgotPassword = async (forgotPasswordRequestDto?: ForgotPasswordRequestDto, options?: RequestInit): Promise<postAccountForgotPasswordResponse> => {
 
-  const res = await fetch(getPostAccountForgotPasswordUrl(params),
+  const res = await fetch(getPostAccountForgotPasswordUrl(),
   {
     ...options,
     method: 'POST',
@@ -431,8 +386,8 @@ export const postAccountForgotPassword = async (forgotPasswordRequestDto?: Forgo
 
 
 export const getPostAccountForgotPasswordMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountForgotPassword>>, TError,{data?: ForgotPasswordRequestDto;params?: PostAccountForgotPasswordParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof postAccountForgotPassword>>, TError,{data?: ForgotPasswordRequestDto;params?: PostAccountForgotPasswordParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountForgotPassword>>, TError,{data?: ForgotPasswordRequestDto}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountForgotPassword>>, TError,{data?: ForgotPasswordRequestDto}, TContext> => {
 
 const mutationKey = ['postAccountForgotPassword'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -444,10 +399,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountForgotPassword>>, {data?: ForgotPasswordRequestDto;params?: PostAccountForgotPasswordParams}> = (props) => {
-          const {data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountForgotPassword>>, {data?: ForgotPasswordRequestDto}> = (props) => {
+          const {data} = props ?? {};
 
-          return  postAccountForgotPassword(data,params,fetchOptions)
+          return  postAccountForgotPassword(data,fetchOptions)
         }
 
 
@@ -465,11 +420,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Initiates a secure password reset request, sending a verification link to the specified email address.
  */
 export const usePostAccountForgotPassword = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountForgotPassword>>, TError,{data?: ForgotPasswordRequestDto;params?: PostAccountForgotPasswordParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountForgotPassword>>, TError,{data?: ForgotPasswordRequestDto}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postAccountForgotPassword>>,
         TError,
-        {data?: ForgotPasswordRequestDto;params?: PostAccountForgotPasswordParams},
+        {data?: ForgotPasswordRequestDto},
         TContext
       > => {
       return useMutation(getPostAccountForgotPasswordMutationOptions(options), queryClient);
@@ -487,28 +442,20 @@ export type postAccountResetPasswordResponseSuccess = (postAccountResetPasswordR
 
 export type postAccountResetPasswordResponse = (postAccountResetPasswordResponseSuccess)
 
-export const getPostAccountResetPasswordUrl = (params?: PostAccountResetPasswordParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPostAccountResetPasswordUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Account/reset-password?${stringifiedParams}` : `/api/Account/reset-password`
+  return `/api/v1/Account/reset-password`
 }
 
 /**
  * @summary Completes a password reset flow, applying the new password using the verified reset token.
  */
-export const postAccountResetPassword = async (resetPasswordRequestDto?: ResetPasswordRequestDto,
-    params?: PostAccountResetPasswordParams, options?: RequestInit): Promise<postAccountResetPasswordResponse> => {
+export const postAccountResetPassword = async (resetPasswordRequestDto?: ResetPasswordRequestDto, options?: RequestInit): Promise<postAccountResetPasswordResponse> => {
 
-  const res = await fetch(getPostAccountResetPasswordUrl(params),
+  const res = await fetch(getPostAccountResetPasswordUrl(),
   {
     ...options,
     method: 'POST',
@@ -529,8 +476,8 @@ export const postAccountResetPassword = async (resetPasswordRequestDto?: ResetPa
 
 
 export const getPostAccountResetPasswordMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountResetPassword>>, TError,{data?: ResetPasswordRequestDto;params?: PostAccountResetPasswordParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof postAccountResetPassword>>, TError,{data?: ResetPasswordRequestDto;params?: PostAccountResetPasswordParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountResetPassword>>, TError,{data?: ResetPasswordRequestDto}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountResetPassword>>, TError,{data?: ResetPasswordRequestDto}, TContext> => {
 
 const mutationKey = ['postAccountResetPassword'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -542,10 +489,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountResetPassword>>, {data?: ResetPasswordRequestDto;params?: PostAccountResetPasswordParams}> = (props) => {
-          const {data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountResetPassword>>, {data?: ResetPasswordRequestDto}> = (props) => {
+          const {data} = props ?? {};
 
-          return  postAccountResetPassword(data,params,fetchOptions)
+          return  postAccountResetPassword(data,fetchOptions)
         }
 
 
@@ -563,11 +510,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Completes a password reset flow, applying the new password using the verified reset token.
  */
 export const usePostAccountResetPassword = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountResetPassword>>, TError,{data?: ResetPasswordRequestDto;params?: PostAccountResetPasswordParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountResetPassword>>, TError,{data?: ResetPasswordRequestDto}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postAccountResetPassword>>,
         TError,
-        {data?: ResetPasswordRequestDto;params?: PostAccountResetPasswordParams},
+        {data?: ResetPasswordRequestDto},
         TContext
       > => {
       return useMutation(getPostAccountResetPasswordMutationOptions(options), queryClient);
@@ -604,7 +551,7 @@ export const getGetAccountPrepareChallengeUrl = (params?: GetAccountPrepareChall
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Account/external-challenge?${stringifiedParams}` : `/api/Account/external-challenge`
+  return stringifiedParams.length > 0 ? `/api/v1/Account/external-challenge?${stringifiedParams}` : `/api/v1/Account/external-challenge`
 }
 
 /**
@@ -634,7 +581,7 @@ export const getAccountPrepareChallenge = async (params?: GetAccountPrepareChall
 
 export const getGetAccountPrepareChallengeQueryKey = (params?: GetAccountPrepareChallengeParams,) => {
     return [
-    `/api/Account/external-challenge`, ...(params ? [params] : [])
+    `/api/v1/Account/external-challenge`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -738,7 +685,7 @@ export const getPostAccountHandleCallbackUrl = (params?: PostAccountHandleCallba
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Account/external-callback?${stringifiedParams}` : `/api/Account/external-callback`
+  return stringifiedParams.length > 0 ? `/api/v1/Account/external-callback?${stringifiedParams}` : `/api/v1/Account/external-callback`
 }
 
 /**
@@ -843,7 +790,7 @@ export const getPostAccountLinkExternalUrl = (params?: PostAccountLinkExternalPa
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Account/link-external?${stringifiedParams}` : `/api/Account/link-external`
+  return stringifiedParams.length > 0 ? `/api/v1/Account/link-external?${stringifiedParams}` : `/api/v1/Account/link-external`
 }
 
 /**
@@ -929,27 +876,20 @@ export type getAccountConfiguredProvidersResponseSuccess = (getAccountConfigured
 
 export type getAccountConfiguredProvidersResponse = (getAccountConfiguredProvidersResponseSuccess)
 
-export const getGetAccountConfiguredProvidersUrl = (params?: GetAccountConfiguredProvidersParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getGetAccountConfiguredProvidersUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Account/providers?${stringifiedParams}` : `/api/Account/providers`
+  return `/api/v1/Account/providers`
 }
 
 /**
  * @summary Retrieves the list of configured external OIDC Single Sign-On (SSO) identity provider names.
  */
-export const getAccountConfiguredProviders = async (params?: GetAccountConfiguredProvidersParams, options?: RequestInit): Promise<getAccountConfiguredProvidersResponse> => {
+export const getAccountConfiguredProviders = async ( options?: RequestInit): Promise<getAccountConfiguredProvidersResponse> => {
 
-  const res = await fetch(getGetAccountConfiguredProvidersUrl(params),
+  const res = await fetch(getGetAccountConfiguredProvidersUrl(),
   {
     ...options,
     method: 'GET'
@@ -969,23 +909,23 @@ export const getAccountConfiguredProviders = async (params?: GetAccountConfigure
 
 
 
-export const getGetAccountConfiguredProvidersQueryKey = (params?: GetAccountConfiguredProvidersParams,) => {
+export const getGetAccountConfiguredProvidersQueryKey = () => {
     return [
-    `/api/Account/providers`, ...(params ? [params] : [])
+    `/api/v1/Account/providers`
     ] as const;
     }
 
 
-export const getGetAccountConfiguredProvidersQueryOptions = <TData = Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError = unknown>(params?: GetAccountConfiguredProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>>, fetch?: RequestInit}
+export const getGetAccountConfiguredProvidersQueryOptions = <TData = Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetAccountConfiguredProvidersQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountConfiguredProvidersQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountConfiguredProviders>>> = ({ signal }) => getAccountConfiguredProviders(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountConfiguredProviders>>> = ({ signal }) => getAccountConfiguredProviders({ signal, ...fetchOptions });
 
 
 
@@ -999,7 +939,7 @@ export type GetAccountConfiguredProvidersQueryError = unknown
 
 
 export function useGetAccountConfiguredProviders<TData = Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError = unknown>(
- params: undefined |  GetAccountConfiguredProvidersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>> & Pick<
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAccountConfiguredProviders>>,
           TError,
@@ -1009,7 +949,7 @@ export function useGetAccountConfiguredProviders<TData = Awaited<ReturnType<type
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetAccountConfiguredProviders<TData = Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError = unknown>(
- params?: GetAccountConfiguredProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>> & Pick<
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAccountConfiguredProviders>>,
           TError,
@@ -1019,7 +959,7 @@ export function useGetAccountConfiguredProviders<TData = Awaited<ReturnType<type
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetAccountConfiguredProviders<TData = Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError = unknown>(
- params?: GetAccountConfiguredProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1027,11 +967,11 @@ export function useGetAccountConfiguredProviders<TData = Awaited<ReturnType<type
  */
 
 export function useGetAccountConfiguredProviders<TData = Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError = unknown>(
- params?: GetAccountConfiguredProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountConfiguredProviders>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetAccountConfiguredProvidersQueryOptions(params,options)
+  const queryOptions = getGetAccountConfiguredProvidersQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1056,27 +996,20 @@ export type getAccountIsInitializedResponseSuccess = (getAccountIsInitializedRes
 
 export type getAccountIsInitializedResponse = (getAccountIsInitializedResponseSuccess)
 
-export const getGetAccountIsInitializedUrl = (params?: GetAccountIsInitializedParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getGetAccountIsInitializedUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Account/is-initialized?${stringifiedParams}` : `/api/Account/is-initialized`
+  return `/api/v1/Account/is-initialized`
 }
 
 /**
  * @summary Checks whether the system has been initialized with at least one user account.
  */
-export const getAccountIsInitialized = async (params?: GetAccountIsInitializedParams, options?: RequestInit): Promise<getAccountIsInitializedResponse> => {
+export const getAccountIsInitialized = async ( options?: RequestInit): Promise<getAccountIsInitializedResponse> => {
 
-  const res = await fetch(getGetAccountIsInitializedUrl(params),
+  const res = await fetch(getGetAccountIsInitializedUrl(),
   {
     ...options,
     method: 'GET'
@@ -1096,23 +1029,23 @@ export const getAccountIsInitialized = async (params?: GetAccountIsInitializedPa
 
 
 
-export const getGetAccountIsInitializedQueryKey = (params?: GetAccountIsInitializedParams,) => {
+export const getGetAccountIsInitializedQueryKey = () => {
     return [
-    `/api/Account/is-initialized`, ...(params ? [params] : [])
+    `/api/v1/Account/is-initialized`
     ] as const;
     }
 
 
-export const getGetAccountIsInitializedQueryOptions = <TData = Awaited<ReturnType<typeof getAccountIsInitialized>>, TError = unknown>(params?: GetAccountIsInitializedParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>>, fetch?: RequestInit}
+export const getGetAccountIsInitializedQueryOptions = <TData = Awaited<ReturnType<typeof getAccountIsInitialized>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetAccountIsInitializedQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountIsInitializedQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountIsInitialized>>> = ({ signal }) => getAccountIsInitialized(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountIsInitialized>>> = ({ signal }) => getAccountIsInitialized({ signal, ...fetchOptions });
 
 
 
@@ -1126,7 +1059,7 @@ export type GetAccountIsInitializedQueryError = unknown
 
 
 export function useGetAccountIsInitialized<TData = Awaited<ReturnType<typeof getAccountIsInitialized>>, TError = unknown>(
- params: undefined |  GetAccountIsInitializedParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>> & Pick<
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAccountIsInitialized>>,
           TError,
@@ -1136,7 +1069,7 @@ export function useGetAccountIsInitialized<TData = Awaited<ReturnType<typeof get
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetAccountIsInitialized<TData = Awaited<ReturnType<typeof getAccountIsInitialized>>, TError = unknown>(
- params?: GetAccountIsInitializedParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>> & Pick<
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAccountIsInitialized>>,
           TError,
@@ -1146,7 +1079,7 @@ export function useGetAccountIsInitialized<TData = Awaited<ReturnType<typeof get
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetAccountIsInitialized<TData = Awaited<ReturnType<typeof getAccountIsInitialized>>, TError = unknown>(
- params?: GetAccountIsInitializedParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1154,11 +1087,11 @@ export function useGetAccountIsInitialized<TData = Awaited<ReturnType<typeof get
  */
 
 export function useGetAccountIsInitialized<TData = Awaited<ReturnType<typeof getAccountIsInitialized>>, TError = unknown>(
- params?: GetAccountIsInitializedParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountIsInitialized>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetAccountIsInitializedQueryOptions(params,options)
+  const queryOptions = getGetAccountIsInitializedQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1205,28 +1138,20 @@ export type postApiKeyCreateResponseError = (postApiKeyCreateResponse400 | postA
 
 export type postApiKeyCreateResponse = (postApiKeyCreateResponseSuccess | postApiKeyCreateResponseError)
 
-export const getPostApiKeyCreateUrl = (params?: PostApiKeyCreateParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPostApiKeyCreateUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/ApiKey/create?${stringifiedParams}` : `/api/ApiKey/create`
+  return `/api/v1/ApiKey/create`
 }
 
 /**
  * @summary Generates and stores a new API key for the authenticated user.
  */
-export const postApiKeyCreate = async (createApiKeyDto?: CreateApiKeyDto,
-    params?: PostApiKeyCreateParams, options?: RequestInit): Promise<postApiKeyCreateResponse> => {
+export const postApiKeyCreate = async (createApiKeyDto?: CreateApiKeyDto, options?: RequestInit): Promise<postApiKeyCreateResponse> => {
 
-  const res = await fetch(getPostApiKeyCreateUrl(params),
+  const res = await fetch(getPostApiKeyCreateUrl(),
   {
     ...options,
     method: 'POST',
@@ -1247,8 +1172,8 @@ export const postApiKeyCreate = async (createApiKeyDto?: CreateApiKeyDto,
 
 
 export const getPostApiKeyCreateMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiKeyCreate>>, TError,{data?: CreateApiKeyDto;params?: PostApiKeyCreateParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof postApiKeyCreate>>, TError,{data?: CreateApiKeyDto;params?: PostApiKeyCreateParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiKeyCreate>>, TError,{data?: CreateApiKeyDto}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiKeyCreate>>, TError,{data?: CreateApiKeyDto}, TContext> => {
 
 const mutationKey = ['postApiKeyCreate'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -1260,10 +1185,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiKeyCreate>>, {data?: CreateApiKeyDto;params?: PostApiKeyCreateParams}> = (props) => {
-          const {data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiKeyCreate>>, {data?: CreateApiKeyDto}> = (props) => {
+          const {data} = props ?? {};
 
-          return  postApiKeyCreate(data,params,fetchOptions)
+          return  postApiKeyCreate(data,fetchOptions)
         }
 
 
@@ -1281,11 +1206,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Generates and stores a new API key for the authenticated user.
  */
 export const usePostApiKeyCreate = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiKeyCreate>>, TError,{data?: CreateApiKeyDto;params?: PostApiKeyCreateParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiKeyCreate>>, TError,{data?: CreateApiKeyDto}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postApiKeyCreate>>,
         TError,
-        {data?: CreateApiKeyDto;params?: PostApiKeyCreateParams},
+        {data?: CreateApiKeyDto},
         TContext
       > => {
       return useMutation(getPostApiKeyCreateMutationOptions(options), queryClient);
@@ -1315,27 +1240,20 @@ export type getApiKeyMyKeysResponseError = (getApiKeyMyKeysResponse401 | getApiK
 
 export type getApiKeyMyKeysResponse = (getApiKeyMyKeysResponseSuccess | getApiKeyMyKeysResponseError)
 
-export const getGetApiKeyMyKeysUrl = (params?: GetApiKeyMyKeysParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getGetApiKeyMyKeysUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/ApiKey/my-keys?${stringifiedParams}` : `/api/ApiKey/my-keys`
+  return `/api/v1/ApiKey/my-keys`
 }
 
 /**
  * @summary Retrieves all active, non-revoked API keys belonging to the authenticated user.
  */
-export const getApiKeyMyKeys = async (params?: GetApiKeyMyKeysParams, options?: RequestInit): Promise<getApiKeyMyKeysResponse> => {
+export const getApiKeyMyKeys = async ( options?: RequestInit): Promise<getApiKeyMyKeysResponse> => {
 
-  const res = await fetch(getGetApiKeyMyKeysUrl(params),
+  const res = await fetch(getGetApiKeyMyKeysUrl(),
   {
     ...options,
     method: 'GET'
@@ -1355,23 +1273,23 @@ export const getApiKeyMyKeys = async (params?: GetApiKeyMyKeysParams, options?: 
 
 
 
-export const getGetApiKeyMyKeysQueryKey = (params?: GetApiKeyMyKeysParams,) => {
+export const getGetApiKeyMyKeysQueryKey = () => {
     return [
-    `/api/ApiKey/my-keys`, ...(params ? [params] : [])
+    `/api/v1/ApiKey/my-keys`
     ] as const;
     }
 
 
-export const getGetApiKeyMyKeysQueryOptions = <TData = Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError = ProblemDetails>(params?: GetApiKeyMyKeysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>>, fetch?: RequestInit}
+export const getGetApiKeyMyKeysQueryOptions = <TData = Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError = ProblemDetails>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetApiKeyMyKeysQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetApiKeyMyKeysQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiKeyMyKeys>>> = ({ signal }) => getApiKeyMyKeys(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiKeyMyKeys>>> = ({ signal }) => getApiKeyMyKeys({ signal, ...fetchOptions });
 
 
 
@@ -1385,7 +1303,7 @@ export type GetApiKeyMyKeysQueryError = ProblemDetails
 
 
 export function useGetApiKeyMyKeys<TData = Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError = ProblemDetails>(
- params: undefined |  GetApiKeyMyKeysParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>> & Pick<
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getApiKeyMyKeys>>,
           TError,
@@ -1395,7 +1313,7 @@ export function useGetApiKeyMyKeys<TData = Awaited<ReturnType<typeof getApiKeyMy
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiKeyMyKeys<TData = Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError = ProblemDetails>(
- params?: GetApiKeyMyKeysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>> & Pick<
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getApiKeyMyKeys>>,
           TError,
@@ -1405,7 +1323,7 @@ export function useGetApiKeyMyKeys<TData = Awaited<ReturnType<typeof getApiKeyMy
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiKeyMyKeys<TData = Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError = ProblemDetails>(
- params?: GetApiKeyMyKeysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1413,11 +1331,11 @@ export function useGetApiKeyMyKeys<TData = Awaited<ReturnType<typeof getApiKeyMy
  */
 
 export function useGetApiKeyMyKeys<TData = Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError = ProblemDetails>(
- params?: GetApiKeyMyKeysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyMyKeys>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetApiKeyMyKeysQueryOptions(params,options)
+  const queryOptions = getGetApiKeyMyKeysQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1454,27 +1372,20 @@ export type getApiKeyAllKeysResponseError = (getApiKeyAllKeysResponse401 | getAp
 
 export type getApiKeyAllKeysResponse = (getApiKeyAllKeysResponseSuccess | getApiKeyAllKeysResponseError)
 
-export const getGetApiKeyAllKeysUrl = (params?: GetApiKeyAllKeysParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getGetApiKeyAllKeysUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/ApiKey/all-keys?${stringifiedParams}` : `/api/ApiKey/all-keys`
+  return `/api/v1/ApiKey/all-keys`
 }
 
 /**
  * @summary Retrieves all active, non-revoked API keys in the system.
  */
-export const getApiKeyAllKeys = async (params?: GetApiKeyAllKeysParams, options?: RequestInit): Promise<getApiKeyAllKeysResponse> => {
+export const getApiKeyAllKeys = async ( options?: RequestInit): Promise<getApiKeyAllKeysResponse> => {
 
-  const res = await fetch(getGetApiKeyAllKeysUrl(params),
+  const res = await fetch(getGetApiKeyAllKeysUrl(),
   {
     ...options,
     method: 'GET'
@@ -1494,23 +1405,23 @@ export const getApiKeyAllKeys = async (params?: GetApiKeyAllKeysParams, options?
 
 
 
-export const getGetApiKeyAllKeysQueryKey = (params?: GetApiKeyAllKeysParams,) => {
+export const getGetApiKeyAllKeysQueryKey = () => {
     return [
-    `/api/ApiKey/all-keys`, ...(params ? [params] : [])
+    `/api/v1/ApiKey/all-keys`
     ] as const;
     }
 
 
-export const getGetApiKeyAllKeysQueryOptions = <TData = Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError = ProblemDetails>(params?: GetApiKeyAllKeysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>>, fetch?: RequestInit}
+export const getGetApiKeyAllKeysQueryOptions = <TData = Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError = ProblemDetails>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetApiKeyAllKeysQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetApiKeyAllKeysQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiKeyAllKeys>>> = ({ signal }) => getApiKeyAllKeys(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiKeyAllKeys>>> = ({ signal }) => getApiKeyAllKeys({ signal, ...fetchOptions });
 
 
 
@@ -1524,7 +1435,7 @@ export type GetApiKeyAllKeysQueryError = ProblemDetails
 
 
 export function useGetApiKeyAllKeys<TData = Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError = ProblemDetails>(
- params: undefined |  GetApiKeyAllKeysParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>> & Pick<
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getApiKeyAllKeys>>,
           TError,
@@ -1534,7 +1445,7 @@ export function useGetApiKeyAllKeys<TData = Awaited<ReturnType<typeof getApiKeyA
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiKeyAllKeys<TData = Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError = ProblemDetails>(
- params?: GetApiKeyAllKeysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>> & Pick<
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getApiKeyAllKeys>>,
           TError,
@@ -1544,7 +1455,7 @@ export function useGetApiKeyAllKeys<TData = Awaited<ReturnType<typeof getApiKeyA
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetApiKeyAllKeys<TData = Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError = ProblemDetails>(
- params?: GetApiKeyAllKeysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1552,11 +1463,11 @@ export function useGetApiKeyAllKeys<TData = Awaited<ReturnType<typeof getApiKeyA
  */
 
 export function useGetApiKeyAllKeys<TData = Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError = ProblemDetails>(
- params?: GetApiKeyAllKeysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiKeyAllKeys>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetApiKeyAllKeysQueryOptions(params,options)
+  const queryOptions = getGetApiKeyAllKeysQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1598,29 +1509,20 @@ export type postApiKeyRevokeFromIdResponseError = (postApiKeyRevokeFromIdRespons
 
 export type postApiKeyRevokeFromIdResponse = (postApiKeyRevokeFromIdResponseSuccess | postApiKeyRevokeFromIdResponseError)
 
-export const getPostApiKeyRevokeFromIdUrl = (id: number,
-    params?: PostApiKeyRevokeFromIdParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPostApiKeyRevokeFromIdUrl = (id: number,) => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/ApiKey/revoke/${id}?${stringifiedParams}` : `/api/ApiKey/revoke/${id}`
+  return `/api/v1/ApiKey/revoke/${id}`
 }
 
 /**
  * @summary Marks a specific API key as revoked to prevent further use.
  */
-export const postApiKeyRevokeFromId = async (id: number,
-    params?: PostApiKeyRevokeFromIdParams, options?: RequestInit): Promise<postApiKeyRevokeFromIdResponse> => {
+export const postApiKeyRevokeFromId = async (id: number, options?: RequestInit): Promise<postApiKeyRevokeFromIdResponse> => {
 
-  const res = await fetch(getPostApiKeyRevokeFromIdUrl(id,params),
+  const res = await fetch(getPostApiKeyRevokeFromIdUrl(id),
   {
     ...options,
     method: 'POST'
@@ -1641,8 +1543,8 @@ export const postApiKeyRevokeFromId = async (id: number,
 
 
 export const getPostApiKeyRevokeFromIdMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiKeyRevokeFromId>>, TError,{id: number;params?: PostApiKeyRevokeFromIdParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof postApiKeyRevokeFromId>>, TError,{id: number;params?: PostApiKeyRevokeFromIdParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiKeyRevokeFromId>>, TError,{id: number}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiKeyRevokeFromId>>, TError,{id: number}, TContext> => {
 
 const mutationKey = ['postApiKeyRevokeFromId'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -1654,10 +1556,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiKeyRevokeFromId>>, {id: number;params?: PostApiKeyRevokeFromIdParams}> = (props) => {
-          const {id,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiKeyRevokeFromId>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
 
-          return  postApiKeyRevokeFromId(id,params,fetchOptions)
+          return  postApiKeyRevokeFromId(id,fetchOptions)
         }
 
 
@@ -1675,11 +1577,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Marks a specific API key as revoked to prevent further use.
  */
 export const usePostApiKeyRevokeFromId = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiKeyRevokeFromId>>, TError,{id: number;params?: PostApiKeyRevokeFromIdParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiKeyRevokeFromId>>, TError,{id: number}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postApiKeyRevokeFromId>>,
         TError,
-        {id: number;params?: PostApiKeyRevokeFromIdParams},
+        {id: number},
         TContext
       > => {
       return useMutation(getPostApiKeyRevokeFromIdMutationOptions(options), queryClient);
@@ -3702,7 +3604,7 @@ export const getGetBackupsBackupsUrl = () => {
 
 
 
-  return `/api/v1/backups`
+  return `/api/v1/Backups`
 }
 
 /**
@@ -3732,7 +3634,7 @@ export const getBackupsBackups = async ( options?: RequestInit): Promise<getBack
 
 export const getGetBackupsBackupsQueryKey = () => {
     return [
-    `/api/v1/backups`
+    `/api/v1/Backups`
     ] as const;
     }
 
@@ -3839,7 +3741,7 @@ export const getPostBackupsCreateBackupUrl = () => {
 
 
 
-  return `/api/v1/backups/create`
+  return `/api/v1/Backups/create`
 }
 
 /**
@@ -3946,7 +3848,7 @@ export const getPostBackupsUploadBackupUrl = () => {
 
 
 
-  return `/api/v1/backups/upload`
+  return `/api/v1/Backups/upload`
 }
 
 /**
@@ -4057,7 +3959,7 @@ export const getGetBackupsDownloadBackupFromFileNameUrl = (fileName: string,) =>
 
 
 
-  return `/api/v1/backups/${fileName}/download`
+  return `/api/v1/Backups/${fileName}/download`
 }
 
 /**
@@ -4087,7 +3989,7 @@ export const getBackupsDownloadBackupFromFileName = async (fileName: string, opt
 
 export const getGetBackupsDownloadBackupFromFileNameQueryKey = (fileName: string,) => {
     return [
-    `/api/v1/backups/${fileName}/download`
+    `/api/v1/Backups/${fileName}/download`
     ] as const;
     }
 
@@ -4719,7 +4621,7 @@ export const getDeleteBackupsBackupFromFileNameUrl = (fileName: string,) => {
 
 
 
-  return `/api/v1/backups/${fileName}`
+  return `/api/v1/Backups/${fileName}`
 }
 
 /**
@@ -4826,7 +4728,7 @@ export const getPostBackupsRestoreBackupFromFileNameUrl = (fileName: string,) =>
 
 
 
-  return `/api/v1/backups/${fileName}/restore`
+  return `/api/v1/Backups/${fileName}/restore`
 }
 
 /**
@@ -4928,7 +4830,7 @@ export const getGetBackupsBackupSettingsUrl = () => {
 
 
 
-  return `/api/v1/backups/backup-settings`
+  return `/api/v1/Backups/backup-settings`
 }
 
 /**
@@ -4958,7 +4860,7 @@ export const getBackupsBackupSettings = async ( options?: RequestInit): Promise<
 
 export const getGetBackupsBackupSettingsQueryKey = () => {
     return [
-    `/api/v1/backups/backup-settings`
+    `/api/v1/Backups/backup-settings`
     ] as const;
     }
 
@@ -10000,27 +9902,20 @@ export type getRolesSystemPermissionsResponseSuccess = (getRolesSystemPermission
 
 export type getRolesSystemPermissionsResponse = (getRolesSystemPermissionsResponseSuccess)
 
-export const getGetRolesSystemPermissionsUrl = (params?: GetRolesSystemPermissionsParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getGetRolesSystemPermissionsUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Roles/permissions?${stringifiedParams}` : `/api/Roles/permissions`
+  return `/api/v1/Roles/permissions`
 }
 
 /**
  * @summary Retrieves the list of all available system permissions configured in Chambered.
  */
-export const getRolesSystemPermissions = async (params?: GetRolesSystemPermissionsParams, options?: RequestInit): Promise<getRolesSystemPermissionsResponse> => {
+export const getRolesSystemPermissions = async ( options?: RequestInit): Promise<getRolesSystemPermissionsResponse> => {
 
-  const res = await fetch(getGetRolesSystemPermissionsUrl(params),
+  const res = await fetch(getGetRolesSystemPermissionsUrl(),
   {
     ...options,
     method: 'GET'
@@ -10040,23 +9935,23 @@ export const getRolesSystemPermissions = async (params?: GetRolesSystemPermissio
 
 
 
-export const getGetRolesSystemPermissionsQueryKey = (params?: GetRolesSystemPermissionsParams,) => {
+export const getGetRolesSystemPermissionsQueryKey = () => {
     return [
-    `/api/Roles/permissions`, ...(params ? [params] : [])
+    `/api/v1/Roles/permissions`
     ] as const;
     }
 
 
-export const getGetRolesSystemPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError = unknown>(params?: GetRolesSystemPermissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>>, fetch?: RequestInit}
+export const getGetRolesSystemPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetRolesSystemPermissionsQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetRolesSystemPermissionsQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesSystemPermissions>>> = ({ signal }) => getRolesSystemPermissions(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesSystemPermissions>>> = ({ signal }) => getRolesSystemPermissions({ signal, ...fetchOptions });
 
 
 
@@ -10070,7 +9965,7 @@ export type GetRolesSystemPermissionsQueryError = unknown
 
 
 export function useGetRolesSystemPermissions<TData = Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError = unknown>(
- params: undefined |  GetRolesSystemPermissionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>> & Pick<
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesSystemPermissions>>,
           TError,
@@ -10080,7 +9975,7 @@ export function useGetRolesSystemPermissions<TData = Awaited<ReturnType<typeof g
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetRolesSystemPermissions<TData = Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError = unknown>(
- params?: GetRolesSystemPermissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>> & Pick<
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesSystemPermissions>>,
           TError,
@@ -10090,7 +9985,7 @@ export function useGetRolesSystemPermissions<TData = Awaited<ReturnType<typeof g
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetRolesSystemPermissions<TData = Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError = unknown>(
- params?: GetRolesSystemPermissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -10098,11 +9993,11 @@ export function useGetRolesSystemPermissions<TData = Awaited<ReturnType<typeof g
  */
 
 export function useGetRolesSystemPermissions<TData = Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError = unknown>(
- params?: GetRolesSystemPermissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesSystemPermissions>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetRolesSystemPermissionsQueryOptions(params,options)
+  const queryOptions = getGetRolesSystemPermissionsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -10127,27 +10022,20 @@ export type getRolesRolesResponseSuccess = (getRolesRolesResponse200) & {
 
 export type getRolesRolesResponse = (getRolesRolesResponseSuccess)
 
-export const getGetRolesRolesUrl = (params?: GetRolesRolesParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getGetRolesRolesUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Roles?${stringifiedParams}` : `/api/Roles`
+  return `/api/v1/Roles`
 }
 
 /**
  * @summary Retrieves the list of all defined roles in the system.
  */
-export const getRolesRoles = async (params?: GetRolesRolesParams, options?: RequestInit): Promise<getRolesRolesResponse> => {
+export const getRolesRoles = async ( options?: RequestInit): Promise<getRolesRolesResponse> => {
 
-  const res = await fetch(getGetRolesRolesUrl(params),
+  const res = await fetch(getGetRolesRolesUrl(),
   {
     ...options,
     method: 'GET'
@@ -10167,23 +10055,23 @@ export const getRolesRoles = async (params?: GetRolesRolesParams, options?: Requ
 
 
 
-export const getGetRolesRolesQueryKey = (params?: GetRolesRolesParams,) => {
+export const getGetRolesRolesQueryKey = () => {
     return [
-    `/api/Roles`, ...(params ? [params] : [])
+    `/api/v1/Roles`
     ] as const;
     }
 
 
-export const getGetRolesRolesQueryOptions = <TData = Awaited<ReturnType<typeof getRolesRoles>>, TError = unknown>(params?: GetRolesRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>>, fetch?: RequestInit}
+export const getGetRolesRolesQueryOptions = <TData = Awaited<ReturnType<typeof getRolesRoles>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetRolesRolesQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetRolesRolesQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesRoles>>> = ({ signal }) => getRolesRoles(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesRoles>>> = ({ signal }) => getRolesRoles({ signal, ...fetchOptions });
 
 
 
@@ -10197,7 +10085,7 @@ export type GetRolesRolesQueryError = unknown
 
 
 export function useGetRolesRoles<TData = Awaited<ReturnType<typeof getRolesRoles>>, TError = unknown>(
- params: undefined |  GetRolesRolesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>> & Pick<
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesRoles>>,
           TError,
@@ -10207,7 +10095,7 @@ export function useGetRolesRoles<TData = Awaited<ReturnType<typeof getRolesRoles
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetRolesRoles<TData = Awaited<ReturnType<typeof getRolesRoles>>, TError = unknown>(
- params?: GetRolesRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>> & Pick<
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesRoles>>,
           TError,
@@ -10217,7 +10105,7 @@ export function useGetRolesRoles<TData = Awaited<ReturnType<typeof getRolesRoles
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetRolesRoles<TData = Awaited<ReturnType<typeof getRolesRoles>>, TError = unknown>(
- params?: GetRolesRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -10225,11 +10113,11 @@ export function useGetRolesRoles<TData = Awaited<ReturnType<typeof getRolesRoles
  */
 
 export function useGetRolesRoles<TData = Awaited<ReturnType<typeof getRolesRoles>>, TError = unknown>(
- params?: GetRolesRolesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoles>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetRolesRolesQueryOptions(params,options)
+  const queryOptions = getGetRolesRolesQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -10261,29 +10149,20 @@ export type postRolesCreateRoleFromRoleNameResponseError = (postRolesCreateRoleF
 
 export type postRolesCreateRoleFromRoleNameResponse = (postRolesCreateRoleFromRoleNameResponseSuccess | postRolesCreateRoleFromRoleNameResponseError)
 
-export const getPostRolesCreateRoleFromRoleNameUrl = (roleName: string,
-    params?: PostRolesCreateRoleFromRoleNameParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPostRolesCreateRoleFromRoleNameUrl = (roleName: string,) => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Roles/${roleName}?${stringifiedParams}` : `/api/Roles/${roleName}`
+  return `/api/v1/Roles/${roleName}`
 }
 
 /**
  * @summary Creates a brand new system role.
  */
-export const postRolesCreateRoleFromRoleName = async (roleName: string,
-    params?: PostRolesCreateRoleFromRoleNameParams, options?: RequestInit): Promise<postRolesCreateRoleFromRoleNameResponse> => {
+export const postRolesCreateRoleFromRoleName = async (roleName: string, options?: RequestInit): Promise<postRolesCreateRoleFromRoleNameResponse> => {
 
-  const res = await fetch(getPostRolesCreateRoleFromRoleNameUrl(roleName,params),
+  const res = await fetch(getPostRolesCreateRoleFromRoleNameUrl(roleName),
   {
     ...options,
     method: 'POST'
@@ -10304,8 +10183,8 @@ export const postRolesCreateRoleFromRoleName = async (roleName: string,
 
 
 export const getPostRolesCreateRoleFromRoleNameMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRolesCreateRoleFromRoleName>>, TError,{roleName: string;params?: PostRolesCreateRoleFromRoleNameParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof postRolesCreateRoleFromRoleName>>, TError,{roleName: string;params?: PostRolesCreateRoleFromRoleNameParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRolesCreateRoleFromRoleName>>, TError,{roleName: string}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postRolesCreateRoleFromRoleName>>, TError,{roleName: string}, TContext> => {
 
 const mutationKey = ['postRolesCreateRoleFromRoleName'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -10317,10 +10196,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postRolesCreateRoleFromRoleName>>, {roleName: string;params?: PostRolesCreateRoleFromRoleNameParams}> = (props) => {
-          const {roleName,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postRolesCreateRoleFromRoleName>>, {roleName: string}> = (props) => {
+          const {roleName} = props ?? {};
 
-          return  postRolesCreateRoleFromRoleName(roleName,params,fetchOptions)
+          return  postRolesCreateRoleFromRoleName(roleName,fetchOptions)
         }
 
 
@@ -10338,11 +10217,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Creates a brand new system role.
  */
 export const usePostRolesCreateRoleFromRoleName = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRolesCreateRoleFromRoleName>>, TError,{roleName: string;params?: PostRolesCreateRoleFromRoleNameParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRolesCreateRoleFromRoleName>>, TError,{roleName: string}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postRolesCreateRoleFromRoleName>>,
         TError,
-        {roleName: string;params?: PostRolesCreateRoleFromRoleNameParams},
+        {roleName: string},
         TContext
       > => {
       return useMutation(getPostRolesCreateRoleFromRoleNameMutationOptions(options), queryClient);
@@ -10367,29 +10246,20 @@ export type deleteRolesRoleFromRoleNameResponseError = (deleteRolesRoleFromRoleN
 
 export type deleteRolesRoleFromRoleNameResponse = (deleteRolesRoleFromRoleNameResponseSuccess | deleteRolesRoleFromRoleNameResponseError)
 
-export const getDeleteRolesRoleFromRoleNameUrl = (roleName: string,
-    params?: DeleteRolesRoleFromRoleNameParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getDeleteRolesRoleFromRoleNameUrl = (roleName: string,) => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Roles/${roleName}?${stringifiedParams}` : `/api/Roles/${roleName}`
+  return `/api/v1/Roles/${roleName}`
 }
 
 /**
  * @summary Deletes an existing system role.
  */
-export const deleteRolesRoleFromRoleName = async (roleName: string,
-    params?: DeleteRolesRoleFromRoleNameParams, options?: RequestInit): Promise<deleteRolesRoleFromRoleNameResponse> => {
+export const deleteRolesRoleFromRoleName = async (roleName: string, options?: RequestInit): Promise<deleteRolesRoleFromRoleNameResponse> => {
 
-  const res = await fetch(getDeleteRolesRoleFromRoleNameUrl(roleName,params),
+  const res = await fetch(getDeleteRolesRoleFromRoleNameUrl(roleName),
   {
     ...options,
     method: 'DELETE'
@@ -10410,8 +10280,8 @@ export const deleteRolesRoleFromRoleName = async (roleName: string,
 
 
 export const getDeleteRolesRoleFromRoleNameMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRolesRoleFromRoleName>>, TError,{roleName: string;params?: DeleteRolesRoleFromRoleNameParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteRolesRoleFromRoleName>>, TError,{roleName: string;params?: DeleteRolesRoleFromRoleNameParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRolesRoleFromRoleName>>, TError,{roleName: string}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRolesRoleFromRoleName>>, TError,{roleName: string}, TContext> => {
 
 const mutationKey = ['deleteRolesRoleFromRoleName'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -10423,10 +10293,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRolesRoleFromRoleName>>, {roleName: string;params?: DeleteRolesRoleFromRoleNameParams}> = (props) => {
-          const {roleName,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRolesRoleFromRoleName>>, {roleName: string}> = (props) => {
+          const {roleName} = props ?? {};
 
-          return  deleteRolesRoleFromRoleName(roleName,params,fetchOptions)
+          return  deleteRolesRoleFromRoleName(roleName,fetchOptions)
         }
 
 
@@ -10444,11 +10314,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Deletes an existing system role.
  */
 export const useDeleteRolesRoleFromRoleName = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRolesRoleFromRoleName>>, TError,{roleName: string;params?: DeleteRolesRoleFromRoleNameParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRolesRoleFromRoleName>>, TError,{roleName: string}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteRolesRoleFromRoleName>>,
         TError,
-        {roleName: string;params?: DeleteRolesRoleFromRoleNameParams},
+        {roleName: string},
         TContext
       > => {
       return useMutation(getDeleteRolesRoleFromRoleNameMutationOptions(options), queryClient);
@@ -10473,29 +10343,20 @@ export type getRolesRoleClaimsFromRoleNameResponseError = (getRolesRoleClaimsFro
 
 export type getRolesRoleClaimsFromRoleNameResponse = (getRolesRoleClaimsFromRoleNameResponseSuccess | getRolesRoleClaimsFromRoleNameResponseError)
 
-export const getGetRolesRoleClaimsFromRoleNameUrl = (roleName: string,
-    params?: GetRolesRoleClaimsFromRoleNameParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getGetRolesRoleClaimsFromRoleNameUrl = (roleName: string,) => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Roles/${roleName}/claims?${stringifiedParams}` : `/api/Roles/${roleName}/claims`
+  return `/api/v1/Roles/${roleName}/claims`
 }
 
 /**
  * @summary Retrieves the exact permissions mapped to a specific system role.
  */
-export const getRolesRoleClaimsFromRoleName = async (roleName: string,
-    params?: GetRolesRoleClaimsFromRoleNameParams, options?: RequestInit): Promise<getRolesRoleClaimsFromRoleNameResponse> => {
+export const getRolesRoleClaimsFromRoleName = async (roleName: string, options?: RequestInit): Promise<getRolesRoleClaimsFromRoleNameResponse> => {
 
-  const res = await fetch(getGetRolesRoleClaimsFromRoleNameUrl(roleName,params),
+  const res = await fetch(getGetRolesRoleClaimsFromRoleNameUrl(roleName),
   {
     ...options,
     method: 'GET'
@@ -10515,25 +10376,23 @@ export const getRolesRoleClaimsFromRoleName = async (roleName: string,
 
 
 
-export const getGetRolesRoleClaimsFromRoleNameQueryKey = (roleName: string,
-    params?: GetRolesRoleClaimsFromRoleNameParams,) => {
+export const getGetRolesRoleClaimsFromRoleNameQueryKey = (roleName: string,) => {
     return [
-    `/api/Roles/${roleName}/claims`, ...(params ? [params] : [])
+    `/api/v1/Roles/${roleName}/claims`
     ] as const;
     }
 
 
-export const getGetRolesRoleClaimsFromRoleNameQueryOptions = <TData = Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError = ProblemDetails>(roleName: string,
-    params?: GetRolesRoleClaimsFromRoleNameParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>>, fetch?: RequestInit}
+export const getGetRolesRoleClaimsFromRoleNameQueryOptions = <TData = Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError = ProblemDetails>(roleName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetRolesRoleClaimsFromRoleNameQueryKey(roleName,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetRolesRoleClaimsFromRoleNameQueryKey(roleName);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>> = ({ signal }) => getRolesRoleClaimsFromRoleName(roleName,params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>> = ({ signal }) => getRolesRoleClaimsFromRoleName(roleName, { signal, ...fetchOptions });
 
 
 
@@ -10547,8 +10406,7 @@ export type GetRolesRoleClaimsFromRoleNameQueryError = ProblemDetails
 
 
 export function useGetRolesRoleClaimsFromRoleName<TData = Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError = ProblemDetails>(
- roleName: string,
-    params: undefined |  GetRolesRoleClaimsFromRoleNameParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>> & Pick<
+ roleName: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>,
           TError,
@@ -10558,8 +10416,7 @@ export function useGetRolesRoleClaimsFromRoleName<TData = Awaited<ReturnType<typ
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetRolesRoleClaimsFromRoleName<TData = Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError = ProblemDetails>(
- roleName: string,
-    params?: GetRolesRoleClaimsFromRoleNameParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>> & Pick<
+ roleName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>,
           TError,
@@ -10569,8 +10426,7 @@ export function useGetRolesRoleClaimsFromRoleName<TData = Awaited<ReturnType<typ
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetRolesRoleClaimsFromRoleName<TData = Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError = ProblemDetails>(
- roleName: string,
-    params?: GetRolesRoleClaimsFromRoleNameParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>>, fetch?: RequestInit}
+ roleName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -10578,12 +10434,11 @@ export function useGetRolesRoleClaimsFromRoleName<TData = Awaited<ReturnType<typ
  */
 
 export function useGetRolesRoleClaimsFromRoleName<TData = Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError = ProblemDetails>(
- roleName: string,
-    params?: GetRolesRoleClaimsFromRoleNameParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>>, fetch?: RequestInit}
+ roleName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesRoleClaimsFromRoleName>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetRolesRoleClaimsFromRoleNameQueryOptions(roleName,params,options)
+  const queryOptions = getGetRolesRoleClaimsFromRoleNameQueryOptions(roleName,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -10615,30 +10470,21 @@ export type postRolesUpdateRoleClaimsFromRoleNameResponseError = (postRolesUpdat
 
 export type postRolesUpdateRoleClaimsFromRoleNameResponse = (postRolesUpdateRoleClaimsFromRoleNameResponseSuccess | postRolesUpdateRoleClaimsFromRoleNameResponseError)
 
-export const getPostRolesUpdateRoleClaimsFromRoleNameUrl = (roleName: string,
-    params?: PostRolesUpdateRoleClaimsFromRoleNameParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPostRolesUpdateRoleClaimsFromRoleNameUrl = (roleName: string,) => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Roles/${roleName}/claims?${stringifiedParams}` : `/api/Roles/${roleName}/claims`
+  return `/api/v1/Roles/${roleName}/claims`
 }
 
 /**
  * @summary Updates the set of permission claims assigned to a specific system role.
  */
 export const postRolesUpdateRoleClaimsFromRoleName = async (roleName: string,
-    postRolesUpdateRoleClaimsFromRoleNameBody?: string[],
-    params?: PostRolesUpdateRoleClaimsFromRoleNameParams, options?: RequestInit): Promise<postRolesUpdateRoleClaimsFromRoleNameResponse> => {
+    postRolesUpdateRoleClaimsFromRoleNameBody?: string[], options?: RequestInit): Promise<postRolesUpdateRoleClaimsFromRoleNameResponse> => {
 
-  const res = await fetch(getPostRolesUpdateRoleClaimsFromRoleNameUrl(roleName,params),
+  const res = await fetch(getPostRolesUpdateRoleClaimsFromRoleNameUrl(roleName),
   {
     ...options,
     method: 'POST',
@@ -10659,8 +10505,8 @@ export const postRolesUpdateRoleClaimsFromRoleName = async (roleName: string,
 
 
 export const getPostRolesUpdateRoleClaimsFromRoleNameMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRolesUpdateRoleClaimsFromRoleName>>, TError,{roleName: string;data?: string[];params?: PostRolesUpdateRoleClaimsFromRoleNameParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof postRolesUpdateRoleClaimsFromRoleName>>, TError,{roleName: string;data?: string[];params?: PostRolesUpdateRoleClaimsFromRoleNameParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRolesUpdateRoleClaimsFromRoleName>>, TError,{roleName: string;data?: string[]}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postRolesUpdateRoleClaimsFromRoleName>>, TError,{roleName: string;data?: string[]}, TContext> => {
 
 const mutationKey = ['postRolesUpdateRoleClaimsFromRoleName'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -10672,10 +10518,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postRolesUpdateRoleClaimsFromRoleName>>, {roleName: string;data?: string[];params?: PostRolesUpdateRoleClaimsFromRoleNameParams}> = (props) => {
-          const {roleName,data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postRolesUpdateRoleClaimsFromRoleName>>, {roleName: string;data?: string[]}> = (props) => {
+          const {roleName,data} = props ?? {};
 
-          return  postRolesUpdateRoleClaimsFromRoleName(roleName,data,params,fetchOptions)
+          return  postRolesUpdateRoleClaimsFromRoleName(roleName,data,fetchOptions)
         }
 
 
@@ -10693,11 +10539,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Updates the set of permission claims assigned to a specific system role.
  */
 export const usePostRolesUpdateRoleClaimsFromRoleName = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRolesUpdateRoleClaimsFromRoleName>>, TError,{roleName: string;data?: string[];params?: PostRolesUpdateRoleClaimsFromRoleNameParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRolesUpdateRoleClaimsFromRoleName>>, TError,{roleName: string;data?: string[]}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postRolesUpdateRoleClaimsFromRoleName>>,
         TError,
-        {roleName: string;data?: string[];params?: PostRolesUpdateRoleClaimsFromRoleNameParams},
+        {roleName: string;data?: string[]},
         TContext
       > => {
       return useMutation(getPostRolesUpdateRoleClaimsFromRoleNameMutationOptions(options), queryClient);
@@ -10976,28 +10822,20 @@ export type postUsersRegisterResponseError = (postUsersRegisterResponse400) & {
 
 export type postUsersRegisterResponse = (postUsersRegisterResponseSuccess | postUsersRegisterResponseError)
 
-export const getPostUsersRegisterUrl = (params?: PostUsersRegisterParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPostUsersRegisterUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Users/register?${stringifiedParams}` : `/api/Users/register`
+  return `/api/v1/Users/register`
 }
 
 /**
  * @summary Registers a brand new user account within the Chambered identity store.
  */
-export const postUsersRegister = async (createUserRequestDto?: CreateUserRequestDto,
-    params?: PostUsersRegisterParams, options?: RequestInit): Promise<postUsersRegisterResponse> => {
+export const postUsersRegister = async (createUserRequestDto?: CreateUserRequestDto, options?: RequestInit): Promise<postUsersRegisterResponse> => {
 
-  const res = await fetch(getPostUsersRegisterUrl(params),
+  const res = await fetch(getPostUsersRegisterUrl(),
   {
     ...options,
     method: 'POST',
@@ -11018,8 +10856,8 @@ export const postUsersRegister = async (createUserRequestDto?: CreateUserRequest
 
 
 export const getPostUsersRegisterMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersRegister>>, TError,{data?: CreateUserRequestDto;params?: PostUsersRegisterParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof postUsersRegister>>, TError,{data?: CreateUserRequestDto;params?: PostUsersRegisterParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersRegister>>, TError,{data?: CreateUserRequestDto}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postUsersRegister>>, TError,{data?: CreateUserRequestDto}, TContext> => {
 
 const mutationKey = ['postUsersRegister'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -11031,10 +10869,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postUsersRegister>>, {data?: CreateUserRequestDto;params?: PostUsersRegisterParams}> = (props) => {
-          const {data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postUsersRegister>>, {data?: CreateUserRequestDto}> = (props) => {
+          const {data} = props ?? {};
 
-          return  postUsersRegister(data,params,fetchOptions)
+          return  postUsersRegister(data,fetchOptions)
         }
 
 
@@ -11052,11 +10890,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Registers a brand new user account within the Chambered identity store.
  */
 export const usePostUsersRegister = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersRegister>>, TError,{data?: CreateUserRequestDto;params?: PostUsersRegisterParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersRegister>>, TError,{data?: CreateUserRequestDto}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postUsersRegister>>,
         TError,
-        {data?: CreateUserRequestDto;params?: PostUsersRegisterParams},
+        {data?: CreateUserRequestDto},
         TContext
       > => {
       return useMutation(getPostUsersRegisterMutationOptions(options), queryClient);
@@ -11086,27 +10924,20 @@ export type getUsersProfileResponseError = (getUsersProfileResponse401 | getUser
 
 export type getUsersProfileResponse = (getUsersProfileResponseSuccess | getUsersProfileResponseError)
 
-export const getGetUsersProfileUrl = (params?: GetUsersProfileParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getGetUsersProfileUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Users/profile?${stringifiedParams}` : `/api/Users/profile`
+  return `/api/v1/Users/profile`
 }
 
 /**
  * @summary Fetches the profile details of the currently authenticated user.
  */
-export const getUsersProfile = async (params?: GetUsersProfileParams, options?: RequestInit): Promise<getUsersProfileResponse> => {
+export const getUsersProfile = async ( options?: RequestInit): Promise<getUsersProfileResponse> => {
 
-  const res = await fetch(getGetUsersProfileUrl(params),
+  const res = await fetch(getGetUsersProfileUrl(),
   {
     ...options,
     method: 'GET'
@@ -11126,23 +10957,23 @@ export const getUsersProfile = async (params?: GetUsersProfileParams, options?: 
 
 
 
-export const getGetUsersProfileQueryKey = (params?: GetUsersProfileParams,) => {
+export const getGetUsersProfileQueryKey = () => {
     return [
-    `/api/Users/profile`, ...(params ? [params] : [])
+    `/api/v1/Users/profile`
     ] as const;
     }
 
 
-export const getGetUsersProfileQueryOptions = <TData = Awaited<ReturnType<typeof getUsersProfile>>, TError = ProblemDetails>(params?: GetUsersProfileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>>, fetch?: RequestInit}
+export const getGetUsersProfileQueryOptions = <TData = Awaited<ReturnType<typeof getUsersProfile>>, TError = ProblemDetails>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetUsersProfileQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetUsersProfileQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersProfile>>> = ({ signal }) => getUsersProfile(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersProfile>>> = ({ signal }) => getUsersProfile({ signal, ...fetchOptions });
 
 
 
@@ -11156,7 +10987,7 @@ export type GetUsersProfileQueryError = ProblemDetails
 
 
 export function useGetUsersProfile<TData = Awaited<ReturnType<typeof getUsersProfile>>, TError = ProblemDetails>(
- params: undefined |  GetUsersProfileParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>> & Pick<
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsersProfile>>,
           TError,
@@ -11166,7 +10997,7 @@ export function useGetUsersProfile<TData = Awaited<ReturnType<typeof getUsersPro
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUsersProfile<TData = Awaited<ReturnType<typeof getUsersProfile>>, TError = ProblemDetails>(
- params?: GetUsersProfileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>> & Pick<
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsersProfile>>,
           TError,
@@ -11176,7 +11007,7 @@ export function useGetUsersProfile<TData = Awaited<ReturnType<typeof getUsersPro
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUsersProfile<TData = Awaited<ReturnType<typeof getUsersProfile>>, TError = ProblemDetails>(
- params?: GetUsersProfileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -11184,11 +11015,11 @@ export function useGetUsersProfile<TData = Awaited<ReturnType<typeof getUsersPro
  */
 
 export function useGetUsersProfile<TData = Awaited<ReturnType<typeof getUsersProfile>>, TError = ProblemDetails>(
- params?: GetUsersProfileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersProfile>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetUsersProfileQueryOptions(params,options)
+  const queryOptions = getGetUsersProfileQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -11220,28 +11051,20 @@ export type putUsersUpdateProfileResponseError = (putUsersUpdateProfileResponse4
 
 export type putUsersUpdateProfileResponse = (putUsersUpdateProfileResponseSuccess | putUsersUpdateProfileResponseError)
 
-export const getPutUsersUpdateProfileUrl = (params?: PutUsersUpdateProfileParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPutUsersUpdateProfileUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Users/profile?${stringifiedParams}` : `/api/Users/profile`
+  return `/api/v1/Users/profile`
 }
 
 /**
  * @summary Updates the profile data of the currently authenticated user.
  */
-export const putUsersUpdateProfile = async (updateUserRequestDto?: UpdateUserRequestDto,
-    params?: PutUsersUpdateProfileParams, options?: RequestInit): Promise<putUsersUpdateProfileResponse> => {
+export const putUsersUpdateProfile = async (updateUserRequestDto?: UpdateUserRequestDto, options?: RequestInit): Promise<putUsersUpdateProfileResponse> => {
 
-  const res = await fetch(getPutUsersUpdateProfileUrl(params),
+  const res = await fetch(getPutUsersUpdateProfileUrl(),
   {
     ...options,
     method: 'PUT',
@@ -11262,8 +11085,8 @@ export const putUsersUpdateProfile = async (updateUserRequestDto?: UpdateUserReq
 
 
 export const getPutUsersUpdateProfileMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateProfile>>, TError,{data?: UpdateUserRequestDto;params?: PutUsersUpdateProfileParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateProfile>>, TError,{data?: UpdateUserRequestDto;params?: PutUsersUpdateProfileParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateProfile>>, TError,{data?: UpdateUserRequestDto}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateProfile>>, TError,{data?: UpdateUserRequestDto}, TContext> => {
 
 const mutationKey = ['putUsersUpdateProfile'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -11275,10 +11098,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putUsersUpdateProfile>>, {data?: UpdateUserRequestDto;params?: PutUsersUpdateProfileParams}> = (props) => {
-          const {data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putUsersUpdateProfile>>, {data?: UpdateUserRequestDto}> = (props) => {
+          const {data} = props ?? {};
 
-          return  putUsersUpdateProfile(data,params,fetchOptions)
+          return  putUsersUpdateProfile(data,fetchOptions)
         }
 
 
@@ -11296,11 +11119,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Updates the profile data of the currently authenticated user.
  */
 export const usePutUsersUpdateProfile = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateProfile>>, TError,{data?: UpdateUserRequestDto;params?: PutUsersUpdateProfileParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateProfile>>, TError,{data?: UpdateUserRequestDto}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof putUsersUpdateProfile>>,
         TError,
-        {data?: UpdateUserRequestDto;params?: PutUsersUpdateProfileParams},
+        {data?: UpdateUserRequestDto},
         TContext
       > => {
       return useMutation(getPutUsersUpdateProfileMutationOptions(options), queryClient);
@@ -11318,27 +11141,20 @@ export type getUsersUsersResponseSuccess = (getUsersUsersResponse200) & {
 
 export type getUsersUsersResponse = (getUsersUsersResponseSuccess)
 
-export const getGetUsersUsersUrl = (params?: GetUsersUsersParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getGetUsersUsersUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Users?${stringifiedParams}` : `/api/Users`
+  return `/api/v1/Users`
 }
 
 /**
  * @summary Fetches all registered users within the system (Admin only).
  */
-export const getUsersUsers = async (params?: GetUsersUsersParams, options?: RequestInit): Promise<getUsersUsersResponse> => {
+export const getUsersUsers = async ( options?: RequestInit): Promise<getUsersUsersResponse> => {
 
-  const res = await fetch(getGetUsersUsersUrl(params),
+  const res = await fetch(getGetUsersUsersUrl(),
   {
     ...options,
     method: 'GET'
@@ -11358,23 +11174,23 @@ export const getUsersUsers = async (params?: GetUsersUsersParams, options?: Requ
 
 
 
-export const getGetUsersUsersQueryKey = (params?: GetUsersUsersParams,) => {
+export const getGetUsersUsersQueryKey = () => {
     return [
-    `/api/Users`, ...(params ? [params] : [])
+    `/api/v1/Users`
     ] as const;
     }
 
 
-export const getGetUsersUsersQueryOptions = <TData = Awaited<ReturnType<typeof getUsersUsers>>, TError = unknown>(params?: GetUsersUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>>, fetch?: RequestInit}
+export const getGetUsersUsersQueryOptions = <TData = Awaited<ReturnType<typeof getUsersUsers>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetUsersUsersQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetUsersUsersQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersUsers>>> = ({ signal }) => getUsersUsers(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersUsers>>> = ({ signal }) => getUsersUsers({ signal, ...fetchOptions });
 
 
 
@@ -11388,7 +11204,7 @@ export type GetUsersUsersQueryError = unknown
 
 
 export function useGetUsersUsers<TData = Awaited<ReturnType<typeof getUsersUsers>>, TError = unknown>(
- params: undefined |  GetUsersUsersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>> & Pick<
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsersUsers>>,
           TError,
@@ -11398,7 +11214,7 @@ export function useGetUsersUsers<TData = Awaited<ReturnType<typeof getUsersUsers
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUsersUsers<TData = Awaited<ReturnType<typeof getUsersUsers>>, TError = unknown>(
- params?: GetUsersUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>> & Pick<
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsersUsers>>,
           TError,
@@ -11408,7 +11224,7 @@ export function useGetUsersUsers<TData = Awaited<ReturnType<typeof getUsersUsers
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUsersUsers<TData = Awaited<ReturnType<typeof getUsersUsers>>, TError = unknown>(
- params?: GetUsersUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -11416,11 +11232,11 @@ export function useGetUsersUsers<TData = Awaited<ReturnType<typeof getUsersUsers
  */
 
 export function useGetUsersUsers<TData = Awaited<ReturnType<typeof getUsersUsers>>, TError = unknown>(
- params?: GetUsersUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersUsers>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetUsersUsersQueryOptions(params,options)
+  const queryOptions = getGetUsersUsersQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -11452,30 +11268,21 @@ export type putUsersUpdateUserFromIdResponseError = (putUsersUpdateUserFromIdRes
 
 export type putUsersUpdateUserFromIdResponse = (putUsersUpdateUserFromIdResponseSuccess | putUsersUpdateUserFromIdResponseError)
 
-export const getPutUsersUpdateUserFromIdUrl = (id: string,
-    params?: PutUsersUpdateUserFromIdParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPutUsersUpdateUserFromIdUrl = (id: string,) => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Users/${id}?${stringifiedParams}` : `/api/Users/${id}`
+  return `/api/v1/Users/${id}`
 }
 
 /**
  * @summary Administers a full update of another user's account properties (Admin only).
  */
 export const putUsersUpdateUserFromId = async (id: string,
-    updateUserRequestDto?: UpdateUserRequestDto,
-    params?: PutUsersUpdateUserFromIdParams, options?: RequestInit): Promise<putUsersUpdateUserFromIdResponse> => {
+    updateUserRequestDto?: UpdateUserRequestDto, options?: RequestInit): Promise<putUsersUpdateUserFromIdResponse> => {
 
-  const res = await fetch(getPutUsersUpdateUserFromIdUrl(id,params),
+  const res = await fetch(getPutUsersUpdateUserFromIdUrl(id),
   {
     ...options,
     method: 'PUT',
@@ -11496,8 +11303,8 @@ export const putUsersUpdateUserFromId = async (id: string,
 
 
 export const getPutUsersUpdateUserFromIdMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateUserFromId>>, TError,{id: string;data?: UpdateUserRequestDto;params?: PutUsersUpdateUserFromIdParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateUserFromId>>, TError,{id: string;data?: UpdateUserRequestDto;params?: PutUsersUpdateUserFromIdParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateUserFromId>>, TError,{id: string;data?: UpdateUserRequestDto}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateUserFromId>>, TError,{id: string;data?: UpdateUserRequestDto}, TContext> => {
 
 const mutationKey = ['putUsersUpdateUserFromId'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -11509,10 +11316,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putUsersUpdateUserFromId>>, {id: string;data?: UpdateUserRequestDto;params?: PutUsersUpdateUserFromIdParams}> = (props) => {
-          const {id,data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putUsersUpdateUserFromId>>, {id: string;data?: UpdateUserRequestDto}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  putUsersUpdateUserFromId(id,data,params,fetchOptions)
+          return  putUsersUpdateUserFromId(id,data,fetchOptions)
         }
 
 
@@ -11530,11 +11337,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Administers a full update of another user's account properties (Admin only).
  */
 export const usePutUsersUpdateUserFromId = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateUserFromId>>, TError,{id: string;data?: UpdateUserRequestDto;params?: PutUsersUpdateUserFromIdParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersUpdateUserFromId>>, TError,{id: string;data?: UpdateUserRequestDto}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof putUsersUpdateUserFromId>>,
         TError,
-        {id: string;data?: UpdateUserRequestDto;params?: PutUsersUpdateUserFromIdParams},
+        {id: string;data?: UpdateUserRequestDto},
         TContext
       > => {
       return useMutation(getPutUsersUpdateUserFromIdMutationOptions(options), queryClient);
@@ -11559,29 +11366,20 @@ export type deleteUsersUserFromIdResponseError = (deleteUsersUserFromIdResponse4
 
 export type deleteUsersUserFromIdResponse = (deleteUsersUserFromIdResponseSuccess | deleteUsersUserFromIdResponseError)
 
-export const getDeleteUsersUserFromIdUrl = (id: string,
-    params?: DeleteUsersUserFromIdParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getDeleteUsersUserFromIdUrl = (id: string,) => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/Users/${id}?${stringifiedParams}` : `/api/Users/${id}`
+  return `/api/v1/Users/${id}`
 }
 
 /**
  * @summary Deletes a user account from the identity repository (Admin only).
  */
-export const deleteUsersUserFromId = async (id: string,
-    params?: DeleteUsersUserFromIdParams, options?: RequestInit): Promise<deleteUsersUserFromIdResponse> => {
+export const deleteUsersUserFromId = async (id: string, options?: RequestInit): Promise<deleteUsersUserFromIdResponse> => {
 
-  const res = await fetch(getDeleteUsersUserFromIdUrl(id,params),
+  const res = await fetch(getDeleteUsersUserFromIdUrl(id),
   {
     ...options,
     method: 'DELETE'
@@ -11602,8 +11400,8 @@ export const deleteUsersUserFromId = async (id: string,
 
 
 export const getDeleteUsersUserFromIdMutationOptions = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersUserFromId>>, TError,{id: string;params?: DeleteUsersUserFromIdParams}, TContext>, fetch?: RequestInit}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteUsersUserFromId>>, TError,{id: string;params?: DeleteUsersUserFromIdParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersUserFromId>>, TError,{id: string}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUsersUserFromId>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['deleteUsersUserFromId'];
 const {mutation: mutationOptions, fetch: fetchOptions} = options ?
@@ -11615,10 +11413,10 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUsersUserFromId>>, {id: string;params?: DeleteUsersUserFromIdParams}> = (props) => {
-          const {id,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUsersUserFromId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
 
-          return  deleteUsersUserFromId(id,params,fetchOptions)
+          return  deleteUsersUserFromId(id,fetchOptions)
         }
 
 
@@ -11636,11 +11434,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Deletes a user account from the identity repository (Admin only).
  */
 export const useDeleteUsersUserFromId = <TError = ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersUserFromId>>, TError,{id: string;params?: DeleteUsersUserFromIdParams}, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersUserFromId>>, TError,{id: string}, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteUsersUserFromId>>,
         TError,
-        {id: string;params?: DeleteUsersUserFromIdParams},
+        {id: string},
         TContext
       > => {
       return useMutation(getDeleteUsersUserFromIdMutationOptions(options), queryClient);
@@ -12866,7 +12664,7 @@ export const getGetVaultsFromKeyResponseMock = (overrideResponse: Partial<Extrac
 
 
 export const getPostAccountLoginMockHandler = (overrideResponse?: AuthenticationResponseDto | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<AuthenticationResponseDto> | AuthenticationResponseDto), options?: RequestHandlerOptions) => {
-  return http.post('*/api/Account/login', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Account/login', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -12878,7 +12676,7 @@ export const getPostAccountLoginMockHandler = (overrideResponse?: Authentication
 }
 
 export const getPostAccountLogoutMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.post('*/api/Account/logout', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Account/logout', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -12888,7 +12686,7 @@ export const getPostAccountLogoutMockHandler = (overrideResponse?: void | ((info
 }
 
 export const getPostAccountForgotPasswordMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.post('*/api/Account/forgot-password', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Account/forgot-password', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -12898,7 +12696,7 @@ export const getPostAccountForgotPasswordMockHandler = (overrideResponse?: void 
 }
 
 export const getPostAccountResetPasswordMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.post('*/api/Account/reset-password', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Account/reset-password', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -12908,7 +12706,7 @@ export const getPostAccountResetPasswordMockHandler = (overrideResponse?: void |
 }
 
 export const getGetAccountPrepareChallengeMockHandler = (overrideResponse?: ChallengePropertiesDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ChallengePropertiesDto> | ChallengePropertiesDto), options?: RequestHandlerOptions) => {
-  return http.get('*/api/Account/external-challenge', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Account/external-challenge', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -12920,7 +12718,7 @@ export const getGetAccountPrepareChallengeMockHandler = (overrideResponse?: Chal
 }
 
 export const getPostAccountHandleCallbackMockHandler = (overrideResponse?: FederatedLoginResponseDto | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<FederatedLoginResponseDto> | FederatedLoginResponseDto), options?: RequestHandlerOptions) => {
-  return http.post('*/api/Account/external-callback', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Account/external-callback', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -12932,7 +12730,7 @@ export const getPostAccountHandleCallbackMockHandler = (overrideResponse?: Feder
 }
 
 export const getPostAccountLinkExternalMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.post('*/api/Account/link-external', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Account/link-external', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -12942,7 +12740,7 @@ export const getPostAccountLinkExternalMockHandler = (overrideResponse?: void | 
 }
 
 export const getGetAccountConfiguredProvidersMockHandler = (overrideResponse?: string[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<string[]> | string[]), options?: RequestHandlerOptions) => {
-  return http.get('*/api/Account/providers', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Account/providers', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -12954,7 +12752,7 @@ export const getGetAccountConfiguredProvidersMockHandler = (overrideResponse?: s
 }
 
 export const getGetAccountIsInitializedMockHandler = (overrideResponse?: boolean | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<boolean> | boolean), options?: RequestHandlerOptions) => {
-  return http.get('*/api/Account/is-initialized', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Account/is-initialized', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -12966,7 +12764,7 @@ export const getGetAccountIsInitializedMockHandler = (overrideResponse?: boolean
 }
 
 export const getPostApiKeyCreateMockHandler = (overrideResponse?: ApiKeyCreatedResponseDto | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ApiKeyCreatedResponseDto> | ApiKeyCreatedResponseDto), options?: RequestHandlerOptions) => {
-  return http.post('*/api/ApiKey/create', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/ApiKey/create', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -12978,7 +12776,7 @@ export const getPostApiKeyCreateMockHandler = (overrideResponse?: ApiKeyCreatedR
 }
 
 export const getGetApiKeyMyKeysMockHandler = (overrideResponse?: ApiKeySummaryDto[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ApiKeySummaryDto[]> | ApiKeySummaryDto[]), options?: RequestHandlerOptions) => {
-  return http.get('*/api/ApiKey/my-keys', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/ApiKey/my-keys', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -12990,7 +12788,7 @@ export const getGetApiKeyMyKeysMockHandler = (overrideResponse?: ApiKeySummaryDt
 }
 
 export const getGetApiKeyAllKeysMockHandler = (overrideResponse?: ApiKeyDetailDto[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ApiKeyDetailDto[]> | ApiKeyDetailDto[]), options?: RequestHandlerOptions) => {
-  return http.get('*/api/ApiKey/all-keys', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/ApiKey/all-keys', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13002,7 +12800,7 @@ export const getGetApiKeyAllKeysMockHandler = (overrideResponse?: ApiKeyDetailDt
 }
 
 export const getPostApiKeyRevokeFromIdMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.post('*/api/ApiKey/revoke/:id', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/ApiKey/revoke/:id', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -13188,7 +12986,7 @@ export const getDeleteArsenalsFromKeyMockHandler = (overrideResponse?: void | ((
 }
 
 export const getGetBackupsBackupsMockHandler = (overrideResponse?: BackupFileInfo[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<BackupFileInfo[]> | BackupFileInfo[]), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/backups', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Backups', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13200,7 +12998,7 @@ export const getGetBackupsBackupsMockHandler = (overrideResponse?: BackupFileInf
 }
 
 export const getPostBackupsCreateBackupMockHandler = (overrideResponse?: BackupResult | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<BackupResult> | BackupResult), options?: RequestHandlerOptions) => {
-  return http.post('*/api/v1/backups/create', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Backups/create', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13212,7 +13010,7 @@ export const getPostBackupsCreateBackupMockHandler = (overrideResponse?: BackupR
 }
 
 export const getPostBackupsUploadBackupMockHandler = (overrideResponse?: BackupFileInfo | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<BackupFileInfo> | BackupFileInfo), options?: RequestHandlerOptions) => {
-  return http.post('*/api/v1/backups/upload', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Backups/upload', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13224,7 +13022,7 @@ export const getPostBackupsUploadBackupMockHandler = (overrideResponse?: BackupF
 }
 
 export const getGetBackupsDownloadBackupFromFileNameMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/backups/:fileName/download', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Backups/:fileName/download', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -13234,7 +13032,7 @@ export const getGetBackupsDownloadBackupFromFileNameMockHandler = (overrideRespo
 }
 
 export const getDeleteBackupsBackupFromFileNameMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.delete('*/api/v1/backups/:fileName', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+  return http.delete('*/api/v1/Backups/:fileName', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -13244,7 +13042,7 @@ export const getDeleteBackupsBackupFromFileNameMockHandler = (overrideResponse?:
 }
 
 export const getPostBackupsRestoreBackupFromFileNameMockHandler = (overrideResponse?: RestoreResult | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<RestoreResult> | RestoreResult), options?: RequestHandlerOptions) => {
-  return http.post('*/api/v1/backups/:fileName/restore', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Backups/:fileName/restore', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13256,7 +13054,7 @@ export const getPostBackupsRestoreBackupFromFileNameMockHandler = (overrideRespo
 }
 
 export const getGetBackupsBackupSettingsMockHandler = (overrideResponse?: ConfigurationSectionResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ConfigurationSectionResponseDto> | ConfigurationSectionResponseDto), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/backups/backup-settings', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Backups/backup-settings', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13702,7 +13500,7 @@ export const getDeleteProductsFromKeyMockHandler = (overrideResponse?: void | ((
 }
 
 export const getGetRolesSystemPermissionsMockHandler = (overrideResponse?: string[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<string[]> | string[]), options?: RequestHandlerOptions) => {
-  return http.get('*/api/Roles/permissions', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Roles/permissions', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13714,7 +13512,7 @@ export const getGetRolesSystemPermissionsMockHandler = (overrideResponse?: strin
 }
 
 export const getGetRolesRolesMockHandler = (overrideResponse?: RoleResponseDto[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<RoleResponseDto[]> | RoleResponseDto[]), options?: RequestHandlerOptions) => {
-  return http.get('*/api/Roles', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Roles', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13726,7 +13524,7 @@ export const getGetRolesRolesMockHandler = (overrideResponse?: RoleResponseDto[]
 }
 
 export const getPostRolesCreateRoleFromRoleNameMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.post('*/api/Roles/:roleName', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Roles/:roleName', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -13736,7 +13534,7 @@ export const getPostRolesCreateRoleFromRoleNameMockHandler = (overrideResponse?:
 }
 
 export const getDeleteRolesRoleFromRoleNameMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.delete('*/api/Roles/:roleName', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+  return http.delete('*/api/v1/Roles/:roleName', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -13746,7 +13544,7 @@ export const getDeleteRolesRoleFromRoleNameMockHandler = (overrideResponse?: voi
 }
 
 export const getGetRolesRoleClaimsFromRoleNameMockHandler = (overrideResponse?: string[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<string[]> | string[]), options?: RequestHandlerOptions) => {
-  return http.get('*/api/Roles/:roleName/claims', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Roles/:roleName/claims', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13758,7 +13556,7 @@ export const getGetRolesRoleClaimsFromRoleNameMockHandler = (overrideResponse?: 
 }
 
 export const getPostRolesUpdateRoleClaimsFromRoleNameMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.post('*/api/Roles/:roleName/claims', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Roles/:roleName/claims', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -13792,7 +13590,7 @@ export const getGetSettingsAppriseSettingsMockHandler = (overrideResponse?: Appr
 }
 
 export const getPostUsersRegisterMockHandler = (overrideResponse?: UserResponseDto | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserResponseDto> | UserResponseDto), options?: RequestHandlerOptions) => {
-  return http.post('*/api/Users/register', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  return http.post('*/api/v1/Users/register', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13804,7 +13602,7 @@ export const getPostUsersRegisterMockHandler = (overrideResponse?: UserResponseD
 }
 
 export const getGetUsersProfileMockHandler = (overrideResponse?: UserResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<UserResponseDto> | UserResponseDto), options?: RequestHandlerOptions) => {
-  return http.get('*/api/Users/profile', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Users/profile', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13816,7 +13614,7 @@ export const getGetUsersProfileMockHandler = (overrideResponse?: UserResponseDto
 }
 
 export const getPutUsersUpdateProfileMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.put('*/api/Users/profile', async (info: Parameters<Parameters<typeof http.put>[1]>[0]) => {
+  return http.put('*/api/v1/Users/profile', async (info: Parameters<Parameters<typeof http.put>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -13826,7 +13624,7 @@ export const getPutUsersUpdateProfileMockHandler = (overrideResponse?: void | ((
 }
 
 export const getGetUsersUsersMockHandler = (overrideResponse?: UserResponseDto[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<UserResponseDto[]> | UserResponseDto[]), options?: RequestHandlerOptions) => {
-  return http.get('*/api/Users', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  return http.get('*/api/v1/Users', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
     return HttpResponse.json(overrideResponse !== undefined
@@ -13838,7 +13636,7 @@ export const getGetUsersUsersMockHandler = (overrideResponse?: UserResponseDto[]
 }
 
 export const getPutUsersUpdateUserFromIdMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.put('*/api/Users/:id', async (info: Parameters<Parameters<typeof http.put>[1]>[0]) => {
+  return http.put('*/api/v1/Users/:id', async (info: Parameters<Parameters<typeof http.put>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -13848,7 +13646,7 @@ export const getPutUsersUpdateUserFromIdMockHandler = (overrideResponse?: void |
 }
 
 export const getDeleteUsersUserFromIdMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.delete('*/api/Users/:id', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+  return http.delete('*/api/v1/Users/:id', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,

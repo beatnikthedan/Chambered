@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../StoreContext";
+import {
+  postUsersRegister,
+  useGetAccountConfiguredProviders,
+  getGetAccountPrepareChallengeUrl,
+} from "../api/endpoints";
 import "./Login.css";
 
 export default function Login() {
@@ -79,20 +84,22 @@ export default function Login() {
           throw new Error("Please choose a stronger password.");
         }
 
-        // Attempt regular registration if backend API exists, else display admin-restricted warning
         try {
-          const res = await fetch("/api/Users/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password, email }),
+          const res = await postUsersRegister({
+            username,
+            email,
+            password,
+            firstName: username,
+            lastName: "",
           });
-          if (res.ok) {
+
+          if (res.status === 200 || res.status === 201) {
             const loginSuccess = await store.login(username, password);
             if (loginSuccess) navigate("/");
           } else {
-            const txt = await res.text();
             throw new Error(
-              txt || "Registration is restricted by administrators.",
+              res.data?.detail ||
+                "Registration is restricted by administrators.",
             );
           }
         } catch (err) {
@@ -111,13 +118,21 @@ export default function Login() {
     }
   };
 
-  const handleOidcLogin = (url) => {
-    window.location.href = url || "/api/auth/oidc/login";
-  };
+  // Fetch configured providers from the backend (/api/v1/Account/providers)
+  const { data: providersResponse } = useGetAccountConfiguredProviders();
+  const oidcProviders = providersResponse?.data || [];
 
-  const oidcProviders = store.oidcProviders || [
-    { id: "oidc", name: "OIDC single sign-on", url: "/api/auth/oidc/login" },
-  ];
+  const handleOidcLogin = (providerName) => {
+    const redirectUri = `${window.location.origin}/sso-callback`;
+
+    // Dynamically build the versioned URL using Orval's generated builder function
+    const challengeUrl = getGetAccountPrepareChallengeUrl({
+      providerName,
+      redirectUri,
+    });
+
+    window.location.href = challengeUrl;
+  };
 
   const localLoginEnabled = store.localLoginEnabled !== false;
 
@@ -307,15 +322,14 @@ export default function Login() {
               className="sso-actions"
               style={{ display: "flex", flexDirection: "column", gap: "10px" }}
             >
-              {oidcProviders.map((provider) => (
+              {oidcProviders.map((providerName) => (
                 <button
-                  key={provider.id}
-                  onClick={() => handleOidcLogin(provider.url)}
+                  key={providerName}
+                  onClick={() => handleOidcLogin(providerName)}
                   className="btn btn-secondary sso-btn"
                   disabled={isSubmitting}
                 >
-                  <span className="sso-icon">🔒</span>
-                  <span>{provider.name}</span>
+                  <span>{providerName}</span>
                 </button>
               ))}
             </div>

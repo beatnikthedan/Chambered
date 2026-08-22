@@ -9,5 +9,4 @@
 export type GetAccountPrepareChallengeParams = {
 providerName?: string;
 redirectUri?: string;
-'api-version'?: string;
 };

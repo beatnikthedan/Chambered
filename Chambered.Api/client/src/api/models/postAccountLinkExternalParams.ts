@@ -8,5 +8,4 @@
 
 export type PostAccountLinkExternalParams = {
 userId?: string;
-'api-version'?: string;
 };

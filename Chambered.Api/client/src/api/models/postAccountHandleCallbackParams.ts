@@ -8,5 +8,4 @@
 
 export type PostAccountHandleCallbackParams = {
 providerName?: string;
-'api-version'?: string;
 };

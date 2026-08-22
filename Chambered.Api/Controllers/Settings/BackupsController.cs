@@ -18,7 +18,7 @@ namespace Chambered.Api.Controllers.Settings
     /// </summary>
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/backups")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize(Roles = "Admin")]
     public class BackupsController : ControllerBase
     {
