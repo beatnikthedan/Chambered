@@ -10,15 +10,14 @@ namespace Chambered.Api.Controllers;
 
 [ApiVersion("1.0")]
 [Authorize]
-public class ArmoryController : ODataControllerBase<ArmoryItem, int>
+public class ArmoryItemsController : ODataControllerBase<ArmoryItem, int>
 {
-    public ArmoryController(ChamberedDbContext db) : base(db) { }
+    public ArmoryItemsController(ChamberedDbContext db) : base(db) { }
 
     #region Navigation Properties
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Product), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetProduct([FromRoute] int key)
     {
@@ -26,8 +25,7 @@ public class ArmoryController : ODataControllerBase<ArmoryItem, int>
     }
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Vault), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetVault([FromRoute] int key)
     {
@@ -35,8 +33,7 @@ public class ArmoryController : ODataControllerBase<ArmoryItem, int>
     }
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Arsenal), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetArsenal([FromRoute] int key)
     {
@@ -44,8 +41,7 @@ public class ArmoryController : ODataControllerBase<ArmoryItem, int>
     }
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ChamberedUser), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetOwner([FromRoute] int key)
     {
@@ -53,10 +49,25 @@ public class ArmoryController : ODataControllerBase<ArmoryItem, int>
     }
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ChamberedUser), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetBeneficiary([FromRoute] int key)
+    {
+        return await GetNavigationPropertyAsync(key);
+    }
+
+    [EnableQuery]
+    [ProducesResponseType(typeof(ArmoryItem), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetParentItem([FromRoute] int key)
+    {
+        return await GetNavigationPropertyAsync(key);
+    }
+
+    [EnableQuery]
+    [ProducesResponseType(typeof(IEnumerable<ArmoryItem>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetMountedAccessories([FromRoute] int key)
     {
         return await GetNavigationPropertyAsync(key);
     }

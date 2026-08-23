@@ -5,7 +5,8 @@ namespace Chambered.Data
 
     public class ChamberedUser : IdentityUser
     {
-        public ICollection<ArmoryItem> OwnedItems { get; set; } = new List<ArmoryItem>();
-        public ICollection<ArmoryItem> BenificiaryItems { get; set; } = new List<ArmoryItem>();
+        public ICollection<ArmoryItem> OwnedItems { get; set; } = [];
+        public ICollection<ArmoryItem> BenificiaryItems { get; set; } = [];
+        public ICollection<Arsenal> Arsenals { get; set; } = [];
     }
 }

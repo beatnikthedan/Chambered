@@ -143,7 +143,12 @@ builder.Services.AddControllers(options =>
 })
     .AddOData(options =>
     {
-        options.Select().Filter().OrderBy().Expand().Count().SetMaxTop(100);
+        options.Count().Select().OrderBy().Expand().Filter().SetMaxTop(null);
+        options.RouteOptions.EnableKeyInParenthesis = false;
+        options.RouteOptions.EnableNonParenthesisForEmptyParameterFunction = true;
+        options.RouteOptions.EnablePropertyNameCaseInsensitive = true;
+        options.RouteOptions.EnableQualifiedOperationCall = false;
+        options.RouteOptions.EnableUnqualifiedOperationCall = true;
     })
     .AddJsonOptions(options =>
     {
@@ -179,12 +184,13 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
+
 // Configure Versioned Swagger Documents generator
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.OperationFilter<ODataSwaggerFilter>();
-    c.DocumentFilter<ODataSwaggerFilter>();
+    //c.OperationFilter<ODataSwaggerFilter>();
+    //c.DocumentFilter<ODataSwaggerFilter>();
     c.CustomOperationIds((controller, verb, action) => $"{verb}{controller}{action}");
     c.AddApiKeyAuthorization();
 });
@@ -382,7 +388,6 @@ public class ModelStateDebugLoggerFilter : Microsoft.AspNetCore.Mvc.Filters.IAct
 
 public class ODataSwaggerFilter : IOperationFilter, IDocumentFilter
 {
-    // Fixes parameter binding from "query" to "path"
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         var keyParam = operation.Parameters?.FirstOrDefault(p => p.Name == "key");
@@ -393,11 +398,10 @@ public class ODataSwaggerFilter : IOperationFilter, IDocumentFilter
         }
     }
 
-    // Removes unusable parenthesis OData routes like /Products({key}) and namespace-prefixed duplicate routes containing "/Default."
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
         var pathsToRemove = swaggerDoc.Paths.Keys
-            .Where(k => k.Contains("({key})") || k.Contains("/Default."))
+            .Where(k => k.EndsWith("({key})") || k.EndsWith("({key})/") || k.Contains("/Default."))
             .ToList();
 
         foreach (var path in pathsToRemove)

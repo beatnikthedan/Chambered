@@ -17,17 +17,15 @@ public class VaultsController : ODataControllerBase<Vault, int>
     #region Navigation Properties
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<ArmoryItem>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetStoredItems([FromRoute] int key)
+    public async Task<ActionResult> GetArmoryItems([FromRoute] int key)
     {
         return await GetNavigationPropertyAsync(key);
     }
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Security), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetProduct([FromRoute] int key)
     {
@@ -35,10 +33,25 @@ public class VaultsController : ODataControllerBase<Vault, int>
     }
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Arsenal), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetArsenal([FromRoute] int key)
+    {
+        return await GetNavigationPropertyAsync(key);
+    }
+
+    [EnableQuery]
+    [ProducesResponseType(typeof(Vault), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetParentVault([FromRoute] int key)
+    {
+        return await GetNavigationPropertyAsync(key);
+    }
+
+    [EnableQuery]
+    [ProducesResponseType(typeof(IEnumerable<Vault>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetChildVaults([FromRoute] int key)
     {
         return await GetNavigationPropertyAsync(key);
     }
