@@ -66,14 +66,6 @@ export default function UserSettings({ currentUserId }) {
       ? "Failed to load profile."
       : null;
 
-  // Policy Settings States (Visual client-side preview)
-  const [sessionPolicy, setSessionPolicy] = useState({
-    requireTotp: true,
-    autoProvision: false,
-    sessionLifetime: "30 days",
-    disableLocal: false,
-  });
-
   // State for Modal Dialog & Form Input
   const [showUserForm, setShowUserForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -452,7 +444,7 @@ export default function UserSettings({ currentUserId }) {
               <div className="policy-info">
                 <span className="policy-label">Session lifetime</span>
                 <span className="policy-sublabel">
-                  Token validity duration for authenticated web sessions
+                  Cookie validity duration for authenticated web sessions
                 </span>
               </div>
               <input
@@ -474,6 +466,24 @@ export default function UserSettings({ currentUserId }) {
                 <input
                   type="checkbox"
                   checked={loginPolicy.disableLocalUsers}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            <div className="policy-row">
+              <div className="policy-info">
+                <span className="policy-label">
+                  Disable new user registration
+                </span>
+                <span className="policy-sublabel">
+                  Restricts the registration of new local users
+                </span>
+              </div>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={loginPolicy.disableNewUserRegistration}
                 />
                 <span className="slider"></span>
               </label>

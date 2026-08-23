@@ -9,4 +9,5 @@
 export interface LiginConfigurationResponseDto {
   sessionLifetime?: number;
   disableLocalUsers?: boolean;
+  disableNewUserRegistration?: boolean;
 }

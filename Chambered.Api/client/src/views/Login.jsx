@@ -5,8 +5,11 @@ import {
   postUsersRegister,
   useGetAccountConfiguredProviders,
   getGetAccountPrepareChallengeUrl,
+  useGetSettingsLoginSettings,
 } from "../api/endpoints";
 import "./Login.css";
+import "../components/VersionControl.tsx";
+import { VersionControl } from "../components/VersionControl.tsx";
 
 export default function Login() {
   const store = useStore();
@@ -118,6 +121,14 @@ export default function Login() {
     }
   };
 
+  const {
+    data: loginResponse,
+    isLoading: loginLoading,
+    error: loginError,
+  } = useGetSettingsLoginSettings();
+
+  const loginPolicy = loginResponse?.data;
+
   // Fetch configured providers from the backend (/api/v1/Account/providers)
   const { data: providersResponse } = useGetAccountConfiguredProviders();
   const oidcProviders = providersResponse?.data || [];
@@ -176,7 +187,7 @@ export default function Login() {
           </div>
         )}
 
-        {localLoginEnabled ? (
+        {!loginPolicy?.disableLocalUsers ? (
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
               <label htmlFor="username">Username</label>
@@ -340,19 +351,21 @@ export default function Login() {
         {store.isInitialized && (
           <div className="auth-toggle-container">
             {mode === "login" ? (
-              <>
-                New user?
-                <button
-                  type="button"
-                  onClick={() => {
-                    setErrorMessage("");
-                    setMode("register");
-                  }}
-                  className="auth-toggle-link"
-                >
-                  Create an account
-                </button>
-              </>
+              !loginPolicy?.disableNewUserRegistration && (
+                <>
+                  New user?
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setErrorMessage("");
+                      setMode("register");
+                    }}
+                    className="auth-toggle-link"
+                  >
+                    Create an account
+                  </button>
+                </>
+              )
             ) : (
               <>
                 Already have an account?
@@ -378,8 +391,7 @@ export default function Login() {
               "First-run initialization protocol active"
             ) : (
               <>
-                <span className="status-dot online"></span>
-                Server online · v1.0.0 · docker
+                <VersionControl />
               </>
             )}
           </p>

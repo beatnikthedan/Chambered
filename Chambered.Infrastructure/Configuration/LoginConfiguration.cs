@@ -21,5 +21,7 @@
         /// <c>true</c> if local user authentication is disabled; otherwise, <c>false</c>.
         /// </value>
         public bool DisableLocalUsers { get; set; }
+
+        public bool DisableNewUserRegistration { get; set; }
     }
 }

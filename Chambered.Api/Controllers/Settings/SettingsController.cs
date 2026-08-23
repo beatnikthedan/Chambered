@@ -58,7 +58,6 @@ namespace Chambered.Api.Controllers.Settings
         /// <response code="401">If the request is unauthorized.</response>
         [HttpGet("apprise-settings")]
         [Produces("application/json")]
-        [AllowAnonymous]
         [ProducesResponseType(typeof(AppriseSettingsResponseDto), StatusCodes.Status200OK)]
         public ActionResult<AppriseSettingsResponseDto> GetAppriseSettings()
         {
@@ -85,7 +84,8 @@ namespace Chambered.Api.Controllers.Settings
 
             var response = new LiginConfigurationResponseDto(
                 SessionLifetime: opts.SessionLifetime,
-                DisableLocalUsers: opts.DisableLocalUsers
+                DisableLocalUsers: opts.DisableLocalUsers,
+                DisableNewUserRegistration: opts.DisableNewUserRegistration
             );
 
             return Ok(response);
@@ -126,6 +126,7 @@ namespace Chambered.Api.Controllers.Settings
 
     public record LiginConfigurationResponseDto(
         int SessionLifetime,
-        bool DisableLocalUsers
+        bool DisableLocalUsers,
+        bool DisableNewUserRegistration
     );
 }

@@ -86,7 +86,7 @@ export const VersionControl = () => {
 
         {currentVersion && (
           <div>
-            <span className="version-separator">·</span>
+            <span className="version-separator"> · </span>
 
             <button
               onClick={() => handleOpenModal(currentVersion)}
