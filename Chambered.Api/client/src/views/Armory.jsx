@@ -4,6 +4,17 @@ import "./Armory.css";
 import BatteryTracker from "../components/BatteryTracker";
 import SubmitButton from "../components/SubmitButton";
 import buildQuery from "odata-query";
+import {
+  getArmoryItems,
+  getUsersUsers,
+  getUsersProfile,
+  getVaults,
+  getProducts,
+  putArmoryItemsFromKey,
+  postArmoryItems,
+  patchArmoryItemsFromKey,
+  deleteArmoryItemsFromKey
+} from "../api/endpoints";
 
 export default function Armory() {
   const store = useStore();
@@ -141,13 +152,13 @@ export default function Armory() {
     setLoading(true);
     setError("");
     try {
-      const query = "?$expand=product($expand=manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber),vault,owner,beneficiary" + 
-        (store.activeArsenalId ? `&$filter=arsenalId eq ${store.activeArsenalId}` : "");
-      const url = `/api/v1/Armory${query}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        const mappedItems = (data.value || []).map((item) => {
+      const filter = store.activeArsenalId ? `arsenalId eq ${store.activeArsenalId}` : undefined;
+      const res = await getArmoryItems({
+        expand: "product($expand=manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber),vault,owner,beneficiary",
+        filter
+      });
+      if (res.status === 200) {
+        const mappedItems = (res.data.value || []).map((item) => {
           const product = item.product || {};
           const manufacturer = product.manufacturer || {};
           const caliber = product.caliber || {};
@@ -183,10 +194,13 @@ export default function Armory() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/settings/users");
-      if (res.ok) {
-        const data = await res.json();
-        setUsers(data);
+      let res = await getUsersUsers().catch(() => null);
+      if (!res || res.status === 403 || res.status === 401) {
+        res = await getUsersProfile().catch(() => null);
+      }
+      if (res && res.status === 200) {
+        const data = res.data;
+        setUsers(Array.isArray(data) ? data : [data]);
       }
     } catch (err) {
       console.error("Failed to fetch users", err);
@@ -195,13 +209,12 @@ export default function Armory() {
 
   const fetchVaultLocations = async () => {
     try {
-      const url = store.activeArsenalId
-        ? `/api/v1/Vaults?$filter=arsenalId eq ${store.activeArsenalId}`
-        : "/api/v1/Vaults";
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setVaultLocations(data.value || []);
+      const filter = store.activeArsenalId
+        ? `arsenalId eq ${store.activeArsenalId}`
+        : undefined;
+      const res = await getVaults({ filter });
+      if (res.status === 200) {
+        setVaultLocations(res.data.value || []);
       }
     } catch (err) {
       console.error("Failed to load vault locations", err);
@@ -215,10 +228,11 @@ export default function Armory() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("/api/v1/Products?$expand=manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber");
-      if (res.ok) {
-        const data = await res.json();
-        const rawProducts = data.value || [];
+      const res = await getProducts({
+        expand: "manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber"
+      });
+      if (res.status === 200) {
+        const rawProducts = res.data.value || [];
         const mappedProducts = rawProducts.map((p) => {
           let type = "Product";
           if (p["@odata.type"]) {
@@ -302,12 +316,8 @@ export default function Armory() {
     if (!item) return;
     const newRoundCount = (item.roundCount || 0) + 50;
     try {
-      const res = await fetch(`/api/v1/Armory/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...item, roundCount: newRoundCount }),
-      });
-      if (res.ok) {
+      const res = await putArmoryItemsFromKey(id, { ...item, roundCount: newRoundCount });
+      if (res.status === 200 || res.status === 204) {
         setArmoryItems((prev) =>
           prev.map((it) =>
             it.id === id ? { ...it, roundCount: newRoundCount } : it,
@@ -334,12 +344,8 @@ export default function Armory() {
         payload["@odata.type"] = accessoryItem["@odata.type"];
       }
 
-      const res = await fetch(`/api/v1/Armory/${accessoryId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
+      const res = await patchArmoryItemsFromKey(accessoryId, payload);
+      if (res.status === 200 || res.status === 204) {
         await fetchArmoryItems();
         setSelectedExistingId("");
       } else {
@@ -362,12 +368,8 @@ export default function Armory() {
         payload["@odata.type"] = accessoryItem["@odata.type"];
       }
 
-      const res = await fetch(`/api/v1/Armory/${accessoryId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
+      const res = await patchArmoryItemsFromKey(accessoryId, payload);
+      if (res.status === 200 || res.status === 204) {
         await fetchArmoryItems();
       } else {
         alert("Failed to detach accessory.");
@@ -424,20 +426,15 @@ export default function Armory() {
         payload.serialNumber = newAccSerialNumber || "";
       }
 
-      const res = await fetch("/api/v1/Armory", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await postArmoryItems(payload);
 
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201 || res.status === 204) {
         await fetchArmoryItems();
         setNewAccProductId("");
         setNewAccSerialNumber("");
         setNewAccCondition("Excellent");
       } else {
-        const text = await res.text();
-        alert(`Failed to create accessory: ${text}`);
+        alert(`Failed to create accessory: status ${res.status}`);
       }
     } catch (err) {
       console.error("Error creating accessory", err);
@@ -753,7 +750,7 @@ export default function Armory() {
     setIsSaving(true);
     try {
       const isEdit = isEditMode;
-      const url = isEdit ? `/api/v1/Armory/${form.id}` : "/api/v1/Armory";
+      const url = isEdit ? `/api/v1/ArmoryItems/${form.id}` : "/api/v1/ArmoryItems";
       const method = isEdit ? "PUT" : "POST";
 
       // 1. Build a clean payload matching the C# ArmoryItem base properties exactly
@@ -812,23 +809,16 @@ export default function Armory() {
       }
 
       // 3. Perform the API Request
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = isEditMode
+        ? await putArmoryItemsFromKey(form.id, payload)
+        : await postArmoryItems(payload);
 
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201 || res.status === 204) {
         await fetchArmoryItems();
         
-        // Bypasses JSON parsing completely for 204 No Content success responses
         let savedItem = form;
-        if (res.status !== 204) {
-          try {
-            savedItem = await res.json();
-          } catch (jsonErr) {
-            console.warn("Could not parse response JSON:", jsonErr);
-          }
+        if (res.status !== 204 && res.data) {
+          savedItem = res.data;
         }
 
         setIsEditMode(true);
@@ -848,8 +838,7 @@ export default function Armory() {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
       } else {
-        const text = await res.text();
-        alert(`Save failed: ${text || res.statusText}`);
+        alert(`Save failed: status ${res.status}`);
       }
     } catch (err) {
       console.error("Save connection/network error:", err);
@@ -869,10 +858,8 @@ export default function Armory() {
   const handleDeleteConfirm = async () => {
     if (!deleteConfirmId) return;
     try {
-      const res = await fetch(`/api/v1/Armory/${deleteConfirmId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
+      const res = await deleteArmoryItemsFromKey(deleteConfirmId);
+      if (res.status === 200 || res.status === 204) {
         setArmoryItems((prev) => prev.filter((f) => f.id !== deleteConfirmId));
       } else {
         alert("Delete failed.");

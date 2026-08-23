@@ -29,6 +29,6 @@
         /// GitHub requires a valid User-Agent string for all API calls.
         /// Defaults to <c>Repo-Version-Checker</c>.
         /// </summary>
-        public string UserAgengt { get; set; } = "Repo-Version-Checker";
+        public string UserAgent { get; set; } = "Repo-Version-Checker";
     }
 }

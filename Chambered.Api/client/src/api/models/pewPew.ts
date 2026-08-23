@@ -21,7 +21,8 @@ export interface PewPew {
   name?: string | null;
   /** @nullable */
   description?: string | null;
-  id?: number;
+  /** @nullable */
+  productType?: string | null;
   /** @nullable */
   partNumber?: string | null;
   /** @nullable */
@@ -33,6 +34,15 @@ export interface PewPew {
   imageData?: string | null;
   /** @nullable */
   imageContentType?: string | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
   caliber?: Caliber;
   manufacturer?: Manufacturer;
   /** @nullable */

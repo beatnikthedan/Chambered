@@ -17,8 +17,7 @@ public class ProductsController : ODataControllerBase<Product, int>
     #region Navigation Properties
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Manufacturer), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetManufacturer([FromRoute] int key)
     {
@@ -26,10 +25,25 @@ public class ProductsController : ODataControllerBase<Product, int>
     }
 
     [EnableQuery]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Caliber), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetCaliber([FromRoute] int key)
+    {
+        return await GetNavigationPropertyAsync(key);
+    }
+
+    [EnableQuery]
+    [ProducesResponseType(typeof(IEnumerable<Document>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetDocuments([FromRoute] int key)
+    {
+        return await GetNavigationPropertyAsync(key);
+    }
+
+    [EnableQuery]
+    [ProducesResponseType(typeof(IEnumerable<ArmoryItem>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetArmoryItems([FromRoute] int key)
     {
         return await GetNavigationPropertyAsync(key);
     }

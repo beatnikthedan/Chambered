@@ -1,14 +1,24 @@
 using Asp.Versioning;
 using Chambered.Api.BackgroundServices;
+using Chambered.Api.Mappings;
 using Chambered.Api.Swagger;
 using Chambered.Core.Services;
+using Chambered.Core.Services.Identity;
+using Chambered.Core.Services.Models;
+using Chambered.Core.Utility;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
+using Chambered.Infrastructure.Extensions;
+using Chambered.Infrastructure.Services;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
+using Chambered.Infrastructure.Services.GitHubReleaseService;
+using Chambered.Infrastructure.Services.Identity;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.OData;
@@ -26,46 +36,45 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=../chambered.db";
 
-builder.Services.AddDbContext<ChamberedDbContext>(options =>
-    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api")));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService<UserSession>, CurrentUserService>();
+builder.Services.AddScoped<AuditPropertiesInterceptor>();
+
+builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
+{
+    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api"));
+    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor>());
+    options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
+});
 
 // 2. Configure Identity
+// 1. Add Identity base setup
 builder.Services.AddIdentity<ChamberedUser, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = false;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
+    // Static options like unique email can remain here
     options.User.RequireUniqueEmail = false;
-})
-.AddEntityFrameworkStores<ChamberedDbContext>()
+}).AddEntityFrameworkStores<ChamberedDbContext>()
 .AddDefaultTokenProviders();
 
-// 3. Configure Mixed Authentication (Cookie + API Key)
-builder.Services.ConfigureApplicationCookie(options =>
+builder.Services.PostConfigure<IdentityOptions>(options =>
 {
-    options.Cookie.Name = "ChamberedAuth";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.ExpireTimeSpan = TimeSpan.FromDays(30);
-    options.Events.OnRedirectToLogin = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        return Task.CompletedTask;
-    };
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        return Task.CompletedTask;
-    };
+    var policy = builder.Configuration
+        .GetSection(nameof(PasswordPolicyConfiguration))
+        .Get<PasswordPolicyConfiguration>() ?? new PasswordPolicyConfiguration();
+
+    options.Password.RequiredLength = policy.RequiredLength;
+    options.Password.RequireNonAlphanumeric = policy.RequireNonAlphanumeric;
+    options.Password.RequireLowercase = policy.RequireLowercase;
+    options.Password.RequireUppercase = policy.RequireUppercase;
+    options.Password.RequireDigit = policy.RequireDigit;
 });
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
-    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
-});
+
+builder.Services.AddChamberedAuthentication(builder.Configuration, builder.Environment);
+
+// Register dynamic claim-based authorization providers (PermissionPolicyProvider, PermissionAuthorizationHandler)
+builder.Services.AddChamberedAuthorization();
+
 
 // 4. Configure CORS for frontend dev server
 builder.Services.AddCors(options =>
@@ -79,15 +88,67 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddAutoMapper(c =>
+{
+    c.AddProfile<VersionMappingProfile>();
+});
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    var policy = builder.Configuration
+        .GetSection(nameof(LoginConfiguration))
+        .Get<LoginConfiguration>() ?? new LoginConfiguration();
+
+    options.ExpireTimeSpan = TimeSpan.FromDays(policy.SessionLifetime > 0 ? policy.SessionLifetime : 7);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = builder.Environment.IsDevelopment()
+        ? SameSiteMode.Lax
+        : SameSiteMode.Strict;
+
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized;
+        }
+        else
+        {
+            context.Response.Redirect(context.RedirectUri);
+        }
+        return System.Threading.Tasks.Task.CompletedTask;
+    };
+
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status403Forbidden;
+        }
+        else
+        {
+            context.Response.Redirect(context.RedirectUri);
+        }
+        return System.Threading.Tasks.Task.CompletedTask;
+    };
+});
+
 // 5. Configure Controllers with camelCase, cycles ignored, and OData options
 builder.Services.AddControllers(options =>
 {
+    options.Filters.Add(new ProducesAttribute("application/json"));
     options.Filters.Add<ModelStateDebugLoggerFilter>();
     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
 })
     .AddOData(options =>
     {
-        options.Select().Filter().OrderBy().Expand().Count().SetMaxTop(100);
+        options.Count().Select().OrderBy().Expand().Filter().SetMaxTop(null);
+        options.RouteOptions.EnableKeyInParenthesis = false;
+        options.RouteOptions.EnableNonParenthesisForEmptyParameterFunction = true;
+        options.RouteOptions.EnablePropertyNameCaseInsensitive = true;
+        options.RouteOptions.EnableQualifiedOperationCall = false;
+        options.RouteOptions.EnableUnqualifiedOperationCall = true;
     })
     .AddJsonOptions(options =>
     {
@@ -123,23 +184,34 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
+
 // Configure Versioned Swagger Documents generator
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.OperationFilter<ODataSwaggerFilter>();
-    c.DocumentFilter<ODataSwaggerFilter>();
+    //c.OperationFilter<ODataSwaggerFilter>();
+    //c.DocumentFilter<ODataSwaggerFilter>();
     c.CustomOperationIds((controller, verb, action) => $"{verb}{controller}{action}");
+    c.AddApiKeyAuthorization();
 });
 
 
+builder.Services.Configure<LoginConfiguration>(builder.Configuration.GetSection(nameof(LoginConfiguration)));
 
-
+builder.Services.AddHttpClient<IGitHubReleaseService, GitHubReleaseService>();
+builder.Services.Configure<GitHubReleaseConfiguration>(builder.Configuration.GetSection(nameof(GitHubReleaseConfiguration)));
 
 
 
 builder.Services.Configure<AppriseConfiguration>(builder.Configuration.GetSection(nameof(AppriseConfiguration)));
 builder.Services.AddScoped<IAppriseService, AppriseService>();
+
+builder.Services.Configure<IdentityConfiguration>(builder.Configuration.GetSection("Identity"));
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IFederatedAuthService, FederatedAuthService>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(nameof(EmailConfiguration)));
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
@@ -148,12 +220,13 @@ builder.Services.Configure<BackupConfiguration>(builder.Configuration.GetSection
 builder.Services.AddScoped<IBackupService, SqliteBackupService>();
 
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddHostedService<BackupSchedulerWorker>();
 
 
 
-
+builder.Services.AddHealthChecks();
 
 
 
@@ -161,6 +234,15 @@ builder.Services.AddHostedService<BackupSchedulerWorker>();
 
 // 6. Build application
 var app = builder.Build();
+
+var options = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+};
+options.KnownNetworks.Clear(); // Explicitly clears loopback limits
+options.KnownProxies.Clear();  // Explicitly clears loopback limits
+
+app.UseForwardedHeaders(options);
 
 // 7. Configure HTTP Pipeline
 if (app.Environment.IsDevelopment())
@@ -180,45 +262,41 @@ app.UseCors("CorsPolicy");
 
 app.UseHttpLogging();
 
-// Seed and initialize database asynchronously
-using (var scope = app.Services.CreateScope())
+await app.ApplyMigrations<ChamberedDbContext>(async services =>
 {
-    var services = scope.ServiceProvider;
-    try
-    {
-        await Chambered.Api.Data.DbInitializer.InitializeAsync(services);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred seeding the database.");
-    }
-}
+    // 1. Bootstraps default admin user if environment variables are set (Docker)
+    await services.SeedAdminUser();
+
+    // 2. Seeds standard roles & granular permission claims dynamically based on core mapping configuration
+    await services.SeedIdentityData();
+});
+
+
 
 // Custom API Request & ModelState Debug Logger Middleware
-app.Use(async (context, next) =>
-{
-    if (context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
-    {
-        context.Request.EnableBuffering();
-        var requestBody = "";
-        using (var reader = new StreamReader(context.Request.Body, System.Text.Encoding.UTF8, leaveOpen: true))
-        {
-            requestBody = await reader.ReadToEndAsync();
-            context.Request.Body.Position = 0; // Rewind the stream so downstream binders can read it
-        }
+// app.Use(async (context, next) =>
+// {
+//     if (context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
+//     {
+//         context.Request.EnableBuffering();
+//         var requestBody = "";
+//         using (var reader = new StreamReader(context.Request.Body, System.Text.Encoding.UTF8, leaveOpen: true))
+//         {
+//             requestBody = await reader.ReadToEndAsync();
+//             context.Request.Body.Position = 0; // Rewind the stream so downstream binders can read it
+//         }
 
-        Console.WriteLine($"\n[ODATA REQUEST] {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
-        Console.WriteLine($"[Payload]: {requestBody}");
-    }
+//         Console.WriteLine($"\n[ODATA REQUEST] {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
+//         Console.WriteLine($"[Payload]: {requestBody}");
+//     }
 
-    await next();
+//     await next();
 
-    if (context.Response.StatusCode >= 400 && context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
-    {
-        Console.WriteLine($"[ODATA RESPONSE ERROR] Status Code: {context.Response.StatusCode}");
-    }
-});
+//     if (context.Response.StatusCode >= 400 && context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))
+//     {
+//         Console.WriteLine($"[ODATA RESPONSE ERROR] Status Code: {context.Response.StatusCode}");
+//     }
+// });
 
 app.UseRouting();
 
@@ -265,7 +343,7 @@ app.MapFallbackToFile("index.html");
 
 
 
-
+app.MapHealthChecks("/health");
 
 
 
@@ -310,7 +388,6 @@ public class ModelStateDebugLoggerFilter : Microsoft.AspNetCore.Mvc.Filters.IAct
 
 public class ODataSwaggerFilter : IOperationFilter, IDocumentFilter
 {
-    // Fixes parameter binding from "query" to "path"
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         var keyParam = operation.Parameters?.FirstOrDefault(p => p.Name == "key");
@@ -321,11 +398,10 @@ public class ODataSwaggerFilter : IOperationFilter, IDocumentFilter
         }
     }
 
-    // Removes unusable parenthesis OData routes like /Products({key}) and namespace-prefixed duplicate routes containing "/Default."
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
         var pathsToRemove = swaggerDoc.Paths.Keys
-            .Where(k => k.Contains("({key})") || k.Contains("/Default."))
+            .Where(k => k.EndsWith("({key})") || k.EndsWith("({key})/") || k.Contains("/Default."))
             .ToList();
 
         foreach (var path in pathsToRemove)
@@ -342,14 +418,12 @@ public static class SwaggerGenOptionsExtensions
     public static SwaggerGenOptions CustomOperationIds(this SwaggerGenOptions swaggerGenOptions, Func<string, string, string, string> operationIdFormat)
     {
         Func<string, string, string, string> operationIdFormat2 = operationIdFormat;
-        string controller = string.Empty;
-        string verb = string.Empty;
-        string action = string.Empty;
         swaggerGenOptions.CustomOperationIds(delegate (ApiDescription a)
         {
-            StringBuilder stringBuilder = new StringBuilder();
-            controller = a.ActionDescriptor.RouteValues["controller"];
-            action = a.ActionDescriptor.RouteValues["action"];
+            string controller = a.ActionDescriptor.RouteValues["controller"] ?? string.Empty;
+            string action = a.ActionDescriptor.RouteValues["action"] ?? string.Empty;
+            string verb = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(a.HttpMethod?.ToLower() ?? "Get");
+
             foreach (string item in new List<string> { "Get", "Put", "Post", "Patch", "Delete", "Upsert" })
             {
                 if (action.Contains(item))
@@ -359,6 +433,7 @@ public static class SwaggerGenOptionsExtensions
                 }
             }
 
+            StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.Append(operationIdFormat2(controller, verb, action));
             if (a.RelativePath.Contains("$count"))
             {
@@ -397,19 +472,17 @@ public static class SwaggerGenOptionsExtensions
         return swaggerGenOptions;
     }
 
-    public static SwaggerGenOptions AddJwtAuthorization(this SwaggerGenOptions swaggerGenOptions)
+    public static SwaggerGenOptions AddApiKeyAuthorization(this SwaggerGenOptions swaggerGenOptions)
     {
         OpenApiSecurityScheme openApiSecurityScheme = new OpenApiSecurityScheme
         {
-            BearerFormat = "JWT",
-            Name = "JWT Authentication",
+            Name = "X-API-KEY",
             In = ParameterLocation.Header,
-            Type = SecuritySchemeType.Http,
-            Scheme = "Bearer",
-            Description = "Put **_ONLY_** your JWT Bearer token on textbox below!",
+            Type = SecuritySchemeType.ApiKey,
+            Description = "Put your API Key on textbox below!",
             Reference = new OpenApiReference
             {
-                Id = "Bearer",
+                Id = "ApiKey",
                 Type = ReferenceType.SecurityScheme
             }
         };

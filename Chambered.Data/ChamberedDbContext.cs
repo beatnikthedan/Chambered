@@ -1,7 +1,10 @@
 using Chambered.Data.Enums;
+using Chambered.Data.Interfaces;
 using Chambered.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using System.Reflection.Emit;
 
 
 namespace Chambered.Data
@@ -34,6 +37,9 @@ namespace Chambered.Data
 
         public DbSet<Vault> Vaults { get; set; }
 
+        public DbSet<ApiKey> ApiKeys { get; set; }
+        public DbSet<ApiKeyClaim> ApiKeyClaims { get; set; }
+
 
 
 
@@ -58,6 +64,30 @@ namespace Chambered.Data
 
             // Apply your own entity configurations
             builder.ApplyConfigurationsFromAssembly(typeof(ChamberedDbContext).Assembly);
+
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                if (typeof(IAuditProperties).IsAssignableFrom(entityType.ClrType))
+                {
+                    var b = builder.Entity(entityType.ClrType);
+
+                    // Created fields: DB should not overwrite them
+                    b.Property(nameof(IAuditProperties.Created))
+                        .ValueGeneratedOnAdd()
+                        .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+                    b.Property(nameof(IAuditProperties.CreatedBy))
+                        .ValueGeneratedOnAdd()
+                        .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+                    // Modified fields: NOT database-generated
+                    b.Property(nameof(IAuditProperties.Modified))
+                        .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Save);
+
+                    b.Property(nameof(IAuditProperties.ModifiedBy))
+                        .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Save);
+                }
+            }
         }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

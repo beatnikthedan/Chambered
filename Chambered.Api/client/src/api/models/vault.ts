@@ -12,7 +12,6 @@ import type { Vault as __Vault } from './vault';
 import type { VaultCategory } from './vaultCategory';
 
 export interface Vault {
-  id?: number;
   /** @nullable */
   productId?: number | null;
   product?: Security;
@@ -21,7 +20,6 @@ export interface Vault {
   /** @nullable */
   description?: string | null;
   arsenalId?: number;
-  arsenal?: Arsenal;
   vaultCategory?: VaultCategory;
   /** @nullable */
   parentVaultId?: number | null;
@@ -38,13 +36,24 @@ export interface Vault {
   dehumidifierLastServiced?: string | null;
   /** @nullable */
   targetMaxHumidityPercent?: number | null;
+  currentCapacity?: number;
   /** @nullable */
   batteryLastChangedDate?: string | null;
   /** @nullable */
   batteryExpirationDate?: string | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
+  arsenal?: Arsenal;
   parentVault?: __Vault;
   /** @nullable */
   childVaults?: Vault[] | null;
   /** @nullable */
-  armoryItem?: ArmoryItem[] | null;
+  armoryItems?: ArmoryItem[] | null;
 }

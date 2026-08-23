@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import { useStore } from "./StoreContext";
 import "./App.css";
+import "./components/VersionControl.tsx";
 
 // Lazy loaded views stubs
 import Dashboard from "./views/Dashboard";
@@ -23,6 +24,7 @@ import Catalog from "./views/Catalog";
 // Route guarding components
 // Route guarding components
 import { ARSENAL_ICONS } from "./components/ArsenalIcons";
+import { VersionControl } from "./components/VersionControl.tsx";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useStore();
@@ -406,22 +408,23 @@ export default function App() {
                   {!isSidebarCollapsed ? "Catalog" : ""}
                 </span>
               </Link>
-              {!isSidebarCollapsed && location.pathname.startsWith("/catalog") && (
-                <div className="nav-sub-items">
-                  <Link
-                    to="/catalog"
-                    className={`sub-nav-item ${location.pathname === "/catalog" || location.pathname === "/catalog/products" ? "active" : ""}`}
-                  >
-                    <span className="sub-text">Products</span>
-                  </Link>
-                  <Link
-                    to="/catalog/manufacturers"
-                    className={`sub-nav-item ${location.pathname === "/catalog/manufacturers" ? "active" : ""}`}
-                  >
-                    <span className="sub-text">Manufacturers</span>
-                  </Link>
-                </div>
-              )}
+              {!isSidebarCollapsed &&
+                location.pathname.startsWith("/catalog") && (
+                  <div className="nav-sub-items">
+                    <Link
+                      to="/catalog"
+                      className={`sub-nav-item ${location.pathname === "/catalog" || location.pathname === "/catalog/products" ? "active" : ""}`}
+                    >
+                      <span className="sub-text">Products</span>
+                    </Link>
+                    <Link
+                      to="/catalog/manufacturers"
+                      className={`sub-nav-item ${location.pathname === "/catalog/manufacturers" ? "active" : ""}`}
+                    >
+                      <span className="sub-text">Manufacturers</span>
+                    </Link>
+                  </div>
+                )}
             </div>
           </nav>
 
@@ -429,29 +432,10 @@ export default function App() {
           <div className="sidebar-footer version-footer">
             {!isSidebarCollapsed ? (
               <div className="version-info">
-                <div className="version-row">
-                  <span className="version-label">v1.0.0</span>
-                  <span className="container-badge">Docker</span>
-                  <div
-                    className="api-signal"
-                    title="Chambered API Connected"
-                    style={{ marginLeft: "8px" }}
-                  >
-                    <span className="status-indicator online"></span>
-                  </div>
-                </div>
-                <div className="update-row">
-                  <span className="status-dot green"></span>
-                  <span className="update-text">Up to date</span>
-                </div>
+                <VersionControl />
               </div>
             ) : (
-              <div
-                className="version-info-collapsed"
-                title="v1.0.0 (Docker) - Up to date"
-              >
-                <span className="status-dot green"></span>
-              </div>
+              <div className="version-info-collapsed"></div>
             )}
           </div>
         </aside>
@@ -467,13 +451,16 @@ export default function App() {
 
             {store.user && (
               <div className="header-right">
-                <Link
-                  to="/settings"
-                  className="header-action-btn"
-                  title="Settings Menu"
-                >
-                  <span className="btn-icon">⚙️</span>
-                </Link>
+                {/* Only render Settings link if the user has the Admin role */}
+                {store.user.roles?.includes("Admin") && (
+                  <Link
+                    to="/settings"
+                    className="header-action-btn"
+                    title="Settings Menu"
+                  >
+                    <span className="btn-icon">⚙️</span>
+                  </Link>
+                )}
 
                 {/* Profile dropdown wrapper */}
                 <div
@@ -542,7 +529,6 @@ export default function App() {
             )}
           </header>
         )}
-
         <div className="content-wrapper">
           {store.loading ? (
             <div className="global-loading">

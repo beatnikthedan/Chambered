@@ -1,86 +1,179 @@
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+
+import {
+  useGetBackupsBackupSettings,
+  useGetBackupsBackups,
+  usePostBackupsCreateBackup,
+  usePostBackupsUploadBackup,
+  usePostBackupsRestoreBackupFromFileName,
+  useDeleteBackupsBackupFromFileName,
+  getGetBackupsBackupsQueryKey,
+} from "../api/endpoints";
 
 export default function BackupSettings() {
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const formatBytes = (bytes) => {
+    if (!bytes || bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  };
 
-  // Configuration State
-  const [backupPath] = useState("/metadata/backups");
-  const [autoBackups, setAutoBackups] = useState(true);
-  const [schedule] = useState("Run every Sunday at 1:30");
-  const [backupsToKeep, setBackupsToKeep] = useState(3);
+  const {
+    data: backupSettingsData,
+    isLoading: backupSettingsLoading,
+    error: backupSettingsError,
+    refetch: backupSettingsFetch,
+  } = useGetBackupsBackupSettings();
 
-  // Table Data State
-  const [backupsList, setBackupsList] = useState([
-    {
-      id: "b1",
-      file: "2026-08-16T0130.arsenalbackup",
-      datetime: "08/15/2026 19:30",
-      size: "125 MB",
-    },
-    {
-      id: "b2",
-      file: "2026-08-09T0130.arsenalbackup",
-      datetime: "08/08/2026 19:30",
-      size: "125 MB",
-    },
-    {
-      id: "b3",
-      file: "2026-08-02T0130.arsenalbackup",
-      datetime: "08/01/2026 19:30",
-      size: "125 MB",
-    },
-  ]);
+  const backupSettings = backupSettingsData?.data;
+
+  const [backups, setBackups] = useState([]);
+
+  const {
+    data: backupsData,
+    isLoading: backupsLoading,
+    error: backupsError,
+  } = useGetBackupsBackups();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
+    if (backupsData?.data) {
+      setBackups(backupsData.data);
+    }
+  }, [backupsData]);
 
+  const refreshBackupsList = () => {
+    queryClient.invalidateQueries({
+      queryKey: getGetBackupsBackupsQueryKey(),
+    });
+  };
+
+  /// <summary>
+  /// Mutation to trigger the immediate manual creation of a database backup artifact.
+  /// </summary>
+  const { mutate: createBackup, isPending: isCreating } =
+    usePostBackupsCreateBackup({
+      mutation: {
+        onSuccess: () => {
+          alert("Backup artifact created successfully!");
+          refreshBackupsList();
+        },
+        onError: (err) => {
+          alert(
+            `Failed to create backup: ${err?.message || "Internal server error"}`,
+          );
+        },
+      },
+    });
+  /// <summary>
+  /// Mutation to upload a database backup artifact file to the storage server.
+  /// </summary>
+  const { mutate: uploadBackup, isPending: isUploading } =
+    usePostBackupsUploadBackup({
+      mutation: {
+        onSuccess: () => {
+          alert("Backup artifact uploaded successfully!");
+          refreshBackupsList();
+        },
+        onError: (err) => {
+          alert(`Upload failed: ${err?.message || "Internal server error"}`);
+        },
+      },
+    });
+  /// <summary>
+  /// Mutation to restore the database system using a specified backup file.
+  /// </summary>
+  const { mutate: restoreBackup, isPending: isRestoring } =
+    usePostBackupsRestoreBackupFromFileName({
+      mutation: {
+        onSuccess: (res) => {
+          alert(res?.message || "System database restored successfully!");
+          refreshBackupsList();
+        },
+        onError: (err) => {
+          alert(
+            `Restore action failed: ${err?.message || "Internal server error"}`,
+          );
+        },
+      },
+    });
+  /// <summary>
+  /// Mutation to permanently delete a specified backup file from storage.
+  /// </summary>
+  const { mutate: deleteBackup, isPending: isDeleting } =
+    useDeleteBackupsBackupFromFileName({
+      mutation: {
+        onSuccess: () => {
+          alert("Backup file permanently deleted.");
+          refreshBackupsList();
+        },
+        onError: (err) => {
+          alert(
+            `Failed to delete backup file: ${err?.message || "Internal server error"}`,
+          );
+        },
+      },
+    });
+  /// <summary>
+  /// Handlers to execute from React UI onClick/onChange event triggers.
+  /// </summary>
   const handleCreateBackup = () => {
-    const now = new Date();
-    const formattedDate = now.toISOString().replace(/[:.]/g, "-").slice(0, 16);
-    const newEntry = {
-      id: `b_${Date.now()}`,
-      file: `${formattedDate}.arsenalbackup`,
-      datetime: now.toLocaleDateString(),
-      size: "128 MB",
-    };
-    setBackupsList([newEntry, ...backupsList]);
+    createBackup();
   };
-
   const handleUploadBackup = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
-      const newEntry = {
-        id: `b_${Date.now()}`,
-        file: file.name,
-        datetime: new Date().toLocaleDateString(),
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-      };
-      setBackupsList([newEntry, ...backupsList]);
+      uploadBackup({ data: { file } });
     }
   };
-
-  const handleDeleteBackup = (id) => {
-    if (window.confirm("Are you sure you want to delete this backup file?")) {
-      setBackupsList((prev) => prev.filter((b) => b.id !== id));
-    }
-  };
-
-  const handleRestoreBackup = (file) => {
+  const handleRestoreBackup = (fileName) => {
     if (
       window.confirm(
-        `Restore database from ${file}? Current unsaved changes will be overwritten.`,
+        `Are you sure you want to restore the system database from ${fileName}? All current unsaved changes will be overwritten.`,
       )
     ) {
-      alert("System restored successfully!");
+      restoreBackup({ fileName });
     }
   };
+  const handleDeleteBackup = (fileName) => {
+    if (
+      window.confirm(
+        `Are you sure you want to permanently delete the backup file ${fileName}?`,
+      )
+    ) {
+      deleteBackup({ fileName });
+    }
+  };
+  /// <summary>
+  /// Authenticated binary file download wrapper.
+  /// Downloads backup programmatically via fetch relying on automatically attached session cookies.
+  /// </summary>
+  const handleDownloadBackup = async (fileName) => {
+    try {
+      const response = await fetch(`/api/v1/backups/${fileName}/download`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      // Convert stream payload to clean blob reference
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      // Programmatically click temporary link to initiate client file download
+      const tempLink = document.createElement("a");
+      tempLink.href = blobUrl;
+      tempLink.setAttribute("download", fileName);
+      document.body.appendChild(tempLink);
+      tempLink.click();
 
-  const handleDownloadBackup = (file) => {
-    alert(`Downloading ${file}...`);
+      // Cleanup temporary window resources
+      document.body.removeChild(tempLink);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      alert(`Download failed: ${err.message}`);
+    }
   };
 
   return (
@@ -98,8 +191,7 @@ export default function BackupSettings() {
           <input
             type="checkbox"
             id="autoBackupsHeader"
-            checked={autoBackups}
-            onChange={(e) => setAutoBackups(e.target.checked)}
+            checked={backupSettings?.enabled}
             style={{
               width: "20px",
               height: "20px",
@@ -116,7 +208,7 @@ export default function BackupSettings() {
               fontWeight: "bold",
             }}
           >
-            {autoBackups
+            {backupSettings?.enabled
               ? "Automatic Backups Enabled"
               : "Enable Automatic Backups"}
           </label>
@@ -135,7 +227,7 @@ export default function BackupSettings() {
             Upload Backup
             <input
               type="file"
-              accept=".arsenalbackup"
+              accept=".db,.sql,.gz,.tar,.bak,application/x-sqlite3,application/gzip,application/sql"
               onChange={handleUploadBackup}
               style={{ display: "none" }}
             />
@@ -151,65 +243,94 @@ export default function BackupSettings() {
         className="sec-subtitle"
         style={{
           margin: "0.75rem 0 1.5rem 0",
-          opacity: autoBackups ? 1 : 0.4,
+          opacity: backupSettings?.enabled ? 1 : 0.4,
           transition: "opacity 0.2s ease-in-out",
         }}
       >
-        Backups are copy of the database and currently, backups can only be
-        configured through secrets.
+        Backups are a copy of the database and currently, can only be set
+        through external configuration.
       </p>
 
       {/* FORM INPUTS & TABLE (GRAYED OUT WHEN AUTOMATIC BACKUPS ARE DISABLED) */}
       <div
         style={{
-          opacity: autoBackups ? 1 : 0.4,
-          pointerEvents: autoBackups ? "auto" : "none",
+          opacity: backupSettings ? 1 : 0.4,
+          pointerEvents: backupSettings ? "auto" : "none",
           transition: "opacity 0.2s ease-in-out",
         }}
       >
         {/* STACKED FORM CONFIGURATION */}
-        <div
-          className="form-stacked"
-          style={{
-            margin: "0 0 1.5rem 0",
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.25rem",
-          }}
-        >
-          <div className="form-group">
-            <label>BACKUP LOCATION</label>
-            <input
-              type="text"
-              readOnly
-              value={backupPath}
-              className="text-mono readonly-input"
-            />
-          </div>
 
-          <div className="form-group">
-            <label>SCHEDULE</label>
-            <input
-              type="text"
-              readOnly
-              value={schedule}
-              className="readonly-input"
-            />
+        {backupSettingsLoading ? (
+          <div className="loading-spinner-box">
+            <div className="spinner"></div>
+            <p>Analyzing vaults...</p>
           </div>
+        ) : backupSettingsError ? (
+          <div className="vaults-error-card">
+            <span className="err-icon">⚠️</span>
+            <p>{error}</p>
+            {/* <button
+              className="btn btn-secondary btn-small"
+              onClick={() =>
+                queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] })
+              }
+            >
+              Retry
+            </button> */}
+          </div>
+        ) : backupSettings === null ? (
+          <div className="empty-state panel">
+            <h3>You have no items in your Vaults.</h3>
+            <p style={{ marginTop: "4px", color: "var(--text-muted)" }}>
+              Click 'Add Item' above to add your first item.
+            </p>
+          </div>
+        ) : (
+          <div
+            className="form-stacked"
+            style={{
+              margin: "0 0 1.5rem 0",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1.25rem",
+            }}
+          >
+            <div className="form-group">
+              <label>BACKUP LOCATION</label>
+              <input
+                type="text"
+                readOnly
+                value={backupSettings.backupPath}
+                className="text-mono readonly-input"
+              />
+            </div>
 
-          <div className="form-group">
-            <label>NUMBER OF BACKUPS TO KEEP</label>
-            <input
-              type="number"
-              min="1"
-              value={backupsToKeep}
-              onChange={(e) => setBackupsToKeep(parseInt(e.target.value) || 1)}
-            />
+            <div className="form-group">
+              <label>SCHEDULE</label>
+              <input
+                type="text"
+                readOnly
+                value={backupSettings.cronSchedule}
+                className="readonly-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>NUMBER OF BACKUPS TO KEEP</label>
+              <input
+                type="number"
+                min="1"
+                readOnly
+                value={backupSettings.retentionCount}
+                className="readonly-input"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* TABLE DATA */}
-        {loading ? (
+        {backupsLoading ? (
           <div className="loading-inline">
             <div className="spinner"></div>
           </div>
@@ -227,16 +348,16 @@ export default function BackupSettings() {
                 </tr>
               </thead>
               <tbody>
-                {backupsList.map((b) => (
-                  <tr key={b.id}>
+                {backups.map((b) => (
+                  <tr key={b.fileName}>
                     <td
                       className="text-bold text-mono"
                       style={{ wordBreak: "break-all" }}
                     >
-                      {b.file}
+                      {b.fileName}
                     </td>
-                    <td>{b.datetime}</td>
-                    <td>{b.size}</td>
+                    <td>{b.date}</td>
+                    <td>{formatBytes(b.sizeInBytes)}</td>
                     <td>
                       <div
                         style={{
@@ -248,7 +369,7 @@ export default function BackupSettings() {
                       >
                         <button
                           className="btn btn-secondary btn-mini"
-                          onClick={() => handleRestoreBackup(b.file)}
+                          onClick={() => handleRestoreBackup(b.fileName)}
                         >
                           Restore
                         </button>
@@ -256,7 +377,7 @@ export default function BackupSettings() {
                         <button
                           className="btn-icon"
                           title="Download Backup"
-                          onClick={() => handleDownloadBackup(b.file)}
+                          onClick={() => handleDownloadBackup(b.fileName)}
                           style={{
                             background: "none",
                             border: "none",
@@ -284,7 +405,7 @@ export default function BackupSettings() {
                         <button
                           className="btn-icon"
                           title="Delete Backup"
-                          onClick={() => handleDeleteBackup(b.id)}
+                          onClick={() => handleDeleteBackup(b.fileName)}
                           style={{
                             background: "none",
                             border: "none",

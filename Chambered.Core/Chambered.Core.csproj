@@ -4,7 +4,13 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Title>Chambered.Core</Title>
+    <Version>5.2.1</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
+  </ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Chambered.Data\Chambered.Data.csproj" />

@@ -1,208 +1,132 @@
-using Chambered.Data;
+using Asp.Versioning;
+using Chambered.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Chambered.Api.Controllers.Settings
 {
+    /// <summary>
+    /// Provides access to general application settings, including password policies and notification configurations.
+    /// </summary>
+    /// <param name="identityOptions">The security identity password options.</param>
+    /// <param name="appriseConfiguration">The Apprise notifications configuration options.</param>
     [ApiController]
-    [Route("api/settings")]
-    [Authorize(Roles = "Admin")] // Settings management is administrative
-    public class SettingsController : ControllerBase
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/settings")]
+    [Authorize]
+    public class SettingsController(
+        IOptions<IdentityOptions> identityOptions,
+        IOptions<AppriseConfiguration> appriseConfiguration,
+        IOptions<LoginConfiguration> loginConfiguration) : ControllerBase
     {
-        private readonly ChamberedDbContext _db;
-        private readonly UserManager<ChamberedUser> _userManager;
+        private readonly IOptions<IdentityOptions> _identityOptions = identityOptions;
+        private readonly IOptions<AppriseConfiguration> _appriseConfiguration = appriseConfiguration;
+        private readonly IOptions<LoginConfiguration> _loginConfiguration = loginConfiguration;
 
-        public SettingsController(ChamberedDbContext db, UserManager<ChamberedUser> userManager)
+        /// <summary>
+        /// Retrieves the active password complexity policy settings.
+        /// </summary>
+        /// <returns>A data transfer object describing password length and character requirements.</returns>
+        /// <response code="200">Returns the configured password policy settings.</response>
+        /// <response code="401">If the request is unauthorized.</response>
+        [HttpGet("password-policy")]
+        [Produces("application/json")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(PasswordPolicyResponseDto), StatusCodes.Status200OK)]
+        public ActionResult<PasswordPolicyResponseDto> GetPasswordPolicy()
         {
-            _db = db;
-            _userManager = userManager;
+            var opts = _identityOptions.Value.Password;
+
+            var response = new PasswordPolicyResponseDto(
+                MinLength: opts.RequiredLength,
+                RequireUpper: opts.RequireUppercase,
+                RequireLower: opts.RequireLowercase,
+                RequireNumbers: opts.RequireDigit,
+                RequireSpecial: opts.RequireNonAlphanumeric
+            );
+
+            return Ok(response);
         }
 
-        // ==========================================
-        // 1. OIDC CONFIGURATION ENDPOINTS
-        // ==========================================
-
-        // OIDC Config endpoints removed since OidcConfig model was cleaned up.
-
-        // ApiKeys endpoints removed since ApiKeys model was cleaned up.
-
-        // ==========================================
-        // 3. USER MANAGEMENT ENDPOINTS
-        // ==========================================
-
-        [HttpGet("users")]
-        public async Task<IActionResult> GetUsers()
+        /// <summary>
+        /// Retrieves the system Apprise notification connection settings.
+        /// </summary>
+        /// <returns>A data transfer object containing host URL, credentials key, and delivery endpoints.</returns>
+        /// <response code="200">Returns the active Apprise configurations.</response>
+        /// <response code="401">If the request is unauthorized.</response>
+        [HttpGet("apprise-settings")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(AppriseSettingsResponseDto), StatusCodes.Status200OK)]
+        public ActionResult<AppriseSettingsResponseDto> GetAppriseSettings()
         {
-            var users = await _userManager.Users.ToListAsync();
-            var userDtos = new List<UserDto>();
+            var opts = _appriseConfiguration.Value;
 
-            foreach (var user in users)
-            {
-                userDtos.Add(new UserDto
-                {
-                    Id = user.Id,
-                    Username = user.UserName ?? "",
-                    Email = user.Email ?? "",
-                    Roles = await _userManager.GetRolesAsync(user),
-                    GravatarUrl = Chambered.Api.Controllers.Auth.AuthController.GetGravatarUrl(user.Email)
-                });
-            }
+            var response = new AppriseSettingsResponseDto(
+                AllowInvalidCertificates: opts.AllowInvalidCertificates,
+                HostUrl: opts.HostUrl,
+                NotificationKey: opts.NotificationKey,
+                TargetUrls: opts.TargetUrls,
+                TimeoutSeconds: opts.TimeoutSeconds
+            );
 
-            return Ok(userDtos);
+            return Ok(response);
         }
 
-        [HttpPost("users")]
-        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+        [HttpGet("login-settings")]
+        [Produces("application/json")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(LoginConfigurationResponseDto), StatusCodes.Status200OK)]
+        public ActionResult<LoginConfigurationResponseDto> GetLoginSettings()
         {
-            if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
-                return BadRequest("Username and Password are required.");
+            var opts = _loginConfiguration.Value;
 
-            var existing = await _userManager.FindByNameAsync(request.Username);
-            if (existing != null)
-                return BadRequest("Username is already taken.");
+            var response = new LoginConfigurationResponseDto(
+                SessionLifetime: opts.SessionLifetime,
+                DisableLocalUsers: opts.DisableLocalUsers,
+                DisableNewUserRegistration: opts.DisableNewUserRegistration
+            );
 
-            var user = new ChamberedUser
-            {
-                UserName = request.Username,
-                Email = string.IsNullOrEmpty(request.Email) ? $"{request.Username}@chambered.local" : request.Email,
-                EmailConfirmed = true
-            };
-
-            var result = await _userManager.CreateAsync(user, request.Password);
-            if (!result.Succeeded)
-            {
-                return BadRequest(string.Join(", ", result.Errors.Select(e => e.Description)));
-            }
-
-            var role = request.IsAdmin ? "Admin" : "User";
-            await _userManager.AddToRoleAsync(user, role);
-
-            return Ok(new UserDto
-            {
-                Id = user.Id,
-                Username = user.UserName,
-                Email = user.Email,
-                Roles = new List<string> { role },
-                GravatarUrl = Chambered.Api.Controllers.Auth.AuthController.GetGravatarUrl(user.Email)
-            });
-        }
-
-        [HttpPut("users/{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserRequest request)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            // Update email if provided
-            if (!string.IsNullOrEmpty(request.Email))
-            {
-                user.Email = request.Email;
-            }
-
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-            {
-                return BadRequest(string.Join(", ", result.Errors.Select(e => e.Description)));
-            }
-
-            // Update role
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            await _userManager.RemoveFromRolesAsync(user, currentRoles);
-
-            var role = request.IsAdmin ? "Admin" : "User";
-            await _userManager.AddToRoleAsync(user, role);
-
-            // Update password if provided
-            if (!string.IsNullOrEmpty(request.Password))
-            {
-                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var resetResult = await _userManager.ResetPasswordAsync(user, token, request.Password);
-                if (!resetResult.Succeeded)
-                {
-                    return BadRequest(string.Join(", ", resetResult.Errors.Select(e => e.Description)));
-                }
-            }
-
-            return Ok(new UserDto
-            {
-                Id = user.Id,
-                Username = user.UserName ?? "",
-                Email = user.Email ?? "",
-                Roles = new List<string> { role },
-                GravatarUrl = Chambered.Api.Controllers.Auth.AuthController.GetGravatarUrl(user.Email)
-            });
-        }
-
-        [HttpDelete("users/{id}")]
-        public async Task<IActionResult> DeleteUser(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            // Prevent self-deletion
-            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (currentUserId == user.Id)
-            {
-                return BadRequest("You cannot delete your own account.");
-            }
-
-            var result = await _userManager.DeleteAsync(user);
-            if (!result.Succeeded)
-            {
-                return BadRequest("Failed to delete user.");
-            }
-
-            return Ok();
+            return Ok(response);
         }
     }
 
-    public class DiscoverRequest
-    {
-        public string IssuerUrl { get; set; }
-    }
+    /// <summary>
+    /// Data transfer object defining password complexity criteria.
+    /// </summary>
+    /// <param name="MinLength">The minimum character length requirement.</param>
+    /// <param name="RequireUpper">Indicates whether uppercase characters are mandatory.</param>
+    /// <param name="RequireLower">Indicates whether lowercase characters are mandatory.</param>
+    /// <param name="RequireNumbers">Indicates whether numeric digits are mandatory.</param>
+    /// <param name="RequireSpecial">Indicates whether non-alphanumeric characters are mandatory.</param>
+    public record PasswordPolicyResponseDto(
+        int MinLength,
+        bool RequireUpper,
+        bool RequireLower,
+        bool RequireNumbers,
+        bool RequireSpecial
+    );
 
-    public class CreateApiKeyRequest
-    {
-        public string Name { get; set; }
-        public string UserId { get; set; }
-    }
+    /// <summary>
+    /// Data transfer object defining Apprise push notification properties.
+    /// </summary>
+    /// <param name="AllowInvalidCertificates">Indicates whether self-signed SSL certs are trusted.</param>
+    /// <param name="HostUrl">The push notification server URL.</param>
+    /// <param name="NotificationKey">The secret Apprise decryption key.</param>
+    /// <param name="TargetUrls">The delivery endpoints payload.</param>
+    /// <param name="TimeoutSeconds">The connection timeout parameter.</param>
+    public record AppriseSettingsResponseDto(
+        bool AllowInvalidCertificates,
+        string HostUrl,
+        string NotificationKey,
+        string TargetUrls,
+        int TimeoutSeconds
+    );
 
-    public class ApiKeyDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string UserId { get; set; }
-        public string UserName { get; set; }
-        public string TokenPreview { get; set; }
-        public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
-
-    public class CreateUserRequest
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string Email { get; set; }
-        public bool IsAdmin { get; set; }
-    }
-
-    public class UpdateUserRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public bool IsAdmin { get; set; }
-    }
-
-    public class UserDto
-    {
-        public string Id { get; set; }
-        public string Username { get; set; }
-        public string Email { get; set; }
-        public IList<string> Roles { get; set; }
-        public string GravatarUrl { get; set; }
-    }
+    public record LoginConfigurationResponseDto(
+        int SessionLifetime,
+        bool DisableLocalUsers,
+        bool DisableNewUserRegistration
+    );
 }

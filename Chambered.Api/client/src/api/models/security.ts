@@ -13,13 +13,16 @@ import type { Manufacturer } from './manufacturer';
 
 export interface Security {
   lockType?: LockType;
+  isCapacityLimited?: boolean;
+  maxCapacity?: number;
   hasBattery?: boolean;
   batteryType?: BatteryType;
   /** @nullable */
   name?: string | null;
   /** @nullable */
   description?: string | null;
-  id?: number;
+  /** @nullable */
+  productType?: string | null;
   /** @nullable */
   partNumber?: string | null;
   /** @nullable */
@@ -31,6 +34,15 @@ export interface Security {
   imageData?: string | null;
   /** @nullable */
   imageContentType?: string | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
   manufacturer?: Manufacturer;
   /** @nullable */
   documents?: Document[] | null;

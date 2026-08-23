@@ -6,14 +6,9 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents a secure container, room, vehicle, or physical location where armory items or ammunition are stored.
     /// </summary>
-    public class Vault : IItemIdentifier, IHasBattery, ICurrentCapcity
+    public class Vault : ModelBase<int>, IItemIdentifier, IHasBattery, ICurrentCapcity
     {
         #region Primary Identification
-
-        /// <summary>
-        /// Gets or sets the unique primary key for the vault.
-        /// </summary>
-        public int Id { get; set; }
 
         /// <summary>
         /// Gets or sets the foreign key of the associated catalog product.

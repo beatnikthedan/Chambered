@@ -1,0 +1,185 @@
+.version-control-container {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 550px;
+}
+
+/* Status Bar Styles */
+.version-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #8a99a8;
+  background-color: transparent;
+}
+
+.version-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 2px;
+}
+
+.version-dot.connected {
+  background-color: #00c853;
+  box-shadow: 0 0 6px #00c853;
+}
+
+.version-dot.disconnected {
+  background-color: #ff5252;
+  box-shadow: 0 0 6px #ff5252;
+}
+
+.version-status-text {
+  color: #708294;
+}
+
+.version-separator {
+  color: #434e5a;
+  font-weight: bold;
+}
+
+.version-link {
+  background: none;
+  border: none;
+  color: #64b5f6;
+  cursor: pointer;
+
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+  padding: 0;
+  margin: 0;
+
+  text-decoration: underline;
+}
+
+.version-link:hover {
+  color: #90caf9;
+}
+
+/* Update Banner Styles */
+.version-update-banner {
+  background-color: #231c10;
+  border: 1px solid #483918;
+  border-radius: 8px;
+  padding: 4px 18px;
+  color: #e5c07b;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.version-banner-link {
+  background: none;
+  border: none;
+  color: #e5c07b;
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.version-banner-link:hover {
+  color: #ffe082;
+}
+
+/* Modal Styles */
+.version-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.version-modal-content {
+  background-color: #1b1f24;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  color: #c9d1d9;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.version-modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #30363d;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Aligns close button to the top */
+}
+
+/* Wrapper to stack the title and GitHub link on the left */
+.version-modal-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Space between v5.2.1 and View on GitHub */
+}
+
+.version-modal-title-group h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.version-modal-header h3 {
+  margin: 0;
+}
+
+.version-modal-body {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.version-modal-date {
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: #90a4ae;
+}
+
+.version-close-button {
+  background: none;
+  border: none;
+  color: #8b949e;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.version-close-button:hover {
+  color: #ffffff;
+}
+
+.version-markdown-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+  background-color: #161b22;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #21262d;
+}

@@ -180,7 +180,9 @@ export default function ArsenalSettings() {
                 <th>Arsenal Name</th>
                 <th>Description</th>
                 <th>Status</th>
-                <th style={{ width: "120px" }}>Actions</th>
+                <th align="center" style={{ width: "120px" }}>
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -236,7 +238,7 @@ export default function ArsenalSettings() {
                       }}
                     >
                       <button
-                        className="btn btn-secondary"
+                        className="btn-action-edit"
                         onClick={() => openEditModal(arsenal)}
                         style={{
                           width: "74px",
@@ -250,10 +252,18 @@ export default function ArsenalSettings() {
                           borderRadius: "4px",
                         }}
                       >
-                        Edit
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          className="pencil-icon"
+                        >
+                          <path d="M12 20h9"></path>
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
                       </button>
                       <button
-                        className="btn btn-danger"
+                        className="btn-action-delete"
                         disabled={store.arsenals.length <= 1}
                         onClick={() => handleDelete(arsenal.id)}
                         title="Remove arsenal and all its items"
@@ -269,7 +279,15 @@ export default function ArsenalSettings() {
                           borderRadius: "4px",
                         }}
                       >
-                        Delete
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          className="trash-icon"
+                        >
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
                       </button>
                     </div>
                   </td>

@@ -8,7 +8,6 @@
 import type { Product } from './product';
 
 export interface Manufacturer {
-  id?: number;
   /** @nullable */
   name?: string | null;
   /** @nullable */
@@ -25,6 +24,15 @@ export interface Manufacturer {
   postalCode?: string | null;
   /** @nullable */
   country?: string | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
   /** @nullable */
   product?: Product[] | null;
 }

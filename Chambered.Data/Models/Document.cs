@@ -5,14 +5,9 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents an offline binary document or file attachment associated with a product or item.
     /// </summary>
-    public class Document
+    public class Document : ModelBase<int>
     {
         #region Primary Identification
-
-        /// <summary>
-        /// Gets or sets the unique primary key for the document.
-        /// </summary>
-        public int Id { get; set; }
 
         /// <summary>
         /// Gets or sets the descriptive title of the document (e.g., "10/22 Factory Owner's Manual", "Exploded Parts View").

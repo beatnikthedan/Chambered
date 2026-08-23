@@ -6,7 +6,7 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents a specific product line or catalog entry offered by a manufacturer.
     /// </summary>
-    public class Product : IItemIdentifier
+    public class Product : ModelBase<int>, IItemIdentifier
     {
         #region IItemIdentifier
 
@@ -19,11 +19,6 @@ namespace Chambered.Data.Models
         #endregion
 
         #region Primary Identification
-
-        /// <summary>
-        /// Gets or sets the unique primary key for the product.
-        /// </summary>
-        public int Id { get; set; }
 
         /// <summary>
         /// Gets or sets the discriminator value for the product type (used for TPH inheritance mapping).

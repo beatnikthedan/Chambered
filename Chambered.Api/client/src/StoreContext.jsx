@@ -1,4 +1,36 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import {
+  getAccountIsInitialized,
+  getArsenals,
+  postArsenals,
+  putArsenalsFromKey,
+  deleteArsenalsFromKey,
+  getUsersProfile,
+  postAccountLogin,
+  postAccountLogout,
+  postUsersRegister,
+  getProductsActionTypes,
+  getProductsBatteryTypes,
+  getProductsLaserColors,
+  getProductsLightMountTypes,
+  getProductsOpticAdjustmentUnits,
+  getProductsOpticReticles,
+  getProductsOpticTypes,
+  getProductsPewPewCategories,
+  getProductsSuppressorAttachmentTypes,
+  getProductsSuppressorMaterials,
+  getArmoryItemsItemConditions,
+  getArmoryItemsNfaFormTypes,
+  getVaultsLockTypes,
+  getVaultsVaultCategories,
+  getDocumentsDocumentTypes
+} from "./api/endpoints";
 
 const StoreContext = createContext(null);
 
@@ -8,38 +40,31 @@ export function StoreProvider({ children }) {
   const [isInitialized, setIsInitialized] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Arsenal state
   const [activeArsenalId, setActiveArsenalId] = useState(null);
-  const [activeArsenalName, setActiveArsenalName] = useState('Loading...');
+  const [activeArsenalName, setActiveArsenalName] = useState("Loading...");
   const [arsenals, setArsenals] = useState([]);
-  
-  // Enums metadata state
   const [enums, setEnums] = useState(null);
 
-  // Check initialization status
   const checkInitialization = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/is-initialized');
-      if (res.ok) {
-        const data = await res.json();
-        setIsInitialized(data.isInitialized);
+      const res = await getAccountIsInitialized();
+      if (res.status === 200) {
+        setIsInitialized(res.data.isInitialized);
       }
     } catch (err) {
-      console.error('Initialization check failed', err);
+      console.error("Initialization check failed", err);
     }
   }, []);
 
-  // Fetch all arsenals
   const fetchArsenals = useCallback(async () => {
     try {
-      const res = await fetch('/api/v1/Arsenals');
-      if (res.ok) {
-        const data = await res.json();
-        const list = data.value || [];
+      const res = await getArsenals();
+      if (res.status === 200) {
+        const list = res.data.value || [];
         setArsenals(list);
         if (list.length > 0) {
-          const savedId = localStorage.getItem('activeArsenalId');
-          const found = list.find(a => a.id === parseInt(savedId));
+          const savedId = localStorage.getItem("activeArsenalId");
+          const found = list.find((a) => a.id === parseInt(savedId));
           if (found) {
             setActiveArsenalId(found.id);
             setActiveArsenalName(found.name);
@@ -49,26 +74,25 @@ export function StoreProvider({ children }) {
           }
         } else {
           setActiveArsenalId(null);
-          setActiveArsenalName('No Collections');
+          setActiveArsenalName("No Collections");
         }
       }
     } catch (err) {
-      console.error('Failed to load arsenals list', err);
+      console.error("Failed to load arsenals list", err);
     }
   }, []);
 
-  // Fetch all metadata enums
   const fetchEnums = useCallback(async () => {
     try {
-      const fetchEnum = async (url) => {
+      const fetchEnum = async (promiseFn) => {
         try {
-          const r = await fetch(url);
-          if (r.ok) {
-            const d = await r.json();
-            return (d.value || []).map(e => ({
+          const r = await promiseFn();
+          if (r.status === 200) {
+            const d = r.data;
+            return (d.value || []).map((e) => ({
               id: e.value,
               name: e.value,
-              label: e.displayName
+              label: e.displayName,
             }));
           }
         } catch (e) {
@@ -92,23 +116,23 @@ export function StoreProvider({ children }) {
         nfaFormTypes,
         lockTypes,
         vaultCategories,
-        documentTypes
+        documentTypes,
       ] = await Promise.all([
-        fetchEnum('/api/v1/Products/GetActionTypes()'),
-        fetchEnum('/api/v1/Products/GetBatteryTypes()'),
-        fetchEnum('/api/v1/Products/GetLaserColors()'),
-        fetchEnum('/api/v1/Products/GetLightMountTypes()'),
-        fetchEnum('/api/v1/Products/GetOpticAdjustmentUnits()'),
-        fetchEnum('/api/v1/Products/GetOpticReticles()'),
-        fetchEnum('/api/v1/Products/GetOpticTypes()'),
-        fetchEnum('/api/v1/Products/GetPewPewCategories()'),
-        fetchEnum('/api/v1/Products/GetSuppressorAttachmentTypes()'),
-        fetchEnum('/api/v1/Products/GetSuppressorMaterials()'),
-        fetchEnum('/api/v1/Armory/GetItemConditions()'),
-        fetchEnum('/api/v1/Armory/GetNfaFormTypes()'),
-        fetchEnum('/api/v1/Vaults/GetLockTypes()'),
-        fetchEnum('/api/v1/Vaults/GetVaultCategories()'),
-        fetchEnum('/api/v1/Documents/GetDocumentTypes()')
+        fetchEnum(getProductsActionTypes),
+        fetchEnum(getProductsBatteryTypes),
+        fetchEnum(getProductsLaserColors),
+        fetchEnum(getProductsLightMountTypes),
+        fetchEnum(getProductsOpticAdjustmentUnits),
+        fetchEnum(getProductsOpticReticles),
+        fetchEnum(getProductsOpticTypes),
+        fetchEnum(getProductsPewPewCategories),
+        fetchEnum(getProductsSuppressorAttachmentTypes),
+        fetchEnum(getProductsSuppressorMaterials),
+        fetchEnum(getArmoryItemsItemConditions),
+        fetchEnum(getArmoryItemsNfaFormTypes),
+        fetchEnum(getVaultsLockTypes),
+        fetchEnum(getVaultsVaultCategories),
+        fetchEnum(getDocumentsDocumentTypes),
       ]);
 
       setEnums({
@@ -126,23 +150,20 @@ export function StoreProvider({ children }) {
         nfaFormTypes,
         lockTypes,
         vaultCategories,
-        documentTypes
+        documentTypes,
       });
     } catch (err) {
-      console.error('Failed to load enums metadata', err);
+      console.error("Failed to load enums metadata", err);
     }
   }, []);
 
-  // Check authentication status
   const checkAuth = useCallback(async () => {
     try {
       await checkInitialization();
-      const res = await fetch('/api/auth/user');
-      if (res.ok) {
-        const userData = await res.json();
-        setUser(userData);
+      const res = await getUsersProfile();
+      if (res.status === 200) {
+        setUser(res.data);
         setIsAuthenticated(true);
-        // Fetch arsenals right after successful auth
         await fetchArsenals();
         await fetchEnums();
       } else {
@@ -150,7 +171,7 @@ export function StoreProvider({ children }) {
         setIsAuthenticated(false);
       }
     } catch (err) {
-      console.error('Auth verification failed', err);
+      console.error("Auth verification failed", err);
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -158,198 +179,151 @@ export function StoreProvider({ children }) {
     }
   }, [checkInitialization, fetchArsenals, fetchEnums]);
 
-  // Login action
-  const login = useCallback(async (username, password) => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    if (res.ok) {
-      const userData = await res.json();
-      setUser(userData);
-      setIsAuthenticated(true);
-      
-      // Fetch arsenals right after login
-      const arsenalsRes = await fetch('/api/v1/Arsenals');
-      if (arsenalsRes.ok) {
-        const data = await arsenalsRes.json();
-        const list = data.value || [];
-        setArsenals(list);
-        if (list.length > 0) {
-          const savedId = localStorage.getItem('activeArsenalId');
-          const found = list.find(a => a.id === parseInt(savedId));
-          if (found) {
-            setActiveArsenalId(found.id);
-            setActiveArsenalName(found.name);
-          } else {
-            setActiveArsenalId(list[0].id);
-            setActiveArsenalName(list[0].name);
-          }
-        } else {
-          setActiveArsenalId(null);
-          setActiveArsenalName('No Collections');
-        }
-      }
-      await fetchEnums();
-      return true;
-    }
-    const err = await res.text();
-    throw new Error(err || 'Invalid credentials');
-  }, [fetchEnums]);
+  const login = useCallback(
+    async (username, password) => {
+      const res = await postAccountLogin({ email: username, password });
+      if (res.status === 200) {
+        const authResponse = res.data;
+        setUser({
+          id: authResponse.userId,
+          username: authResponse.username || authResponse.email,
+          email: authResponse.email,
+          gravatarUrl: authResponse.gravatarUrl,
+          roles: authResponse.roles || [],
+        });
+        setIsAuthenticated(true);
+        setIsInitialized(true);
 
-  // Register action
-  const firstRegister = useCallback(async (username, password, email) => {
-    const res = await fetch('/api/auth/first-register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, email })
-    });
-    if (res.ok) {
-      const userData = await res.json();
-      setUser(userData);
-      setIsAuthenticated(true);
-      setIsInitialized(true);
-      
-      // Fetch arsenals right after registration
-      const arsenalsRes = await fetch('/api/v1/Arsenals');
-      if (arsenalsRes.ok) {
-        const data = await arsenalsRes.json();
-        const list = data.value || [];
-        setArsenals(list);
-        if (list.length > 0) {
-          setActiveArsenalId(list[0].id);
-          setActiveArsenalName(list[0].name);
-        } else {
-          setActiveArsenalId(null);
-          setActiveArsenalName('No Collections');
-        }
+        await fetchArsenals();
+        await fetchEnums();
+        return true;
       }
-      await fetchEnums();
-      return true;
-    }
-    const err = await res.text();
-    throw new Error(err || 'Registration failed');
-  }, [fetchEnums]);
+      throw new Error("Invalid credentials");
+    },
+    [fetchEnums, fetchArsenals],
+  );
 
-  // Logout action
+  const firstRegister = useCallback(
+    async (username, password, email) => {
+      const res = await postUsersRegister({
+        username,
+        email,
+        password,
+      });
+      if (res.status === 200 || res.status === 201) {
+        setIsInitialized(true);
+        return await login(email, password);
+      }
+      throw new Error("Registration failed");
+    },
+    [login],
+  );
+
   const logout = useCallback(async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await postAccountLogout();
     } catch (err) {
-      console.error('Logout error', err);
+      console.error("Logout error", err);
     } finally {
       setUser(null);
       setIsAuthenticated(false);
       setActiveArsenalId(null);
-      setActiveArsenalName('Loading...');
+      setActiveArsenalName("Loading...");
       setArsenals([]);
       setEnums(null);
     }
   }, []);
 
-  // Select an arsenal
-  const selectArsenal = useCallback(async (id) => {
-    const res = await fetch('/api/v1/Arsenals');
-    if (res.ok) {
-      const data = await res.json();
-      const list = data.value || [];
-      setArsenals(list);
-      const found = list.find(a => a.id === id);
-      if (found) {
-        setActiveArsenalId(found.id);
-        setActiveArsenalName(found.name);
-        localStorage.setItem('activeArsenalId', found.id);
-      }
-    }
-  }, []);
-
-  // Create arsenal collection
-  const createArsenal = useCallback(async (name, description, iconName, colorHex) => {
-    const res = await fetch('/api/v1/Arsenals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description, iconName, colorHex })
-    });
-    if (res.ok) {
-      const newArsenal = await res.json();
-      
-      // Reload and select
-      const arsenalsRes = await fetch('/api/v1/Arsenals');
-      if (arsenalsRes.ok) {
-        const data = await arsenalsRes.json();
-        const list = data.value || [];
+  const selectArsenal = useCallback(
+    async (id) => {
+      const res = await getArsenals();
+      if (res.status === 200) {
+        const list = res.data.value || [];
         setArsenals(list);
-        const found = list.find(a => a.id === newArsenal.id);
+        const found = list.find((a) => a.id === id);
         if (found) {
           setActiveArsenalId(found.id);
           setActiveArsenalName(found.name);
-          localStorage.setItem('activeArsenalId', found.id);
+          localStorage.setItem("activeArsenalId", found.id);
         }
       }
-      return true;
-    }
-    const err = await res.text();
-    throw new Error(err || 'Failed to create arsenal collection');
-  }, []);
+    },
+    [],
+  );
 
-  // Delete arsenal
-  const deleteArsenal = useCallback(async (id) => {
-    const res = await fetch(`/api/v1/Arsenals/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      // Reload arsenals
-      const arsenalsRes = await fetch('/api/v1/Arsenals');
-      if (arsenalsRes.ok) {
-        const data = await arsenalsRes.json();
-        const list = data.value || [];
-        setArsenals(list);
-        if (list.length > 0) {
-          const savedId = localStorage.getItem('activeArsenalId');
-          const found = list.find(a => a.id === parseInt(savedId));
+  const createArsenal = useCallback(
+    async (name, description, iconName, colorHex) => {
+      const res = await postArsenals({ name, description, iconName, colorHex });
+      if (res.status === 200 || res.status === 201) {
+        const newArsenal = res.data;
+        const arsenalsRes = await getArsenals();
+        if (arsenalsRes.status === 200) {
+          const list = arsenalsRes.data.value || [];
+          setArsenals(list);
+          const found = list.find((a) => a.id === newArsenal.id);
           if (found) {
             setActiveArsenalId(found.id);
             setActiveArsenalName(found.name);
-          } else {
-            setActiveArsenalId(list[0].id);
-            setActiveArsenalName(list[0].name);
+            localStorage.setItem("activeArsenalId", found.id);
           }
-        } else {
-          setActiveArsenalId(null);
-          setActiveArsenalName('No Collections');
         }
+        return true;
       }
-      return true;
-    }
-    const err = await res.text();
-    throw new Error(err || 'Failed to delete arsenal');
-  }, []);
+      throw new Error("Failed to create arsenal collection");
+    },
+    [],
+  );
 
-  // Update arsenal collection
-  const updateArsenal = useCallback(async (id, name, description, iconName, colorHex) => {
-    const res = await fetch(`/api/v1/Arsenals/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, name, description, iconName, colorHex })
-    });
-    if (res.ok) {
-      // Reload lists
-      const arsenalsRes = await fetch('/api/v1/Arsenals');
-      if (arsenalsRes.ok) {
-        const data = await arsenalsRes.json();
-        const list = data.value || [];
-        setArsenals(list);
-        const active = list.find(a => a.id === id);
-        if (active && id === activeArsenalId) {
-          setActiveArsenalName(active.name);
+  const deleteArsenal = useCallback(
+    async (id) => {
+      const res = await deleteArsenalsFromKey(id);
+      if (res.status === 200 || res.status === 204) {
+        const arsenalsRes = await getArsenals();
+        if (arsenalsRes.status === 200) {
+          const list = arsenalsRes.data.value || [];
+          setArsenals(list);
+          if (list.length > 0) {
+            const savedId = localStorage.getItem("activeArsenalId");
+            const found = list.find((a) => a.id === parseInt(savedId));
+            if (found) {
+              setActiveArsenalId(found.id);
+              setActiveArsenalName(found.name);
+            } else {
+              setActiveArsenalId(list[0].id);
+              setActiveArsenalName(list[0].name);
+            }
+          } else {
+            setActiveArsenalId(null);
+            setActiveArsenalName("No Collections");
+          }
         }
+        return true;
       }
-      return true;
-    }
-    const err = await res.text();
-    throw new Error(err || 'Failed to update arsenal collection');
-  }, [activeArsenalId]);
+      throw new Error("Failed to delete arsenal");
+    },
+    [],
+  );
 
-  // Check auth on mount
+  const updateArsenal = useCallback(
+    async (id, name, description, iconName, colorHex) => {
+      const res = await putArsenalsFromKey(id, { id, name, description, iconName, colorHex });
+      if (res.status === 200 || res.status === 204) {
+        const arsenalsRes = await getArsenals();
+        if (arsenalsRes.status === 200) {
+          const list = arsenalsRes.data.value || [];
+          setArsenals(list);
+          const active = list.find((a) => a.id === id);
+          if (active && id === activeArsenalId) {
+            setActiveArsenalName(active.name);
+          }
+        }
+        return true;
+      }
+      throw new Error("Failed to update arsenal collection");
+    },
+    [activeArsenalId],
+  );
+
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
@@ -372,20 +346,18 @@ export function StoreProvider({ children }) {
     selectArsenal,
     createArsenal,
     updateArsenal,
-    deleteArsenal
+    deleteArsenal,
   };
 
   return (
-    <StoreContext.Provider value={value}>
-      {children}
-    </StoreContext.Provider>
+    <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
   );
 }
 
 export function useStore() {
   const context = useContext(StoreContext);
   if (!context) {
-    throw new Error('useStore must be used within a StoreProvider');
+    throw new Error("useStore must be used within a StoreProvider");
   }
   return context;
 }

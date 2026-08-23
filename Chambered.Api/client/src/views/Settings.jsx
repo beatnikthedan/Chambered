@@ -51,6 +51,34 @@ export default function Settings() {
           </ul>
         </div>
 
+        {/* NOTIFICATION Group */}
+        <div className="menu-group">
+          <div className="menu-title">NOTIFICATIONS</div>
+
+          <ul className="menu-list">
+            <li
+              className={`menu-item ${activeView === "email" ? "ative" : ""}`}
+              onClick={() => setActiveView("email")}
+            >
+              <span>Email</span>
+            </li>
+
+            <li
+              className={`menu-item ${activeView === "home" ? "active" : ""}`}
+              onClick={() => setActiveView("home")}
+            >
+              <span>Home Assistant</span>
+            </li>
+
+            <li
+              className={`menu-item ${activeView === "apprise" ? "active" : ""}`}
+              onClick={() => setActiveView("apprise")}
+            >
+              <span>Apprise</span>
+            </li>
+          </ul>
+        </div>
+
         {/* ACCESS Group */}
         <div className="menu-group">
           <div className="menu-title">ACCESS</div>
@@ -60,7 +88,7 @@ export default function Settings() {
               onClick={() => setActiveView("users")}
             >
               <span>Users</span>
-              <span className="badge badge-yellow">3</span>
+              <span className="badge badge-yellow"></span>
             </li>
             <li
               className={`menu-item ${activeView === "auth" ? "active" : ""}`}
@@ -84,7 +112,7 @@ export default function Settings() {
           <div className="menu-title">SERVER</div>
           <ul className="menu-list">
             <li
-              className={`menu-item ${activeView === "users" ? "history" : ""}`}
+              className={`menu-item ${activeView === "history" ? "active" : ""}`}
               onClick={() => setActiveView("history")}
             >
               <span>History</span>
