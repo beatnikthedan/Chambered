@@ -141,8 +141,6 @@ namespace Chambered.Infrastructure.Services.Identity
                 {
                     UserName = username,
                     Email = email,
-                    FirstName = null,
-                    LastName = null,
                     EmailConfirmed = true
                 };
 

@@ -6,14 +6,9 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents an item in your armory.
     /// </summary>
-    public class ArmoryItem : IItemIdentifier
+    public class ArmoryItem : ModelBase<int>, IItemIdentifier
     {
         #region Primary Identification & Relational Lookups
-
-        /// <summary>
-        /// Gets or sets the unique primary key for the armory item.
-        /// </summary>
-        public int Id { get; set; }
 
         /// <summary>
         /// Gets or sets the discriminator value for the item type (used for TPH inheritance mapping).

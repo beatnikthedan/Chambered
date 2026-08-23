@@ -3,14 +3,9 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents a standard chambering or caliber designation for items.
     /// </summary>
-    public class Caliber
+    public class Caliber : ModelBase<int>
     {
         #region Primary Identification
-
-        /// <summary>
-        /// Gets or sets the unique primary key for the caliber.
-        /// </summary>
-        public int Id { get; set; }
 
         /// <summary>
         /// Gets or sets the official caliber name (e.g., "9x19mm Parabellum", ".308 Winchester", "12 Gauge").

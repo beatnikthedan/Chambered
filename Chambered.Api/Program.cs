@@ -4,9 +4,12 @@ using Chambered.Api.Mappings;
 using Chambered.Api.Swagger;
 using Chambered.Core.Services;
 using Chambered.Core.Services.Identity;
+using Chambered.Core.Services.Models;
+using Chambered.Core.Utility;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
+using Chambered.Infrastructure.Services;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
 using Chambered.Infrastructure.Services.GitHubReleaseService;
@@ -32,6 +35,10 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. Configure EF Core & SQLite
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=../chambered.db";
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService<UserSession>, CurrentUserService>();
+builder.Services.AddScoped<AuditPropertiesInterceptor>();
 
 builder.Services.AddDbContext<ChamberedDbContext>(options =>
     options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api")));

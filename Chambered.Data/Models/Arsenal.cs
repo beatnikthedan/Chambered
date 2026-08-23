@@ -3,14 +3,9 @@
     /// <summary>
     /// Represents an isolated collection.
     /// </summary>
-    public class Arsenal : IItemIdentifier
+    public class Arsenal : ModelBase<int>, IItemIdentifier
     {
         #region Primary Identification
-
-        /// <summary>
-        /// Gets or sets the unique primary key for the arsenal.
-        /// </summary>
-        public int Id { get; set; }
 
         #region IItemIdentifier
 

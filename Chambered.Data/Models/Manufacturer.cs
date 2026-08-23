@@ -3,14 +3,9 @@
     /// <summary>
     /// Represents a manufacturer or maker with corporate metadata and catalog listings.
     /// </summary>
-    public class Manufacturer
+    public class Manufacturer : ModelBase<int>
     {
         #region Primary Identification
-
-        /// <summary>
-        /// Gets or sets the unique primary key for the manufacturer.
-        /// </summary>
-        public int Id { get; set; }
 
         /// <summary>
         /// Gets or sets the official name of the manufacturer.

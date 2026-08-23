@@ -9,11 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace Chambered.Infrastructure.Extensions
 {
@@ -76,56 +72,33 @@ namespace Chambered.Infrastructure.Extensions
                                 },
                                 OnTicketReceived = async context =>
                                 {
-                                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("OidcAuthentication");
-                                    logger.LogInformation("================== SSO SYNC DIAGNOSTICS ==================");
-                                    logger.LogInformation("OIDC Ticket Received: Scheme={Scheme}", context.Scheme.Name);
-                                    logger.LogInformation("User Claims Extracted from SSO Token:");
-
                                     var principal = context.Principal;
-                                    if (principal == null) 
+                                    if (principal == null)
                                     {
-                                        logger.LogWarning("OIDC Ticket Principal is null!");
-                                        logger.LogInformation("=========================================================");
+                                        context.Fail("OIDC principal was null");
                                         return;
                                     }
-
-                                    foreach (var claim in principal.Claims)
-                                    {
-                                        logger.LogInformation("  [Claim] {Type} = {Value}", claim.Type, claim.Value);
-                                    }
-                                    logger.LogInformation("=========================================================");
-
-                                    var providerName = context.Scheme.Name;
-                                    var subClaim = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier) 
+                                    var subClaim = principal.FindFirst(ClaimTypes.NameIdentifier)
                                         ?? principal.FindFirst("sub")
-                                        ?? principal.FindFirst("nameid")
-                                        ?? principal.FindFirst(System.Security.Claims.ClaimTypes.Name);
-
-                                    if (subClaim == null) 
+                                        ?? principal.FindFirst("nameid");
+                                    if (subClaim == null)
                                     {
-                                        logger.LogError("OIDC Ticket failed: Could not find NameIdentifier or sub claim!");
+                                        context.Fail("Could not resolve unique user identifier (sub claim) from OIDC token");
                                         return;
                                     }
-
-                                    var providerKey = subClaim.Value;
                                     var claimsDict = principal.Claims
                                         .GroupBy(c => c.Type)
                                         .ToDictionary(g => g.Key, g => g.First().Value);
-
-                                    var externalInfo = new ExternalIdentityDto(providerName, providerKey, claimsDict);
-                                    
+                                    var externalInfo = new ExternalIdentityDto(context.Scheme.Name, subClaim.Value, claimsDict);
                                     var federatedAuthService = context.HttpContext.RequestServices.GetRequiredService<IFederatedAuthService>();
-                                    var loginResult = await federatedAuthService.HandleCallbackAsync(providerName, externalInfo).ConfigureAwait(false);
-
+                                    var loginResult = await federatedAuthService.HandleCallbackAsync(context.Scheme.Name, externalInfo).ConfigureAwait(false);
                                     if (loginResult.IsSuccess)
                                     {
-                                        logger.LogInformation("OIDC Ticket processed successfully. Issuing Application cookie and redirecting to {ReturnUri}", context.ReturnUri ?? "/");
                                         context.HandleResponse();
                                         context.Response.Redirect(context.ReturnUri ?? "/");
                                     }
                                     else
                                     {
-                                        logger.LogError("OIDC Ticket processing failed: {Error}", loginResult.ErrorMessage);
                                         context.Fail(loginResult.ErrorMessage);
                                     }
                                 }
