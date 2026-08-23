@@ -5,15 +5,15 @@ import BatteryTracker from "../components/BatteryTracker";
 import SubmitButton from "../components/SubmitButton";
 import buildQuery from "odata-query";
 import {
-  getArmory,
+  getArmoryItems,
   getUsersUsers,
   getUsersProfile,
   getVaults,
   getProducts,
-  putArmoryFromKey,
-  postArmory,
-  patchArmoryFromKey,
-  deleteArmoryFromKey
+  putArmoryItemsFromKey,
+  postArmoryItems,
+  patchArmoryItemsFromKey,
+  deleteArmoryItemsFromKey
 } from "../api/endpoints";
 
 export default function Armory() {
@@ -153,7 +153,7 @@ export default function Armory() {
     setError("");
     try {
       const filter = store.activeArsenalId ? `arsenalId eq ${store.activeArsenalId}` : undefined;
-      const res = await getArmory({
+      const res = await getArmoryItems({
         expand: "product($expand=manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber),vault,owner,beneficiary",
         filter
       });
@@ -316,7 +316,7 @@ export default function Armory() {
     if (!item) return;
     const newRoundCount = (item.roundCount || 0) + 50;
     try {
-      const res = await putArmoryFromKey(id, { ...item, roundCount: newRoundCount });
+      const res = await putArmoryItemsFromKey(id, { ...item, roundCount: newRoundCount });
       if (res.status === 200 || res.status === 204) {
         setArmoryItems((prev) =>
           prev.map((it) =>
@@ -344,7 +344,7 @@ export default function Armory() {
         payload["@odata.type"] = accessoryItem["@odata.type"];
       }
 
-      const res = await patchArmoryFromKey(accessoryId, payload);
+      const res = await patchArmoryItemsFromKey(accessoryId, payload);
       if (res.status === 200 || res.status === 204) {
         await fetchArmoryItems();
         setSelectedExistingId("");
@@ -368,7 +368,7 @@ export default function Armory() {
         payload["@odata.type"] = accessoryItem["@odata.type"];
       }
 
-      const res = await patchArmoryFromKey(accessoryId, payload);
+      const res = await patchArmoryItemsFromKey(accessoryId, payload);
       if (res.status === 200 || res.status === 204) {
         await fetchArmoryItems();
       } else {
@@ -426,7 +426,7 @@ export default function Armory() {
         payload.serialNumber = newAccSerialNumber || "";
       }
 
-      const res = await postArmory(payload);
+      const res = await postArmoryItems(payload);
 
       if (res.status === 200 || res.status === 201 || res.status === 204) {
         await fetchArmoryItems();
@@ -750,7 +750,7 @@ export default function Armory() {
     setIsSaving(true);
     try {
       const isEdit = isEditMode;
-      const url = isEdit ? `/api/v1/Armory/${form.id}` : "/api/v1/Armory";
+      const url = isEdit ? `/api/v1/ArmoryItems/${form.id}` : "/api/v1/ArmoryItems";
       const method = isEdit ? "PUT" : "POST";
 
       // 1. Build a clean payload matching the C# ArmoryItem base properties exactly
@@ -810,8 +810,8 @@ export default function Armory() {
 
       // 3. Perform the API Request
       const res = isEditMode
-        ? await putArmoryFromKey(form.id, payload)
-        : await postArmory(payload);
+        ? await putArmoryItemsFromKey(form.id, payload)
+        : await postArmoryItems(payload);
 
       if (res.status === 200 || res.status === 201 || res.status === 204) {
         await fetchArmoryItems();
@@ -858,7 +858,7 @@ export default function Armory() {
   const handleDeleteConfirm = async () => {
     if (!deleteConfirmId) return;
     try {
-      const res = await deleteArmoryFromKey(deleteConfirmId);
+      const res = await deleteArmoryItemsFromKey(deleteConfirmId);
       if (res.status === 200 || res.status === 204) {
         setArmoryItems((prev) => prev.filter((f) => f.id !== deleteConfirmId));
       } else {

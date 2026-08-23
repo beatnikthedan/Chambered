@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 // - useArmoryGetGET: Hook for pulling multiple records (collection-get)
 // - useArmoryPatchByKeyPATCH: Hook for partially updating a single record by its key (PATCH)
 // ==========================================
-import { useGetArmory, usePatchArmoryFromKey } from "../api/endpoints";
+import { useGetArmoryItems, usePatchArmoryItemsFromKey } from "../api/endpoints";
 
 export default function Munitions() {
   // ==========================================
@@ -39,7 +39,7 @@ export default function Munitions() {
   // - select: "id,name" -> only load the 'id' and 'name' fields from the DB.
   // - filter: "product/manufacturer/name eq 'Glock'" -> only load items made by Glock.
   // ==========================================
-  const { data, isLoading, error } = useGetArmory({
+  const { data, isLoading, error } = useGetArmoryItems({
     top: 1,
     select: "id,name",
     filter: "product/manufacturer/name eq 'Glock'",
@@ -50,7 +50,7 @@ export default function Munitions() {
   // This configures a PATCH request to /api/v1/Armory/{key}.
   // We pass an options object containing an 'onSuccess' callback.
   // ==========================================
-  const saveMutation = usePatchArmoryFromKey({
+  const saveMutation = usePatchArmoryItemsFromKey({
     mutation: {
       onSuccess: () => {
         // [UI FEEDBACK] - Show success notification banner
@@ -59,9 +59,9 @@ export default function Munitions() {
         setTimeout(() => setSaveSuccess(false), 3000);
 
         // [SAVING DATA] - Invalidate the GET cache.
-        // This tells React Query that any cached data starting with "/api/v1/Armory" is now out of date.
+        // This tells React Query that any cached data starting with "/api/v1/ArmoryItems" is now out of date.
         // React Query will automatically re-run the GET hook above in the background to grab the updated name.
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/Armory"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/ArmoryItems"] });
       },
       onError: (err) => {
         alert("Failed to save changes: " + (err.message || "Unknown error"));
