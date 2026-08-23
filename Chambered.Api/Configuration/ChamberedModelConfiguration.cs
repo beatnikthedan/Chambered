@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Asp.Versioning.OData;
+using Chambered.Api.Dto.Versioning;
 using Chambered.Api.Models;
 using Chambered.Data.Models;
 using Microsoft.OData.ModelBuilder;
@@ -159,6 +160,13 @@ public class ChamberedModelConfiguration : IModelConfiguration
         vault.Property(v => v.EncryptionIv).MaxLength = 128;
         vault.Property(v => v.PasscodeHint).MaxLength = 250;
         vault.Property(v => v.BackupKeyLocation).MaxLength = 250;
+
+
+        builder.ComplexType<GitHubReleaseDto>();
+
+        builder.Function("GetCurrentVersion").Returns<GitHubReleaseDto>();
+        builder.Function("GetVersionHistory").ReturnsCollection<GitHubReleaseDto>().Parameter<bool>("PreRelease");
+        builder.Function("GetLatestVersion").Returns<GitHubReleaseDto>().Parameter<bool>("PreRelease");
 
         #endregion
     }

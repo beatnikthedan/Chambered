@@ -87,8 +87,8 @@ export default function ApiKeysSettings({ usersList = [] }) {
     return foundUser?.email || ownerId;
   };
 
-  const handleDeleteApiKey = async (keyId) => {
-    if (window.confirm("Are you sure you want to delete this API key?")) {
+  const handlerevokeApiKey = async (keyId) => {
+    if (window.confirm("Are you sure you want to revoke this API key?")) {
       try {
         await revokeMutation.mutateAsync({ id: keyId });
         refetch();
@@ -200,9 +200,9 @@ export default function ApiKeysSettings({ usersList = [] }) {
                   <td>
                     <button
                       className="btn btn-danger btn-mini"
-                      onClick={() => handleDeleteApiKey(key.id!)}
+                      onClick={() => handlerevokeApiKey(key.id!)}
                     >
-                      Delete
+                      Revoke
                     </button>
                   </td>
                 </tr>
