@@ -95,10 +95,14 @@ builder.Services.AddAutoMapper(c =>
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.ExpireTimeSpan = TimeSpan.FromDays(7); // Set your desired expiration window
-    options.SlidingExpiration = true;              // Reset window when user is active
-    options.Cookie.HttpOnly = true;                 // Protects completely against XSS token theft
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Allows HTTP locally, requires HTTPS in prod
+    var policy = builder.Configuration
+        .GetSection(nameof(LoginConfiguration))
+        .Get<LoginConfiguration>() ?? new LoginConfiguration();
+
+    options.ExpireTimeSpan = TimeSpan.FromDays(policy.SessionLifetime > 0 ? policy.SessionLifetime : 7);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     options.Cookie.SameSite = builder.Environment.IsDevelopment()
         ? SameSiteMode.Lax
         : SameSiteMode.Strict;

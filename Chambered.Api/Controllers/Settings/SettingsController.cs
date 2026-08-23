@@ -10,27 +10,20 @@ namespace Chambered.Api.Controllers.Settings
     /// <summary>
     /// Provides access to general application settings, including password policies and notification configurations.
     /// </summary>
+    /// <param name="identityOptions">The security identity password options.</param>
+    /// <param name="appriseConfiguration">The Apprise notifications configuration options.</param>
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/settings")]
     [Authorize]
-    public class SettingsController : ControllerBase
+    public class SettingsController(
+        IOptions<IdentityOptions> identityOptions,
+        IOptions<AppriseConfiguration> appriseConfiguration,
+        IOptions<LoginConfiguration> loginConfiguration) : ControllerBase
     {
-        private readonly IOptions<IdentityOptions> _identityOptions;
-        private readonly IOptions<AppriseConfiguration> _appriseConfiguration;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SettingsController"/> class.
-        /// </summary>
-        /// <param name="identityOptions">The security identity password options.</param>
-        /// <param name="appriseConfiguration">The Apprise notifications configuration options.</param>
-        public SettingsController(
-            IOptions<IdentityOptions> identityOptions,
-            IOptions<AppriseConfiguration> appriseConfiguration)
-        {
-            _identityOptions = identityOptions;
-            _appriseConfiguration = appriseConfiguration;
-        }
+        private readonly IOptions<IdentityOptions> _identityOptions = identityOptions;
+        private readonly IOptions<AppriseConfiguration> _appriseConfiguration = appriseConfiguration;
+        private readonly IOptions<LoginConfiguration> _loginConfiguration = loginConfiguration;
 
         /// <summary>
         /// Retrieves the active password complexity policy settings.
@@ -81,6 +74,22 @@ namespace Chambered.Api.Controllers.Settings
 
             return Ok(response);
         }
+
+        [HttpGet("login-settings")]
+        [Produces("application/json")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(LiginConfigurationResponseDto), StatusCodes.Status200OK)]
+        public ActionResult<LiginConfigurationResponseDto> GetLoginSettings()
+        {
+            var opts = _loginConfiguration.Value;
+
+            var response = new LiginConfigurationResponseDto(
+                SessionLifetime: opts.SessionLifetime,
+                DisableLocalUsers: opts.DisableLocalUsers
+            );
+
+            return Ok(response);
+        }
     }
 
     /// <summary>
@@ -113,5 +122,10 @@ namespace Chambered.Api.Controllers.Settings
         string NotificationKey,
         string TargetUrls,
         int TimeoutSeconds
+    );
+
+    public record LiginConfigurationResponseDto(
+        int SessionLifetime,
+        bool DisableLocalUsers
     );
 }

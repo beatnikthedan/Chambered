@@ -85,6 +85,7 @@ import type {
   GetVersionLatestVersionFromPreReleaseParams,
   GetVersionVersionHistoryFromPreReleaseParams,
   GitHubReleaseDto,
+  LiginConfigurationResponseDto,
   LoginRequestDto,
   Manufacturer,
   PasswordPolicyResponseDto,
@@ -10799,6 +10800,120 @@ export function useGetSettingsAppriseSettings<TData = Awaited<ReturnType<typeof 
 
 
 
+export type getSettingsLoginSettingsResponse200 = {
+  data: LiginConfigurationResponseDto
+  status: 200
+}
+
+export type getSettingsLoginSettingsResponseSuccess = (getSettingsLoginSettingsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getSettingsLoginSettingsResponse = (getSettingsLoginSettingsResponseSuccess)
+
+export const getGetSettingsLoginSettingsUrl = () => {
+
+
+
+
+  return `/api/v1/settings/login-settings`
+}
+
+export const getSettingsLoginSettings = async ( options?: RequestInit): Promise<getSettingsLoginSettingsResponse> => {
+
+  const res = await fetch(getGetSettingsLoginSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getSettingsLoginSettingsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getSettingsLoginSettingsResponse
+}
+
+
+
+
+
+export const getGetSettingsLoginSettingsQueryKey = () => {
+    return [
+    `/api/v1/settings/login-settings`
+    ] as const;
+    }
+
+
+export const getGetSettingsLoginSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsLoginSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettingsLoginSettings>>> = ({ signal }) => getSettingsLoginSettings({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSettingsLoginSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getSettingsLoginSettings>>>
+export type GetSettingsLoginSettingsQueryError = unknown
+
+
+export function useGetSettingsLoginSettings<TData = Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsLoginSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsLoginSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsLoginSettings<TData = Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsLoginSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsLoginSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsLoginSettings<TData = Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetSettingsLoginSettings<TData = Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsLoginSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSettingsLoginSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export type postUsersRegisterResponse200 = {
   data: UserResponseDto
   status: 200
@@ -13069,6 +13184,8 @@ export const getGetSettingsPasswordPolicyResponseMock = (overrideResponse: Parti
 
 export const getGetSettingsAppriseSettingsResponseMock = (overrideResponse: Partial<Extract<AppriseSettingsResponseDto, object>> = {}): AppriseSettingsResponseDto => ({allowInvalidCertificates: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), hostUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notificationKey: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), targetUrls: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), timeoutSeconds: faker.helpers.arrayElement([faker.number.int(), undefined]), ...overrideResponse})
 
+export const getGetSettingsLoginSettingsResponseMock = (overrideResponse: Partial<Extract<LiginConfigurationResponseDto, object>> = {}): LiginConfigurationResponseDto => ({sessionLifetime: faker.helpers.arrayElement([faker.number.int(), undefined]), disableLocalUsers: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
+
 export const getPostUsersRegisterResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
 
 export const getGetUsersProfileResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
@@ -14014,6 +14131,18 @@ export const getGetSettingsAppriseSettingsMockHandler = (overrideResponse?: Appr
   }, options)
 }
 
+export const getGetSettingsLoginSettingsMockHandler = (overrideResponse?: LiginConfigurationResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<LiginConfigurationResponseDto> | LiginConfigurationResponseDto), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/settings/login-settings', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSettingsLoginSettingsResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
 export const getPostUsersRegisterMockHandler = (overrideResponse?: UserResponseDto | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserResponseDto> | UserResponseDto), options?: RequestHandlerOptions) => {
   return http.post('*/api/v1/Users/register', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
@@ -14298,6 +14427,7 @@ export const getChamberedAPIMock = () => [
   getPostRolesUpdateRoleClaimsFromRoleNameMockHandler(),
   getGetSettingsPasswordPolicyMockHandler(),
   getGetSettingsAppriseSettingsMockHandler(),
+  getGetSettingsLoginSettingsMockHandler(),
   getPostUsersRegisterMockHandler(),
   getGetUsersProfileMockHandler(),
   getPutUsersUpdateProfileMockHandler(),

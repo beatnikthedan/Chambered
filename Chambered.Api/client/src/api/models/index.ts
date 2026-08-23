@@ -222,6 +222,7 @@ export * from './gitHubAssetDto';
 export * from './gitHubAuthorDto';
 export * from './gitHubReleaseDto';
 export * from './itemCondition';
+export * from './liginConfigurationResponseDto';
 export * from './lockType';
 export * from './loginRequest';
 export * from './loginRequestDto';

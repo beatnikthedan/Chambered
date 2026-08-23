@@ -5,6 +5,7 @@ import {
   useGetUsersUsers,
   useGetUsersProfile,
   useGetSettingsPasswordPolicy,
+  useGetSettingsLoginSettings,
   usePostUsersRegister,
   usePutUsersUpdateUserFromId,
   useDeleteUsersUserFromId,
@@ -28,6 +29,14 @@ export default function UserSettings({ currentUserId }) {
     error: profileError,
     refetch: refetchProfile,
   } = useGetUsersProfile({ query: { enabled: !currentUserIsAdmin } });
+
+  const {
+    data: loginResponse,
+    isLoading: loginLoading,
+    error: loginError,
+  } = useGetSettingsLoginSettings();
+
+  const loginPolicy = loginResponse?.data;
 
   const {
     data: policyResponse,
@@ -364,10 +373,37 @@ export default function UserSettings({ currentUserId }) {
 
       <div className="policies-grid">
         {/* Session Policy Card */}
-        <div className="policy-card">
-          <div className="policy-card-title">Session Policy</div>
 
-          <div className="policy-row">
+        {loginLoading ? (
+          <div className="loading-spinner-box">
+            <div className="spinner"></div>
+            <p>Loading settings...</p>
+          </div>
+        ) : loginError ? (
+          <div className="vaults-error-card">
+            <span className="err-icon">⚠️</span>
+            <p>{loginError?.message || "Failed to load."}</p>
+            {/* <button
+              className="btn btn-secondary btn-small"
+              onClick={() =>
+                queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] })
+              }
+            >
+              Retry
+            </button> */}
+          </div>
+        ) : loginPolicy === null ? (
+          <div className="empty-state panel">
+            <h3>You have no items in your Vaults.</h3>
+            <p style={{ marginTop: "4px", color: "var(--text-muted)" }}>
+              Click 'Add Item' above to add your first item.
+            </p>
+          </div>
+        ) : (
+          <div className="policy-card">
+            <div className="policy-card-title">Session Policy</div>
+
+            {/* <div className="policy-row">
             <div className="policy-info">
               <span className="policy-label">Require TOTP for owners</span>
               <span className="policy-sublabel">
@@ -410,65 +446,51 @@ export default function UserSettings({ currentUserId }) {
               />
               <span className="slider"></span>
             </label>
-          </div>
+          </div> */}
 
-          <div className="policy-row">
-            <div className="policy-info">
-              <span className="policy-label">Session lifetime</span>
-              <span className="policy-sublabel">
-                Token validity duration for authenticated web sessions
-              </span>
-            </div>
-            <select
-              className="policy-lifetime-select"
-              value={sessionPolicy.sessionLifetime}
-              onChange={(e) =>
-                setSessionPolicy({
-                  ...sessionPolicy,
-                  sessionLifetime: e.target.value,
-                })
-              }
-            >
-              <option value="1 day">1 day</option>
-              <option value="7 days">7 days</option>
-              <option value="30 days">30 days</option>
-              <option value="90 days">90 days</option>
-            </select>
-          </div>
-
-          <div className="policy-row">
-            <div className="policy-info">
-              <span className="policy-label">Disable Local Users</span>
-              <span className="policy-sublabel">
-                Restricts logins strictly to integrated OIDC sign-on
-              </span>
-            </div>
-            <label className="switch">
+            <div className="policy-row">
+              <div className="policy-info">
+                <span className="policy-label">Session lifetime</span>
+                <span className="policy-sublabel">
+                  Token validity duration for authenticated web sessions
+                </span>
+              </div>
               <input
-                type="checkbox"
-                checked={sessionPolicy.disableLocal}
-                onChange={(e) =>
-                  setSessionPolicy({
-                    ...sessionPolicy,
-                    disableLocal: e.target.checked,
-                  })
-                }
+                style={{ width: 60 }}
+                type="number"
+                //placeholder="7"
+                value={loginPolicy.sessionLifetime}
               />
-              <span className="slider"></span>
-            </label>
+            </div>
+
+            <div className="policy-row">
+              <div className="policy-info">
+                <span className="policy-label">Disable Local Users</span>
+                <span className="policy-sublabel">
+                  Restricts logins strictly to integrated OIDC sign-on
+                </span>
+              </div>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={loginPolicy.disableLocalUsers}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Password Policy Card */}
         {policiesAreLoading ? (
           <div className="loading-spinner-box">
             <div className="spinner"></div>
-            <p>Analyzing vaults...</p>
+            <p>Loading settings...</p>
           </div>
         ) : policyError ? (
           <div className="vaults-error-card">
             <span className="err-icon">⚠️</span>
-            <p>{policyError?.message || "Failed to load password policy."}</p>
+            <p>{policyError?.message || "Failed to load."}</p>
             {/* <button
               className="btn btn-secondary btn-small"
               onClick={() =>
