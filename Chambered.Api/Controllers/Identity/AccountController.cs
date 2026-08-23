@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using Chambered.Infrastructure.Configuration;
 
 namespace Chambered.Api.Controllers.Identity
 {
@@ -22,16 +24,19 @@ namespace Chambered.Api.Controllers.Identity
     {
         private readonly IAuthenticationService _authenticationService;
         private readonly IFederatedAuthService _federatedAuthService;
+        private readonly IOptions<LoginConfiguration> _loginConfiguration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AccountController"/> class.
         /// </summary>
         public AccountController(
             IAuthenticationService authenticationService,
-            IFederatedAuthService federatedAuthService)
+            IFederatedAuthService federatedAuthService,
+            IOptions<LoginConfiguration> loginConfiguration)
         {
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
             _federatedAuthService = federatedAuthService ?? throw new ArgumentNullException(nameof(federatedAuthService));
+            _loginConfiguration = loginConfiguration ?? throw new ArgumentNullException(nameof(loginConfiguration));
         }
 
         /// <summary>
@@ -45,6 +50,11 @@ namespace Chambered.Api.Controllers.Identity
             if (model == null)
             {
                 return BadRequest("Login credentials cannot be null.");
+            }
+
+            if (_loginConfiguration.Value.DisableLocalUsers)
+            {
+                return BadRequest("Local authentication is disabled. Please sign in using integrated OIDC SSO.");
             }
 
             try

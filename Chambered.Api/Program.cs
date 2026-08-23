@@ -190,7 +190,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-
+builder.Services.Configure<LoginConfiguration>(builder.Configuration.GetSection(nameof(LoginConfiguration)));
 
 builder.Services.AddHttpClient<IGitHubReleaseService, GitHubReleaseService>();
 builder.Services.Configure<GitHubReleaseConfiguration>(builder.Configuration.GetSection(nameof(GitHubReleaseConfiguration)));

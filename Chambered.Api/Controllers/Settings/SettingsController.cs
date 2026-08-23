@@ -77,12 +77,12 @@ namespace Chambered.Api.Controllers.Settings
         [HttpGet("login-settings")]
         [Produces("application/json")]
         [AllowAnonymous]
-        [ProducesResponseType(typeof(LiginConfigurationResponseDto), StatusCodes.Status200OK)]
-        public ActionResult<LiginConfigurationResponseDto> GetLoginSettings()
+        [ProducesResponseType(typeof(LoginConfigurationResponseDto), StatusCodes.Status200OK)]
+        public ActionResult<LoginConfigurationResponseDto> GetLoginSettings()
         {
             var opts = _loginConfiguration.Value;
 
-            var response = new LiginConfigurationResponseDto(
+            var response = new LoginConfigurationResponseDto(
                 SessionLifetime: opts.SessionLifetime,
                 DisableLocalUsers: opts.DisableLocalUsers,
                 DisableNewUserRegistration: opts.DisableNewUserRegistration
@@ -124,7 +124,7 @@ namespace Chambered.Api.Controllers.Settings
         int TimeoutSeconds
     );
 
-    public record LiginConfigurationResponseDto(
+    public record LoginConfigurationResponseDto(
         int SessionLifetime,
         bool DisableLocalUsers,
         bool DisableNewUserRegistration

@@ -224,6 +224,7 @@ export * from './gitHubReleaseDto';
 export * from './itemCondition';
 export * from './liginConfigurationResponseDto';
 export * from './lockType';
+export * from './loginConfigurationResponseDto';
 export * from './loginRequest';
 export * from './loginRequestDto';
 export * from './manufacturer';

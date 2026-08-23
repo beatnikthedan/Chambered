@@ -7,8 +7,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using Chambered.Infrastructure.Configuration;
 
 namespace Chambered.Api.Controllers.Identity
 {
@@ -22,13 +25,17 @@ namespace Chambered.Api.Controllers.Identity
     public class UsersController : ControllerBase
     {
         private readonly IIdentityService _identityService;
+        private readonly IOptions<LoginConfiguration> _loginConfiguration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UsersController"/> class.
         /// </summary>
-        public UsersController(IIdentityService identityService)
+        public UsersController(
+            IIdentityService identityService,
+            IOptions<LoginConfiguration> loginConfiguration)
         {
             _identityService = identityService ?? throw new ArgumentNullException(nameof(identityService));
+            _loginConfiguration = loginConfiguration ?? throw new ArgumentNullException(nameof(loginConfiguration));
         }
 
         /// <summary>
@@ -42,6 +49,15 @@ namespace Chambered.Api.Controllers.Identity
             if (model == null)
             {
                 return BadRequest("Registration payload cannot be null.");
+            }
+
+            if (_loginConfiguration.Value.DisableNewUserRegistration)
+            {
+                var existingUsers = await _identityService.GetAllUsersAsync().ConfigureAwait(false);
+                if (existingUsers.Any())
+                {
+                    return BadRequest("Self-registration is disabled. Please contact your system administrator.");
+                }
             }
 
             try

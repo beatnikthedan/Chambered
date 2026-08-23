@@ -85,7 +85,7 @@ import type {
   GetVersionLatestVersionFromPreReleaseParams,
   GetVersionVersionHistoryFromPreReleaseParams,
   GitHubReleaseDto,
-  LiginConfigurationResponseDto,
+  LoginConfigurationResponseDto,
   LoginRequestDto,
   Manufacturer,
   PasswordPolicyResponseDto,
@@ -10801,7 +10801,7 @@ export function useGetSettingsAppriseSettings<TData = Awaited<ReturnType<typeof 
 
 
 export type getSettingsLoginSettingsResponse200 = {
-  data: LiginConfigurationResponseDto
+  data: LoginConfigurationResponseDto
   status: 200
 }
 
@@ -13184,7 +13184,7 @@ export const getGetSettingsPasswordPolicyResponseMock = (overrideResponse: Parti
 
 export const getGetSettingsAppriseSettingsResponseMock = (overrideResponse: Partial<Extract<AppriseSettingsResponseDto, object>> = {}): AppriseSettingsResponseDto => ({allowInvalidCertificates: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), hostUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), notificationKey: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), targetUrls: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), timeoutSeconds: faker.helpers.arrayElement([faker.number.int(), undefined]), ...overrideResponse})
 
-export const getGetSettingsLoginSettingsResponseMock = (overrideResponse: Partial<Extract<LiginConfigurationResponseDto, object>> = {}): LiginConfigurationResponseDto => ({sessionLifetime: faker.helpers.arrayElement([faker.number.int(), undefined]), disableLocalUsers: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), disableNewUserRegistration: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
+export const getGetSettingsLoginSettingsResponseMock = (overrideResponse: Partial<Extract<LoginConfigurationResponseDto, object>> = {}): LoginConfigurationResponseDto => ({sessionLifetime: faker.helpers.arrayElement([faker.number.int(), undefined]), disableLocalUsers: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), disableNewUserRegistration: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
 
 export const getPostUsersRegisterResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
 
@@ -14131,7 +14131,7 @@ export const getGetSettingsAppriseSettingsMockHandler = (overrideResponse?: Appr
   }, options)
 }
 
-export const getGetSettingsLoginSettingsMockHandler = (overrideResponse?: LiginConfigurationResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<LiginConfigurationResponseDto> | LiginConfigurationResponseDto), options?: RequestHandlerOptions) => {
+export const getGetSettingsLoginSettingsMockHandler = (overrideResponse?: LoginConfigurationResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<LoginConfigurationResponseDto> | LoginConfigurationResponseDto), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/settings/login-settings', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
