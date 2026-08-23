@@ -66,14 +66,12 @@ namespace Chambered.Infrastructure.Services.Identity
 
             var usernameToUse = !string.IsNullOrWhiteSpace(request.Username)
                 ? request.Username.Trim()
-                : (!string.IsNullOrWhiteSpace(request.FirstName) ? request.FirstName.Trim() : emailToUse);
+                : emailToUse;
 
             var user = new ChamberedUser
             {
                 UserName = usernameToUse,
                 Email = emailToUse,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
                 EmailConfirmed = true
             };
 
@@ -135,8 +133,6 @@ namespace Chambered.Infrastructure.Services.Identity
             return new UserResponseDto(
                 user.Id,
                 user.Email,
-                user.FirstName,
-                user.LastName,
                 request.Roles ?? Enumerable.Empty<string>(),
                 user.UserName ?? user.Email,
                 GetGravatarUrl(user.Email)
@@ -164,8 +160,6 @@ namespace Chambered.Infrastructure.Services.Identity
             return new UserResponseDto(
                 user.Id,
                 user.Email ?? string.Empty,
-                user.FirstName,
-                user.LastName,
                 roles,
                 user.UserName ?? user.Email,
                 GetGravatarUrl(user.Email)
@@ -202,8 +196,6 @@ namespace Chambered.Infrastructure.Services.Identity
                 userResponseDtos.Add(new UserResponseDto(
                     user.Id,
                     user.Email ?? string.Empty,
-                    user.FirstName,
-                    user.LastName,
                     roles ?? Enumerable.Empty<string>(),
                     user.UserName ?? user.Email,
                     GetGravatarUrl(user.Email)
@@ -235,8 +227,6 @@ namespace Chambered.Infrastructure.Services.Identity
                 throw new KeyNotFoundException($"User with ID '{id}' was not found.");
             }
 
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName;
             user.Email = request.Email;
             user.UserName = request.Email;
 

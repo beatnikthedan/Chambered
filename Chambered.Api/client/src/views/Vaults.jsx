@@ -630,6 +630,12 @@ export default function Vaults() {
                                 ))}
                               </select>
                             </div>
+
+                            <div className="form-item full-row">
+                              {selectedVault.createdBy} {selectedVault.created}{" "}
+                              {selectedVault.modifiedBy}{" "}
+                              {selectedVault.modified}
+                            </div>
                           </div>
                         </div>
                       )}

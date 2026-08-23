@@ -12,10 +12,6 @@ export interface UserResponseDto {
   /** @nullable */
   email?: string | null;
   /** @nullable */
-  firstName?: string | null;
-  /** @nullable */
-  lastName?: string | null;
-  /** @nullable */
   roles?: string[] | null;
   /** @nullable */
   username?: string | null;

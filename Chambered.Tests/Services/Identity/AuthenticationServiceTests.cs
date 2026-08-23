@@ -101,8 +101,6 @@ namespace Chambered.Tests.Services.Identity
             {
                 Id = "user-123",
                 Email = "user@test.com",
-                FirstName = "Test",
-                LastName = "User",
                 UserName = "user@test.com"
             };
 

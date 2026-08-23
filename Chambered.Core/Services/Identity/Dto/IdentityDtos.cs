@@ -7,8 +7,6 @@ namespace Chambered.Core.Services.Identity.Dto
     /// </summary>
     public record CreateUserRequestDto(
         string Email,
-        string FirstName,
-        string LastName,
         IEnumerable<string> Roles,
         string? Password = null,
         string? Username = null
@@ -19,8 +17,6 @@ namespace Chambered.Core.Services.Identity.Dto
     /// </summary>
     public record UpdateUserRequestDto(
         string Email,
-        string FirstName,
-        string LastName,
         IEnumerable<string> Roles,
         string? Password = null
     );
@@ -31,8 +27,6 @@ namespace Chambered.Core.Services.Identity.Dto
     public record UserResponseDto(
         string Id,
         string Email,
-        string FirstName,
-        string LastName,
         IEnumerable<string> Roles,
         string? Username = null,
         string? GravatarUrl = null

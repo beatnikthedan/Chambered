@@ -50,7 +50,7 @@ namespace Chambered.Tests.Services.Identity
         {
             // Arrange
             var createDto = new CreateUserRequestDto(
-                "john@test.com", "John", "Doe",
+                "john@test.com",
                 new List<string> { "User" }
             );
 
@@ -80,8 +80,6 @@ namespace Chambered.Tests.Services.Identity
             {
                 Id = userId,
                 Email = "john@test.com",
-                FirstName = "John",
-                LastName = "Doe",
                 UserName = "john@test.com"
             };
 

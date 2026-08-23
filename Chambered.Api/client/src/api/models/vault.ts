@@ -12,7 +12,6 @@ import type { Vault as __Vault } from './vault';
 import type { VaultCategory } from './vaultCategory';
 
 export interface Vault {
-  id?: number;
   /** @nullable */
   productId?: number | null;
   product?: Security;
@@ -43,6 +42,15 @@ export interface Vault {
   batteryLastChangedDate?: string | null;
   /** @nullable */
   batteryExpirationDate?: string | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
   parentVault?: __Vault;
   /** @nullable */
   childVaults?: Vault[] | null;

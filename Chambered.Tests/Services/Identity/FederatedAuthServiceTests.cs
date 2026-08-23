@@ -155,9 +155,7 @@ namespace Chambered.Tests.Services.Identity
             {
                 Id = "user-id-999",
                 UserName = "testuser",
-                Email = userEmail,
-                FirstName = null,
-                LastName = null
+                Email = userEmail
             };
 
             _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
@@ -208,9 +206,7 @@ namespace Chambered.Tests.Services.Identity
             {
                 Id = "user-id-999",
                 UserName = "testuser",
-                Email = userEmail,
-                FirstName = null,
-                LastName = null
+                Email = userEmail
             };
 
             _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
@@ -261,9 +257,7 @@ namespace Chambered.Tests.Services.Identity
             {
                 Id = "user-id-999",
                 UserName = "testuser",
-                Email = userEmail,
-                FirstName = null,
-                LastName = null
+                Email = userEmail
             };
 
             _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))

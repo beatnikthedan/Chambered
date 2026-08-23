@@ -112,11 +112,9 @@ namespace Chambered.Tests.Integration
             var identityService = _serviceProvider.GetRequiredService<IdentityService>();
             var createDto = new CreateUserRequestDto(
                 Email: "admin@chambered.com",
-                FirstName: "admin", // Alphanumeric username passed in FirstName during first-run setup
-                LastName: "User",
                 Roles: new[] { "Admin" },
                 Password: "Password123!",
-                Username: null
+                Username: "admin"
             );
 
             // Act

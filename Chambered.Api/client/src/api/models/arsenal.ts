@@ -10,7 +10,6 @@ import type { ChamberedUser } from './chamberedUser';
 import type { Vault } from './vault';
 
 export interface Arsenal {
-  id?: number;
   /** @nullable */
   name?: string | null;
   /** @nullable */
@@ -19,6 +18,15 @@ export interface Arsenal {
   iconName?: string | null;
   /** @nullable */
   colorHex?: string | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
   /** @nullable */
   users?: ChamberedUser[] | null;
   /** @nullable */

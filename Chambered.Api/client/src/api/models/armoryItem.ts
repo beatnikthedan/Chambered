@@ -13,7 +13,6 @@ import type { Product } from './product';
 import type { Vault } from './vault';
 
 export interface ArmoryItem {
-  id?: number;
   /** @nullable */
   itemType?: string | null;
   productId?: number;
@@ -44,6 +43,15 @@ export interface ArmoryItem {
   imageUrl?: string | null;
   /** @nullable */
   notesMarkdown?: string | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
   product?: Product;
   beneficiary?: ChamberedUser;
   arsenal?: Arsenal;

@@ -14,7 +14,6 @@ export interface Product {
   name?: string | null;
   /** @nullable */
   description?: string | null;
-  id?: number;
   /** @nullable */
   productType?: string | null;
   /** @nullable */
@@ -33,4 +32,13 @@ export interface Product {
   documents?: Document[] | null;
   /** @nullable */
   armoryItems?: ArmoryItem[] | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
 }

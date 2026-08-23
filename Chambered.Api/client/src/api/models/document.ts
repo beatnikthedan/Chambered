@@ -9,7 +9,6 @@ import type { DocumentType } from './documentType';
 import type { Product } from './product';
 
 export interface Document {
-  id?: number;
   /** @nullable */
   title?: string | null;
   type?: DocumentType;
@@ -22,5 +21,14 @@ export interface Document {
   fileSizeBytes?: number;
   /** @nullable */
   productId?: number | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
   product?: Product;
 }

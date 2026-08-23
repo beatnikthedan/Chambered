@@ -40,8 +40,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService<UserSession>, CurrentUserService>();
 builder.Services.AddScoped<AuditPropertiesInterceptor>();
 
-builder.Services.AddDbContext<ChamberedDbContext>(options =>
-    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api")));
+builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
+{
+    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api"));
+    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor>());
+    options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
+});
 
 // 2. Configure Identity
 // 1. Add Identity base setup

@@ -209,8 +209,6 @@ export function StoreProvider({ children }) {
         username,
         email,
         password,
-        firstName: username,
-        lastName: "",
       });
       if (res.status === 200 || res.status === 201) {
         setIsInitialized(true);

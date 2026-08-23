@@ -8,11 +8,19 @@
 import type { PewPew } from './pewPew';
 
 export interface Caliber {
-  id?: number;
   /** @nullable */
   name?: string | null;
   /** @nullable */
   alternateNames?: string | null;
   /** @nullable */
   models?: PewPew[] | null;
+  id?: number;
+  /** @nullable */
+  created?: string | null;
+  /** @nullable */
+  modified?: string | null;
+  /** @nullable */
+  createdBy?: string | null;
+  /** @nullable */
+  modifiedBy?: string | null;
 }

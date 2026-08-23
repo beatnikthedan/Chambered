@@ -10,10 +10,6 @@ export interface UpdateUserRequestDto {
   /** @nullable */
   email?: string | null;
   /** @nullable */
-  firstName?: string | null;
-  /** @nullable */
-  lastName?: string | null;
-  /** @nullable */
   roles?: string[] | null;
   /** @nullable */
   password?: string | null;
