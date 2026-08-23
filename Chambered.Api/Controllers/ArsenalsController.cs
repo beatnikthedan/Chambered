@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using Chambered.Api.Controllers.Settings;
 using Chambered.Data;
 using Chambered.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -10,9 +9,8 @@ namespace Chambered.Api.Controllers;
 
 [ApiVersion("1.0")]
 [Authorize]
-public class ArsenalsController : ODataControllerBase<Arsenal, int>
+public class ArsenalsController(ChamberedDbContext db) : ODataControllerBase<Arsenal, int>(db)
 {
-    public ArsenalsController(ChamberedDbContext db) : base(db) { }
 
     #region Navigation Properties
 

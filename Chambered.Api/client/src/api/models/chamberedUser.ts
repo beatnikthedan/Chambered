@@ -6,8 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 import type { ArmoryItem } from './armoryItem';
+import type { Arsenal } from './arsenal';
 
 export interface ChamberedUser {
+  /** @nullable */
+  arsenals?: Arsenal[] | null;
   /** @nullable */
   id?: string | null;
   /** @nullable */

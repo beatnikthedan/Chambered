@@ -20,7 +20,6 @@ export interface Vault {
   /** @nullable */
   description?: string | null;
   arsenalId?: number;
-  arsenal?: Arsenal;
   vaultCategory?: VaultCategory;
   /** @nullable */
   parentVaultId?: number | null;
@@ -51,6 +50,7 @@ export interface Vault {
   createdBy?: string | null;
   /** @nullable */
   modifiedBy?: string | null;
+  arsenal?: Arsenal;
   parentVault?: __Vault;
   /** @nullable */
   childVaults?: Vault[] | null;

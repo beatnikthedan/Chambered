@@ -30,8 +30,6 @@ export interface Product {
   imageContentType?: string | null;
   /** @nullable */
   documents?: Document[] | null;
-  /** @nullable */
-  armoryItems?: ArmoryItem[] | null;
   id?: number;
   /** @nullable */
   created?: string | null;
@@ -41,4 +39,6 @@ export interface Product {
   createdBy?: string | null;
   /** @nullable */
   modifiedBy?: string | null;
+  /** @nullable */
+  armoryItems?: ArmoryItem[] | null;
 }

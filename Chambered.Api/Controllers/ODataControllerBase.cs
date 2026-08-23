@@ -1,7 +1,6 @@
 using Chambered.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
-using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
@@ -15,15 +14,10 @@ namespace Chambered.Api.Controllers;
 /// <typeparam name="TEntity">The target entity database model class.</typeparam>
 /// <typeparam name="TKey">The primary key type of the target entity.</typeparam>
 [Produces("application/json")]
-public abstract class ODataControllerBase<TEntity, TKey> : ODataController
+public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) : ODataController
     where TEntity : class
 {
-    protected readonly ChamberedDbContext _db;
-
-    protected ODataControllerBase(ChamberedDbContext db)
-    {
-        _db = db;
-    }
+    protected readonly ChamberedDbContext _db = db;
 
     /// <summary>
     /// Retrieves a queryable collection of entities.
@@ -61,7 +55,7 @@ public abstract class ODataControllerBase<TEntity, TKey> : ODataController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public virtual async Task<ActionResult<TEntity>> Get([FromODataUri] TKey key)
+    public virtual async Task<ActionResult<TEntity>> Get(TKey key)
     {
         var entity = await _db.Set<TEntity>().FindAsync(key);
         if (entity == null) return NotFound();
@@ -103,7 +97,7 @@ public abstract class ODataControllerBase<TEntity, TKey> : ODataController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public virtual async Task<IActionResult> Put([FromODataUri] TKey key, [FromBody] TEntity update)
+    public virtual async Task<IActionResult> Put(TKey key, [FromBody] TEntity update)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -136,7 +130,7 @@ public abstract class ODataControllerBase<TEntity, TKey> : ODataController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public virtual async Task<IActionResult> Patch([FromODataUri] TKey key, [FromBody] Delta<TEntity> patch)
+    public virtual async Task<IActionResult> Patch(TKey key, [FromBody] Delta<TEntity> patch)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -169,7 +163,7 @@ public abstract class ODataControllerBase<TEntity, TKey> : ODataController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public virtual async Task<IActionResult> Delete([FromODataUri] TKey key)
+    public virtual async Task<IActionResult> Delete(TKey key)
     {
         var entity = await _db.Set<TEntity>().FindAsync(key);
         if (entity == null) return NotFound();

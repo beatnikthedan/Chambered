@@ -16,6 +16,7 @@ export interface ArmoryItem {
   /** @nullable */
   itemType?: string | null;
   productId?: number;
+  product?: Product;
   /** @nullable */
   name?: string | null;
   /** @nullable */
@@ -34,7 +35,6 @@ export interface ArmoryItem {
   beneficiaryId?: string | null;
   /** @nullable */
   vaultId?: number | null;
-  vault?: Vault;
   /** @nullable */
   arsenalId?: number | null;
   /** @nullable */
@@ -52,8 +52,8 @@ export interface ArmoryItem {
   createdBy?: string | null;
   /** @nullable */
   modifiedBy?: string | null;
-  product?: Product;
   beneficiary?: ChamberedUser;
+  vault?: Vault;
   arsenal?: Arsenal;
   parentItem?: __ArmoryItem;
   /** @nullable */

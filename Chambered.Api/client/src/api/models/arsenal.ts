@@ -18,6 +18,8 @@ export interface Arsenal {
   iconName?: string | null;
   /** @nullable */
   colorHex?: string | null;
+  /** @nullable */
+  vaults?: Vault[] | null;
   id?: number;
   /** @nullable */
   created?: string | null;
@@ -28,9 +30,7 @@ export interface Arsenal {
   /** @nullable */
   modifiedBy?: string | null;
   /** @nullable */
-  users?: ChamberedUser[] | null;
-  /** @nullable */
-  vaults?: Vault[] | null;
-  /** @nullable */
   armoryItems?: ArmoryItem[] | null;
+  /** @nullable */
+  chamberedUsers?: ChamberedUser[] | null;
 }
