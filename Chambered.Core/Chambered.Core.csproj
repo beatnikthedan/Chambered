@@ -16,4 +16,8 @@
 		<ProjectReference Include="..\Chambered.Data\Chambered.Data.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Extensions\" />
+	</ItemGroup>
+
 </Project>

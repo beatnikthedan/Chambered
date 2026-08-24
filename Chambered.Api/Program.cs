@@ -224,7 +224,7 @@ builder.Services.Configure<GitHubReleaseConfiguration>(builder.Configuration.Get
 builder.Services.Configure<AppriseConfiguration>(builder.Configuration.GetSection(nameof(AppriseConfiguration)));
 builder.Services.AddScoped<IAppriseService, AppriseService>();
 
-builder.Services.Configure<IdentityConfiguration>(builder.Configuration.GetSection("Identity"));
+//builder.Services.Configure<IdentityConfiguration>(builder.Configuration.GetSection("Identity"));
 builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IFederatedAuthService, FederatedAuthService>();
