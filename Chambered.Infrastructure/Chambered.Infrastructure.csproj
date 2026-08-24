@@ -28,8 +28,4 @@
 		<ProjectReference Include="..\Chambered.Core\Chambered.Core.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Extensions\" />
-	</ItemGroup>
-
 </Project>

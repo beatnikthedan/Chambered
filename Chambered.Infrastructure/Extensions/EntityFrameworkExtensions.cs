@@ -1,6 +1,9 @@
+using Chambered.Core.Services;
 using Chambered.Core.Services.Identity;
+using Chambered.Core.Utility;
 using Chambered.Data;
 using Chambered.Infrastructure.LogMessages;
+using Chambered.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,10 +14,55 @@ using System.Security.Claims;
 namespace Chambered.Infrastructure.Extensions
 {
     /// <summary>
-    /// Provides host and service provider extension methods for database initialization, schema verification, and identity seeding.
+    /// Provides extension methods for Entity Framework database migrations and seeding operations.
     /// </summary>
-    public static class MigrationExtensions
+    public static class EntityFrameworkExtensions
     {
+        /// <summary>
+        /// Registers the generic current user service and configures custom claims mapping.
+        /// </summary>
+        /// <typeparam name="TUser">The identity user type.</typeparam>
+        /// <param name="services">The service collection.</param>
+        /// <param name="mapCustomClaims">The custom claims mapping action.</param>
+        /// <returns>The updated service collection.</returns>
+        public static IServiceCollection AddCurrentUserService<TUser>(
+            this IServiceCollection services,
+            Action<ClaimsPrincipal, TUser>? mapCustomClaims = null)
+            where TUser : IdentityUser, new()
+        {
+            services.AddScoped<ICurrentUserService<TUser>, CurrentUserService<TUser>>();
+
+            services.Configure<CurrentUserServiceOptions<TUser>>(options =>
+            {
+                options.MapCustomClaims = mapCustomClaims;
+            });
+            return services;
+        }
+
+        /// <summary>
+        /// Registers the generic audit properties interceptor and configures custom name formatting.
+        /// </summary>
+        /// <typeparam name="TUser">The identity user type.</typeparam>
+        /// <param name="services">The service collection.</param>
+        /// <param name="resolveAuditorName">The custom function to resolve auditor names.</param>
+        /// <returns>The updated service collection.</returns>
+        public static IServiceCollection AddAuditPropertiesInterceptor<TUser>(
+            this IServiceCollection services,
+            Func<TUser, string>? resolveAuditorName = null)
+            where TUser : IdentityUser
+        {
+            services.AddScoped<AuditPropertiesInterceptor<TUser>>();
+
+            services.Configure<AuditPropertiesInterceptorOptions<TUser>>(options =>
+            {
+                if (resolveAuditorName != null)
+                {
+                    options.ResolveAuditorName = resolveAuditorName;
+                }
+            });
+            return services;
+        }
+
         /// <summary>
         /// Ensures the target DbContext database is created and runs an optional asynchronous seeding routine.
         /// </summary>
@@ -27,7 +75,7 @@ namespace Chambered.Infrastructure.Extensions
             using var scope = host.Services.CreateScope();
             var services = scope.ServiceProvider;
             var contextName = typeof(TContext).Name;
-            var log = new MigrationLogMessages(services.GetRequiredService<ILogger<TContext>>());
+            var log = new EntityFrameworkExtensionsLogMessages(services.GetRequiredService<ILogger<TContext>>());
 
             try
             {
@@ -58,7 +106,7 @@ namespace Chambered.Infrastructure.Extensions
         public static async Task SeedAdminUser(this IServiceProvider services)
         {
             var logger = services.GetRequiredService<ILogger<ChamberedDbContext>>();
-            var log = new UserSeedLogMessages(logger);
+            var log = new EntityFrameworkExtensionsLogMessages(logger);
             var userManager = services.GetRequiredService<UserManager<ChamberedUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             var rulebook = services.GetRequiredService<IAuthorizationRulebook>();
@@ -126,16 +174,17 @@ namespace Chambered.Infrastructure.Extensions
         public static async Task SeedIdentityData(this IServiceProvider services)
         {
             var logger = services.GetRequiredService<ILogger<ChamberedDbContext>>();
+            var log = new EntityFrameworkExtensionsLogMessages(logger);
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             var rulebook = services.GetRequiredService<IAuthorizationRulebook>();
 
-            logger.LogInformation("Seeding standard roles and granular permission claims dynamically...");
+            log.SeedingIdentityDataStarted();
 
             foreach (var entry in rulebook.RoleClaimsMap)
             {
                 if (!await roleManager.RoleExistsAsync(entry.Key).ConfigureAwait(false))
                 {
-                    logger.LogInformation("Creating missing system role: {RoleName}", entry.Key);
+                    log.SystemRoleCreated(entry.Key);
                     await roleManager.CreateAsync(new IdentityRole(entry.Key)).ConfigureAwait(false);
                 }
 
@@ -147,7 +196,7 @@ namespace Chambered.Infrastructure.Extensions
                     {
                         if (!existingClaims.Any(c => c.Value == permission))
                         {
-                            logger.LogInformation("Assigning permission claim {Permission} to role {RoleName}", permission, entry.Key);
+                            log.PermissionAssigned(permission, entry.Key);
                             await roleManager.AddClaimAsync(role, new Claim(rulebook.PermissionClaimType, permission)).ConfigureAwait(false);
                         }
                     }

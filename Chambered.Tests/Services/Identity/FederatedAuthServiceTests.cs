@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Chambered.Core.Services.Identity;
 using Chambered.Core.Services.Identity.Dto;
 using Chambered.Data;
@@ -10,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using Xunit;
 
 namespace Chambered.Tests.Services.Identity
 {
@@ -21,7 +26,6 @@ namespace Chambered.Tests.Services.Identity
         private readonly Mock<SignInManager<ChamberedUser>> _signInManagerMock;
         private readonly Mock<UserManager<ChamberedUser>> _userManagerMock;
         private readonly Mock<RoleManager<IdentityRole>> _roleManagerMock;
-        private readonly Mock<IConfiguration> _configurationMock;
         private readonly Mock<ILogger<FederatedAuthService>> _loggerMock;
         private readonly FederatedAuthenticationConfiguration _fedConfig;
         private readonly FederatedAuthService _federatedAuthService;
@@ -79,6 +83,7 @@ namespace Chambered.Tests.Services.Identity
             rulebookMock.Setup(r => r.DefaultUserRoleName).Returns("User");
             rulebookMock.Setup(r => r.AdminRoleName).Returns("Admin");
             rulebookMock.Setup(r => r.PermissionClaimType).Returns("permission");
+            rulebookMock.Setup(r => r.RoleClaimsMap).Returns(new Dictionary<string, IEnumerable<string>>());
 
             _federatedAuthService = new FederatedAuthService(
                 _signInManagerMock.Object,
@@ -86,7 +91,8 @@ namespace Chambered.Tests.Services.Identity
                 _roleManagerMock.Object,
                 optionsFedMock,
                 _loggerMock.Object,
-                rulebookMock.Object);
+                rulebookMock.Object,
+                Enumerable.Empty<IFederatedCustomScopeProcessor>());
         }
 
         /// <summary>
@@ -164,6 +170,24 @@ namespace Chambered.Tests.Services.Identity
                 Email = userEmail
             };
 
+            var rulebookMock = new Mock<IAuthorizationRulebook>();
+            rulebookMock.Setup(r => r.DefaultUserRoleName).Returns("User");
+            rulebookMock.Setup(r => r.AdminRoleName).Returns("Admin");
+            rulebookMock.Setup(r => r.RoleClaimsMap).Returns(new Dictionary<string, IEnumerable<string>>
+            {
+                { "UsageAdmin", new[] { "PermissionA" } },
+                { "DataAdmin", new[] { "PermissionB" } }
+            });
+
+            var localService = new FederatedAuthService(
+                _signInManagerMock.Object,
+                _userManagerMock.Object,
+                _roleManagerMock.Object,
+                Options.Create(_fedConfig),
+                _loggerMock.Object,
+                rulebookMock.Object,
+                Enumerable.Empty<IFederatedCustomScopeProcessor>());
+
             _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
                 .ReturnsAsync(user);
 
@@ -185,7 +209,7 @@ namespace Chambered.Tests.Services.Identity
             _signInManagerMock.Setup(s => s.SignInAsync(user, false, null))
                 .Returns(Task.CompletedTask);
 
-            var result = await _federatedAuthService.HandleCallbackAsync(providerName, externalInfo);
+            var result = await localService.HandleCallbackAsync(providerName, externalInfo);
 
             Assert.NotNull(result);
             Assert.True(result.IsSuccess);
@@ -297,6 +321,144 @@ namespace Chambered.Tests.Services.Identity
 
             _userManagerMock.Verify(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "User" }))), Times.Once);
             _userManagerMock.Verify(u => u.RemoveFromRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "Viewer" }))), Times.Once);
+        }
+
+        /// <summary>
+        /// Verifies that HandleCallbackAsync skips role mappings that are not defined in the authorization rulebook.
+        /// </summary>
+        [Fact]
+        public async Task HandleCallbackAsync_ShouldSkipInvalidRoleMappings()
+        {
+            var providerName = "Authentik";
+            var userEmail = "test@authentik.gov";
+
+            var providerConfig = _fedConfig.Providers.First();
+            providerConfig.RoleMappings["GroupA"] = "ValidRole";
+            providerConfig.RoleMappings["GroupB"] = "InvalidRole";
+
+            var userClaims = new Dictionary<string, string>
+            {
+                { "email", userEmail },
+                { "preferred_username", "testuser" },
+                { "roles", "GroupA,GroupB" }
+            };
+
+            var externalInfo = new ExternalIdentityDto(providerName, "authentik-external-key-123", userClaims);
+            var user = new ChamberedUser
+            {
+                Id = "user-id-999",
+                UserName = "testuser",
+                Email = userEmail
+            };
+
+            var rulebookMock = new Mock<IAuthorizationRulebook>();
+            rulebookMock.Setup(r => r.DefaultUserRoleName).Returns("User");
+            rulebookMock.Setup(r => r.AdminRoleName).Returns("Admin");
+            rulebookMock.Setup(r => r.RoleClaimsMap).Returns(new Dictionary<string, IEnumerable<string>>
+            {
+                { "ValidRole", new[] { "Permission1" } }
+            });
+
+            var localService = new FederatedAuthService(
+                _signInManagerMock.Object,
+                _userManagerMock.Object,
+                _roleManagerMock.Object,
+                Options.Create(_fedConfig),
+                _loggerMock.Object,
+                rulebookMock.Object,
+                Enumerable.Empty<IFederatedCustomScopeProcessor>());
+
+            _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.FindByLoginAsync(providerName, externalInfo.ProviderKey))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.GetRolesAsync(user))
+                .ReturnsAsync(new List<string>());
+
+            _userManagerMock.Setup(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "ValidRole" }))))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _signInManagerMock.Setup(s => s.SignInAsync(user, false, null))
+                .Returns(Task.CompletedTask);
+
+            var result = await localService.HandleCallbackAsync(providerName, externalInfo);
+
+            Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+            _userManagerMock.Verify(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.Contains("ValidRole"))), Times.Once);
+            _userManagerMock.Verify(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.Contains("InvalidRole"))), Times.Never);
+        }
+
+        /// <summary>
+        /// Verifies that HandleCallbackAsync invokes the registered custom scope processors during user authentication.
+        /// </summary>
+        [Fact]
+        public async Task HandleCallbackAsync_ShouldExecuteCustomScopeProcessors()
+        {
+            var providerName = "Authentik";
+            var userEmail = "test@authentik.gov";
+            var userClaims = new Dictionary<string, string>
+            {
+                { "email", userEmail },
+                { "preferred_username", "testuser" },
+                { "roles", "User" },
+                { "arsenals", "arsenal-123,arsenal-456" }
+            };
+
+            var externalInfo = new ExternalIdentityDto(providerName, "authentik-external-key-123", userClaims);
+            var user = new ChamberedUser
+            {
+                Id = "user-id-999",
+                UserName = "testuser",
+                Email = userEmail
+            };
+
+            var rulebookMock = new Mock<IAuthorizationRulebook>();
+            rulebookMock.Setup(r => r.DefaultUserRoleName).Returns("User");
+            rulebookMock.Setup(r => r.AdminRoleName).Returns("Admin");
+            rulebookMock.Setup(r => r.RoleClaimsMap).Returns(new Dictionary<string, IEnumerable<string>>
+            {
+                { "User", new[] { "Permission1" } }
+            });
+
+            var processorMock = new Mock<IFederatedCustomScopeProcessor>();
+            processorMock.Setup(p => p.TargetScope).Returns("arsenals");
+            processorMock.Setup(p => p.ProcessScopeAsync(user, "arsenal-123,arsenal-456"))
+                .Returns(Task.CompletedTask)
+                .Verifiable();
+
+            var localService = new FederatedAuthService(
+                _signInManagerMock.Object,
+                _userManagerMock.Object,
+                _roleManagerMock.Object,
+                Options.Create(_fedConfig),
+                _loggerMock.Object,
+                rulebookMock.Object,
+                new[] { processorMock.Object });
+
+            _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.FindByLoginAsync(providerName, externalInfo.ProviderKey))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.GetRolesAsync(user))
+                .ReturnsAsync(new List<string> { "User" });
+
+            _userManagerMock.Setup(u => u.UpdateAsync(user))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _signInManagerMock.Setup(s => s.SignInAsync(user, false, null))
+                .Returns(Task.CompletedTask);
+
+            var result = await localService.HandleCallbackAsync(providerName, externalInfo);
+
+            Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+            processorMock.Verify();
+            _userManagerMock.Verify(u => u.UpdateAsync(user), Times.Once);
         }
     }
 }

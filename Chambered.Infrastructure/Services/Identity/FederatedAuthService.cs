@@ -6,7 +6,11 @@ using Chambered.Infrastructure.LogMessages.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace Chambered.Infrastructure.Services.Identity
 {
@@ -19,6 +23,7 @@ namespace Chambered.Infrastructure.Services.Identity
         private readonly IOptions<FederatedAuthenticationConfiguration> _federatedOptions;
         private readonly ILogger<FederatedAuthService> _logger;
         private readonly IAuthorizationRulebook _rulebook;
+        private readonly IEnumerable<IFederatedCustomScopeProcessor> _scopeProcessors;
         private readonly FederatedAuthServiceLogMessages _log;
 
         /// <summary>
@@ -28,16 +33,17 @@ namespace Chambered.Infrastructure.Services.Identity
         /// <param name="userManager">The identity user manager.</param>
         /// <param name="roleManager">The identity role manager.</param>
         /// <param name="federatedOptions">The federated options configurations.</param>
-        /// <param name="configuration">The configuration context.</param>
         /// <param name="logger">The service logger.</param>
         /// <param name="rulebook">The authorization rulebook.</param>
+        /// <param name="scopeProcessors">The custom scope processors.</param>
         public FederatedAuthService(
             SignInManager<ChamberedUser> signInManager,
             UserManager<ChamberedUser> userManager,
             RoleManager<IdentityRole> roleManager,
             IOptions<FederatedAuthenticationConfiguration> federatedOptions,
             ILogger<FederatedAuthService> logger,
-            IAuthorizationRulebook rulebook)
+            IAuthorizationRulebook rulebook,
+            IEnumerable<IFederatedCustomScopeProcessor> scopeProcessors)
         {
             _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -45,6 +51,7 @@ namespace Chambered.Infrastructure.Services.Identity
             _federatedOptions = federatedOptions ?? throw new ArgumentNullException(nameof(federatedOptions));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _rulebook = rulebook ?? throw new ArgumentNullException(nameof(rulebook));
+            _scopeProcessors = scopeProcessors ?? throw new ArgumentNullException(nameof(scopeProcessors));
             _log = new FederatedAuthServiceLogMessages(logger);
         }
 
@@ -134,15 +141,34 @@ namespace Chambered.Infrastructure.Services.Identity
 
             var user = await _userManager.FindByEmailAsync(email).ConfigureAwait(false);
             var loginInfo = await _userManager.FindByLoginAsync(providerName, externalInfo.ProviderKey).ConfigureAwait(false);
+            var isNewUser = false;
 
             if (user == null && loginInfo == null)
             {
+                isNewUser = true;
                 user = new ChamberedUser
                 {
                     UserName = username,
                     Email = email,
                     EmailConfirmed = true
                 };
+
+                foreach (var processor in _scopeProcessors)
+                {
+                    if (externalInfo.UserClaims.TryGetValue(processor.TargetScope, out var claimValue) && !string.IsNullOrWhiteSpace(claimValue))
+                    {
+                        _log.ScopeProcessingStarted(processor.TargetScope, "new_user");
+                        try
+                        {
+                            await processor.ProcessScopeAsync(user, claimValue).ConfigureAwait(false);
+                            _log.ScopeProcessingCompleted(processor.TargetScope, "new_user");
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.ScopeProcessingFailed(processor.TargetScope, "new_user", ex.Message);
+                        }
+                    }
+                }
 
                 var createResult = await _userManager.CreateAsync(user).ConfigureAwait(false);
                 if (!createResult.Succeeded)
@@ -174,7 +200,33 @@ namespace Chambered.Infrastructure.Services.Identity
                 _log.AccountLinked(providerName, user.Id);
             }
 
-            if (providerConfig != null)
+            if (user != null && !isNewUser)
+            {
+                var userProfileUpdated = false;
+                foreach (var processor in _scopeProcessors)
+                {
+                    if (externalInfo.UserClaims.TryGetValue(processor.TargetScope, out var claimValue) && !string.IsNullOrWhiteSpace(claimValue))
+                    {
+                        _log.ScopeProcessingStarted(processor.TargetScope, user.Id);
+                        try
+                        {
+                            await processor.ProcessScopeAsync(user, claimValue).ConfigureAwait(false);
+                            _log.ScopeProcessingCompleted(processor.TargetScope, user.Id);
+                            userProfileUpdated = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.ScopeProcessingFailed(processor.TargetScope, user.Id, ex.Message);
+                        }
+                    }
+                }
+                if (userProfileUpdated)
+                {
+                    await _userManager.UpdateAsync(user).ConfigureAwait(false);
+                }
+            }
+
+            if (providerConfig != null && user != null)
             {
                 var desiredRoles = new List<string>();
 
@@ -187,7 +239,14 @@ namespace Chambered.Infrastructure.Services.Identity
                         {
                             if (providerConfig.RoleMappings != null && providerConfig.RoleMappings.TryGetValue(group, out var mappedRole))
                             {
-                                desiredRoles.Add(mappedRole);
+                                if (_rulebook.RoleClaimsMap.ContainsKey(mappedRole) || mappedRole.Equals(_rulebook.AdminRoleName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    desiredRoles.Add(mappedRole);
+                                }
+                                else
+                                {
+                                    _logger.LogWarning("External group '{Group}' mapped to role '{MappedRole}' which does not exist in the rulebook.", group, mappedRole);
+                                }
                             }
                             else
                             {

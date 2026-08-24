@@ -369,45 +369,6 @@ app.MapHealthChecks("/health");
 app.Run();
 
 
-public static class CurrentUserServiceExtensions
-{
-    /// <summary>
-    /// Registers the generic current user service and configures custom claims mapping.
-    /// </summary>
-    public static IServiceCollection AddCurrentUserService<TUser>(
-        this IServiceCollection services,
-        Action<ClaimsPrincipal, TUser>? mapCustomClaims = null)
-        where TUser : IdentityUser, new()
-    {
-        services.AddScoped<ICurrentUserService<TUser>, CurrentUserService<TUser>>();
-
-        services.Configure<CurrentUserServiceOptions<TUser>>(options =>
-        {
-            options.MapCustomClaims = mapCustomClaims;
-        });
-        return services;
-    }
-    /// <summary>
-    /// Registers the generic audit properties interceptor and configures custom name formatting.
-    /// </summary>
-    public static IServiceCollection AddAuditPropertiesInterceptor<TUser>(
-        this IServiceCollection services,
-        Func<TUser, string>? resolveAuditorName = null)
-        where TUser : IdentityUser
-    {
-        services.AddScoped<AuditPropertiesInterceptor<TUser>>();
-
-        services.Configure<AuditPropertiesInterceptorOptions<TUser>>(options =>
-        {
-            if (resolveAuditorName != null)
-            {
-                options.ResolveAuditorName = resolveAuditorName;
-            }
-        });
-        return services;
-    }
-}
-
 
 public class ModelStateDebugLoggerFilter : Microsoft.AspNetCore.Mvc.Filters.IActionFilter
 {

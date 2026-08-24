@@ -103,5 +103,30 @@ namespace Chambered.Infrastructure.LogMessages.Identity
         /// <param name="errors">The details of the database failure.</param>
         [LoggerMessage(EventId = 262, EventName = "OidcLinkFailedWithErrors", Level = LogLevel.Error, Message = "SSO account linking failed: Provider={Provider}, User={UserId}, Errors={Errors}")]
         public partial void LinkFailedWithErrors(string provider, string userId, string errors);
+
+        /// <summary>
+        /// Logs that custom scope processing was started.
+        /// </summary>
+        /// <param name="scope">The scope name.</param>
+        /// <param name="userId">The user ID.</param>
+        [LoggerMessage(EventId = 263, EventName = "OidcScopeProcessingStarted", Level = LogLevel.Information, Message = "Custom scope processing started: Scope={Scope}, UserId={UserId}")]
+        public partial void ScopeProcessingStarted(string scope, string userId);
+
+        /// <summary>
+        /// Logs that custom scope processing completed successfully.
+        /// </summary>
+        /// <param name="scope">The scope name.</param>
+        /// <param name="userId">The user ID.</param>
+        [LoggerMessage(EventId = 264, EventName = "OidcScopeProcessingCompleted", Level = LogLevel.Information, Message = "Custom scope processing completed successfully: Scope={Scope}, UserId={UserId}")]
+        public partial void ScopeProcessingCompleted(string scope, string userId);
+
+        /// <summary>
+        /// Logs that custom scope processing failed with an error.
+        /// </summary>
+        /// <param name="scope">The scope name.</param>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="error">The exception error details.</param>
+        [LoggerMessage(EventId = 265, EventName = "OidcScopeProcessingFailed", Level = LogLevel.Error, Message = "Custom scope processing failed: Scope={Scope}, UserId={UserId}, Error={Error}")]
+        public partial void ScopeProcessingFailed(string scope, string userId, string error);
     }
 }
