@@ -29,6 +29,12 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddScoped<IIdentityService, IdentityService<TContext, TUser>>();
             services.AddScoped<IRoleService, RoleService>();
 
+            services.AddIdentity<TUser, IdentityRole>(options =>
+            {
+                // Static options like unique email can remain here
+                options.User.RequireUniqueEmail = false;
+            }).AddEntityFrameworkStores<TContext>().AddDefaultTokenProviders();
+
             return services;
         }
         

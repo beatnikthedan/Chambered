@@ -36,17 +36,6 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=../chambered.db";
 
-
-
-// 2. Configure Identity
-// 1. Add Identity base setup
-builder.Services.AddIdentity<ChamberedUser, IdentityRole>(options =>
-{
-    // Static options like unique email can remain here
-    options.User.RequireUniqueEmail = false;
-}).AddEntityFrameworkStores<ChamberedDbContext>()
-.AddDefaultTokenProviders();
-
 builder.Services.PostConfigure<IdentityOptions>(options =>
 {
     var policy = builder.Configuration
@@ -59,6 +48,9 @@ builder.Services.PostConfigure<IdentityOptions>(options =>
     options.Password.RequireUppercase = policy.RequireUppercase;
     options.Password.RequireDigit = policy.RequireDigit;
 });
+
+// 2. Configure Identity
+// 1. Add Identity base setup
 
 
 builder.Services.AddChamberedAuthentication(builder.Configuration, builder.Environment);
@@ -191,6 +183,8 @@ builder.Services.AddSwaggerGen(c =>
 #region BeatnikToolKit.EntityFramework
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddIdentityServices<ChamberedDbContext, ChamberedUser>();
 
 builder.Services.AddCurrentUserService<ChamberedUser>((principal, user) =>
 {
