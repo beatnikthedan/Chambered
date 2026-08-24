@@ -11,7 +11,7 @@ import SubmitButton from "../components/SubmitButton";
 import {
   useGetArsenals,
   usePostArsenals,
-  usePatchArsenalsFromKey,
+  usePutArsenalsFromKey,
   useDeleteArsenalsFromKey,
   useGetUsersUsers,
 } from "../api/endpoints";
@@ -34,7 +34,7 @@ export default function ArsenalSettings() {
 
   const users = usersData?.data ?? [];
 
-  const updateArsenalMutation = usePatchArsenalsFromKey({
+  const updateArsenalMutation = usePutArsenalsFromKey({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["/api/v1/Arsenals"] });
@@ -93,6 +93,7 @@ export default function ArsenalSettings() {
       description: selectedArsenal.description || null,
       colorHex: selectedArsenal.colorHex || "#2563eb",
       iconName: selectedArsenal.iconName || "shield",
+      ChamberedUsers: selectedUserIds.map((uid) => ({ id: uid })),
     };
 
     try {
@@ -117,7 +118,7 @@ export default function ArsenalSettings() {
     isLoading: arsenalsAreLoading,
     error: arsenalsError,
   } = useGetArsenals({
-    expand: "chamberedusers",
+    expand: "ChamberedUsers",
   });
 
   useEffect(() => {
@@ -128,6 +129,7 @@ export default function ArsenalSettings() {
 
   const openCreateModal = () => {
     setIsEditArsenalMode(false);
+    setSelectedUserIds([]);
     setSelectedArsenal({
       id: 0,
       name: "",
@@ -140,6 +142,8 @@ export default function ArsenalSettings() {
 
   const openEditModal = (arsenal) => {
     setIsEditArsenalMode(true);
+    const usersList = arsenal.ChamberedUsers || arsenal.chamberedUsers || [];
+    setSelectedUserIds(usersList.map((u) => u.id));
     setSelectedArsenal({ ...arsenal });
     setShowArsenalForm(true);
   };
