@@ -330,7 +330,7 @@ public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) 
         var navigations = entry.Metadata.GetNavigations()
             .Concat<INavigationBase>(entry.Metadata.GetSkipNavigations());
 
-        var navigation = navigations.FirstOrDefault(n => 
+        var navigation = navigations.FirstOrDefault(n =>
             string.Equals(n.Name, pathSegment, StringComparison.OrdinalIgnoreCase));
 
         if (navigation == null)

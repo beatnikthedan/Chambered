@@ -4,7 +4,6 @@ using Chambered.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using System.Reflection.Emit;
 
 
 namespace Chambered.Data

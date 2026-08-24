@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Chambered.Core.Services.Identity.Dto;
 
 namespace Chambered.Core.Services.Identity

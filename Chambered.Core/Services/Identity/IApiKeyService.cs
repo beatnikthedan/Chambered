@@ -1,7 +1,5 @@
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using Chambered.Core.Services.Identity.Dto;
+using System.Security.Claims;
 
 namespace Chambered.Core.Services.Identity
 {

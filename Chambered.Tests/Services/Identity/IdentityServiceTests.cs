@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Chambered.Core.Services.Identity.Dto;
 using Chambered.Data;
@@ -25,6 +24,9 @@ namespace Chambered.Tests.Services.Identity
         private readonly Mock<ILogger<IdentityService>> _loggerMock;
         private readonly IdentityService _identityService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IdentityServiceTests"/> class.
+        /// </summary>
         public IdentityServiceTests()
         {
             _connection = new SqliteConnection("Filename=:memory:");
@@ -45,10 +47,12 @@ namespace Chambered.Tests.Services.Identity
             _identityService = new IdentityService(_userManagerMock.Object, _db, _loggerMock.Object);
         }
 
+        /// <summary>
+        /// Verifies that CreateUserAsync successfully invokes UserManager methods to create the user and add roles.
+        /// </summary>
         [Fact]
         public async Task CreateUserAsync_ShouldInvokeUserManager()
         {
-            // Arrange
             var createDto = new CreateUserRequestDto(
                 "john@test.com",
                 new List<string> { "User" }
@@ -61,20 +65,20 @@ namespace Chambered.Tests.Services.Identity
             _userManagerMock.Setup(u => u.AddToRolesAsync(It.IsAny<ChamberedUser>(), createDto.Roles))
                 .ReturnsAsync(IdentityResult.Success);
 
-            // Act
             var result = await _identityService.CreateUserAsync(createDto);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Equal("new-user-id", result.Id);
             Assert.Equal(createDto.Email, result.Email);
             _userManagerMock.Verify(u => u.CreateAsync(It.IsAny<ChamberedUser>(), It.IsAny<string>()), Times.Once);
         }
 
+        /// <summary>
+        /// Verifies that GetUserByIdAsync successfully returns the user details with associated role names.
+        /// </summary>
         [Fact]
         public async Task GetUserByIdAsync_ShouldReturnUserDetailsWithRoles()
         {
-            // Arrange
             var userId = "user-123";
             var user = new ChamberedUser
             {
@@ -89,16 +93,17 @@ namespace Chambered.Tests.Services.Identity
             _userManagerMock.Setup(u => u.GetRolesAsync(user))
                 .ReturnsAsync(new List<string> { "User", "Admin" });
 
-            // Act
             var result = await _identityService.GetUserByIdAsync(userId);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Equal(userId, result.Id);
             Assert.Contains("User", result.Roles);
             Assert.Contains("Admin", result.Roles);
         }
 
+        /// <summary>
+        /// Disposes standard database resources.
+        /// </summary>
         public void Dispose()
         {
             _db.Dispose();

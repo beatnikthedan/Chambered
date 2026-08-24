@@ -1,22 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Mail;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 using Chambered.Core.Services;
 using Chambered.Core.Services.Identity;
 using Chambered.Core.Services.Identity.Dto;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
+using Chambered.Infrastructure.LogMessages.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Chambered.Infrastructure.LogMessages.Identity;
+using System.Net.Mail;
+using System.Text;
 
 namespace Chambered.Infrastructure.Services.Identity
 {

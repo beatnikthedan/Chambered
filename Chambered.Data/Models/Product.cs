@@ -117,7 +117,7 @@ namespace Chambered.Data.Models
         public ActionType ActionType { get; set; } = ActionType.Unknown;
 
         #region IIsNfaItem
-        
+
         /// <inheritdoc/>
         public bool IsNfaItem { get; set; } = false;
 

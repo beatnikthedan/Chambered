@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -19,6 +18,9 @@ namespace Chambered.Tests.Services.Identity
         private readonly Mock<ILogger<RoleService>> _loggerMock;
         private readonly RoleService _roleService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RoleServiceTests"/> class.
+        /// </summary>
         public RoleServiceTests()
         {
             var roleStoreMock = new Mock<IRoleStore<IdentityRole>>();
@@ -29,10 +31,12 @@ namespace Chambered.Tests.Services.Identity
             _roleService = new RoleService(_roleManagerMock.Object, _loggerMock.Object);
         }
 
+        /// <summary>
+        /// Verifies that CreateRoleAsync invokes the underlying RoleManager create methods if the role does not already exist.
+        /// </summary>
         [Fact]
         public async Task CreateRoleAsync_ShouldInvokeRoleManagerCreate()
         {
-            // Arrange
             var roleName = "NewRole";
             _roleManagerMock.Setup(r => r.RoleExistsAsync(roleName))
                 .ReturnsAsync(false);
@@ -40,17 +44,17 @@ namespace Chambered.Tests.Services.Identity
             _roleManagerMock.Setup(r => r.CreateAsync(It.Is<IdentityRole>(role => role.Name == roleName)))
                 .ReturnsAsync(IdentityResult.Success);
 
-            // Act
             await _roleService.CreateRoleAsync(roleName);
 
-            // Assert
             _roleManagerMock.Verify(r => r.CreateAsync(It.Is<IdentityRole>(role => role.Name == roleName)), Times.Once);
         }
 
+        /// <summary>
+        /// Verifies that SyncClaimsToRoleAsync correctly determines which claims to add or remove to sync with the target permissions list.
+        /// </summary>
         [Fact]
         public async Task SyncClaimsToRoleAsync_ShouldAddAndRemoveClaimsCorrectly()
         {
-            // Arrange
             var roleName = "TestRole";
             var role = new IdentityRole(roleName) { Id = "role-123" };
 
@@ -74,10 +78,8 @@ namespace Chambered.Tests.Services.Identity
             _roleManagerMock.Setup(r => r.RemoveClaimAsync(role, It.IsAny<Claim>()))
                 .ReturnsAsync(IdentityResult.Success);
 
-            // Act
             await _roleService.SyncClaimsToRoleAsync(roleName, permissions);
 
-            // Assert
             _roleManagerMock.Verify(r => r.AddClaimAsync(role, It.Is<Claim>(c => c.Value == "Write")), Times.Once);
             _roleManagerMock.Verify(r => r.RemoveClaimAsync(role, It.Is<Claim>(c => c.Value == "Delete")), Times.Once);
             _roleManagerMock.Verify(r => r.AddClaimAsync(role, It.Is<Claim>(c => c.Value == "Read")), Times.Never);

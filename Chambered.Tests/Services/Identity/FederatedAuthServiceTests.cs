@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+using Chambered.Core.Services.Identity;
 using Chambered.Core.Services.Identity.Dto;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
@@ -14,7 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Xunit;
 
 namespace Chambered.Tests.Services.Identity
 {
@@ -31,6 +26,9 @@ namespace Chambered.Tests.Services.Identity
         private readonly FederatedAuthenticationConfiguration _fedConfig;
         private readonly FederatedAuthService _federatedAuthService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FederatedAuthServiceTests"/> class.
+        /// </summary>
         public FederatedAuthServiceTests()
         {
             var userStoreMock = new Mock<IUserStore<ChamberedUser>>();
@@ -56,12 +54,7 @@ namespace Chambered.Tests.Services.Identity
             _roleManagerMock = new Mock<RoleManager<IdentityRole>>(
                 roleStoreMock.Object, null, null, null, null);
 
-            _configurationMock = new Mock<IConfiguration>();
             _loggerMock = new Mock<ILogger<FederatedAuthService>>();
-
-            _configurationMock.Setup(c => c["Jwt:Key"]).Returns("super-secret-key-32-chars-long-12345");
-            _configurationMock.Setup(c => c["Jwt:Issuer"]).Returns("ChamberedIssuer");
-            _configurationMock.Setup(c => c["Jwt:ExpireDays"]).Returns("7");
 
             _fedConfig = new FederatedAuthenticationConfiguration();
             var provider = new FederatedProviderConfiguration
@@ -82,15 +75,23 @@ namespace Chambered.Tests.Services.Identity
 
             var optionsFedMock = Options.Create(_fedConfig);
 
+            var rulebookMock = new Mock<IAuthorizationRulebook>();
+            rulebookMock.Setup(r => r.DefaultUserRoleName).Returns("User");
+            rulebookMock.Setup(r => r.AdminRoleName).Returns("Admin");
+            rulebookMock.Setup(r => r.PermissionClaimType).Returns("permission");
+
             _federatedAuthService = new FederatedAuthService(
                 _signInManagerMock.Object,
                 _userManagerMock.Object,
                 _roleManagerMock.Object,
                 optionsFedMock,
-                _configurationMock.Object,
-                _loggerMock.Object);
+                _loggerMock.Object,
+                rulebookMock.Object);
         }
 
+        /// <summary>
+        /// Verifies that PrepareChallengeAsync returns the configured authentication challenge properties.
+        /// </summary>
         [Fact]
         public async Task PrepareChallengeAsync_ShouldReturnChallengeProperties()
         {
@@ -111,6 +112,9 @@ namespace Chambered.Tests.Services.Identity
             Assert.Equal("test-value", result.Properties["test-key"]);
         }
 
+        /// <summary>
+        /// Verifies that LinkAccountAsync associates the external SSO identity with the specified user profile.
+        /// </summary>
         [Fact]
         public async Task LinkAccountAsync_ShouldAssociateExternalSsoWithUser()
         {
@@ -132,13 +136,15 @@ namespace Chambered.Tests.Services.Identity
             _userManagerMock.Verify(u => u.AddLoginAsync(user, It.Is<UserLoginInfo>(li => li.LoginProvider == externalInfo.ProviderName && li.ProviderKey == externalInfo.ProviderKey)), Times.Once);
         }
 
+        /// <summary>
+        /// Verifies that HandleCallbackAsync performs delta role synchronization correctly on a successful login.
+        /// </summary>
         [Fact]
         public async Task HandleCallbackAsync_ShouldDeltaSyncRoles_SuccessfulLogin()
         {
             var providerName = "Authentik";
             var userEmail = "test@authentik.gov";
 
-            // Configure Role Mappings for delta sync
             var providerConfig = _fedConfig.Providers.First();
             providerConfig.RoleMappings["UsageAdmin"] = "UsageAdmin";
             providerConfig.RoleMappings["DataAdmin"] = "DataAdmin";
@@ -189,6 +195,9 @@ namespace Chambered.Tests.Services.Identity
             _signInManagerMock.Verify(s => s.SignInAsync(user, false, null), Times.Once);
         }
 
+        /// <summary>
+        /// Verifies that HandleCallbackAsync defaults to the standard user role when no mapped roles match.
+        /// </summary>
         [Fact]
         public async Task HandleCallbackAsync_ShouldDefaultToUserRole_WhenNoMappedGroupsMatch()
         {
@@ -236,6 +245,9 @@ namespace Chambered.Tests.Services.Identity
             _userManagerMock.Verify(u => u.RemoveFromRolesAsync(user, It.Is<IEnumerable<string>>(roles => roles.SequenceEqual(new[] { "Viewer" }))), Times.Once);
         }
 
+        /// <summary>
+        /// Verifies that HandleCallbackAsync defaults to the standard user role when role synchronization is disabled.
+        /// </summary>
         [Fact]
         public async Task HandleCallbackAsync_ShouldDefaultToUserRole_WhenRoleSyncIsDisabled()
         {

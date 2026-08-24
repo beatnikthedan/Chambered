@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Chambered.Core.Services;
 using Chambered.Core.Services.Identity.Dto;
@@ -30,6 +31,9 @@ namespace Chambered.Tests.Services.Identity
         private readonly Mock<ILogger<AuthenticationService>> _loggerMock;
         private readonly AuthenticationService _authenticationService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthenticationServiceTests"/> class.
+        /// </summary>
         public AuthenticationServiceTests()
         {
             var userStoreMock = new Mock<IUserStore<ChamberedUser>>();
@@ -80,23 +84,26 @@ namespace Chambered.Tests.Services.Identity
                 _loggerMock.Object);
         }
 
+        /// <summary>
+        /// Verifies that LoginAsync throws an UnauthorizedAccessException when the specified user email is not found.
+        /// </summary>
         [Fact]
         public async Task LoginAsync_ShouldThrowUnauthorizedException_WhenUserDoesNotExist()
         {
-            // Arrange
             var request = new LoginRequestDto("nonexistent@test.com", "Password123!", false);
             _userManagerMock.Setup(u => u.FindByEmailAsync(request.Email))
                 .ReturnsAsync((ChamberedUser?)null);
 
-            // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
                 _authenticationService.LoginAsync(request));
         }
 
+        /// <summary>
+        /// Verifies that LoginAsync returns a valid response details DTO when valid credentials are provided.
+        /// </summary>
         [Fact]
         public async Task LoginAsync_ShouldReturnResponseDto_WhenCredentialsAreValid()
         {
-            // Arrange
             var user = new ChamberedUser
             {
                 Id = "user-123",
@@ -115,10 +122,8 @@ namespace Chambered.Tests.Services.Identity
             _userManagerMock.Setup(u => u.GetRolesAsync(user))
                 .ReturnsAsync(new List<string> { "User" });
 
-            // Act
             var response = await _authenticationService.LoginAsync(request);
 
-            // Assert
             Assert.NotNull(response);
             Assert.Equal(user.Id, response.UserId);
             Assert.Equal(user.Email, response.Email);
@@ -127,76 +132,89 @@ namespace Chambered.Tests.Services.Identity
             Assert.Contains("User", response.Roles);
         }
 
+        /// <summary>
+        /// Verifies that LogoutAsync successfully invokes SignOutAsync on the underlying sign-in manager.
+        /// </summary>
         [Fact]
         public async Task LogoutAsync_ShouldSignOutSuccessfully()
         {
-            // Act
             await _authenticationService.LogoutAsync("user-123");
 
-            // Assert
             _signInManagerMock.Verify(s => s.SignOutAsync(), Times.Once);
         }
 
+        /// <summary>
+        /// Verifies that IsInitializedAsync returns false when there are no users in the database.
+        /// </summary>
         [Fact]
         public async Task IsInitializedAsync_ShouldReturnFalse_WhenNoUsersExist()
         {
-            // Arrange
             var users = new List<ChamberedUser>().AsQueryable();
             var mockQueryable = new TestAsyncEnumerable<ChamberedUser>(users);
             _userManagerMock.Setup(u => u.Users).Returns(mockQueryable);
 
-            // Act
             var result = await _authenticationService.IsInitializedAsync();
 
-            // Assert
             Assert.False(result);
         }
 
+        /// <summary>
+        /// Verifies that IsInitializedAsync returns true when at least one user exists in the database.
+        /// </summary>
         [Fact]
         public async Task IsInitializedAsync_ShouldReturnTrue_WhenAtLeastOneUserExists()
         {
-            // Arrange
             var users = new List<ChamberedUser> { new ChamberedUser() }.AsQueryable();
             var mockQueryable = new TestAsyncEnumerable<ChamberedUser>(users);
             _userManagerMock.Setup(u => u.Users).Returns(mockQueryable);
 
-            // Act
             var result = await _authenticationService.IsInitializedAsync();
 
-            // Assert
             Assert.True(result);
         }
     }
 
+    /// <summary>
+    /// Provides an asynchronous query provider implementation for unit testing.
+    /// </summary>
+    /// <typeparam name="TEntity">The type of entity in the query.</typeparam>
     internal class TestAsyncQueryProvider<TEntity> : Microsoft.EntityFrameworkCore.Query.IAsyncQueryProvider
     {
         private readonly IQueryProvider _inner;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TestAsyncQueryProvider{TEntity}"/> class.
+        /// </summary>
         internal TestAsyncQueryProvider(IQueryProvider inner)
         {
             _inner = inner;
         }
 
+        /// <inheritdoc/>
         public IQueryable CreateQuery(System.Linq.Expressions.Expression expression)
         {
             return new TestAsyncEnumerable<TEntity>(expression);
         }
 
+        /// <inheritdoc/>
         public IQueryable<TElement> CreateQuery<TElement>(System.Linq.Expressions.Expression expression)
         {
             return new TestAsyncEnumerable<TElement>(expression);
         }
 
+        /// <inheritdoc/>
         public object Execute(System.Linq.Expressions.Expression expression)
         {
             return _inner.Execute(expression);
         }
 
+        /// <inheritdoc/>
         public TResult Execute<TResult>(System.Linq.Expressions.Expression expression)
         {
             return _inner.Execute<TResult>(expression);
         }
 
+        /// <inheritdoc/>
         public TResult ExecuteAsync<TResult>(System.Linq.Expressions.Expression expression, System.Threading.CancellationToken cancellationToken = default)
         {
             var expectedResultType = typeof(TResult).GetGenericArguments()[0];
@@ -212,41 +230,63 @@ namespace Chambered.Tests.Services.Identity
         }
     }
 
+    /// <summary>
+    /// Represents an in-memory asynchronous enumerable collection for testing.
+    /// </summary>
+    /// <typeparam name="T">The collection item type.</typeparam>
     internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TestAsyncEnumerable{T}"/> class.
+        /// </summary>
         public TestAsyncEnumerable(IEnumerable<T> enumerable)
             : base(enumerable)
         { }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TestAsyncEnumerable{T}"/> class.
+        /// </summary>
         public TestAsyncEnumerable(System.Linq.Expressions.Expression expression)
             : base(expression)
         { }
 
+        /// <inheritdoc/>
         public IAsyncEnumerator<T> GetAsyncEnumerator(System.Threading.CancellationToken cancellationToken = default)
         {
             return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
         }
 
+        /// <inheritdoc/>
         IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
     }
 
+    /// <summary>
+    /// Represents an asynchronous enumerator wrapper over standard enumerator instances for testing.
+    /// </summary>
+    /// <typeparam name="T">The type of elements to enumerate.</typeparam>
     internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
     {
         private readonly IEnumerator<T> _inner;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TestAsyncEnumerator{T}"/> class.
+        /// </summary>
         public TestAsyncEnumerator(IEnumerator<T> inner)
         {
             _inner = inner;
         }
 
+        /// <inheritdoc/>
         public T Current => _inner.Current;
 
+        /// <inheritdoc/>
         public ValueTask DisposeAsync()
         {
             _inner.Dispose();
             return ValueTask.CompletedTask;
         }
 
+        /// <inheritdoc/>
         public ValueTask<bool> MoveNextAsync()
         {
             return new ValueTask<bool>(_inner.MoveNext());

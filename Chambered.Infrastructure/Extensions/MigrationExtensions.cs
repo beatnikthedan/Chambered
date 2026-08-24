@@ -1,14 +1,12 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+using Chambered.Core.Services.Identity;
 using Chambered.Data;
-using Chambered.Core.Security;
 using Chambered.Infrastructure.LogMessages;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace Chambered.Infrastructure.Extensions
 {
@@ -20,6 +18,10 @@ namespace Chambered.Infrastructure.Extensions
         /// <summary>
         /// Ensures the target DbContext database is created and runs an optional asynchronous seeding routine.
         /// </summary>
+        /// <typeparam name="TContext">The database context type.</typeparam>
+        /// <param name="host">The system host provider context.</param>
+        /// <param name="seedAction">The optional seed initialization action.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public static async Task ApplyMigrations<TContext>(this IHost host, Func<IServiceProvider, Task>? seedAction = null) where TContext : DbContext
         {
             using var scope = host.Services.CreateScope();
@@ -30,7 +32,7 @@ namespace Chambered.Infrastructure.Extensions
             try
             {
                 var context = services.GetRequiredService<TContext>();
-                
+
                 log.DatabaseCreated(contextName);
                 await context.Database.EnsureCreatedAsync().ConfigureAwait(false);
 
@@ -51,12 +53,15 @@ namespace Chambered.Infrastructure.Extensions
         /// <summary>
         /// Seeds a default administrative user and role based on ADMIN_EMAIL and ADMIN_PASSWORD environment variables.
         /// </summary>
+        /// <param name="services">The service provider to resolve managers.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public static async Task SeedAdminUser(this IServiceProvider services)
         {
             var logger = services.GetRequiredService<ILogger<ChamberedDbContext>>();
             var log = new UserSeedLogMessages(logger);
             var userManager = services.GetRequiredService<UserManager<ChamberedUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+            var rulebook = services.GetRequiredService<IAuthorizationRulebook>();
 
             var email = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
             var password = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
@@ -72,18 +77,18 @@ namespace Chambered.Infrastructure.Extensions
             {
                 log.AdminNotFound(email);
 
-                var user = new ChamberedUser 
-                { 
-                    UserName = "admin", 
-                    Email = email, 
-                    EmailConfirmed = true 
+                var user = new ChamberedUser
+                {
+                    UserName = "admin",
+                    Email = email,
+                    EmailConfirmed = true
                 };
-                
+
                 var result = await userManager.CreateAsync(user, password).ConfigureAwait(false);
 
                 if (result.Succeeded)
                 {
-                    string adminRole = ChamberedAuthorization.Roles.Admin;
+                    string adminRole = rulebook.AdminRoleName;
                     if (!await roleManager.RoleExistsAsync(adminRole).ConfigureAwait(false))
                     {
                         log.CreatingRole(adminRole);
@@ -116,14 +121,17 @@ namespace Chambered.Infrastructure.Extensions
         /// <summary>
         /// Seeds system roles and their default claim permission structures dynamically based on core authorization mapping configuration.
         /// </summary>
+        /// <param name="services">The service provider to resolve managers.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public static async Task SeedIdentityData(this IServiceProvider services)
         {
             var logger = services.GetRequiredService<ILogger<ChamberedDbContext>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+            var rulebook = services.GetRequiredService<IAuthorizationRulebook>();
 
             logger.LogInformation("Seeding standard roles and granular permission claims dynamically...");
 
-            foreach (var entry in ChamberedAuthorization.RoleClaimsMap)
+            foreach (var entry in rulebook.RoleClaimsMap)
             {
                 if (!await roleManager.RoleExistsAsync(entry.Key).ConfigureAwait(false))
                 {
@@ -140,7 +148,7 @@ namespace Chambered.Infrastructure.Extensions
                         if (!existingClaims.Any(c => c.Value == permission))
                         {
                             logger.LogInformation("Assigning permission claim {Permission} to role {RoleName}", permission, entry.Key);
-                            await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim(ChamberedAuthorization.PermissionClaimType, permission)).ConfigureAwait(false);
+                            await roleManager.AddClaimAsync(role, new Claim(rulebook.PermissionClaimType, permission)).ConfigureAwait(false);
                         }
                     }
                 }

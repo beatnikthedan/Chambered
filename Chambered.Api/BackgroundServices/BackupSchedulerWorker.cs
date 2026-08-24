@@ -2,13 +2,7 @@ using Chambered.Core.Services;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.LogMessages;
 using Cronos;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Chambered.Api.BackgroundServices
 {

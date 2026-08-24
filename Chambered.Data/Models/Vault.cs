@@ -2,7 +2,7 @@ using Chambered.Data.Enums;
 using Chambered.Data.Interfaces;
 
 namespace Chambered.Data.Models
-{    
+{
     /// <summary>
     /// Represents a secure container, room, vehicle, or physical location where armory items or ammunition are stored.
     /// </summary>

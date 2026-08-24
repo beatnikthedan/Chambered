@@ -1,15 +1,10 @@
 using Asp.Versioning;
 using Chambered.Core.Services.Identity;
 using Chambered.Core.Services.Identity.Dto;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 using Chambered.Infrastructure.Configuration;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Chambered.Api.Controllers.Identity
 {

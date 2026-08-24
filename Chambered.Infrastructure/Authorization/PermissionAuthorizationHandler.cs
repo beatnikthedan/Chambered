@@ -1,26 +1,29 @@
-using System.Threading.Tasks;
-using Chambered.Core.Security;
+using Chambered.Core.Services.Identity;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Chambered.Infrastructure.Authorization
 {
     /// <summary>
-    /// Evaluates the user principal claims against dynamic permission requirements with a global Admin role bypass.
+    /// Evaluates the user principal claims against dynamic permission requirements with a global super-user bypass.
     /// </summary>
-    public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
+    /// <param name="rulebook">The authorization rulebook implementation.</param>
+    public class PermissionAuthorizationHandler(IAuthorizationRulebook rulebook) : AuthorizationHandler<PermissionRequirement>
     {
-        /// <inheritdoc />
+        private readonly IAuthorizationRulebook _rulebook = rulebook;
+
+        /// <inheritdoc/>
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
         {
-            // Global Bypass: Admins possess all privileges
-            if (context.User.IsInRole(ChamberedAuthorization.Roles.Admin))
+            if (context.User.IsInRole(_rulebook.AdminRoleName))
             {
                 context.Succeed(requirement);
                 return Task.CompletedTask;
             }
 
-            // Evaluate specific permission claims
-            var hasPermission = context.User.HasClaim(c => c.Type == ChamberedAuthorization.PermissionClaimType && c.Value == requirement.Permission);
+            var hasPermission = context.User.HasClaim(c =>
+                c.Type == _rulebook.PermissionClaimType &&
+                c.Value == requirement.Permission);
+
             if (hasPermission)
             {
                 context.Succeed(requirement);

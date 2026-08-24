@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Chambered.Infrastructure.Configuration
 {
     /// <summary>

@@ -4,7 +4,6 @@ using Chambered.Api.Mappings;
 using Chambered.Api.Swagger;
 using Chambered.Core.Services;
 using Chambered.Core.Services.Identity;
-using Chambered.Core.Services.Models;
 using Chambered.Core.Utility;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
@@ -26,6 +25,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -37,13 +37,30 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? "Data Source=../chambered.db";
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserService<UserSession>, CurrentUserService>();
-builder.Services.AddScoped<AuditPropertiesInterceptor>();
+
+builder.Services.AddCurrentUserService<ChamberedUser>((principal, user) =>
+{
+    // Map custom properties unique to ChamberedUser
+    // user.FullName = principal.FindFirst("FullName")?.Value;
+});
+builder.Services.AddAuditPropertiesInterceptor<ChamberedUser>(user =>
+{
+    // You have access to the fully mapped ChamberedUser here
+    return !string.IsNullOrWhiteSpace(user?.UserName)
+        ? user.UserName.Trim()
+        : "System";
+});
 
 builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
 {
     options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api"));
-    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor>());
+    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor<ChamberedUser>>());
+});
+
+builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
+{
+    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api"));
+    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor<ChamberedUser>>());
     options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
 });
 
@@ -350,6 +367,46 @@ app.MapHealthChecks("/health");
 
 
 app.Run();
+
+
+public static class CurrentUserServiceExtensions
+{
+    /// <summary>
+    /// Registers the generic current user service and configures custom claims mapping.
+    /// </summary>
+    public static IServiceCollection AddCurrentUserService<TUser>(
+        this IServiceCollection services,
+        Action<ClaimsPrincipal, TUser>? mapCustomClaims = null)
+        where TUser : IdentityUser, new()
+    {
+        services.AddScoped<ICurrentUserService<TUser>, CurrentUserService<TUser>>();
+
+        services.Configure<CurrentUserServiceOptions<TUser>>(options =>
+        {
+            options.MapCustomClaims = mapCustomClaims;
+        });
+        return services;
+    }
+    /// <summary>
+    /// Registers the generic audit properties interceptor and configures custom name formatting.
+    /// </summary>
+    public static IServiceCollection AddAuditPropertiesInterceptor<TUser>(
+        this IServiceCollection services,
+        Func<TUser, string>? resolveAuditorName = null)
+        where TUser : IdentityUser
+    {
+        services.AddScoped<AuditPropertiesInterceptor<TUser>>();
+
+        services.Configure<AuditPropertiesInterceptorOptions<TUser>>(options =>
+        {
+            if (resolveAuditorName != null)
+            {
+                options.ResolveAuditorName = resolveAuditorName;
+            }
+        });
+        return services;
+    }
+}
 
 
 public class ModelStateDebugLoggerFilter : Microsoft.AspNetCore.Mvc.Filters.IActionFilter

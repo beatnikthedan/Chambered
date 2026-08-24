@@ -27,6 +27,9 @@ namespace Chambered.Tests.Services.Identity
         private readonly Mock<ILogger<ApiKeyService>> _loggerMock;
         private readonly ApiKeyService _apiKeyService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ApiKeyServiceTests"/> class.
+        /// </summary>
         public ApiKeyServiceTests()
         {
             _connection = new SqliteConnection("Filename=:memory:");
@@ -47,10 +50,12 @@ namespace Chambered.Tests.Services.Identity
             _apiKeyService = new ApiKeyService(_db, _userManagerMock.Object, _loggerMock.Object);
         }
 
+        /// <summary>
+        /// Verifies that CreateKeyAsync successfully saves a new API key and returns its details.
+        /// </summary>
         [Fact]
         public async Task CreateKeyAsync_ShouldSaveNewKeyAndReturnDetails()
         {
-            // Arrange
             var user = new ChamberedUser { Id = "user-123", Email = "user@test.com", UserName = "user@test.com" };
             var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
@@ -66,10 +71,8 @@ namespace Chambered.Tests.Services.Identity
             _userManagerMock.Setup(u => u.GetUserId(claimsPrincipal))
                 .Returns("user-123");
 
-            // Act
             var result = await _apiKeyService.CreateKeyAsync(createDto, claimsPrincipal);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Equal("Test Key", result.Name);
             Assert.NotEmpty(result.PlainTextKey);
@@ -80,10 +83,12 @@ namespace Chambered.Tests.Services.Identity
             Assert.Equal(2, savedKey.Claims.Count);
         }
 
+        /// <summary>
+        /// Verifies that GetKeysForUserAsync returns all active API keys owned by the specified user principal.
+        /// </summary>
         [Fact]
         public async Task GetKeysForUserAsync_ShouldReturnActiveKeysForOwner()
         {
-            // Arrange
             var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, "user-123")
@@ -106,19 +111,19 @@ namespace Chambered.Tests.Services.Identity
             _userManagerMock.Setup(u => u.GetUserId(claimsPrincipal))
                 .Returns("user-123");
 
-            // Act
             var result = await _apiKeyService.GetKeysForUserAsync(claimsPrincipal);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Single(result);
             Assert.Equal("Key 1", result.First().Name);
         }
 
+        /// <summary>
+        /// Verifies that RevokeKeyAsync successfully deactivates an active API key.
+        /// </summary>
         [Fact]
         public async Task RevokeKeyAsync_ShouldDeactivateKey_WhenKeyExists()
         {
-            // Arrange
             var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, "user-123")
@@ -141,16 +146,17 @@ namespace Chambered.Tests.Services.Identity
             _userManagerMock.Setup(u => u.GetUserId(claimsPrincipal))
                 .Returns("user-123");
 
-            // Act
             var result = await _apiKeyService.RevokeKeyAsync(1, claimsPrincipal);
 
-            // Assert
             Assert.True(result);
             var updatedKey = _db.ApiKeys.FirstOrDefault(k => k.Id == 1);
             Assert.NotNull(updatedKey);
             Assert.True(updatedKey.IsRevoked);
         }
 
+        /// <summary>
+        /// Disposes standard active database resources.
+        /// </summary>
         public void Dispose()
         {
             _db.Dispose();

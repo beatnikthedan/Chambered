@@ -1,10 +1,12 @@
-﻿namespace Chambered.Core.Services
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace Chambered.Core.Services
 {
     /// <summary>
     /// Service contract to retrieve session context for the current user.
     /// </summary>
     /// <typeparam name="TUserSession">The type of the user session model.</typeparam>
-    public interface ICurrentUserService<TUserSession>
+    public interface ICurrentUserService<TUserSession> where TUserSession : IdentityUser
     {
         /// <summary>
         /// Retrieves the current user's session details.

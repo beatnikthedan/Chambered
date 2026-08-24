@@ -1,18 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 using Chambered.Core.Services.Identity;
 using Chambered.Core.Services.Identity.Dto;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
+using Chambered.Infrastructure.LogMessages.Identity;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Chambered.Infrastructure.LogMessages.Identity;
+using System.Security.Claims;
 
 namespace Chambered.Infrastructure.Services.Identity
 {
@@ -23,27 +17,34 @@ namespace Chambered.Infrastructure.Services.Identity
         private readonly UserManager<ChamberedUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IOptions<FederatedAuthenticationConfiguration> _federatedOptions;
-        private readonly IConfiguration _configuration;
         private readonly ILogger<FederatedAuthService> _logger;
+        private readonly IAuthorizationRulebook _rulebook;
         private readonly FederatedAuthServiceLogMessages _log;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FederatedAuthService"/> class.
         /// </summary>
+        /// <param name="signInManager">The identity sign-in manager.</param>
+        /// <param name="userManager">The identity user manager.</param>
+        /// <param name="roleManager">The identity role manager.</param>
+        /// <param name="federatedOptions">The federated options configurations.</param>
+        /// <param name="configuration">The configuration context.</param>
+        /// <param name="logger">The service logger.</param>
+        /// <param name="rulebook">The authorization rulebook.</param>
         public FederatedAuthService(
             SignInManager<ChamberedUser> signInManager,
             UserManager<ChamberedUser> userManager,
             RoleManager<IdentityRole> roleManager,
             IOptions<FederatedAuthenticationConfiguration> federatedOptions,
-            IConfiguration configuration,
-            ILogger<FederatedAuthService> logger)
+            ILogger<FederatedAuthService> logger,
+            IAuthorizationRulebook rulebook)
         {
             _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
             _federatedOptions = federatedOptions ?? throw new ArgumentNullException(nameof(federatedOptions));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _rulebook = rulebook ?? throw new ArgumentNullException(nameof(rulebook));
             _log = new FederatedAuthServiceLogMessages(logger);
         }
 
@@ -94,8 +95,7 @@ namespace Chambered.Infrastructure.Services.Identity
             {
                 externalInfo.UserClaims.TryGetValue("email", out email);
             }
-            
-            // Smart email fallback if empty or missing
+
             if (string.IsNullOrWhiteSpace(email))
             {
                 externalInfo.UserClaims.TryGetValue("preferred_username", out email);
@@ -199,7 +199,7 @@ namespace Chambered.Infrastructure.Services.Identity
 
                 if (!desiredRoles.Any())
                 {
-                    desiredRoles.Add(Chambered.Core.Security.ChamberedAuthorization.Roles.User);
+                    desiredRoles.Add(_rulebook.DefaultUserRoleName);
                 }
 
                 desiredRoles = desiredRoles.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -299,8 +299,6 @@ namespace Chambered.Infrastructure.Services.Identity
         {
             return _federatedOptions.Value?.Providers?.Select(p => p.ProviderName) ?? Enumerable.Empty<string>();
         }
-
-
 
         private async Task<IEnumerable<string>> GetPermissionsForUserInternalAsync(ChamberedUser user, IEnumerable<string> roles)
         {
