@@ -1,4 +1,4 @@
-﻿using Chambered.Core.Services.Identity;
+﻿using BeatnikToolKit.EntityFramework.Services.Identity;
 using Chambered.Data;
 using Chambered.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +9,7 @@ namespace Chambered.Infrastructure.Services.Identity
     /// Processes and synchronizes the custom 'arsenals' claim returned from the federated provider.
     /// </summary>
     /// <param name="db">The database context.</param>
-    public class ArsenalScopeProcessor(ChamberedDbContext db) : IFederatedCustomScopeProcessor
+    public class ArsenalScopeProcessor(ChamberedDbContext db) : IFederatedCustomScopeProcessor<ChamberedUser>
     {
         private readonly ChamberedDbContext _db = db ?? throw new ArgumentNullException(nameof(db));
 

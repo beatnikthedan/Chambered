@@ -1,6 +1,6 @@
 using Asp.Versioning;
-using Chambered.Core.Services.Identity;
-using Chambered.Core.Services.Identity.Dto;
+using BeatnikToolKit.EntityFramework.Services.Identity;
+using BeatnikToolKit.EntityFramework.Services.Identity.Dto;
 using Chambered.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

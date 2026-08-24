@@ -12,7 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
-namespace BeatnikToolKit.EntityFramework.Extensions
+namespace Microsoft.Extensions.DependencyInjection
 {
     /// <summary>
     /// Provides extension methods for Entity Framework database migrations and seeding operations.
@@ -24,7 +24,7 @@ namespace BeatnikToolKit.EntityFramework.Extensions
             services.AddOptions<FederatedAuthenticationConfiguration>().Configure<IConfiguration>((settings, configuration) =>{configuration.GetSection(nameof(FederatedAuthenticationConfiguration)).Bind(settings);});
             services.AddOptions<IdentityConfiguration>().Configure<IConfiguration>((settings, configuration) => { configuration.GetSection(nameof(IdentityConfiguration)).Bind(settings); });
 
-            services.AddScoped<Services.Identity.IAuthenticationService, AuthenticationService<TUser>>();
+            services.AddScoped<IAuthenticationService, AuthenticationService<TUser>>();
             services.AddScoped<IFederatedAuthService, FederatedAuthService<TUser>>();
             services.AddScoped<IIdentityService, IdentityService<TContext, TUser>>();
             services.AddScoped<IRoleService, RoleService>();
@@ -186,7 +186,7 @@ namespace BeatnikToolKit.EntityFramework.Extensions
         /// </summary>
         /// <param name="services">The service provider to resolve managers.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public static async Task SeedIdentityData<TContext>(this IServiceProvider services) where TContext : IdentityDbContext
+        public static async Task SeedIdentityData<TContext, TUser>(this IServiceProvider services) where TContext : IdentityDbContext<TUser> where TUser : IdentityUser
         {
             var logger = services.GetRequiredService<ILogger<TContext>>();
             var log = new EntityFrameworkExtensionsLogMessages(logger);

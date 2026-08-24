@@ -1,5 +1,7 @@
+using BeatnikToolKit.EntityFramework.Configuration;
+using BeatnikToolKit.EntityFramework.Services.Identity;
+using BeatnikToolKit.EntityFramework.Services.Identity.Dto;
 using Chambered.Infrastructure.Authorization;
-using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;

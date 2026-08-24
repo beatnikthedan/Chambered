@@ -1,5 +1,5 @@
-using Chambered.Core.Services.Identity;
-using Chambered.Core.Services.Identity.Dto;
+using BeatnikToolKit.EntityFramework.Services.Identity;
+using BeatnikToolKit.EntityFramework.Services.Identity.Dto;
 using Chambered.Core.Utility;
 using Chambered.Data;
 using Chambered.Data.Models;

@@ -1,4 +1,4 @@
-﻿using Chambered.Core.Services.Identity;
+﻿using BeatnikToolKit.EntityFramework.Services.Identity;
 
 namespace Chambered.Core.Security
 {

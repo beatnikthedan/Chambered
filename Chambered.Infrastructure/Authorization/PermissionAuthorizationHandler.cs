@@ -1,4 +1,4 @@
-using Chambered.Core.Services.Identity;
+using BeatnikToolKit.EntityFramework.Services.Identity;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Chambered.Infrastructure.Authorization

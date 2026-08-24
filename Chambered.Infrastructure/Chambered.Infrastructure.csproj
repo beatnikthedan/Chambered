@@ -1,22 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="MailKit" Version="4.17.0" />
-		<PackageReference Include="Microsoft.Data.Sqlite.Core" Version="8.0.29" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
-		<!-- Updated to 9.0.0 to satisfy Npgsql 10.x requirement -->
-		
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="9.0.2" />
+		<PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.2" />
 		<PackageReference Include="MimeKit" Version="4.17.0" />
 		<PackageReference Include="Npgsql" Version="10.0.3" />
-
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.8" />
 	</ItemGroup>
 
 	<ItemGroup>

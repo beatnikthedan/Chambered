@@ -23,7 +23,7 @@ namespace BeatnikToolKit.EntityFramework.Services.Identity
         IOptions<FederatedAuthenticationConfiguration> federatedOptions,
         ILogger<FederatedAuthService<TUser>> logger,
         IAuthorizationRulebook rulebook,
-        IEnumerable<IFederatedCustomScopeProcessor> scopeProcessors) : IFederatedAuthService where TUser : IdentityUser, new()
+        IEnumerable<IFederatedCustomScopeProcessor<TUser>> scopeProcessors) : IFederatedAuthService where TUser : IdentityUser, new()
     {
         private readonly SignInManager<TUser> _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
         private readonly UserManager<TUser> _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -31,7 +31,7 @@ namespace BeatnikToolKit.EntityFramework.Services.Identity
         private readonly IOptions<FederatedAuthenticationConfiguration> _federatedOptions = federatedOptions ?? throw new ArgumentNullException(nameof(federatedOptions));
         private readonly ILogger<FederatedAuthService<TUser>> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         private readonly IAuthorizationRulebook _rulebook = rulebook ?? throw new ArgumentNullException(nameof(rulebook));
-        private readonly IEnumerable<IFederatedCustomScopeProcessor> _scopeProcessors = scopeProcessors ?? throw new ArgumentNullException(nameof(scopeProcessors));
+        private readonly IEnumerable<IFederatedCustomScopeProcessor<TUser>> _scopeProcessors = scopeProcessors ?? throw new ArgumentNullException(nameof(scopeProcessors));
         private readonly FederatedAuthServiceLogMessages _log = new FederatedAuthServiceLogMessages(logger);
 
         /// <inheritdoc/>

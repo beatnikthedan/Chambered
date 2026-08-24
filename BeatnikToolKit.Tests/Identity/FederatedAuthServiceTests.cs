@@ -86,7 +86,7 @@ namespace Chambered.Tests.Services.Identity
                 optionsFedMock,
                 _loggerMock.Object,
                 rulebookMock.Object,
-                Enumerable.Empty<IFederatedCustomScopeProcessor>());
+                Enumerable.Empty<IFederatedCustomScopeProcessor<IdentityUser>>());
         }
 
         /// <summary>
@@ -180,7 +180,7 @@ namespace Chambered.Tests.Services.Identity
                 Options.Create(_fedConfig),
                 _loggerMock.Object,
                 rulebookMock.Object,
-                Enumerable.Empty<IFederatedCustomScopeProcessor>());
+                Enumerable.Empty<IFederatedCustomScopeProcessor<IdentityUser>>());
 
             _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
                 .ReturnsAsync(user);
@@ -360,7 +360,7 @@ namespace Chambered.Tests.Services.Identity
                 Options.Create(_fedConfig),
                 _loggerMock.Object,
                 rulebookMock.Object,
-                Enumerable.Empty<IFederatedCustomScopeProcessor>());
+                Enumerable.Empty<IFederatedCustomScopeProcessor<IdentityUser>>());
 
             _userManagerMock.Setup(u => u.FindByEmailAsync(userEmail))
                 .ReturnsAsync(user);
@@ -417,7 +417,7 @@ namespace Chambered.Tests.Services.Identity
                 { "User", new[] { "Permission1" } }
             });
 
-            var processorMock = new Mock<IFederatedCustomScopeProcessor>();
+            var processorMock = new Mock<IFederatedCustomScopeProcessor<IdentityUser>>();
             processorMock.Setup(p => p.TargetScope).Returns("arsenals");
             processorMock.Setup(p => p.ProcessScopeAsync(user, "arsenal-123,arsenal-456"))
                 .Returns(Task.CompletedTask)

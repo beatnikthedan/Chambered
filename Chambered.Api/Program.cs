@@ -1,15 +1,15 @@
 using Asp.Versioning;
+using BeatnikToolKit.EntityFramework.Services.Identity;
+using BeatnikToolKit.EntityFramework.Utility;
+using BeatnikToolKit.Services;
 using Chambered.Api.BackgroundServices;
 using Chambered.Api.Mappings;
 using Chambered.Api.Swagger;
 using Chambered.Core.Security;
 using Chambered.Core.Services;
-using Chambered.Core.Services.Identity;
-using Chambered.Core.Utility;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
-using Chambered.Infrastructure.Services;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
 using Chambered.Infrastructure.Services.GitHubReleaseService;
@@ -26,7 +26,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -187,11 +186,7 @@ builder.Services.AddSwaggerGen(c =>
     c.AddApiKeyAuthorization();
 });
 
-builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
-{
-    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api"));
-    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor<ChamberedUser>>());
-});
+
 
 #region BeatnikToolKit.EntityFramework
 
@@ -208,6 +203,14 @@ builder.Services.AddAuditPropertiesInterceptor<ChamberedUser>(user =>
     return !string.IsNullOrWhiteSpace(user?.UserName)
         ? user.UserName.Trim()
         : "System";
+});
+
+builder.Services.AddScoped<IFederatedCustomScopeProcessor<ChamberedUser>, ArsenalScopeProcessor>();
+
+builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
+{
+    options.UseSqlite(connectionString);
+    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor<ChamberedUser>>());
 });
 
 #endregion
@@ -244,7 +247,7 @@ builder.Services.AddHealthChecks();
 
 builder.Services.AddSingleton<IAuthorizationRulebook, ChamberedRulebook>();
 
-builder.Services.AddScoped<IFederatedCustomScopeProcessor, ArsenalScopeProcessor>();
+
 
 
 
@@ -282,11 +285,11 @@ app.UseHttpLogging();
 
 await app.ApplyMigrations<ChamberedDbContext>(async services =>
 {
-    // 1. Bootstraps default admin user if environment variables are set (Docker)
-    await services.SeedAdminUser();
+    await services.SeedAdminUser<ChamberedDbContext, ChamberedUser>();
 
-    // 2. Seeds standard roles & granular permission claims dynamically based on core mapping configuration
-    await services.SeedIdentityData();
+    await services.SeedIdentityData<ChamberedDbContext, ChamberedUser>();
+
+#warning add apply migragations here
 });
 
 

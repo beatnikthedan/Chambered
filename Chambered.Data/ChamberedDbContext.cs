@@ -1,3 +1,4 @@
+using BeatnikToolKit.EntityFramework.Utility;
 using Chambered.Data.Enums;
 using Chambered.Data.Interfaces;
 using Chambered.Data.Models;

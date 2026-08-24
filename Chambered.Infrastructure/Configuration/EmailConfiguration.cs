@@ -1,4 +1,5 @@
-﻿using MailKit.Security;
+﻿using BeatnikToolKit.Attributes;
+using MailKit.Security;
 
 namespace Chambered.Infrastructure.Configuration
 {
