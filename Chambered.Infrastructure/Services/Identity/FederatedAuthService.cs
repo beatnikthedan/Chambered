@@ -6,11 +6,7 @@ using Chambered.Infrastructure.LogMessages.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Chambered.Infrastructure.Services.Identity
 {

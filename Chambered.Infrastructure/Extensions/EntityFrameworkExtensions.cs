@@ -6,6 +6,7 @@ using Chambered.Infrastructure.LogMessages;
 using Chambered.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -111,8 +112,9 @@ namespace Chambered.Infrastructure.Extensions
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             var rulebook = services.GetRequiredService<IAuthorizationRulebook>();
 
-            var email = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
-            var password = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+            var configuration = services.GetRequiredService<IConfiguration>();
+            var email = configuration["ADMIN_EMAIL"];
+            var password = configuration["ADMIN_PASSWORD"];
 
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
