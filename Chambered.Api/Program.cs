@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Chambered.Api.BackgroundServices;
 using Chambered.Api.Mappings;
 using Chambered.Api.Swagger;
+using Chambered.Core.Security;
 using Chambered.Core.Services;
 using Chambered.Core.Services.Identity;
 using Chambered.Core.Utility;
@@ -244,6 +245,10 @@ builder.Services.AddHostedService<BackupSchedulerWorker>();
 
 
 builder.Services.AddHealthChecks();
+
+builder.Services.AddSingleton<IAuthorizationRulebook, ChamberedRulebook>();
+
+builder.Services.AddScoped<IFederatedCustomScopeProcessor, ArsenalScopeProcessor>();
 
 
 
