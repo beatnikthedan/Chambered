@@ -37,33 +37,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=../chambered.db";
 
-builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddCurrentUserService<ChamberedUser>((principal, user) =>
-{
-    // Map custom properties unique to ChamberedUser
-    // user.FullName = principal.FindFirst("FullName")?.Value;
-});
-builder.Services.AddAuditPropertiesInterceptor<ChamberedUser>(user =>
-{
-    // You have access to the fully mapped ChamberedUser here
-    return !string.IsNullOrWhiteSpace(user?.UserName)
-        ? user.UserName.Trim()
-        : "System";
-});
-
-builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
-{
-    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api"));
-    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor<ChamberedUser>>());
-});
-
-builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
-{
-    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api"));
-    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor<ChamberedUser>>());
-    options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
-});
 
 // 2. Configure Identity
 // 1. Add Identity base setup
@@ -213,6 +187,31 @@ builder.Services.AddSwaggerGen(c =>
     c.AddApiKeyAuthorization();
 });
 
+builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
+{
+    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api"));
+    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor<ChamberedUser>>());
+});
+
+#region BeatnikToolKit.EntityFramework
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddCurrentUserService<ChamberedUser>((principal, user) =>
+{
+    // Map custom properties unique to ChamberedUser
+    // user.FullName = principal.FindFirst("FullName")?.Value;
+});
+builder.Services.AddAuditPropertiesInterceptor<ChamberedUser>(user =>
+{
+    // You have access to the fully mapped ChamberedUser here
+    return !string.IsNullOrWhiteSpace(user?.UserName)
+        ? user.UserName.Trim()
+        : "System";
+});
+
+#endregion
+
 
 builder.Services.Configure<LoginConfiguration>(builder.Configuration.GetSection(nameof(LoginConfiguration)));
 
@@ -226,10 +225,7 @@ builder.Services.AddScoped<IAppriseService, AppriseService>();
 
 //builder.Services.Configure<IdentityConfiguration>(builder.Configuration.GetSection("Identity"));
 builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-builder.Services.AddScoped<IFederatedAuthService, FederatedAuthService>();
-builder.Services.AddScoped<IIdentityService, IdentityService>();
-builder.Services.AddScoped<IRoleService, RoleService>();
+
 
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(nameof(EmailConfiguration)));
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();

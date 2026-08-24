@@ -37,13 +37,15 @@ namespace Chambered.Tests.Services.Identity
             var loggerSignInMock = new Mock<ILogger<SignInManager<IdentityUser>>>();
             var confirmationMock = new Mock<IUserConfirmation<IdentityUser>>();
 
+            var schemeProviderMock = new Mock<IAuthenticationSchemeProvider>();
+
             _signInManagerMock = new Mock<SignInManager<IdentityUser>>(
                 _userManagerMock.Object,
                 contextAccessorMock.Object,
                 claimsFactoryMock.Object,
                 optionsMock.Object,
                 loggerSignInMock.Object,
-                null,
+                schemeProviderMock.Object,
                 confirmationMock.Object);
 
             var roleStoreMock = new Mock<IRoleStore<IdentityRole>>();

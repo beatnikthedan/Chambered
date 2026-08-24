@@ -28,7 +28,7 @@ namespace Chambered.Tests.Services.Identity
             _connection = new SqliteConnection("Filename=:memory:");
             _connection.Open();
 
-            var options = new DbContextOptionsBuilder<IdentityDbContext>().UseSqlite(_connection).Options;
+            var options = new DbContextOptionsBuilder<IdentityDbContext<IdentityUser>>().UseSqlite(_connection).Options;
 
             _db = new IdentityDbContext<IdentityUser>(options);
             _db.Database.EnsureCreated();

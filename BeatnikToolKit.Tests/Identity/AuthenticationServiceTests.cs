@@ -2,6 +2,7 @@ using BeatnikToolKit.EntityFramework.Configuration;
 using BeatnikToolKit.EntityFramework.Services.Identity;
 using BeatnikToolKit.EntityFramework.Services.Identity.Dto;
 using BeatnikToolKit.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +21,6 @@ namespace Chambered.Tests.Services.Identity
         private readonly Mock<SignInManager<IdentityUser>> _signInManagerMock;
         private readonly Mock<RoleManager<IdentityRole>> _roleManagerMock;
         private readonly Mock<IEmailService> _emailServiceMock;
-        private readonly Mock<IConfiguration> _configurationMock;
         private readonly Mock<IOptions<IdentityConfiguration>> _identityOptionsMock;
         private readonly Mock<ILogger<AuthenticationService<IdentityUser>>> _loggerMock;
         private readonly AuthenticationService<IdentityUser> _authenticationService;
@@ -40,13 +40,15 @@ namespace Chambered.Tests.Services.Identity
             var loggerSignInMock = new Mock<ILogger<SignInManager<IdentityUser>>>();
             var confirmationMock = new Mock<IUserConfirmation<IdentityUser>>();
 
+            var schemeProviderMock = new Mock<IAuthenticationSchemeProvider>();
+
             _signInManagerMock = new Mock<SignInManager<IdentityUser>>(
                 _userManagerMock.Object,
                 contextAccessorMock.Object,
                 claimsFactoryMock.Object,
                 optionsMock.Object,
                 loggerSignInMock.Object,
-                null,
+                schemeProviderMock.Object,
                 confirmationMock.Object);
 
             var roleStoreMock = new Mock<IRoleStore<IdentityRole>>();
@@ -62,10 +64,6 @@ namespace Chambered.Tests.Services.Identity
                 Website = "https://localhost",
                 DefaultEmailAddress = "no-reply@test.com"
             });
-
-            _configurationMock.Setup(c => c["Jwt:Key"]).Returns("super-secret-key-32-chars-long-12345");
-            _configurationMock.Setup(c => c["Jwt:Issuer"]).Returns("ChamberedIssuer");
-            _configurationMock.Setup(c => c["Jwt:ExpireDays"]).Returns("7");
 
             _authenticationService = new AuthenticationService<IdentityUser>(
                 _signInManagerMock.Object,

@@ -1,3 +1,4 @@
+using BeatnikToolKit.EntityFramework.Configuration;
 using BeatnikToolKit.EntityFramework.LogMessages;
 using BeatnikToolKit.EntityFramework.Services;
 using BeatnikToolKit.EntityFramework.Services.Identity;
@@ -18,6 +19,19 @@ namespace BeatnikToolKit.EntityFramework.Extensions
     /// </summary>
     public static class EntityFrameworkExtensions
     {
+        public static IServiceCollection AddIdentityServices<TContext, TUser>(this IServiceCollection services) where TContext : IdentityDbContext<TUser> where TUser : IdentityUser, new()
+        {
+            services.AddOptions<FederatedAuthenticationConfiguration>().Configure<IConfiguration>((settings, configuration) =>{configuration.GetSection(nameof(FederatedAuthenticationConfiguration)).Bind(settings);});
+            services.AddOptions<IdentityConfiguration>().Configure<IConfiguration>((settings, configuration) => { configuration.GetSection(nameof(IdentityConfiguration)).Bind(settings); });
+
+            services.AddScoped<Services.Identity.IAuthenticationService, AuthenticationService<TUser>>();
+            services.AddScoped<IFederatedAuthService, FederatedAuthService<TUser>>();
+            services.AddScoped<IIdentityService, IdentityService<TContext, TUser>>();
+            services.AddScoped<IRoleService, RoleService>();
+
+            return services;
+        }
+        
         /// <summary>
         /// Registers the generic current user service and configures custom claims mapping.
         /// </summary>
