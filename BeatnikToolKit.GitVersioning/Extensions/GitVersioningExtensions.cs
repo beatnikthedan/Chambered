@@ -13,6 +13,8 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.AddHttpClient<IGitHubReleaseService, GitHubReleaseService>();
 
+            services.AddMemoryCache();
+
             return services;
         }
     }

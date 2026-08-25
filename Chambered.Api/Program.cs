@@ -219,9 +219,6 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.Configure<BackupConfiguration>(builder.Configuration.GetSection(nameof(BackupConfiguration)));
 builder.Services.AddScoped<IBackupService, SqliteBackupService>();
 
-builder.Services.AddHttpClient();
-builder.Services.AddMemoryCache();
-
 builder.Services.AddHostedService<BackupSchedulerWorker>();
 
 
