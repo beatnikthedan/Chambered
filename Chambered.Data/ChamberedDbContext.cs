@@ -32,6 +32,7 @@ namespace Chambered.Data
         public DbSet<Suppressor> Suppressors => Set<Suppressor>();
         public DbSet<PewPewLight> PewPewLights => Set<PewPewLight>();
         public DbSet<Security> Securities => Set<Security>();
+        public DbSet<Magazine> Magazines => Set<Magazine>();
 
 
 

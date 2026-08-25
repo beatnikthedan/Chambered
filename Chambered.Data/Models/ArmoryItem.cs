@@ -37,6 +37,16 @@ namespace Chambered.Data.Models
 
         #endregion
 
+        /// <summary>
+        /// Gets or sets the optional foreign key for the primary workspace arsenal context.
+        /// </summary>
+        public int? ArsenalId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the navigation property for the assigned workspace arsenal context.
+        /// </summary>
+        public Arsenal? Arsenal { get; set; }
+
         #region Financial & Valuation
 
         /// <summary>
@@ -94,16 +104,6 @@ namespace Chambered.Data.Models
         /// Gets or sets the navigation property for the assigned vault container.
         /// </summary>
         public Vault? Vault { get; set; }
-
-        /// <summary>
-        /// Gets or sets the optional foreign key for the primary workspace arsenal context.
-        /// </summary>
-        public int? ArsenalId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the navigation property for the assigned workspace arsenal context.
-        /// </summary>
-        public Arsenal? Arsenal { get; set; }
 
         /// <summary>
         /// Gets or sets the optional foreign key for the parent armory item (for mounted accessories).
