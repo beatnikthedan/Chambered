@@ -1,13 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using BeatnikToolKit.EntityFramework.Services.Identity;
 using Chambered.Core.Security;
-using Chambered.Core.Services.Identity;
-using Chambered.Core.Services.Identity.Dto;
 using Chambered.Data;
-using Chambered.Infrastructure.Extensions;
-using Chambered.Infrastructure.Services.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace Chambered.Tests.Integration
 {

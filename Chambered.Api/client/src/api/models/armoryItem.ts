@@ -22,6 +22,9 @@ export interface ArmoryItem {
   /** @nullable */
   description?: string | null;
   /** @nullable */
+  arsenalId?: number | null;
+  arsenal?: Arsenal;
+  /** @nullable */
   purchasePrice?: number | null;
   /** @nullable */
   purchaseDate?: string | null;
@@ -30,13 +33,10 @@ export interface ArmoryItem {
   condition?: ItemCondition;
   /** @nullable */
   ownerId?: string | null;
-  owner?: ChamberedUser;
   /** @nullable */
   beneficiaryId?: string | null;
   /** @nullable */
   vaultId?: number | null;
-  /** @nullable */
-  arsenalId?: number | null;
   /** @nullable */
   parentItemId?: number | null;
   /** @nullable */
@@ -52,9 +52,9 @@ export interface ArmoryItem {
   createdBy?: string | null;
   /** @nullable */
   modifiedBy?: string | null;
+  owner?: ChamberedUser;
   beneficiary?: ChamberedUser;
   vault?: Vault;
-  arsenal?: Arsenal;
   parentItem?: __ArmoryItem;
   /** @nullable */
   mountedAccessories?: ArmoryItem[] | null;

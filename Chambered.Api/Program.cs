@@ -10,6 +10,7 @@ using Chambered.Core.Services;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
+using Chambered.Infrastructure.Services;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
 using Chambered.Infrastructure.Services.Identity;
@@ -203,7 +204,13 @@ builder.Services.Configure<LoginConfiguration>(builder.Configuration.GetSection(
 
 
 builder.Services.AddGitHubVersioning();
-
+// use redis or valkey for IDistributedCache
+//builder.Services.AddStackExchangeRedisCache(options =>
+//{
+//    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+//    options.InstanceName = "Chambered:";
+//});
+builder.Services.AddHybridCache();
 
 
 builder.Services.Configure<AppriseConfiguration>(builder.Configuration.GetSection(nameof(AppriseConfiguration)));
@@ -221,6 +228,10 @@ builder.Services.AddScoped<IBackupService, SqliteBackupService>();
 
 builder.Services.AddHostedService<BackupSchedulerWorker>();
 
+
+
+// Configure decoupled favicon retrieval service
+builder.Services.AddHttpClient<IFaveIconService, FaveIconService>();
 
 
 builder.Services.AddHealthChecks();
