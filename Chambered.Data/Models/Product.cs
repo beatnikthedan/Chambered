@@ -550,9 +550,6 @@ namespace Chambered.Data.Models
         /// </summary>
         public bool IsLeadFree { get; set; }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether this cartridge uses a non-corrosive primer.
-        /// </summary>
         public bool IsSubsonic => MuzzleVelocityFps > 0 && MuzzleVelocityFps < 1125;
 
         #endregion

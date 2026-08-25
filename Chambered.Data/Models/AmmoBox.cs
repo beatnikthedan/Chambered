@@ -1,6 +1,3 @@
-using Chambered.Data.Enums;
-using Chambered.Data.Interfaces;
-
 namespace Chambered.Data.Models
 {
     /// <summary>
@@ -25,8 +22,9 @@ namespace Chambered.Data.Models
         /// </summary>
         public Product? Product { get; set; }
 
+        #endregion
 
-        #region Classification & Ownership
+        #region Heirarchy
 
         /// <summary>
         /// Gets or sets the foreign key for a parent vault/location if this item is nested inside another (e.g., Lockbox inside a Truck).
@@ -44,7 +42,7 @@ namespace Chambered.Data.Models
         public ICollection<AmmoBox> ChildAmmoBoxes { get; set; } = new List<AmmoBox>();
 
         #endregion
-        
+
         public int ReloadingRecipeId { get; set; }
 
         public ReloadingRecipe? ReloadingRecipe { get; set; }

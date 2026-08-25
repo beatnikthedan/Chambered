@@ -7,6 +7,4 @@
         Ball = 2,     // Spherical
         Flake = 3
     }
-
-    #endregion
 }

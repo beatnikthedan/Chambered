@@ -11,6 +11,4 @@
         SlowRifle = 6,
         FiftyCaliber = 7
     }
-
-    #endregion
 }

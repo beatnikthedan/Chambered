@@ -9,6 +9,4 @@
         PolymerCoatedLead = 4,
         Frangible = 5
     }
-
-    #endregion
 }

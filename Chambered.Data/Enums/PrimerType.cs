@@ -6,6 +6,4 @@
         Boxer = 1,  // Standard reloadable single flash-hole
         Berdan = 2   // European non-standard dual flash-hole
     }
-
-    #endregion
 }
