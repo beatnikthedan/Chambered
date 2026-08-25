@@ -2068,8 +2068,17 @@ export default function Catalog() {
                   ✓ Manufacturer updated successfully
                 </div>
               )}
-              <h2>{selectedMfg.name}</h2>
 
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <ManufacturerFavicon mfgId={selectedMfg.id} />
+                <h2 style={{ margin: 0 }}>{selectedMfg.name}</h2>
+              </span>
               {selectedMfg.phoneNumber && (
                 <p className="mfg-meta-item">
                   <strong>📞 Phone Support:</strong>{" "}

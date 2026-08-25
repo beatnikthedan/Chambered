@@ -33,10 +33,12 @@ public class ManufacturersController(ChamberedDbContext db, IFaveIconService fav
     /// Retrieves the cached favicon for the specified manufacturer.
     /// </summary>
     [HttpGet]
-    [Authorize] // Enforce token authentication
-    [ProducesResponseType(typeof(FaveIconDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetFavicon([FromRoute] int key, CancellationToken cancellationToken)
+[Authorize]
+[ProducesResponseType(typeof(FaveIconDto), StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+public async Task<IActionResult> GetFavicon([FromRoute] int key, CancellationToken cancellationToken)
+{
+    try
     {
         var mfg = await db.Manufacturers.FindAsync(new object[] { key }, cancellationToken);
         if (mfg == null || string.IsNullOrWhiteSpace(mfg.WebPageUrl))
@@ -55,6 +57,11 @@ public class ManufacturersController(ChamberedDbContext db, IFaveIconService fav
         };
         return Ok(dto);
     }
+    catch (OperationCanceledException)
+    {
+        return StatusCode(499); // Client Closed Request
+    }
+}
 
     #endregion
 }
