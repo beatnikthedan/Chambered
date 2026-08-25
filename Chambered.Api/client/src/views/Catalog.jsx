@@ -1146,26 +1146,807 @@ export default function Catalog() {
       </div>
 
       {/* RIGHT 1/3: DETAIL / EDITING PANEL */}
-      <div className="detail-panel">
-        {!isManufacturersPage ? (
-          /* ==================== PRODUCTS PANEL ==================== */
-          !selectedProduct ? (
+
+      <div className="right-pane-column">
+        <div className="detail-panel">
+          {!isManufacturersPage ? (
+            /* ==================== PRODUCTS PANEL ==================== */
+            !selectedProduct ? (
+              <div className="empty-detail-state">
+                <span className="icon">📦</span>
+                <h3>No Product Selected</h3>
+                <p>
+                  Select a product from the list on the left, or add a brand-new
+                  entry.
+                </p>
+                <button className="add-master-btn" onClick={startAddProduct}>
+                  + Add Product
+                </button>
+              </div>
+            ) : isEditing ? (
+              /* PRODUCT EDIT MODE */
+              <form
+                className="detail-editing-form"
+                onSubmit={handleSaveProduct}
+              >
+                <div className="detail-panel-header">
+                  <h3>
+                    {form.id === 0 ? "Add Product" : "Edit Product Model"}
+                  </h3>
+                  <div className="header-actions">
+                    <button
+                      type="button"
+                      className="btn btn-secondary cancel-editing-btn"
+                      onClick={cancelEdit}
+                    >
+                      Cancel
+                    </button>
+                    <SubmitButton
+                      isSaving={
+                        createProductMutation.isPending ||
+                        updateProductMutation.isPending
+                      }
+                      text="Save Asset"
+                      className="save-editing-btn"
+                    />
+                  </div>
+                </div>
+
+                {/* TABS SELECTOR */}
+                <div className="form-panel-tabs">
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
+                    onClick={() => setActiveTab("general")}
+                  >
+                    General
+                  </button>
+                  {form.productType !== "Product" && (
+                    <button
+                      type="button"
+                      className={`tab-btn ${activeTab === "subclass" ? "active" : ""}`}
+                      onClick={() => setActiveTab("subclass")}
+                    >
+                      Technical Specifications
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === "specifications" ? "active" : ""}`}
+                    onClick={() => setActiveTab("specifications")}
+                  >
+                    Specifications Dictionary
+                  </button>
+                </div>
+
+                <div className="tab-scroll-body">
+                  {activeTab === "general" && (
+                    <div className="form-tab-panel">
+                      <div className="form-item">
+                        <label>Product Class Type</label>
+                        <select
+                          value={form.productType}
+                          onChange={(e) =>
+                            setForm({ ...form, productType: e.target.value })
+                          }
+                          disabled={form.id > 0}
+                        >
+                          <option value="PewPew">PewPew (Firearm)</option>
+                          <option value="Optic">Optic / Scope</option>
+                          <option value="Suppressor">
+                            Suppressor / Silencer
+                          </option>
+                          <option value="PewPewLight">
+                            Tactical Weapon Light
+                          </option>
+                          <option value="Security">Security / Safe</option>
+                          <option value="Product">General Product Model</option>
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Model Name</label>
+                        <input
+                          type="text"
+                          value={form.name}
+                          onChange={(e) =>
+                            setForm({ ...form, name: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Part Number</label>
+                        <input
+                          type="text"
+                          value={form.partNumber}
+                          onChange={(e) =>
+                            setForm({ ...form, partNumber: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>SKU Code</label>
+                        <input
+                          type="text"
+                          value={form.sku}
+                          onChange={(e) =>
+                            setForm({ ...form, sku: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Manufacturer / Brand</label>
+                        <select
+                          value={form.manufacturerId}
+                          onChange={(e) =>
+                            setForm({ ...form, manufacturerId: e.target.value })
+                          }
+                          required
+                        >
+                          <option value="">-- Choose Manufacturer --</option>
+                          {manufacturersList.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Reference URL</label>
+                        <input
+                          type="url"
+                          value={form.webPageUrl}
+                          onChange={(e) =>
+                            setForm({ ...form, webPageUrl: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item full-row">
+                        <label>Detailed Description</label>
+                        <textarea
+                          rows="4"
+                          value={form.description}
+                          onChange={(e) =>
+                            setForm({ ...form, description: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "subclass" && (
+                    <div className="form-tab-panel">
+                      {form.productType === "PewPew" && (
+                        <>
+                          <div className="form-item">
+                            <label>Caliber Size</label>
+                            <select
+                              value={form.caliberId}
+                              onChange={(e) =>
+                                setForm({ ...form, caliberId: e.target.value })
+                              }
+                            >
+                              <option value="">-- Select Caliber --</option>
+                              {calibersList.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Firearm Category</label>
+                            <select
+                              value={form.pewPewCategory}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  pewPewCategory: e.target.value,
+                                })
+                              }
+                            >
+                              {pewPewCategories.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Action Method</label>
+                            <select
+                              value={form.actionType}
+                              onChange={(e) =>
+                                setForm({ ...form, actionType: e.target.value })
+                              }
+                            >
+                              {actionTypes.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isNfaItem || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isNfaItem: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Is NFA Item (SBR, Suppressor, etc.)</span>
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      {form.productType === "Optic" && (
+                        <>
+                          <div className="form-item">
+                            <label>Min Magnification (x)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={form.minMagnification}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  minMagnification: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Max Magnification (x)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={form.maxMagnification}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  maxMagnification: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Objective Diameter (mm)</label>
+                            <input
+                              type="number"
+                              value={form.objectiveDiameterMm}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  objectiveDiameterMm: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Optic Class Type</label>
+                            <select
+                              value={form.opticType}
+                              onChange={(e) =>
+                                setForm({ ...form, opticType: e.target.value })
+                              }
+                            >
+                              {opticTypes.map((o) => (
+                                <option key={o.id} value={o.id}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Reticle Pattern</label>
+                            <select
+                              value={form.reticle}
+                              onChange={(e) =>
+                                setForm({ ...form, reticle: e.target.value })
+                              }
+                            >
+                              {opticReticles.map((r) => (
+                                <option key={r.id} value={r.id}>
+                                  {r.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Adjustment Increments</label>
+                            <select
+                              value={form.adjustmentUnits}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  adjustmentUnits: e.target.value,
+                                })
+                              }
+                            >
+                              {opticAdjustmentUnits.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Tube Size (mm / in)</label>
+                            <input
+                              type="text"
+                              value={form.tubeDiameter}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  tubeDiameter: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isIlluminated || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isIlluminated: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Has Illuminated Reticle</span>
+                            </label>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.hasBattery || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    hasBattery: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Requires Battery Power</span>
+                            </label>
+                          </div>
+                          {form.hasBattery && (
+                            <div className="form-item">
+                              <label>Battery Size</label>
+                              <select
+                                value={form.batteryType}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    batteryType: e.target.value,
+                                  })
+                                }
+                              >
+                                {batteryTypes.map((b) => (
+                                  <option key={b.id} value={b.id}>
+                                    {b.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {form.productType === "Suppressor" && (
+                        <>
+                          <div className="form-item">
+                            <label>Compatible Caliber</label>
+                            <select
+                              value={form.caliberId}
+                              onChange={(e) =>
+                                setForm({ ...form, caliberId: e.target.value })
+                              }
+                            >
+                              <option value="">-- Choose Caliber --</option>
+                              {calibersList.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Thread Pitch Pattern</label>
+                            <input
+                              type="text"
+                              value={form.threadPitch}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  threadPitch: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Suppressor Mounting Style</label>
+                            <select
+                              value={form.attachmentType}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  attachmentType: e.target.value,
+                                })
+                              }
+                            >
+                              {suppressorAttachmentTypes.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Build Metal / Material</label>
+                            <select
+                              value={form.material}
+                              onChange={(e) =>
+                                setForm({ ...form, material: e.target.value })
+                              }
+                            >
+                              {suppressorMaterials.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Sound Suppression (dB)</label>
+                            <input
+                              type="number"
+                              value={form.soundReductionDb}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  soundReductionDb: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isFullAutoRated || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isFullAutoRated: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Full-Auto Rated Capacity</span>
+                            </label>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isUserServiceable || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isUserServiceable: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>User Serviceable / Disassemblable</span>
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      {form.productType === "PewPewLight" && (
+                        <>
+                          <div className="form-item">
+                            <label>Light Output (Lumens)</label>
+                            <input
+                              type="number"
+                              value={form.lumens}
+                              onChange={(e) =>
+                                setForm({ ...form, lumens: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Peak Beam Intensity (Candela)</label>
+                            <input
+                              type="number"
+                              value={form.candela}
+                              onChange={(e) =>
+                                setForm({ ...form, candela: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Mount Style</label>
+                            <select
+                              value={form.mountType}
+                              onChange={(e) =>
+                                setForm({ ...form, mountType: e.target.value })
+                              }
+                            >
+                              {lightMountTypes.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Integrated Laser Color</label>
+                            <select
+                              value={form.laserColor}
+                              onChange={(e) =>
+                                setForm({ ...form, laserColor: e.target.value })
+                              }
+                            >
+                              {laserColors.map((l) => (
+                                <option key={l.id} value={l.id}>
+                                  {l.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.hasRemoteSwitchPort || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    hasRemoteSwitchPort: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Has Tape-Switch / Remote Port</span>
+                            </label>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isInfraredCapable || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isInfraredCapable: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Is Infrared / IR Illumination Capable</span>
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      {form.productType === "Security" && (
+                        <div className="form-item">
+                          <label>Security Lock Category</label>
+                          <select
+                            value={form.lockType}
+                            onChange={(e) =>
+                              setForm({ ...form, lockType: e.target.value })
+                            }
+                          >
+                            {lockTypes.map((l) => (
+                              <option key={l.id} value={l.id}>
+                                {l.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === "specifications" && (
+                    <div className="form-tab-panel">
+                      <div className="specifications-editor-container">
+                        <div className="spec-info-card">
+                          <h4>Manual Specifications Dictionary</h4>
+                          <p>
+                            Store custom key-value pairs representing custom
+                            structural properties of this model asset.
+                          </p>
+                        </div>
+
+                        <div className="specs-editor-grid">
+                          {customSpecs.length > 0 && (
+                            <div className="specs-headers">
+                              <span>Specification Key</span>
+                              <span>Assigned Value</span>
+                              <span>Actions</span>
+                            </div>
+                          )}
+
+                          {customSpecs.map((spec, i) => (
+                            <div key={i} className="spec-editor-row">
+                              <input
+                                type="text"
+                                placeholder="e.g. Finish"
+                                value={spec.key}
+                                onChange={(e) =>
+                                  handleCustomSpecChange(
+                                    i,
+                                    "key",
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                              <input
+                                type="text"
+                                placeholder="e.g. Matte Black"
+                                value={spec.value}
+                                onChange={(e) =>
+                                  handleCustomSpecChange(
+                                    i,
+                                    "value",
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                              <button
+                                type="button"
+                                className="remove-spec-btn"
+                                onClick={() => removeCustomSpec(i)}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            className="add-spec-btn"
+                            onClick={addCustomSpec}
+                          >
+                            + Add Custom Property Row
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </form>
+            ) : (
+              /* PRODUCT VIEW MODE */
+              <div className="detail-view-container">
+                <div className="detail-panel-header">
+                  <span className="type-badge-pill">
+                    {getProductTypeLabel(selectedProduct.productType)}
+                  </span>
+                  <div className="header-actions">
+                    <button
+                      className="btn btn-secondary edit-btn"
+                      onClick={startEditProduct}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn delete-btn"
+                      onClick={handleDeleteProduct}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                <div className="detail-view-body">
+                  {saveSuccess && (
+                    <div className="detail-save-toast">
+                      ✓ Product updated successfully
+                    </div>
+                  )}
+                  <span className="detail-mfg">
+                    {selectedProduct.manufacturerName}
+                  </span>
+                  <h2>{selectedProduct.name}</h2>
+                  <div className="text-mono detail-pn-sku">
+                    <span>Part No: {selectedProduct.partNumber || "None"}</span>
+                    <span>SKU: {selectedProduct.sku || "None"}</span>
+                  </div>
+
+                  <p className="detail-desc">
+                    {selectedProduct.description ||
+                      "No model description loaded for this product catalog asset."}
+                  </p>
+
+                  {selectedProduct.webPageUrl && (
+                    <a
+                      href={selectedProduct.webPageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="external-site-link"
+                    >
+                      🌐 Open Official Website
+                    </a>
+                  )}
+
+                  <hr className="detail-divider" />
+
+                  {/* Subclass Specs Detail Block */}
+                  {selectedProduct.productType !== "Product" && (
+                    <div className="details-specs-block">
+                      <h3>Technical Details</h3>
+                      <p className="sub-specs-text">
+                        {renderSubAttributesText(selectedProduct)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Specifications Key-Value Details */}
+                  {selectedProduct.specifications &&
+                    Object.keys(selectedProduct.specifications).length > 0 && (
+                      <div className="details-specs-block">
+                        <h3>Manual Specifications</h3>
+                        <div className="specs-table">
+                          {Object.entries(selectedProduct.specifications).map(
+                            ([key, value]) => (
+                              <div key={key} className="specs-table-row">
+                                <span className="key-col">{key}</span>
+                                <span className="val-col">{String(value)}</span>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              </div>
+            )
+          ) : /* ==================== MANUFACTURERS PANEL ==================== */
+          !selectedMfg ? (
             <div className="empty-detail-state">
-              <span className="icon">📦</span>
-              <h3>No Product Selected</h3>
+              <span className="icon">🏢</span>
+              <h3>No Manufacturer Selected</h3>
               <p>
-                Select a product from the list on the left, or add a brand-new
-                entry.
+                Select a manufacturer from the list on the left, or add a
+                brand-new corporate record.
               </p>
-              <button className="add-master-btn" onClick={startAddProduct}>
-                + Add Product
+              <button className="add-master-btn" onClick={startAddMfg}>
+                + Add Manufacturer
               </button>
             </div>
           ) : isEditing ? (
-            /* PRODUCT EDIT MODE */
-            <form className="detail-editing-form" onSubmit={handleSaveProduct}>
+            /* MANUFACTURER EDIT MODE */
+            <form className="detail-editing-form" onSubmit={handleSaveMfg}>
               <div className="detail-panel-header">
-                <h3>{form.id === 0 ? "Add Product" : "Edit Product Model"}</h3>
+                <h3>
+                  {mfgForm.id === 0
+                    ? "Add Manufacturer"
+                    : "Edit Corporate Record"}
+                </h3>
                 <div className="header-actions">
                   <button
                     type="button"
@@ -1176,670 +1957,126 @@ export default function Catalog() {
                   </button>
                   <SubmitButton
                     isSaving={
-                      createProductMutation.isPending ||
-                      updateProductMutation.isPending
+                      createMfgMutation.isPending || updateMfgMutation.isPending
                     }
-                    text="Save Asset"
+                    text="Save Record"
                     className="save-editing-btn"
                   />
                 </div>
               </div>
 
-              {/* TABS SELECTOR */}
-              <div className="form-panel-tabs">
-                <button
-                  type="button"
-                  className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
-                  onClick={() => setActiveTab("general")}
-                >
-                  General
-                </button>
-                {form.productType !== "Product" && (
-                  <button
-                    type="button"
-                    className={`tab-btn ${activeTab === "subclass" ? "active" : ""}`}
-                    onClick={() => setActiveTab("subclass")}
-                  >
-                    Technical Specifications
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className={`tab-btn ${activeTab === "specifications" ? "active" : ""}`}
-                  onClick={() => setActiveTab("specifications")}
-                >
-                  Specifications Dictionary
-                </button>
-              </div>
-
-              <div className="tab-scroll-body">
-                {activeTab === "general" && (
-                  <div className="form-tab-panel">
-                    <div className="form-item">
-                      <label>Product Class Type</label>
-                      <select
-                        value={form.productType}
-                        onChange={(e) =>
-                          setForm({ ...form, productType: e.target.value })
-                        }
-                        disabled={form.id > 0}
-                      >
-                        <option value="PewPew">PewPew (Firearm)</option>
-                        <option value="Optic">Optic / Scope</option>
-                        <option value="Suppressor">
-                          Suppressor / Silencer
-                        </option>
-                        <option value="PewPewLight">
-                          Tactical Weapon Light
-                        </option>
-                        <option value="Security">Security / Safe</option>
-                        <option value="Product">General Product Model</option>
-                      </select>
-                    </div>
-
-                    <div className="form-item">
-                      <label>Model Name</label>
-                      <input
-                        type="text"
-                        value={form.name}
-                        onChange={(e) =>
-                          setForm({ ...form, name: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-
-                    <div className="form-item">
-                      <label>Part Number</label>
-                      <input
-                        type="text"
-                        value={form.partNumber}
-                        onChange={(e) =>
-                          setForm({ ...form, partNumber: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="form-item">
-                      <label>SKU Code</label>
-                      <input
-                        type="text"
-                        value={form.sku}
-                        onChange={(e) =>
-                          setForm({ ...form, sku: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="form-item">
-                      <label>Manufacturer / Brand</label>
-                      <select
-                        value={form.manufacturerId}
-                        onChange={(e) =>
-                          setForm({ ...form, manufacturerId: e.target.value })
-                        }
-                        required
-                      >
-                        <option value="">-- Choose Manufacturer --</option>
-                        {manufacturersList.map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-item">
-                      <label>Reference URL</label>
-                      <input
-                        type="url"
-                        value={form.webPageUrl}
-                        onChange={(e) =>
-                          setForm({ ...form, webPageUrl: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="form-item full-row">
-                      <label>Detailed Description</label>
-                      <textarea
-                        rows="4"
-                        value={form.description}
-                        onChange={(e) =>
-                          setForm({ ...form, description: e.target.value })
-                        }
-                      />
-                    </div>
+              <div className="tab-scroll-body single-tab">
+                <div className="form-tab-panel">
+                  <div className="form-item">
+                    <label>Official Corporate Name</label>
+                    <input
+                      type="text"
+                      value={mfgForm.name}
+                      onChange={(e) =>
+                        setMfgForm({ ...mfgForm, name: e.target.value })
+                      }
+                      required
+                    />
                   </div>
-                )}
 
-                {activeTab === "subclass" && (
-                  <div className="form-tab-panel">
-                    {form.productType === "PewPew" && (
-                      <>
-                        <div className="form-item">
-                          <label>Caliber Size</label>
-                          <select
-                            value={form.caliberId}
-                            onChange={(e) =>
-                              setForm({ ...form, caliberId: e.target.value })
-                            }
-                          >
-                            <option value="">-- Select Caliber --</option>
-                            {calibersList.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item">
-                          <label>Firearm Category</label>
-                          <select
-                            value={form.pewPewCategory}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                pewPewCategory: e.target.value,
-                              })
-                            }
-                          >
-                            {pewPewCategories.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item">
-                          <label>Action Method</label>
-                          <select
-                            value={form.actionType}
-                            onChange={(e) =>
-                              setForm({ ...form, actionType: e.target.value })
-                            }
-                          >
-                            {actionTypes.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item checkbox-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isNfaItem || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isNfaItem: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>Is NFA Item (SBR, Suppressor, etc.)</span>
-                          </label>
-                        </div>
-                      </>
-                    )}
-
-                    {form.productType === "Optic" && (
-                      <>
-                        <div className="form-item">
-                          <label>Min Magnification (x)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={form.minMagnification}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                minMagnification: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="form-item">
-                          <label>Max Magnification (x)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={form.maxMagnification}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                maxMagnification: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="form-item">
-                          <label>Objective Diameter (mm)</label>
-                          <input
-                            type="number"
-                            value={form.objectiveDiameterMm}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                objectiveDiameterMm: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="form-item">
-                          <label>Optic Class Type</label>
-                          <select
-                            value={form.opticType}
-                            onChange={(e) =>
-                              setForm({ ...form, opticType: e.target.value })
-                            }
-                          >
-                            {opticTypes.map((o) => (
-                              <option key={o.id} value={o.id}>
-                                {o.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item">
-                          <label>Reticle Pattern</label>
-                          <select
-                            value={form.reticle}
-                            onChange={(e) =>
-                              setForm({ ...form, reticle: e.target.value })
-                            }
-                          >
-                            {opticReticles.map((r) => (
-                              <option key={r.id} value={r.id}>
-                                {r.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item">
-                          <label>Adjustment Increments</label>
-                          <select
-                            value={form.adjustmentUnits}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                adjustmentUnits: e.target.value,
-                              })
-                            }
-                          >
-                            {opticAdjustmentUnits.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item">
-                          <label>Tube Size (mm / in)</label>
-                          <input
-                            type="text"
-                            value={form.tubeDiameter}
-                            onChange={(e) =>
-                              setForm({ ...form, tubeDiameter: e.target.value })
-                            }
-                          />
-                        </div>
-                        <div className="form-item checkbox-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isIlluminated || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isIlluminated: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>Has Illuminated Reticle</span>
-                          </label>
-                        </div>
-                        <div className="form-item checkbox-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.hasBattery || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  hasBattery: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>Requires Battery Power</span>
-                          </label>
-                        </div>
-                        {form.hasBattery && (
-                          <div className="form-item">
-                            <label>Battery Size</label>
-                            <select
-                              value={form.batteryType}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  batteryType: e.target.value,
-                                })
-                              }
-                            >
-                              {batteryTypes.map((b) => (
-                                <option key={b.id} value={b.id}>
-                                  {b.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    {form.productType === "Suppressor" && (
-                      <>
-                        <div className="form-item">
-                          <label>Compatible Caliber</label>
-                          <select
-                            value={form.caliberId}
-                            onChange={(e) =>
-                              setForm({ ...form, caliberId: e.target.value })
-                            }
-                          >
-                            <option value="">-- Choose Caliber --</option>
-                            {calibersList.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item">
-                          <label>Thread Pitch Pattern</label>
-                          <input
-                            type="text"
-                            value={form.threadPitch}
-                            onChange={(e) =>
-                              setForm({ ...form, threadPitch: e.target.value })
-                            }
-                          />
-                        </div>
-                        <div className="form-item">
-                          <label>Suppressor Mounting Style</label>
-                          <select
-                            value={form.attachmentType}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                attachmentType: e.target.value,
-                              })
-                            }
-                          >
-                            {suppressorAttachmentTypes.map((t) => (
-                              <option key={t.id} value={t.id}>
-                                {t.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item">
-                          <label>Build Metal / Material</label>
-                          <select
-                            value={form.material}
-                            onChange={(e) =>
-                              setForm({ ...form, material: e.target.value })
-                            }
-                          >
-                            {suppressorMaterials.map((m) => (
-                              <option key={m.id} value={m.id}>
-                                {m.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item">
-                          <label>Sound Suppression (dB)</label>
-                          <input
-                            type="number"
-                            value={form.soundReductionDb}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                soundReductionDb: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="form-item checkbox-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isFullAutoRated || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isFullAutoRated: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>Full-Auto Rated Capacity</span>
-                          </label>
-                        </div>
-                        <div className="form-item checkbox-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isUserServiceable || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isUserServiceable: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>User Serviceable / Disassemblable</span>
-                          </label>
-                        </div>
-                      </>
-                    )}
-
-                    {form.productType === "PewPewLight" && (
-                      <>
-                        <div className="form-item">
-                          <label>Light Output (Lumens)</label>
-                          <input
-                            type="number"
-                            value={form.lumens}
-                            onChange={(e) =>
-                              setForm({ ...form, lumens: e.target.value })
-                            }
-                          />
-                        </div>
-                        <div className="form-item">
-                          <label>Peak Beam Intensity (Candela)</label>
-                          <input
-                            type="number"
-                            value={form.candela}
-                            onChange={(e) =>
-                              setForm({ ...form, candela: e.target.value })
-                            }
-                          />
-                        </div>
-                        <div className="form-item">
-                          <label>Mount Style</label>
-                          <select
-                            value={form.mountType}
-                            onChange={(e) =>
-                              setForm({ ...form, mountType: e.target.value })
-                            }
-                          >
-                            {lightMountTypes.map((m) => (
-                              <option key={m.id} value={m.id}>
-                                {m.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item">
-                          <label>Integrated Laser Color</label>
-                          <select
-                            value={form.laserColor}
-                            onChange={(e) =>
-                              setForm({ ...form, laserColor: e.target.value })
-                            }
-                          >
-                            {laserColors.map((l) => (
-                              <option key={l.id} value={l.id}>
-                                {l.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-item checkbox-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.hasRemoteSwitchPort || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  hasRemoteSwitchPort: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>Has Tape-Switch / Remote Port</span>
-                          </label>
-                        </div>
-                        <div className="form-item checkbox-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isInfraredCapable || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isInfraredCapable: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>Is Infrared / IR Illumination Capable</span>
-                          </label>
-                        </div>
-                      </>
-                    )}
-
-                    {form.productType === "Security" && (
-                      <div className="form-item">
-                        <label>Security Lock Category</label>
-                        <select
-                          value={form.lockType}
-                          onChange={(e) =>
-                            setForm({ ...form, lockType: e.target.value })
-                          }
-                        >
-                          {lockTypes.map((l) => (
-                            <option key={l.id} value={l.id}>
-                              {l.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
+                  <div className="form-item">
+                    <label>Company Website URL</label>
+                    <input
+                      type="url"
+                      value={mfgForm.webPageUrl}
+                      onChange={(e) =>
+                        setMfgForm({ ...mfgForm, webPageUrl: e.target.value })
+                      }
+                    />
                   </div>
-                )}
 
-                {activeTab === "specifications" && (
-                  <div className="form-tab-panel">
-                    <div className="specifications-editor-container">
-                      <div className="spec-info-card">
-                        <h4>Manual Specifications Dictionary</h4>
-                        <p>
-                          Store custom key-value pairs representing custom
-                          structural properties of this model asset.
-                        </p>
-                      </div>
-
-                      <div className="specs-editor-grid">
-                        {customSpecs.length > 0 && (
-                          <div className="specs-headers">
-                            <span>Specification Key</span>
-                            <span>Assigned Value</span>
-                            <span>Actions</span>
-                          </div>
-                        )}
-
-                        {customSpecs.map((spec, i) => (
-                          <div key={i} className="spec-editor-row">
-                            <input
-                              type="text"
-                              placeholder="e.g. Finish"
-                              value={spec.key}
-                              onChange={(e) =>
-                                handleCustomSpecChange(i, "key", e.target.value)
-                              }
-                            />
-                            <input
-                              type="text"
-                              placeholder="e.g. Matte Black"
-                              value={spec.value}
-                              onChange={(e) =>
-                                handleCustomSpecChange(
-                                  i,
-                                  "value",
-                                  e.target.value,
-                                )
-                              }
-                            />
-                            <button
-                              type="button"
-                              className="remove-spec-btn"
-                              onClick={() => removeCustomSpec(i)}
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-
-                        <button
-                          type="button"
-                          className="add-spec-btn"
-                          onClick={addCustomSpec}
-                        >
-                          + Add Custom Property Row
-                        </button>
-                      </div>
-                    </div>
+                  <div className="form-item">
+                    <label>Support Phone Number</label>
+                    <input
+                      type="tel"
+                      value={mfgForm.phoneNumber}
+                      onChange={(e) =>
+                        setMfgForm({ ...mfgForm, phoneNumber: e.target.value })
+                      }
+                    />
                   </div>
-                )}
+
+                  <div className="form-item">
+                    <label>Street Address</label>
+                    <input
+                      type="text"
+                      value={mfgForm.streetAddress}
+                      onChange={(e) =>
+                        setMfgForm({
+                          ...mfgForm,
+                          streetAddress: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="form-item">
+                    <label>City</label>
+                    <input
+                      type="text"
+                      value={mfgForm.city}
+                      onChange={(e) =>
+                        setMfgForm({ ...mfgForm, city: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="form-item">
+                    <label>State / Province</label>
+                    <input
+                      type="text"
+                      value={mfgForm.stateOrProvince}
+                      onChange={(e) =>
+                        setMfgForm({
+                          ...mfgForm,
+                          stateOrProvince: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="form-item">
+                    <label>Postal / ZIP Code</label>
+                    <input
+                      type="text"
+                      value={mfgForm.postalCode}
+                      onChange={(e) =>
+                        setMfgForm({ ...mfgForm, postalCode: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="form-item">
+                    <label>Country of Origin</label>
+                    <input
+                      type="text"
+                      value={mfgForm.country}
+                      onChange={(e) =>
+                        setMfgForm({ ...mfgForm, country: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
               </div>
             </form>
           ) : (
-            /* PRODUCT VIEW MODE */
+            /* MANUFACTURER VIEW MODE */
             <div className="detail-view-container">
               <div className="detail-panel-header">
-                <span className="type-badge-pill">
-                  {getProductTypeLabel(selectedProduct.productType)}
-                </span>
+                <span className="type-badge-pill">🏢 Manufacturer</span>
                 <div className="header-actions">
                   <button
                     className="btn btn-secondary edit-btn"
-                    onClick={startEditProduct}
+                    onClick={startEditMfg}
                   >
                     Edit
                   </button>
-                  <button
-                    className="btn delete-btn"
-                    onClick={handleDeleteProduct}
-                  >
+                  <button className="btn delete-btn" onClick={handleDeleteMfg}>
                     Delete
                   </button>
                 </div>
@@ -1848,274 +2085,883 @@ export default function Catalog() {
               <div className="detail-view-body">
                 {saveSuccess && (
                   <div className="detail-save-toast">
-                    ✓ Product updated successfully
+                    ✓ Manufacturer updated successfully
                   </div>
                 )}
-                <span className="detail-mfg">
-                  {selectedProduct.manufacturerName}
+
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <ManufacturerFavicon mfgId={selectedMfg.id} />
+                  <h2 style={{ margin: 0 }}>{selectedMfg.name}</h2>
                 </span>
-                <h2>{selectedProduct.name}</h2>
-                <div className="text-mono detail-pn-sku">
-                  <span>Part No: {selectedProduct.partNumber || "None"}</span>
-                  <span>SKU: {selectedProduct.sku || "None"}</span>
-                </div>
+                {selectedMfg.phoneNumber && (
+                  <p className="mfg-meta-item">
+                    <strong>📞 Phone Support:</strong>{" "}
+                    <span className="text-mono">{selectedMfg.phoneNumber}</span>
+                  </p>
+                )}
 
-                <p className="detail-desc">
-                  {selectedProduct.description ||
-                    "No model description loaded for this product catalog asset."}
-                </p>
-
-                {selectedProduct.webPageUrl && (
+                {selectedMfg.webPageUrl && (
                   <a
-                    href={selectedProduct.webPageUrl}
+                    href={selectedMfg.webPageUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="external-site-link"
                   >
-                    🌐 Open Official Website
+                    🌐 Open Manufacturer Website
                   </a>
                 )}
 
                 <hr className="detail-divider" />
 
-                {/* Subclass Specs Detail Block */}
-                {selectedProduct.productType !== "Product" && (
-                  <div className="details-specs-block">
-                    <h3>Technical Details</h3>
-                    <p className="sub-specs-text">
-                      {renderSubAttributesText(selectedProduct)}
-                    </p>
-                  </div>
-                )}
+                <div className="details-specs-block">
+                  <h3>Corporate Address</h3>
+                  <p className="address-display">
+                    {selectedMfg.streetAddress || ""}
+                    <br />
+                    {selectedMfg.city || ""}
+                    {selectedMfg.stateOrProvince
+                      ? `, ${selectedMfg.stateOrProvince}`
+                      : ""}{" "}
+                    {selectedMfg.postalCode || ""}
+                    <br />
+                    <strong>{selectedMfg.country || ""}</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
-                {/* Specifications Key-Value Details */}
-                {selectedProduct.specifications &&
-                  Object.keys(selectedProduct.specifications).length > 0 && (
-                    <div className="details-specs-block">
-                      <h3>Manual Specifications</h3>
-                      <div className="specs-table">
-                        {Object.entries(selectedProduct.specifications).map(
-                          ([key, value]) => (
-                            <div key={key} className="specs-table-row">
-                              <span className="key-col">{key}</span>
-                              <span className="val-col">{String(value)}</span>
-                            </div>
-                          ),
-                        )}
+        <div className="detail-panel">
+          {!isManufacturersPage ? (
+            /* ==================== PRODUCTS PANEL ==================== */
+            !selectedProduct ? (
+              <div className="empty-detail-state">
+                <span className="icon">📦</span>
+                <h3>No Product Selected</h3>
+                <p>
+                  Select a product from the list on the left, or add a brand-new
+                  entry.
+                </p>
+                <button className="add-master-btn" onClick={startAddProduct}>
+                  + Add Product
+                </button>
+              </div>
+            ) : isEditing ? (
+              /* PRODUCT EDIT MODE */
+              <form
+                className="detail-editing-form"
+                onSubmit={handleSaveProduct}
+              >
+                <div className="detail-panel-header">
+                  <h3>
+                    {form.id === 0 ? "Add Product" : "Edit Product Model"}
+                  </h3>
+                  <div className="header-actions">
+                    <button
+                      type="button"
+                      className="btn btn-secondary cancel-editing-btn"
+                      onClick={cancelEdit}
+                    >
+                      Cancel
+                    </button>
+                    <SubmitButton
+                      isSaving={
+                        createProductMutation.isPending ||
+                        updateProductMutation.isPending
+                      }
+                      text="Save Asset"
+                      className="save-editing-btn"
+                    />
+                  </div>
+                </div>
+
+                {/* TABS SELECTOR */}
+                <div className="form-panel-tabs">
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
+                    onClick={() => setActiveTab("general")}
+                  >
+                    General
+                  </button>
+                  {form.productType !== "Product" && (
+                    <button
+                      type="button"
+                      className={`tab-btn ${activeTab === "subclass" ? "active" : ""}`}
+                      onClick={() => setActiveTab("subclass")}
+                    >
+                      Technical Specifications
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === "specifications" ? "active" : ""}`}
+                    onClick={() => setActiveTab("specifications")}
+                  >
+                    Specifications Dictionary
+                  </button>
+                </div>
+
+                <div className="tab-scroll-body">
+                  {activeTab === "general" && (
+                    <div className="form-tab-panel">
+                      <div className="form-item">
+                        <label>Product Class Type</label>
+                        <select
+                          value={form.productType}
+                          onChange={(e) =>
+                            setForm({ ...form, productType: e.target.value })
+                          }
+                          disabled={form.id > 0}
+                        >
+                          <option value="PewPew">PewPew (Firearm)</option>
+                          <option value="Optic">Optic / Scope</option>
+                          <option value="Suppressor">
+                            Suppressor / Silencer
+                          </option>
+                          <option value="PewPewLight">
+                            Tactical Weapon Light
+                          </option>
+                          <option value="Security">Security / Safe</option>
+                          <option value="Product">General Product Model</option>
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Model Name</label>
+                        <input
+                          type="text"
+                          value={form.name}
+                          onChange={(e) =>
+                            setForm({ ...form, name: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Part Number</label>
+                        <input
+                          type="text"
+                          value={form.partNumber}
+                          onChange={(e) =>
+                            setForm({ ...form, partNumber: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>SKU Code</label>
+                        <input
+                          type="text"
+                          value={form.sku}
+                          onChange={(e) =>
+                            setForm({ ...form, sku: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Manufacturer / Brand</label>
+                        <select
+                          value={form.manufacturerId}
+                          onChange={(e) =>
+                            setForm({ ...form, manufacturerId: e.target.value })
+                          }
+                          required
+                        >
+                          <option value="">-- Choose Manufacturer --</option>
+                          {manufacturersList.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Reference URL</label>
+                        <input
+                          type="url"
+                          value={form.webPageUrl}
+                          onChange={(e) =>
+                            setForm({ ...form, webPageUrl: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item full-row">
+                        <label>Detailed Description</label>
+                        <textarea
+                          rows="4"
+                          value={form.description}
+                          onChange={(e) =>
+                            setForm({ ...form, description: e.target.value })
+                          }
+                        />
                       </div>
                     </div>
                   )}
+
+                  {activeTab === "subclass" && (
+                    <div className="form-tab-panel">
+                      {form.productType === "PewPew" && (
+                        <>
+                          <div className="form-item">
+                            <label>Caliber Size</label>
+                            <select
+                              value={form.caliberId}
+                              onChange={(e) =>
+                                setForm({ ...form, caliberId: e.target.value })
+                              }
+                            >
+                              <option value="">-- Select Caliber --</option>
+                              {calibersList.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Firearm Category</label>
+                            <select
+                              value={form.pewPewCategory}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  pewPewCategory: e.target.value,
+                                })
+                              }
+                            >
+                              {pewPewCategories.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Action Method</label>
+                            <select
+                              value={form.actionType}
+                              onChange={(e) =>
+                                setForm({ ...form, actionType: e.target.value })
+                              }
+                            >
+                              {actionTypes.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isNfaItem || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isNfaItem: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Is NFA Item (SBR, Suppressor, etc.)</span>
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      {form.productType === "Optic" && (
+                        <>
+                          <div className="form-item">
+                            <label>Min Magnification (x)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={form.minMagnification}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  minMagnification: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Max Magnification (x)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={form.maxMagnification}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  maxMagnification: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Objective Diameter (mm)</label>
+                            <input
+                              type="number"
+                              value={form.objectiveDiameterMm}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  objectiveDiameterMm: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Optic Class Type</label>
+                            <select
+                              value={form.opticType}
+                              onChange={(e) =>
+                                setForm({ ...form, opticType: e.target.value })
+                              }
+                            >
+                              {opticTypes.map((o) => (
+                                <option key={o.id} value={o.id}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Reticle Pattern</label>
+                            <select
+                              value={form.reticle}
+                              onChange={(e) =>
+                                setForm({ ...form, reticle: e.target.value })
+                              }
+                            >
+                              {opticReticles.map((r) => (
+                                <option key={r.id} value={r.id}>
+                                  {r.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Adjustment Increments</label>
+                            <select
+                              value={form.adjustmentUnits}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  adjustmentUnits: e.target.value,
+                                })
+                              }
+                            >
+                              {opticAdjustmentUnits.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Tube Size (mm / in)</label>
+                            <input
+                              type="text"
+                              value={form.tubeDiameter}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  tubeDiameter: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isIlluminated || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isIlluminated: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Has Illuminated Reticle</span>
+                            </label>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.hasBattery || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    hasBattery: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Requires Battery Power</span>
+                            </label>
+                          </div>
+                          {form.hasBattery && (
+                            <div className="form-item">
+                              <label>Battery Size</label>
+                              <select
+                                value={form.batteryType}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    batteryType: e.target.value,
+                                  })
+                                }
+                              >
+                                {batteryTypes.map((b) => (
+                                  <option key={b.id} value={b.id}>
+                                    {b.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {form.productType === "Suppressor" && (
+                        <>
+                          <div className="form-item">
+                            <label>Compatible Caliber</label>
+                            <select
+                              value={form.caliberId}
+                              onChange={(e) =>
+                                setForm({ ...form, caliberId: e.target.value })
+                              }
+                            >
+                              <option value="">-- Choose Caliber --</option>
+                              {calibersList.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Thread Pitch Pattern</label>
+                            <input
+                              type="text"
+                              value={form.threadPitch}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  threadPitch: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Suppressor Mounting Style</label>
+                            <select
+                              value={form.attachmentType}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  attachmentType: e.target.value,
+                                })
+                              }
+                            >
+                              {suppressorAttachmentTypes.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Build Metal / Material</label>
+                            <select
+                              value={form.material}
+                              onChange={(e) =>
+                                setForm({ ...form, material: e.target.value })
+                              }
+                            >
+                              {suppressorMaterials.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Sound Suppression (dB)</label>
+                            <input
+                              type="number"
+                              value={form.soundReductionDb}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  soundReductionDb: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isFullAutoRated || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isFullAutoRated: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Full-Auto Rated Capacity</span>
+                            </label>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isUserServiceable || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isUserServiceable: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>User Serviceable / Disassemblable</span>
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      {form.productType === "PewPewLight" && (
+                        <>
+                          <div className="form-item">
+                            <label>Light Output (Lumens)</label>
+                            <input
+                              type="number"
+                              value={form.lumens}
+                              onChange={(e) =>
+                                setForm({ ...form, lumens: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Peak Beam Intensity (Candela)</label>
+                            <input
+                              type="number"
+                              value={form.candela}
+                              onChange={(e) =>
+                                setForm({ ...form, candela: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="form-item">
+                            <label>Mount Style</label>
+                            <select
+                              value={form.mountType}
+                              onChange={(e) =>
+                                setForm({ ...form, mountType: e.target.value })
+                              }
+                            >
+                              {lightMountTypes.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item">
+                            <label>Integrated Laser Color</label>
+                            <select
+                              value={form.laserColor}
+                              onChange={(e) =>
+                                setForm({ ...form, laserColor: e.target.value })
+                              }
+                            >
+                              {laserColors.map((l) => (
+                                <option key={l.id} value={l.id}>
+                                  {l.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.hasRemoteSwitchPort || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    hasRemoteSwitchPort: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Has Tape-Switch / Remote Port</span>
+                            </label>
+                          </div>
+                          <div className="form-item checkbox-row">
+                            <label className="checkbox-container">
+                              <input
+                                type="checkbox"
+                                checked={form.isInfraredCapable || false}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    isInfraredCapable: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="checkmark"></span>
+                              <span>Is Infrared / IR Illumination Capable</span>
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      {form.productType === "Security" && (
+                        <div className="form-item">
+                          <label>Security Lock Category</label>
+                          <select
+                            value={form.lockType}
+                            onChange={(e) =>
+                              setForm({ ...form, lockType: e.target.value })
+                            }
+                          >
+                            {lockTypes.map((l) => (
+                              <option key={l.id} value={l.id}>
+                                {l.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === "specifications" && (
+                    <div className="form-tab-panel">
+                      <div className="specifications-editor-container">
+                        <div className="spec-info-card">
+                          <h4>Manual Specifications Dictionary</h4>
+                          <p>
+                            Store custom key-value pairs representing custom
+                            structural properties of this model asset.
+                          </p>
+                        </div>
+
+                        <div className="specs-editor-grid">
+                          {customSpecs.length > 0 && (
+                            <div className="specs-headers">
+                              <span>Specification Key</span>
+                              <span>Assigned Value</span>
+                              <span>Actions</span>
+                            </div>
+                          )}
+
+                          {customSpecs.map((spec, i) => (
+                            <div key={i} className="spec-editor-row">
+                              <input
+                                type="text"
+                                placeholder="e.g. Finish"
+                                value={spec.key}
+                                onChange={(e) =>
+                                  handleCustomSpecChange(
+                                    i,
+                                    "key",
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                              <input
+                                type="text"
+                                placeholder="e.g. Matte Black"
+                                value={spec.value}
+                                onChange={(e) =>
+                                  handleCustomSpecChange(
+                                    i,
+                                    "value",
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                              <button
+                                type="button"
+                                className="remove-spec-btn"
+                                onClick={() => removeCustomSpec(i)}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            className="add-spec-btn"
+                            onClick={addCustomSpec}
+                          >
+                            + Add Custom Property Row
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </form>
+            ) : (
+              /* PRODUCT VIEW MODE */
+              <div className="detail-view-container">
+                <div className="detail-panel-header">
+                  <span className="type-badge-pill">
+                    {getProductTypeLabel(selectedProduct.productType)}
+                  </span>
+                  <div className="header-actions">
+                    <button
+                      className="btn btn-secondary edit-btn"
+                      onClick={startEditProduct}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn delete-btn"
+                      onClick={handleDeleteProduct}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                <div className="detail-view-body">
+                  {saveSuccess && (
+                    <div className="detail-save-toast">
+                      ✓ Product updated successfully
+                    </div>
+                  )}
+                  <span className="detail-mfg">
+                    {selectedProduct.manufacturerName}
+                  </span>
+                  <h2>{selectedProduct.name}</h2>
+                  <div className="text-mono detail-pn-sku">
+                    <span>Part No: {selectedProduct.partNumber || "None"}</span>
+                    <span>SKU: {selectedProduct.sku || "None"}</span>
+                  </div>
+
+                  <p className="detail-desc">
+                    {selectedProduct.description ||
+                      "No model description loaded for this product catalog asset."}
+                  </p>
+
+                  {selectedProduct.webPageUrl && (
+                    <a
+                      href={selectedProduct.webPageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="external-site-link"
+                    >
+                      🌐 Open Official Website
+                    </a>
+                  )}
+
+                  <hr className="detail-divider" />
+
+                  {/* Subclass Specs Detail Block */}
+                  {selectedProduct.productType !== "Product" && (
+                    <div className="details-specs-block">
+                      <h3>Technical Details</h3>
+                      <p className="sub-specs-text">
+                        {renderSubAttributesText(selectedProduct)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Specifications Key-Value Details */}
+                  {selectedProduct.specifications &&
+                    Object.keys(selectedProduct.specifications).length > 0 && (
+                      <div className="details-specs-block">
+                        <h3>Manual Specifications</h3>
+                        <div className="specs-table">
+                          {Object.entries(selectedProduct.specifications).map(
+                            ([key, value]) => (
+                              <div key={key} className="specs-table-row">
+                                <span className="key-col">{key}</span>
+                                <span className="val-col">{String(value)}</span>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    )}
+                </div>
               </div>
+            )
+          ) : /* ==================== MANUFACTURERS PANEL ==================== */
+          selectedMfg ? (
+            <div className="detail-view-container">
+              <table className="split-view-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>City / State</th>
+                    <th>Country</th>
+                    <th>Contact Phone</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {processedManufacturers.map((m) => (
+                    <tr
+                      key={m.id}
+                      className={`table-row-item ${selectedMfg?.id === m.id ? "selected" : ""}`}
+                      // onClick={() => {
+                      //   setSelectedMfg(m);
+                      //   setIsEditing(false);
+                      // }}
+                    >
+                      <td className="bold-name-cell">
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <ManufacturerFavicon mfgId={m.id} />
+                          <span>{m.name}</span>
+                        </div>
+                      </td>
+                      <td>
+                        {m.city || "N/A"}
+                        {m.stateOrProvince ? `, ${m.stateOrProvince}` : ""}
+                      </td>
+                      <td>{m.country || "N/A"}</td>
+                      <td className="text-mono">{m.phoneNumber || "N/A"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )
-        ) : /* ==================== MANUFACTURERS PANEL ==================== */
-        !selectedMfg ? (
-          <div className="empty-detail-state">
-            <span className="icon">🏢</span>
-            <h3>No Manufacturer Selected</h3>
-            <p>
-              Select a manufacturer from the list on the left, or add a
-              brand-new corporate record.
-            </p>
-            <button className="add-master-btn" onClick={startAddMfg}>
-              + Add Manufacturer
-            </button>
-          </div>
-        ) : isEditing ? (
-          /* MANUFACTURER EDIT MODE */
-          <form className="detail-editing-form" onSubmit={handleSaveMfg}>
-            <div className="detail-panel-header">
-              <h3>
-                {mfgForm.id === 0
-                  ? "Add Manufacturer"
-                  : "Edit Corporate Record"}
-              </h3>
-              <div className="header-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary cancel-editing-btn"
-                  onClick={cancelEdit}
-                >
-                  Cancel
-                </button>
-                <SubmitButton
-                  isSaving={
-                    createMfgMutation.isPending || updateMfgMutation.isPending
-                  }
-                  text="Save Record"
-                  className="save-editing-btn"
-                />
-              </div>
-            </div>
-
-            <div className="tab-scroll-body single-tab">
-              <div className="form-tab-panel">
-                <div className="form-item">
-                  <label>Official Corporate Name</label>
-                  <input
-                    type="text"
-                    value={mfgForm.name}
-                    onChange={(e) =>
-                      setMfgForm({ ...mfgForm, name: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-
-                <div className="form-item">
-                  <label>Company Website URL</label>
-                  <input
-                    type="url"
-                    value={mfgForm.webPageUrl}
-                    onChange={(e) =>
-                      setMfgForm({ ...mfgForm, webPageUrl: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="form-item">
-                  <label>Support Phone Number</label>
-                  <input
-                    type="tel"
-                    value={mfgForm.phoneNumber}
-                    onChange={(e) =>
-                      setMfgForm({ ...mfgForm, phoneNumber: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="form-item">
-                  <label>Street Address</label>
-                  <input
-                    type="text"
-                    value={mfgForm.streetAddress}
-                    onChange={(e) =>
-                      setMfgForm({ ...mfgForm, streetAddress: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="form-item">
-                  <label>City</label>
-                  <input
-                    type="text"
-                    value={mfgForm.city}
-                    onChange={(e) =>
-                      setMfgForm({ ...mfgForm, city: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="form-item">
-                  <label>State / Province</label>
-                  <input
-                    type="text"
-                    value={mfgForm.stateOrProvince}
-                    onChange={(e) =>
-                      setMfgForm({
-                        ...mfgForm,
-                        stateOrProvince: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="form-item">
-                  <label>Postal / ZIP Code</label>
-                  <input
-                    type="text"
-                    value={mfgForm.postalCode}
-                    onChange={(e) =>
-                      setMfgForm({ ...mfgForm, postalCode: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="form-item">
-                  <label>Country of Origin</label>
-                  <input
-                    type="text"
-                    value={mfgForm.country}
-                    onChange={(e) =>
-                      setMfgForm({ ...mfgForm, country: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          </form>
-        ) : (
-          /* MANUFACTURER VIEW MODE */
-          <div className="detail-view-container">
-            <div className="detail-panel-header">
-              <span className="type-badge-pill">🏢 Manufacturer</span>
-              <div className="header-actions">
-                <button
-                  className="btn btn-secondary edit-btn"
-                  onClick={startEditMfg}
-                >
-                  Edit
-                </button>
-                <button className="btn delete-btn" onClick={handleDeleteMfg}>
-                  Delete
-                </button>
-              </div>
-            </div>
-
-            <div className="detail-view-body">
-              {saveSuccess && (
-                <div className="detail-save-toast">
-                  ✓ Manufacturer updated successfully
-                </div>
-              )}
-
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <ManufacturerFavicon mfgId={selectedMfg.id} />
-                <h2 style={{ margin: 0 }}>{selectedMfg.name}</h2>
-              </span>
-              {selectedMfg.phoneNumber && (
-                <p className="mfg-meta-item">
-                  <strong>📞 Phone Support:</strong>{" "}
-                  <span className="text-mono">{selectedMfg.phoneNumber}</span>
-                </p>
-              )}
-
-              {selectedMfg.webPageUrl && (
-                <a
-                  href={selectedMfg.webPageUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="external-site-link"
-                >
-                  🌐 Open Manufacturer Website
-                </a>
-              )}
-
-              <hr className="detail-divider" />
-
-              <div className="details-specs-block">
-                <h3>Corporate Address</h3>
-                <p className="address-display">
-                  {selectedMfg.streetAddress || ""}
-                  <br />
-                  {selectedMfg.city || ""}
-                  {selectedMfg.stateOrProvince
-                    ? `, ${selectedMfg.stateOrProvince}`
-                    : ""}{" "}
-                  {selectedMfg.postalCode || ""}
-                  <br />
-                  <strong>{selectedMfg.country || ""}</strong>
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+          ) : null}
+        </div>
       </div>
     </div>
   );

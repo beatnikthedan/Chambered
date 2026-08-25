@@ -205,11 +205,11 @@ builder.Services.Configure<LoginConfiguration>(builder.Configuration.GetSection(
 
 builder.Services.AddGitHubVersioning();
 // use redis or valkey for IDistributedCache
-//builder.Services.AddStackExchangeRedisCache(options =>
-//{
-//    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
-//    options.InstanceName = "Chambered:";
-//});
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    options.InstanceName = "Chambered:";
+});
 builder.Services.AddHybridCache();
 
 
