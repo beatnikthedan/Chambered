@@ -1,4 +1,4 @@
-﻿namespace Chambered.Core.Exceptions
+﻿namespace BeatnikToolKit.GitVersioning.Exceptions
 {
     /// <summary>
     /// Represents an error that occurs when a request to the GitHub API fails

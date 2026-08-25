@@ -1,7 +1,6 @@
-using Chambered.Core.Exceptions;
-using Chambered.Core.Services;
-using Chambered.Core.Services.Models;
-using Chambered.Infrastructure.Configuration;
+using BeatnikToolKit.GitVersioning.Configuration;
+using BeatnikToolKit.GitVersioning.Exceptions;
+using BeatnikToolKit.GitVersioning.ValueObjects;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -9,7 +8,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
 
-namespace Chambered.Infrastructure.Services.GitHubReleaseService
+namespace BeatnikToolKit.GitVersioning.Services
 {
     /// <summary>
     /// Provides operations for retrieving release information from a GitHub repository,

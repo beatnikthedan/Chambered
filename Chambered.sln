@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeatnikToolKit", "BeatnikTo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeatnikToolKit.EntityFramework", "BeatnikToolKit.EntityFramework\BeatnikToolKit.EntityFramework.csproj", "{38EF2E8A-18D4-4F29-B0E3-05C69DF24F1E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeatnikToolKit.GitVersioning", "BeatnikToolKit.GitVersioning\BeatnikToolKit.GitVersioning.csproj", "{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,6 +133,18 @@ Global
 		{38EF2E8A-18D4-4F29-B0E3-05C69DF24F1E}.Release|x64.Build.0 = Release|Any CPU
 		{38EF2E8A-18D4-4F29-B0E3-05C69DF24F1E}.Release|x86.ActiveCfg = Release|Any CPU
 		{38EF2E8A-18D4-4F29-B0E3-05C69DF24F1E}.Release|x86.Build.0 = Release|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Debug|x64.Build.0 = Debug|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Debug|x86.Build.0 = Debug|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Release|x64.ActiveCfg = Release|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Release|x64.Build.0 = Release|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Release|x86.ActiveCfg = Release|Any CPU
+		{15AAA59D-E569-4BB9-9FD0-861E5228DBF1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

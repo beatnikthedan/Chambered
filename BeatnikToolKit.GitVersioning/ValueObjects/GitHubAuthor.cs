@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Chambered.Core.Services.Models
+namespace BeatnikToolKit.GitVersioning.ValueObjects
 {
     /// <summary>
     /// Represents a GitHub user who authored a release or uploaded an asset.

@@ -9,6 +9,7 @@
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <Version>5.2.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BeatnikToolKit.GitVersioning\BeatnikToolKit.GitVersioning.csproj" />
     <ProjectReference Include="..\Chambered.Infrastructure\Chambered.Infrastructure.csproj" />
   </ItemGroup>
 

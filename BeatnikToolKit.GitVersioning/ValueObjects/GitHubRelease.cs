@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Chambered.Core.Services.Models
+namespace BeatnikToolKit.GitVersioning.ValueObjects
 {
     /// <summary>
     /// Represents a GitHub release, including metadata, author information,

@@ -12,12 +12,10 @@ using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
-using Chambered.Infrastructure.Services.GitHubReleaseService;
 using Chambered.Infrastructure.Services.Identity;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -36,18 +34,9 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=../chambered.db";
 
-builder.Services.PostConfigure<IdentityOptions>(options =>
-{
-    var policy = builder.Configuration
-        .GetSection(nameof(PasswordPolicyConfiguration))
-        .Get<PasswordPolicyConfiguration>() ?? new PasswordPolicyConfiguration();
-
-    options.Password.RequiredLength = policy.RequiredLength;
-    options.Password.RequireNonAlphanumeric = policy.RequireNonAlphanumeric;
-    options.Password.RequireLowercase = policy.RequireLowercase;
-    options.Password.RequireUppercase = policy.RequireUppercase;
-    options.Password.RequireDigit = policy.RequireDigit;
-});
+builder.Host.ConfigureServices((h, s) =>
+    h.ConfigureIdentity(s)
+);
 
 // 2. Configure Identity
 // 1. Add Identity base setup
@@ -212,8 +201,8 @@ builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
 
 builder.Services.Configure<LoginConfiguration>(builder.Configuration.GetSection(nameof(LoginConfiguration)));
 
-builder.Services.AddHttpClient<IGitHubReleaseService, GitHubReleaseService>();
-builder.Services.Configure<GitHubReleaseConfiguration>(builder.Configuration.GetSection(nameof(GitHubReleaseConfiguration)));
+
+builder.Services.AddGitHubVersioning();
 
 
 

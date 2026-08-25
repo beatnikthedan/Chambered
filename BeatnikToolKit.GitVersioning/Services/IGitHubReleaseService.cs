@@ -1,6 +1,6 @@
-using Chambered.Core.Services.Models;
+using BeatnikToolKit.GitVersioning.ValueObjects;
 
-namespace Chambered.Core.Services
+namespace BeatnikToolKit.GitVersioning.Services
 {
     /// <summary>
     /// Provides access to GitHub release metadata for the ATSPM project,

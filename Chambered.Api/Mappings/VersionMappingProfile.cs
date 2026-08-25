@@ -16,8 +16,8 @@
 #endregion
 
 using AutoMapper;
+using BeatnikToolKit.GitVersioning.ValueObjects;
 using Chambered.Api.Dto.Versioning;
-using Chambered.Core.Services.Models;
 
 namespace Chambered.Api.Mappings
 {

@@ -1,6 +1,6 @@
 ﻿using BeatnikToolKit.Attributes;
 
-namespace Chambered.Infrastructure.Configuration
+namespace BeatnikToolKit.GitVersioning.Configuration
 {
     /// <summary>
     /// Represents configuration settings used by <see cref="GitHubReleaseService"/>
