@@ -17,6 +17,8 @@ namespace Chambered.Data.Models
         /// </summary>
         public decimal DiameterInches { get; set; }
 
+        public string AlternateNames { get; set; }
+
         #endregion
 
         #region Navigation Properties

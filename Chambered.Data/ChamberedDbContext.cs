@@ -27,12 +27,26 @@ namespace Chambered.Data
 
 
         public DbSet<Product> Products { get; set; }
-        public DbSet<PewPew> PewPews => Set<PewPew>();
-        public DbSet<Optic> Optics => Set<Optic>();
-        public DbSet<Suppressor> Suppressors => Set<Suppressor>();
-        public DbSet<PewPewLight> PewPewLights => Set<PewPewLight>();
-        public DbSet<Security> Securities => Set<Security>();
+        public DbSet<AmmoBox> AmmoBoxs => Set<AmmoBox>();
+        public DbSet<Ammunition> Ammunitions => Set<Ammunition>();
+        public DbSet<Casing> Casings => Set<Casing>();
         public DbSet<Magazine> Magazines => Set<Magazine>();
+        public DbSet<Optic> Optics => Set<Optic>();
+        public DbSet<PewPew> PewPews => Set<PewPew>();
+        public DbSet<PewPewLight> PewPewLights => Set<PewPewLight>();
+        public DbSet<Powder> Powders => Set<Powder>();
+        public DbSet<Primer> Primers => Set<Primer>();
+        public DbSet<Projectile> Projectiles => Set<Projectile>();
+        public DbSet<Security> Securities => Set<Security>();
+        public DbSet<Suppressor> Suppressors => Set<Suppressor>();
+
+
+
+
+
+
+
+
 
 
 

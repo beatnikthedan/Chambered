@@ -575,7 +575,7 @@ namespace Chambered.Data.Models
         public Caliber Caliber { get; set; } = null!;
     }
 
-    public class AmmoContainer : Product, IHasCapacity
+    public class AmmoBox : Product, IHasCapacity
     {
         #region IHasCapacity
 

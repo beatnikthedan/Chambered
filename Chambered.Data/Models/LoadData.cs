@@ -3,7 +3,7 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents a tested, reproducible reloading recipe/load data.
     /// </summary>
-    public class ReloadingRecipe : ModelBase<int>, IItemIdentifier
+    public class LoadData : ModelBase<int>, IItemIdentifier
     {
         #region IItemIdentifier
 
@@ -33,6 +33,13 @@ namespace Chambered.Data.Models
 
         #region Load Data Specifications
 
+        public string Notes { get; set; }
+        
+        /// <summary>
+        /// checked if the load has been verified or if it's a work in progress load
+        /// </summary>
+        public bool Proven { get; set; }
+
         /// <summary>
         /// Powder charge weight in grains (e.g., 42.5 gr).
         /// </summary>
@@ -54,6 +61,7 @@ namespace Chambered.Data.Models
         public int? EstimatedVelocityFps { get; set; }
 
         public int? MeasuredVelocityFps { get; set; }
+        public int? MeasuredPressurePsi { get; set; }
 
         /// <summary>
         /// Estimated chamber pressure in PSI / CUP.
@@ -63,5 +71,43 @@ namespace Chambered.Data.Models
         #endregion
 
         ICollection<PewArmoryItem> PewArmoryItems { get; set; } = new List<PewArmoryItem>();
+        ICollection<PowderLadder> PowderLadders { get; set; } = new List<PowderLadder>();
+        ICollection<SeatingDepths> SeatingDepths { get; set; } = new List<SeatingDepths>();
+    }
+
+    public class PowderLadder : ModelBase<int>, IItemIdentifier
+    {
+        #region IItemIdentifier
+
+        /// <inheritdoc/>
+        public string Name { get; set; } = string.Empty;
+
+        /// <inheritdoc/>
+        public string? Description { get; set; } = string.Empty;
+
+        #endregion
+
+        public decimal PowderChargeGrains { get; set; }
+
+        public int LoadDataId { get; set; }
+        public LoadData LoadData { get; set; }
+    }
+
+    public class SeatingDepths : ModelBase<int>, IItemIdentifier
+    {
+        #region IItemIdentifier
+
+        /// <inheritdoc/>
+        public string Name { get; set; } = string.Empty;
+
+        /// <inheritdoc/>
+        public string? Description { get; set; } = string.Empty;
+
+        #endregion
+
+        public decimal CoalInches { get; set; }
+
+        public int LoadDataId { get; set; }
+        public LoadData LoadData { get; set; }
     }
 }

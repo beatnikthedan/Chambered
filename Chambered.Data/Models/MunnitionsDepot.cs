@@ -3,7 +3,7 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents a secure container, room, vehicle, or physical location where armory items or ammunition are stored.
     /// </summary>
-    public class AmmoBox : ContainerBase
+    public class MunnitionsDepot : ContainerBase
     {
         #region Primary Identification & Relational Lookups
 
@@ -34,18 +34,18 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the navigation property for the parent vault/location.
         /// </summary>
-        public AmmoBox? ParentAmmoBox { get; set; }
+        public MunnitionsDepot? ParentAmmoBox { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of child vaults nested within this storage node.
         /// </summary>
-        public ICollection<AmmoBox> ChildAmmoBoxes { get; set; } = new List<AmmoBox>();
+        public ICollection<MunnitionsDepot> ChildAmmoBoxes { get; set; } = new List<MunnitionsDepot>();
 
         #endregion
 
         public int ReloadingRecipeId { get; set; }
 
-        public ReloadingRecipe? ReloadingRecipe { get; set; }
+        public LoadData? ReloadingRecipe { get; set; }
 
         #region Navigation Properties
 
