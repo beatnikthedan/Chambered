@@ -1,23 +1,22 @@
 using Asp.Versioning;
+using BeatnikToolKit.EntityFramework.Services.Identity;
+using BeatnikToolKit.EntityFramework.Utility;
+using BeatnikToolKit.Services;
 using Chambered.Api.BackgroundServices;
 using Chambered.Api.Mappings;
 using Chambered.Api.Swagger;
+using Chambered.Core.Security;
 using Chambered.Core.Services;
-using Chambered.Core.Services.Identity;
-using Chambered.Core.Services.Models;
-using Chambered.Core.Utility;
 using Chambered.Data;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
 using Chambered.Infrastructure.Services;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
-using Chambered.Infrastructure.Services.GitHubReleaseService;
 using Chambered.Infrastructure.Services.Identity;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -36,38 +35,12 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=../chambered.db";
 
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserService<UserSession>, CurrentUserService>();
-builder.Services.AddScoped<AuditPropertiesInterceptor>();
-
-builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
-{
-    options.UseSqlite(connectionString, b => b.MigrationsAssembly("Chambered.Api"));
-    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor>());
-    options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
-});
+builder.Host.ConfigureServices((h, s) =>
+    h.ConfigureIdentity(s)
+);
 
 // 2. Configure Identity
 // 1. Add Identity base setup
-builder.Services.AddIdentity<ChamberedUser, IdentityRole>(options =>
-{
-    // Static options like unique email can remain here
-    options.User.RequireUniqueEmail = false;
-}).AddEntityFrameworkStores<ChamberedDbContext>()
-.AddDefaultTokenProviders();
-
-builder.Services.PostConfigure<IdentityOptions>(options =>
-{
-    var policy = builder.Configuration
-        .GetSection(nameof(PasswordPolicyConfiguration))
-        .Get<PasswordPolicyConfiguration>() ?? new PasswordPolicyConfiguration();
-
-    options.Password.RequiredLength = policy.RequiredLength;
-    options.Password.RequireNonAlphanumeric = policy.RequireNonAlphanumeric;
-    options.Password.RequireLowercase = policy.RequireLowercase;
-    options.Password.RequireUppercase = policy.RequireUppercase;
-    options.Password.RequireDigit = policy.RequireDigit;
-});
 
 
 builder.Services.AddChamberedAuthentication(builder.Configuration, builder.Environment);
@@ -196,22 +169,56 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
+
+#region BeatnikToolKit.EntityFramework
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddIdentityServices<ChamberedDbContext, ChamberedUser>();
+
+builder.Services.AddCurrentUserService<ChamberedUser>((principal, user) =>
+{
+    // Map custom properties unique to ChamberedUser
+    // user.FullName = principal.FindFirst("FullName")?.Value;
+});
+builder.Services.AddAuditPropertiesInterceptor<ChamberedUser>(user =>
+{
+    // You have access to the fully mapped ChamberedUser here
+    return !string.IsNullOrWhiteSpace(user?.UserName)
+        ? user.UserName.Trim()
+        : "System";
+});
+
+builder.Services.AddScoped<IFederatedCustomScopeProcessor<ChamberedUser>, ArsenalScopeProcessor>();
+
+builder.Services.AddDbContext<ChamberedDbContext>((sp, options) =>
+{
+    options.UseSqlite(connectionString);
+    options.AddInterceptors(sp.GetRequiredService<AuditPropertiesInterceptor<ChamberedUser>>());
+});
+
+#endregion
+
+
 builder.Services.Configure<LoginConfiguration>(builder.Configuration.GetSection(nameof(LoginConfiguration)));
 
-builder.Services.AddHttpClient<IGitHubReleaseService, GitHubReleaseService>();
-builder.Services.Configure<GitHubReleaseConfiguration>(builder.Configuration.GetSection(nameof(GitHubReleaseConfiguration)));
 
+builder.Services.AddGitHubVersioning();
+// use redis or valkey for IDistributedCache
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    options.InstanceName = "Chambered:";
+});
+builder.Services.AddHybridCache();
 
 
 builder.Services.Configure<AppriseConfiguration>(builder.Configuration.GetSection(nameof(AppriseConfiguration)));
 builder.Services.AddScoped<IAppriseService, AppriseService>();
 
-builder.Services.Configure<IdentityConfiguration>(builder.Configuration.GetSection("Identity"));
+//builder.Services.Configure<IdentityConfiguration>(builder.Configuration.GetSection("Identity"));
 builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-builder.Services.AddScoped<IFederatedAuthService, FederatedAuthService>();
-builder.Services.AddScoped<IIdentityService, IdentityService>();
-builder.Services.AddScoped<IRoleService, RoleService>();
+
 
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(nameof(EmailConfiguration)));
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
@@ -219,14 +226,19 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.Configure<BackupConfiguration>(builder.Configuration.GetSection(nameof(BackupConfiguration)));
 builder.Services.AddScoped<IBackupService, SqliteBackupService>();
 
-builder.Services.AddHttpClient();
-builder.Services.AddMemoryCache();
-
 builder.Services.AddHostedService<BackupSchedulerWorker>();
 
 
 
+// Configure decoupled favicon retrieval service
+builder.Services.AddHttpClient<IFaveIconService, FaveIconService>();
+
+
 builder.Services.AddHealthChecks();
+
+builder.Services.AddSingleton<IAuthorizationRulebook, ChamberedRulebook>();
+
+
 
 
 
@@ -264,11 +276,11 @@ app.UseHttpLogging();
 
 await app.ApplyMigrations<ChamberedDbContext>(async services =>
 {
-    // 1. Bootstraps default admin user if environment variables are set (Docker)
-    await services.SeedAdminUser();
+    await services.SeedAdminUser<ChamberedDbContext, ChamberedUser>();
 
-    // 2. Seeds standard roles & granular permission claims dynamically based on core mapping configuration
-    await services.SeedIdentityData();
+    await services.SeedIdentityData<ChamberedDbContext, ChamberedUser>();
+
+#warning add apply migragations here
 });
 
 
@@ -350,6 +362,7 @@ app.MapHealthChecks("/health");
 
 
 app.Run();
+
 
 
 public class ModelStateDebugLoggerFilter : Microsoft.AspNetCore.Mvc.Filters.IActionFilter

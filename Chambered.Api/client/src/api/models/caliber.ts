@@ -10,6 +10,7 @@ import type { PewPew } from './pewPew';
 export interface Caliber {
   /** @nullable */
   name?: string | null;
+  diameterInches?: number;
   /** @nullable */
   alternateNames?: string | null;
   /** @nullable */

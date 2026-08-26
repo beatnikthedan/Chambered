@@ -20,6 +20,8 @@ export interface Arsenal {
   colorHex?: string | null;
   /** @nullable */
   vaults?: Vault[] | null;
+  /** @nullable */
+  chamberedUsers?: ChamberedUser[] | null;
   id?: number;
   /** @nullable */
   created?: string | null;
@@ -31,6 +33,4 @@ export interface Arsenal {
   modifiedBy?: string | null;
   /** @nullable */
   armoryItems?: ArmoryItem[] | null;
-  /** @nullable */
-  chamberedUsers?: ChamberedUser[] | null;
 }

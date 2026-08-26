@@ -17,9 +17,9 @@
 
 using Asp.Versioning;
 using AutoMapper;
+using BeatnikToolKit.GitVersioning.Exceptions;
+using BeatnikToolKit.GitVersioning.Services;
 using Chambered.Api.Dto.Versioning;
-using Chambered.Core.Exceptions;
-using Chambered.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -71,7 +71,7 @@ namespace Chambered.Api.Controllers.Settings
         {
             try
             {
-                var assembly = typeof(IGitHubReleaseService).Assembly;
+                var assembly = this.GetType().Assembly;
 
                 var info = assembly?.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
                 var tag = info?.InformationalVersion?.Split('+')[0];

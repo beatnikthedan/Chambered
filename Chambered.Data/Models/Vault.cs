@@ -2,47 +2,13 @@ using Chambered.Data.Enums;
 using Chambered.Data.Interfaces;
 
 namespace Chambered.Data.Models
-{    
+{
     /// <summary>
     /// Represents a secure container, room, vehicle, or physical location where armory items or ammunition are stored.
     /// </summary>
-    public class Vault : ModelBase<int>, IItemIdentifier, IHasBattery, ICurrentCapcity
+    public class Vault : ContainerBase, IHasBattery
     {
-        #region Primary Identification
-
-        /// <summary>
-        /// Gets or sets the foreign key of the associated catalog product.
-        /// </summary>
-        public int? ProductId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the navigation property for the associated catalog product.
-        /// </summary>
-        public Security? Product { get; set; }
-
-        #endregion
-
-        #region IItemIdentifier
-
-        /// <inheritdoc/>
-        public string Name { get; set; } = string.Empty;
-
-        /// <inheritdoc/>
-        public string? Description { get; set; } = string.Empty;
-
-        #endregion
-
-        #region Classification & Ownership
-
-        /// <summary>
-        /// Gets or sets the foreign key for the owning arsenal context.
-        /// </summary>
-        public int ArsenalId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the navigation property for the owning arsenal context.
-        /// </summary>
-        public Arsenal? Arsenal { get; set; }
+        #region Classification & Ownership  
 
         /// <summary>
         /// Gets or sets the navigation property for the vault category.
@@ -90,32 +56,6 @@ namespace Chambered.Data.Models
 
         #endregion
 
-        #region Environment & Maintenance Metadata
-
-        /// <summary>
-        /// Gets or sets a value indicating whether this vault contains an active dehumidifier or desiccant pack.
-        /// </summary>
-        public bool HasDehumidifier { get; set; }
-
-        /// <summary>
-        /// Gets or sets the date the desiccant media was last recharged/replaced or dehumidifier serviced.
-        /// </summary>
-        public DateTime? DehumidifierLastServiced { get; set; }
-
-        /// <summary>
-        /// Gets or sets the target humidity percentage threshold for climate alerts.
-        /// </summary>
-        public int? TargetMaxHumidityPercent { get; set; }
-
-        #endregion
-
-        #region ICurrentCapacity
-
-        /// <inheritdoc/>
-        public int CurrentCapacity { get; set; }
-
-        #endregion
-
         #region IHasBattery
 
         /// <inheritdoc/>
@@ -132,16 +72,6 @@ namespace Chambered.Data.Models
         /// Gets or sets the items currently stored in this vault.
         /// </summary>
         public ICollection<ArmoryItem> ArmoryItems { get; set; } = new List<ArmoryItem>();
-
-        /// <summary>
-        /// Gets or sets the ammunition inventory stored in this vault.
-        /// </summary>
-        // public ICollection<AmmunitionInventory> Ammunition { get; set; } = new List<AmmunitionInventory>();
-
-        /// <summary>
-        /// Gets or sets the standalone accessories stored in this vault.
-        /// </summary>
-        // public ICollection<Accessory> Accessories { get; set; } = new List<Accessory>();
 
         #endregion
     }

@@ -55,7 +55,7 @@ public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) 
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public virtual async Task<ActionResult<TEntity>> Get(TKey key)
+    public virtual async Task<ActionResult<TEntity>> Get([FromRoute] TKey key)
     {
         var entity = await _db.Set<TEntity>().FindAsync(key);
         if (entity == null) return NotFound();
@@ -97,11 +97,16 @@ public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) 
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public virtual async Task<IActionResult> Put(TKey key, [FromBody] TEntity update)
+    public virtual async Task<IActionResult> Put([FromRoute] TKey key, [FromBody] TEntity update)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        _db.Entry(update).State = EntityState.Modified;
+        var existing = await _db.Set<TEntity>().FindAsync(key);
+        if (existing == null) return NotFound();
+
+        _db.Entry(existing).CurrentValues.SetValues(update);
+
+        await UpdateRelationsAsync(existing, update);
 
         try
         {
@@ -113,7 +118,134 @@ public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) 
             throw;
         }
 
-        return Updated(update);
+        return Updated(existing);
+    }
+
+    /// <summary>
+    /// Generically synchronizes the navigation collection and reference properties of an existing tracked entity with an incoming updated entity state.
+    /// </summary>
+    /// <param name="existing">The database-tracked entity instance containing loaded relations.</param>
+    /// <param name="update">The detached entity payload containing updated values and relationships.</param>
+    /// <returns>A asynchronous task tracking the update operation.</returns>
+    protected virtual async Task UpdateRelationsAsync(TEntity existing, TEntity update)
+    {
+        var entry = _db.Entry(existing);
+        var updateEntry = _db.Entry(update);
+
+        foreach (var collectionEntry in entry.Collections)
+        {
+            if (!collectionEntry.IsLoaded)
+            {
+                await collectionEntry.LoadAsync();
+            }
+
+            var incomingCollectionEntry = updateEntry.Collections
+                .FirstOrDefault(w => w.Metadata.Name == collectionEntry.Metadata.Name);
+
+            if (incomingCollectionEntry != null)
+            {
+                var currentItems = collectionEntry.CurrentValue as System.Collections.IEnumerable ?? Enumerable.Empty<object>();
+                var incomingItems = incomingCollectionEntry.CurrentValue as System.Collections.IEnumerable ?? Enumerable.Empty<object>();
+
+                var targetEntityType = collectionEntry.Metadata.TargetEntityType;
+                var primaryKey = targetEntityType.FindPrimaryKey();
+
+                if (primaryKey != null)
+                {
+                    var keyPropertyName = primaryKey.Properties[0].Name;
+
+                    var currentKeys = new System.Collections.Generic.HashSet<object>();
+                    foreach (var x in currentItems)
+                    {
+                        var val = _db.Entry(x).Property(keyPropertyName).CurrentValue;
+                        if (val != null)
+                        {
+                            currentKeys.Add(val);
+                        }
+                    }
+
+                    var incomingKeys = new System.Collections.Generic.HashSet<object>();
+                    var incomingItemsList = new System.Collections.Generic.List<object>();
+                    foreach (var x in incomingItems)
+                    {
+                        var val = _db.Entry(x).Property(keyPropertyName).CurrentValue;
+                        if (val != null)
+                        {
+                            incomingKeys.Add(val);
+                            incomingItemsList.Add(x);
+                        }
+                    }
+
+                    var toRemove = new System.Collections.Generic.List<object>();
+                    foreach (var x in currentItems)
+                    {
+                        var val = _db.Entry(x).Property(keyPropertyName).CurrentValue;
+                        if (val != null && !incomingKeys.Contains(val))
+                        {
+                            toRemove.Add(x);
+                        }
+                    }
+
+                    var removeMethod = collectionEntry.CurrentValue.GetType().GetMethod("Remove");
+                    foreach (var removeObj in toRemove)
+                    {
+                        removeMethod?.Invoke(collectionEntry.CurrentValue, new[] { removeObj });
+                    }
+
+                    var toAddKeys = new System.Collections.Generic.List<object>();
+                    foreach (var k in incomingKeys)
+                    {
+                        if (!currentKeys.Contains(k))
+                        {
+                            toAddKeys.Add(k);
+                        }
+                    }
+
+                    var addMethod = collectionEntry.CurrentValue.GetType().GetMethod("Add");
+                    foreach (var addKey in toAddKeys)
+                    {
+                        var addObj = await _db.FindAsync(targetEntityType.ClrType, addKey);
+                        if (addObj != null)
+                        {
+                            addMethod?.Invoke(collectionEntry.CurrentValue, new[] { addObj });
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach (var referenceEntry in entry.References)
+        {
+            if (!referenceEntry.IsLoaded)
+            {
+                await referenceEntry.LoadAsync();
+            }
+
+            var incomingReferenceEntry = updateEntry.References
+                .FirstOrDefault(w => w.Metadata.Name == referenceEntry.Metadata.Name);
+
+            if (incomingReferenceEntry != null)
+            {
+                var incomingRef = incomingReferenceEntry.CurrentValue;
+                if (incomingRef == null)
+                {
+                    referenceEntry.CurrentValue = null;
+                }
+                else
+                {
+                    var targetEntityType = referenceEntry.Metadata.TargetEntityType;
+                    var primaryKey = targetEntityType.FindPrimaryKey();
+                    if (primaryKey != null)
+                    {
+                        var keyPropertyName = primaryKey.Properties[0].Name;
+                        var incomingKey = _db.Entry(incomingRef).Property(keyPropertyName).CurrentValue;
+
+                        var trackedRef = await _db.FindAsync(targetEntityType.ClrType, incomingKey);
+                        referenceEntry.CurrentValue = trackedRef;
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -130,7 +262,7 @@ public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) 
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public virtual async Task<IActionResult> Patch(TKey key, [FromBody] Delta<TEntity> patch)
+    public virtual async Task<IActionResult> Patch([FromRoute] TKey key, [FromBody] Delta<TEntity> patch)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -163,7 +295,7 @@ public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) 
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public virtual async Task<IActionResult> Delete(TKey key)
+    public virtual async Task<IActionResult> Delete([FromRoute] TKey key)
     {
         var entity = await _db.Set<TEntity>().FindAsync(key);
         if (entity == null) return NotFound();
@@ -198,7 +330,7 @@ public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) 
         var navigations = entry.Metadata.GetNavigations()
             .Concat<INavigationBase>(entry.Metadata.GetSkipNavigations());
 
-        var navigation = navigations.FirstOrDefault(n => 
+        var navigation = navigations.FirstOrDefault(n =>
             string.Equals(n.Name, pathSegment, StringComparison.OrdinalIgnoreCase));
 
         if (navigation == null)

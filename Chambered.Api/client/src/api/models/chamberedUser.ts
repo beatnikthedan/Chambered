@@ -10,8 +10,6 @@ import type { Arsenal } from './arsenal';
 
 export interface ChamberedUser {
   /** @nullable */
-  arsenals?: Arsenal[] | null;
-  /** @nullable */
   id?: string | null;
   /** @nullable */
   userName?: string | null;
@@ -40,4 +38,6 @@ export interface ChamberedUser {
   ownedItems?: ArmoryItem[] | null;
   /** @nullable */
   benificiaryItems?: ArmoryItem[] | null;
+  /** @nullable */
+  arsenals?: Arsenal[] | null;
 }

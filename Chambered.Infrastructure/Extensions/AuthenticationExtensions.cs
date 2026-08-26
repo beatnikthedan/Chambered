@@ -1,7 +1,7 @@
-using Chambered.Core.Services.Identity;
-using Chambered.Core.Services.Identity.Dto;
+using BeatnikToolKit.EntityFramework.Configuration;
+using BeatnikToolKit.EntityFramework.Services.Identity;
+using BeatnikToolKit.EntityFramework.Services.Identity.Dto;
 using Chambered.Infrastructure.Authorization;
-using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -88,7 +88,12 @@ namespace Chambered.Infrastructure.Extensions
                                     }
                                     var claimsDict = principal.Claims
                                         .GroupBy(c => c.Type)
-                                        .ToDictionary(g => g.Key, g => g.First().Value);
+                                        .ToDictionary(
+                                            g => g.Key,
+                                            g => g.Count() > 1
+                                                ? $"[{string.Join(",", g.Select(c => c.Value))}]"
+                                                : g.First().Value
+                                        );
                                     var externalInfo = new ExternalIdentityDto(context.Scheme.Name, subClaim.Value, claimsDict);
                                     var federatedAuthService = context.HttpContext.RequestServices.GetRequiredService<IFederatedAuthService>();
                                     var loginResult = await federatedAuthService.HandleCallbackAsync(context.Scheme.Name, externalInfo).ConfigureAwait(false);

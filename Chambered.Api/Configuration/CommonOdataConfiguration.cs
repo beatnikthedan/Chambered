@@ -24,7 +24,6 @@ namespace Chambered.Api.Configuration
             builder.ComplexType<GitHubReleaseDto>();
 
             builder.EntitySet<Caliber>("Calibers");
-            builder.EntitySet<Manufacturer>("Manufacturers");
             builder.EntitySet<Document>("Documents");
 
             var documentsColl = builder.EntityType<Document>().Collection;
@@ -49,16 +48,6 @@ namespace Chambered.Api.Configuration
                         document.Property(d => d.ContentType).MaxLength = 100;
                         document.Property(d => d.FileSizeBytes).IsRequired();
 
-                        var manufacturer = builder.EntityType<Manufacturer>();
-                        manufacturer.Property(m => m.Name).IsRequired();
-                        manufacturer.Property(m => m.Name).MaxLength = 100;
-                        manufacturer.Property(m => m.WebPageUrl).MaxLength = 2048;
-                        manufacturer.Property(m => m.PhoneNumber).MaxLength = 30;
-                        manufacturer.Property(m => m.StreetAddress).MaxLength = 200;
-                        manufacturer.Property(m => m.City).MaxLength = 100;
-                        manufacturer.Property(m => m.StateOrProvince).MaxLength = 100;
-                        manufacturer.Property(m => m.PostalCode).MaxLength = 20;
-                        manufacturer.Property(m => m.Country).MaxLength = 100;
                         break;
                     }
             }

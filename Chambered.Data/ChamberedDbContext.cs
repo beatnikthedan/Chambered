@@ -1,10 +1,10 @@
+using BeatnikToolKit.EntityFramework.Utility;
 using Chambered.Data.Enums;
 using Chambered.Data.Interfaces;
 using Chambered.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using System.Reflection.Emit;
 
 
 namespace Chambered.Data
@@ -27,11 +27,26 @@ namespace Chambered.Data
 
 
         public DbSet<Product> Products { get; set; }
-        public DbSet<PewPew> PewPews => Set<PewPew>();
+        public DbSet<AmmoBox> AmmoBoxs => Set<AmmoBox>();
+        public DbSet<Ammunition> Ammunitions => Set<Ammunition>();
+        public DbSet<Casing> Casings => Set<Casing>();
+        public DbSet<Magazine> Magazines => Set<Magazine>();
         public DbSet<Optic> Optics => Set<Optic>();
-        public DbSet<Suppressor> Suppressors => Set<Suppressor>();
+        public DbSet<PewPew> PewPews => Set<PewPew>();
         public DbSet<PewPewLight> PewPewLights => Set<PewPewLight>();
+        public DbSet<Powder> Powders => Set<Powder>();
+        public DbSet<Primer> Primers => Set<Primer>();
+        public DbSet<Projectile> Projectiles => Set<Projectile>();
         public DbSet<Security> Securities => Set<Security>();
+        public DbSet<Suppressor> Suppressors => Set<Suppressor>();
+
+
+
+
+
+
+
+
 
 
 

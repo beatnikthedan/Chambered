@@ -1,4 +1,6 @@
-﻿namespace Chambered.Infrastructure.Configuration
+﻿using BeatnikToolKit.Attributes;
+
+namespace Chambered.Infrastructure.Configuration
 {
     /// <summary>
     /// Represents configuration settings for connecting to an Apprise API instance.

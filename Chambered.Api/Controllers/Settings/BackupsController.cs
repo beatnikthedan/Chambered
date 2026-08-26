@@ -3,12 +3,8 @@ using Chambered.Core.Services;
 using Chambered.Core.Services.Models;
 using Chambered.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Chambered.Api.Controllers.Settings
 {

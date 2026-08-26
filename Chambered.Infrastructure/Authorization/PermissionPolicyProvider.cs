@@ -1,6 +1,6 @@
-using System.Threading.Tasks;
-using Chambered.Core.Security;
+using BeatnikToolKit.EntityFramework.Services.Identity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
 namespace Chambered.Infrastructure.Authorization
@@ -8,34 +8,29 @@ namespace Chambered.Infrastructure.Authorization
     /// <summary>
     /// Dynamically generates authorization policies on-demand, eliminating manual registrations.
     /// </summary>
-    public class PermissionPolicyProvider : IAuthorizationPolicyProvider
+    /// <param name="options">The authorization options from the framework context.</param>
+    /// <param name="rulebook">The registered authorization rulebook.</param>
+    public class PermissionPolicyProvider(
+        IOptions<AuthorizationOptions> options,
+        IAuthorizationRulebook rulebook) : IAuthorizationPolicyProvider
     {
-        private readonly DefaultAuthorizationPolicyProvider _backupProvider;
+        private readonly DefaultAuthorizationPolicyProvider _backupProvider = new DefaultAuthorizationPolicyProvider(options);
+        private readonly IAuthorizationRulebook _rulebook = rulebook;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PermissionPolicyProvider"/> class.
-        /// </summary>
-        public PermissionPolicyProvider(IOptions<AuthorizationOptions> options)
-        {
-            _backupProvider = new DefaultAuthorizationPolicyProvider(options);
-        }
-
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
         {
-            var schemes = new[] { Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme, "ApiKey" };
+            var schemes = new[] { IdentityConstants.ApplicationScheme, "ApiKey" };
 
-            // Handle explicit requests for the Admin-only policy
-            if (policyName == ChamberedAuthorization.Roles.Admin)
+            if (policyName == _rulebook.AdminRoleName)
             {
                 var adminPolicy = new AuthorizationPolicyBuilder(schemes)
-                    .RequireRole(ChamberedAuthorization.Roles.Admin)
+                    .RequireRole(_rulebook.AdminRoleName)
                     .Build();
 
                 return Task.FromResult<AuthorizationPolicy?>(adminPolicy);
             }
 
-            // Dynamically generate policies based on permission claims
             var permissionPolicy = new AuthorizationPolicyBuilder(schemes)
                 .AddRequirements(new PermissionRequirement(policyName))
                 .Build();
@@ -43,10 +38,10 @@ namespace Chambered.Infrastructure.Authorization
             return Task.FromResult<AuthorizationPolicy?>(permissionPolicy);
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public Task<AuthorizationPolicy> GetDefaultPolicyAsync() => _backupProvider.GetDefaultPolicyAsync();
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public Task<AuthorizationPolicy?> GetFallbackPolicyAsync() => _backupProvider.GetFallbackPolicyAsync();
     }
 }

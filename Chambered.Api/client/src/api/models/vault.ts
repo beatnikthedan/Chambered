@@ -7,19 +7,11 @@
  */
 import type { ArmoryItem } from './armoryItem';
 import type { Arsenal } from './arsenal';
-import type { Security } from './security';
+import type { Product } from './product';
 import type { Vault as __Vault } from './vault';
 import type { VaultCategory } from './vaultCategory';
 
 export interface Vault {
-  /** @nullable */
-  productId?: number | null;
-  product?: Security;
-  /** @nullable */
-  name?: string | null;
-  /** @nullable */
-  description?: string | null;
-  arsenalId?: number;
   vaultCategory?: VaultCategory;
   /** @nullable */
   parentVaultId?: number | null;
@@ -31,16 +23,23 @@ export interface Vault {
   passcodeHint?: string | null;
   /** @nullable */
   backupKeyLocation?: string | null;
+  /** @nullable */
+  batteryLastChangedDate?: string | null;
+  /** @nullable */
+  batteryExpirationDate?: string | null;
+  /** @nullable */
+  productId?: number | null;
+  /** @nullable */
+  name?: string | null;
+  /** @nullable */
+  description?: string | null;
+  arsenalId?: number;
+  currentCapacity?: number;
   hasDehumidifier?: boolean;
   /** @nullable */
   dehumidifierLastServiced?: string | null;
   /** @nullable */
   targetMaxHumidityPercent?: number | null;
-  currentCapacity?: number;
-  /** @nullable */
-  batteryLastChangedDate?: string | null;
-  /** @nullable */
-  batteryExpirationDate?: string | null;
   id?: number;
   /** @nullable */
   created?: string | null;
@@ -50,10 +49,11 @@ export interface Vault {
   createdBy?: string | null;
   /** @nullable */
   modifiedBy?: string | null;
-  arsenal?: Arsenal;
   parentVault?: __Vault;
   /** @nullable */
   childVaults?: Vault[] | null;
   /** @nullable */
   armoryItems?: ArmoryItem[] | null;
+  product?: Product;
+  arsenal?: Arsenal;
 }

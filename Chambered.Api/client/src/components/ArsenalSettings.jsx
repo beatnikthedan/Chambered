@@ -11,8 +11,9 @@ import SubmitButton from "../components/SubmitButton";
 import {
   useGetArsenals,
   usePostArsenals,
-  usePatchArsenalsFromKey,
+  usePutArsenalsFromKey,
   useDeleteArsenalsFromKey,
+  useGetUsersUsers,
 } from "../api/endpoints";
 
 export default function ArsenalSettings() {
@@ -24,7 +25,16 @@ export default function ArsenalSettings() {
   const [isEditArsenalMode, setIsEditArsenalMode] = useState(false);
   const [arsenalSaveSuccess, setArsenalSaveSuccess] = useState(false);
 
-  const updateArsenalMutation = usePatchArsenalsFromKey({
+  const {
+    data: usersData,
+    isLoading: loadingUsers,
+    error: usersError,
+    refetch: refetchUsersList,
+  } = useGetUsersUsers();
+
+  const users = usersData?.data ?? [];
+
+  const updateArsenalMutation = usePutArsenalsFromKey({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["/api/v1/Arsenals"] });
@@ -83,6 +93,7 @@ export default function ArsenalSettings() {
       description: selectedArsenal.description || null,
       colorHex: selectedArsenal.colorHex || "#2563eb",
       iconName: selectedArsenal.iconName || "shield",
+      ChamberedUsers: selectedUserIds.map((uid) => ({ id: uid })),
     };
 
     try {
@@ -106,7 +117,9 @@ export default function ArsenalSettings() {
     data: arsenalsData,
     isLoading: arsenalsAreLoading,
     error: arsenalsError,
-  } = useGetArsenals();
+  } = useGetArsenals({
+    expand: "ChamberedUsers",
+  });
 
   useEffect(() => {
     if (arsenalsData?.data?.value) {
@@ -116,6 +129,7 @@ export default function ArsenalSettings() {
 
   const openCreateModal = () => {
     setIsEditArsenalMode(false);
+    setSelectedUserIds([]);
     setSelectedArsenal({
       id: 0,
       name: "",
@@ -128,12 +142,29 @@ export default function ArsenalSettings() {
 
   const openEditModal = (arsenal) => {
     setIsEditArsenalMode(true);
+    const usersList = arsenal.ChamberedUsers || arsenal.chamberedUsers || [];
+    setSelectedUserIds(usersList.map((u) => u.id));
     setSelectedArsenal({ ...arsenal });
     setShowArsenalForm(true);
   };
 
   const savingArsenal =
     createArsenalMutation.isPending || updateArsenalMutation.isPending;
+
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const toggleUser = (userId) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
+    );
+  };
+
+  const filteredUsers = users.filter((u) =>
+    u?.username.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   return (
     <section className="settings-sec">
@@ -300,205 +331,403 @@ export default function ArsenalSettings() {
 
       {/* Create/Edit collection modal form */}
       {showArsenalForm && selectedArsenal && (
-        <div className="dialog-overlay">
-          <div className="dialog-card" onClick={(e) => e.stopPropagation()}>
-            <h4 className="dialog-title">
-              {isEditArsenalMode ? "Edit Arsenal" : "Create New Arsenal"}
-            </h4>
-            <form onSubmit={handleSaveArsenal} className="dialog-form">
-              <div className="form-group">
-                <label>Arsenal Name</label>
-                <input
-                  type="text"
-                  value={selectedArsenal.name}
-                  onChange={(e) =>
-                    setSelectedArsenal({
-                      ...selectedArsenal,
-                      name: e.target.value,
-                    })
-                  }
-                  placeholder="e.g. Hunting Arsenal, Tactical Arsenal"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Description (Optional)</label>
-                <textarea
-                  value={selectedArsenal.description || ""}
-                  onChange={(e) =>
-                    setSelectedArsenal({
-                      ...selectedArsenal,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="Describe this arsenal..."
-                  rows="3"
-                  className="form-textarea-abs"
-                />
-              </div>
+        <div
+          style={{
+            display: "flex",
+            width: "100%",
+            height: "calc(100vh - 80px)", // Adjust height to account for top navbar
+            backgroundColor: "#0b0d14",
+            color: "#d1d6e3",
+            boxSizing: "border-box",
+          }}
+        >
+          {/* MODAL OVERLAY (Darkened background behind popup) */}
+          <div className="dialog-overlay">
+            {/* MODAL CONTAINER (Wider container to fit two panes side-by-side) */}
+            <div className="dialog-overlay">
+              <div
+                className="dialog-card"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: "500px",
+                  maxWidth: "95vw",
+                  maxHeight: "85vh",
+                  overflowY: "auto",
+                  padding: "24px",
+                  backgroundColor: "#13151f",
+                  boxSizing: "border-box",
+                }}
+              >
+                <h4 className="dialog-title" style={{ margin: "0 0 16px 0" }}>
+                  {isEditArsenalMode ? "Edit Arsenal" : "Create New Arsenal"}
+                </h4>
 
-              <div className="form-group">
-                <label>Color Accent</label>
-                <div
-                  className="color-picker-grid"
+                <form
+                  onSubmit={handleSaveArsenal}
+                  className="dialog-form"
                   style={{
                     display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap",
-                    marginTop: "8px",
+                    flexDirection: "column",
+                    gap: "16px",
                   }}
                 >
-                  {ARSENAL_PRESET_COLORS.map((col) => (
-                    <div
-                      key={col}
-                      onClick={() =>
-                        setSelectedArsenal({
-                          ...selectedArsenal,
-                          colorHex: col,
-                        })
-                      }
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        backgroundColor: col,
-                        cursor: "pointer",
-                        border:
-                          selectedArsenal.colorHex === col
-                            ? "3px solid var(--text-primary)"
-                            : "2px solid rgba(255,255,255,0.1)",
-                        boxShadow:
-                          selectedArsenal.colorHex === col
-                            ? "0 0 8px " + col
-                            : "none",
-                        transition: "all 0.2s ease",
-                      }}
-                    />
-                  ))}
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "50%",
-                      overflow: "hidden",
-                      border: "2px solid rgba(255,255,255,0.1)",
-                    }}
-                  >
+                  {/* 1. Arsenal Name */}
+                  <div className="form-group">
+                    <label>Arsenal Name</label>
                     <input
-                      type="color"
-                      value={selectedArsenal.colorHex || "#2563eb"}
+                      type="text"
+                      value={selectedArsenal.name}
                       onChange={(e) =>
                         setSelectedArsenal({
                           ...selectedArsenal,
-                          colorHex: e.target.value,
+                          name: e.target.value,
                         })
                       }
-                      style={{
-                        position: "absolute",
-                        top: "-8px",
-                        left: "-8px",
-                        width: "48px",
-                        height: "48px",
-                        border: "none",
-                        padding: 0,
-                        cursor: "pointer",
-                      }}
+                      placeholder="e.g. Hunting Arsenal, Tactical Arsenal"
+                      required
                     />
                   </div>
-                </div>
-              </div>
 
-              <div className="form-group">
-                <label style={{ display: "block", marginBottom: "8px" }}>
-                  Icon Identifier
-                </label>
-                <div
-                  className="icon-selector-scroll-container"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(4, 1fr)",
-                    gap: "10px",
-                    maxHeight: "160px",
-                    overflowY: "auto",
-                    padding: "8px",
-                    borderRadius: "var(--radius-sm)",
-                    border: "1px solid var(--border-solid)",
-                    background: "rgba(0,0,0,0.15)",
-                  }}
-                >
-                  {Object.keys(ARSENAL_ICONS).map((iconKey) => (
-                    <div
-                      key={iconKey}
-                      onClick={() =>
+                  {/* 2. Description */}
+                  <div className="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea
+                      value={selectedArsenal.description || ""}
+                      onChange={(e) =>
                         setSelectedArsenal({
                           ...selectedArsenal,
-                          iconName: iconKey,
+                          description: e.target.value,
                         })
                       }
+                      placeholder="Describe this arsenal..."
+                      rows="3"
+                      className="form-textarea-abs"
+                    />
+                  </div>
+
+                  {/* 3. User Access Permissions (Placed under Description) */}
+                  <div
+                    className="form-group"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
                       style={{
                         display: "flex",
-                        flexDirection: "column",
+                        justifyContent: "space-between",
                         alignItems: "center",
-                        justifyContent: "center",
-                        padding: "10px",
-                        borderRadius: "var(--radius-sm)",
-                        background:
-                          selectedArsenal.iconName === iconKey
-                            ? "rgba(255, 255, 255, 0.05)"
-                            : "transparent",
-                        border:
-                          selectedArsenal.iconName === iconKey
-                            ? `1px solid ${selectedArsenal.colorHex}`
-                            : "1px solid rgba(255,255,255,0.05)",
-                        cursor: "pointer",
-                        color:
-                          selectedArsenal.iconName === iconKey
-                            ? selectedArsenal.colorHex
-                            : "var(--text-muted)",
-                        transition: "all 0.2s",
                       }}
                     >
-                      {ARSENAL_ICONS[iconKey](
-                        selectedArsenal.iconName === iconKey
-                          ? selectedArsenal.colorHex
-                          : "var(--text-muted)",
-                        20,
-                      )}
-                      <span
+                      <label
                         style={{
-                          fontSize: "10px",
-                          marginTop: "4px",
-                          textTransform: "capitalize",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          width: "100%",
-                          textAlign: "center",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: "#9ca3af",
+                          textTransform: "uppercase",
                         }}
                       >
-                        {iconKey}
+                        User Access Permissions
+                      </label>
+                      <span style={{ fontSize: "11px", color: "#6b7280" }}>
+                        {selectedUserIds.length} Selected
                       </span>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="dialog-actions" style={{ marginTop: "20px" }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowArsenalForm(false)}
-                >
-                  Cancel
-                </button>
-                <SubmitButton
-                  isSaving={savingArsenal}
-                  saveSuccess={arsenalSaveSuccess}
-                  isEditMode={isEditArsenalMode}
-                />
+                    {/* Search Filter */}
+                    <input
+                      type="text"
+                      placeholder="Search users..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        backgroundColor: "#1c1f2e",
+                        border: "1px solid #292c39",
+                        borderRadius: "6px",
+                        color: "#d1d6e3",
+                        fontSize: "13px",
+                        boxSizing: "border-box",
+                      }}
+                    />
+
+                    {/* User Selection Container */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "8px",
+                        maxHeight: "140px",
+                        overflowY: "auto",
+                        padding: "8px",
+                        backgroundColor: "rgba(0, 0, 0, 0.2)",
+                        border: "1px solid #292c39",
+                        borderRadius: "6px",
+                        minHeight: "42px",
+                        alignItems: "center",
+                      }}
+                    >
+                      {/* Handling API States */}
+                      {loadingUsers && (
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#6b7280",
+                            padding: "4px",
+                          }}
+                        >
+                          Loading users...
+                        </span>
+                      )}
+
+                      {usersError && (
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#ef4444",
+                            padding: "4px",
+                          }}
+                        >
+                          Failed to load users.
+                        </span>
+                      )}
+
+                      {!loadingUsers &&
+                        !usersError &&
+                        filteredUsers.length === 0 && (
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              color: "#6b7280",
+                              padding: "4px",
+                            }}
+                          >
+                            No users found.
+                          </span>
+                        )}
+
+                      {/* Map over filtered users */}
+                      {!loadingUsers &&
+                        !usersError &&
+                        filteredUsers.map((user) => {
+                          const userId = user.id;
+                          const isSelected = selectedUserIds.includes(user.id);
+                          const displayName =
+                            user.username ?? user.name ?? "Unknown User";
+
+                          return (
+                            <button
+                              key={userId}
+                              type="button"
+                              onClick={() => toggleUser(userId)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                padding: "6px 10px",
+                                borderRadius: "16px",
+                                fontSize: "12px",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                                border: isSelected
+                                  ? "1px solid #3b82f6"
+                                  : "1px solid #292c39",
+                                backgroundColor: isSelected
+                                  ? "rgba(59, 130, 246, 0.15)"
+                                  : "#13151f",
+                                color: isSelected ? "#60a5fa" : "#9ca3af",
+                              }}
+                            >
+                              <span>{isSelected ? "✓" : "+"}</span>
+                              <span>{displayName}</span>
+                            </button>
+                          );
+                        })}
+                    </div>
+
+                    <span style={{ fontSize: "11px", color: "#6b7280" }}>
+                      Click users to grant or revoke access to this arsenal.
+                    </span>
+                  </div>
+
+                  {/* 4. Color Accent Picker */}
+                  <div className="form-group">
+                    <label>Color Accent</label>
+                    <div
+                      className="color-picker-grid"
+                      style={{
+                        display: "flex",
+                        gap: "10px",
+                        flexWrap: "wrap",
+                        marginTop: "8px",
+                      }}
+                    >
+                      {ARSENAL_PRESET_COLORS.map((col) => (
+                        <div
+                          key={col}
+                          onClick={() =>
+                            setSelectedArsenal({
+                              ...selectedArsenal,
+                              colorHex: col,
+                            })
+                          }
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "50%",
+                            backgroundColor: col,
+                            cursor: "pointer",
+                            border:
+                              selectedArsenal.colorHex === col
+                                ? "3px solid var(--text-primary)"
+                                : "2px solid rgba(255,255,255,0.1)",
+                            boxShadow:
+                              selectedArsenal.colorHex === col
+                                ? "0 0 8px " + col
+                                : "none",
+                            transition: "all 0.2s ease",
+                          }}
+                        />
+                      ))}
+                      <div
+                        style={{
+                          position: "relative",
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          overflow: "hidden",
+                          border: "2px solid rgba(255,255,255,0.1)",
+                        }}
+                      >
+                        <input
+                          type="color"
+                          value={selectedArsenal.colorHex || "#2563eb"}
+                          onChange={(e) =>
+                            setSelectedArsenal({
+                              ...selectedArsenal,
+                              colorHex: e.target.value,
+                            })
+                          }
+                          style={{
+                            position: "absolute",
+                            top: "-8px",
+                            left: "-8px",
+                            width: "48px",
+                            height: "48px",
+                            border: "none",
+                            padding: 0,
+                            cursor: "pointer",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5. Icon Selector */}
+                  <div className="form-group">
+                    <label style={{ display: "block", marginBottom: "8px" }}>
+                      Icon Identifier
+                    </label>
+                    <div
+                      className="icon-selector-scroll-container"
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(4, 1fr)",
+                        gap: "10px",
+                        maxHeight: "140px",
+                        overflowY: "auto",
+                        padding: "8px",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--border-solid)",
+                        background: "rgba(0,0,0,0.15)",
+                      }}
+                    >
+                      {Object.keys(ARSENAL_ICONS).map((iconKey) => (
+                        <div
+                          key={iconKey}
+                          onClick={() =>
+                            setSelectedArsenal({
+                              ...selectedArsenal,
+                              iconName: iconKey,
+                            })
+                          }
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "10px",
+                            borderRadius: "var(--radius-sm)",
+                            background:
+                              selectedArsenal.iconName === iconKey
+                                ? "rgba(255, 255, 255, 0.05)"
+                                : "transparent",
+                            border:
+                              selectedArsenal.iconName === iconKey
+                                ? `1px solid ${selectedArsenal.colorHex}`
+                                : "1px solid rgba(255,255,255,0.05)",
+                            cursor: "pointer",
+                            color:
+                              selectedArsenal.iconName === iconKey
+                                ? selectedArsenal.colorHex
+                                : "var(--text-muted)",
+                            transition: "all 0.2s",
+                          }}
+                        >
+                          {ARSENAL_ICONS[iconKey](
+                            selectedArsenal.iconName === iconKey
+                              ? selectedArsenal.colorHex
+                              : "var(--text-muted)",
+                            20,
+                          )}
+                          <span
+                            style={{
+                              fontSize: "10px",
+                              marginTop: "4px",
+                              textTransform: "capitalize",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              width: "100%",
+                              textAlign: "center",
+                            }}
+                          >
+                            {iconKey}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Form Actions */}
+                  <div
+                    className="dialog-actions"
+                    style={{
+                      marginTop: "12px",
+                      display: "flex",
+                      gap: "10px",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setShowArsenalForm(false)}
+                    >
+                      Cancel
+                    </button>
+                    <SubmitButton
+                      isSaving={savingArsenal}
+                      saveSuccess={arsenalSaveSuccess}
+                      isEditMode={isEditArsenalMode}
+                    />
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

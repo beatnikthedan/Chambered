@@ -1,4 +1,3 @@
-using Chambered.Data.Enums;
 using Chambered.Data.Models;
 using Chambered.Data.Utility;
 using Microsoft.EntityFrameworkCore;

@@ -13,9 +13,11 @@ namespace Chambered.Data.Models
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets common alternate names or abbreviations (e.g., "9mm Luger, 9x19, 9mm NATO").
+        /// Gets or sets the actual measured bullet diameter in inches (e.g., 0.308, 0.355, 0.224).
         /// </summary>
-        public string? AlternateNames { get; set; }
+        public decimal DiameterInches { get; set; }
+
+        public string AlternateNames { get; set; }
 
         #endregion
 

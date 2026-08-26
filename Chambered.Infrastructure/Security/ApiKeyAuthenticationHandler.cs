@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 using Chambered.Core.Utility;
 using Chambered.Data;
 using Chambered.Data.Models;
@@ -10,6 +5,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
 
 namespace Chambered.Infrastructure.Security
 {
@@ -24,9 +21,9 @@ namespace Chambered.Infrastructure.Security
         /// Initializes a new instance of the <see cref="ApiKeyAuthenticationHandler"/> class.
         /// </summary>
         public ApiKeyAuthenticationHandler(
-            IOptionsMonitor<AuthenticationSchemeOptions> options, 
-            ILoggerFactory logger, 
-            UrlEncoder encoder, 
+            IOptionsMonitor<AuthenticationSchemeOptions> options,
+            ILoggerFactory logger,
+            UrlEncoder encoder,
             ChamberedDbContext context) : base(options, logger, encoder)
         {
             _context = context;
