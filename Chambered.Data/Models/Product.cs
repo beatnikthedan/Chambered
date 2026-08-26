@@ -1,12 +1,13 @@
 using Chambered.Data.Enums;
 using Chambered.Data.Interfaces;
+using Chambered.Data.Relationships;
 
 namespace Chambered.Data.Models
 {
     /// <summary>
     /// Represents a specific product line or catalog entry offered by a manufacturer.
     /// </summary>
-    public class Product : ModelBase<int>, IItemIdentifier
+    public class Product : ModelBase<int>, IItemIdentifier, IHasManufacturer
     {
         #region IItemIdentifier
 
@@ -15,6 +16,16 @@ namespace Chambered.Data.Models
 
         /// <inheritdoc/>
         public string? Description { get; set; } = string.Empty;
+
+        #endregion
+
+        #region IHasManufacturer
+
+        /// <inheritdoc/>
+        public int ManufacturerId { get; set; }
+
+        /// <inheritdoc/>
+        public Manufacturer Manufacturer { get; set; } = null!;
 
         #endregion
 
@@ -34,16 +45,6 @@ namespace Chambered.Data.Models
         /// Gets or sets the manufacturer SKU or product number (e.g., "1103").
         /// </summary>
         public string? Sku { get; set; }
-
-        /// <summary>
-        /// Gets or sets the foreign key for the manufacturer.
-        /// </summary>
-        public int ManufacturerId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the navigation property for the manufacturer.
-        /// </summary>
-        public Manufacturer Manufacturer { get; set; } = null!;
 
         #endregion
 

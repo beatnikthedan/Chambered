@@ -2925,7 +2925,7 @@ export default function Catalog() {
           selectedMfg ? (
             <div className="detail-view-container">
               <div className="detail-panel-header">
-                <h3> Products for {selectedMfg.name}</h3>
+                <h3> Products by {selectedMfg.name}</h3>
               </div>
 
               {relatedProducts.length === 0 ? (

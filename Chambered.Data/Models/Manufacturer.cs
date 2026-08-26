@@ -1,9 +1,11 @@
-﻿namespace Chambered.Data.Models
+﻿using Chambered.Data.Relationships;
+
+namespace Chambered.Data.Models
 {
     /// <summary>
     /// Represents a manufacturer or maker with corporate metadata and catalog listings.
     /// </summary>
-    public class Manufacturer : ModelBase<int>
+    public class Manufacturer : ModelBase<int>, IHasProducts
     {
         #region Primary Identification
 
@@ -57,12 +59,10 @@
 
         #endregion
 
-        #region Navigation Properties
+        #region IHasProducts
 
-        /// <summary>
-        /// Gets or sets the catalog of products produced by this manufacturer.
-        /// </summary>
-        public ICollection<Product> Product { get; set; } = new List<Product>();
+        /// <inheritdoc/>
+        public ICollection<Product> Products { get; set; } = new List<Product>();
 
         #endregion
     }
