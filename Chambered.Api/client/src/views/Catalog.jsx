@@ -128,20 +128,6 @@ export default function Catalog() {
     },
   });
 
-  // Base Data arrays
-  const productsList = useMemo(
-    () => productsData?.data?.value || [],
-    [productsData],
-  );
-  const manufacturersList = useMemo(
-    () => manufacturersData?.data?.value || [],
-    [manufacturersData],
-  );
-  const calibersList = useMemo(
-    () => calibersData?.data?.value || [],
-    [calibersData],
-  );
-
   // Selected records
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedMfg, setSelectedMfg] = useState(null);
@@ -162,6 +148,26 @@ export default function Catalog() {
   const [showFilterPopover, setShowFilterPopover] = useState(false);
   const [showSortPopover, setShowSortPopover] = useState(false);
   const [showMfgSortPopover, setShowMfgSortPopover] = useState(false);
+
+  // Base Data arrays
+  const productsList = useMemo(
+    () => productsData?.data?.value || [],
+    [productsData],
+  );
+  const manufacturersList = useMemo(
+    () => manufacturersData?.data?.value || [],
+    [manufacturersData],
+  );
+
+  const relatedProducts = useMemo(() => {
+    if (!selectedMfg) return [];
+    return productsList.filter((p) => p.manufacturerId === selectedMfg.id);
+  }, [productsList, selectedMfg]);
+
+  const calibersList = useMemo(
+    () => calibersData?.data?.value || [],
+    [calibersData],
+  );
 
   // References for clicks outside popovers
   const filterRef = useRef(null);
@@ -2918,47 +2924,45 @@ export default function Catalog() {
           ) : /* ==================== MANUFACTURERS PANEL ==================== */
           selectedMfg ? (
             <div className="detail-view-container">
-              <table className="split-view-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>City / State</th>
-                    <th>Country</th>
-                    <th>Contact Phone</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {processedManufacturers.map((m) => (
-                    <tr
-                      key={m.id}
-                      className={`table-row-item ${selectedMfg?.id === m.id ? "selected" : ""}`}
-                      // onClick={() => {
-                      //   setSelectedMfg(m);
-                      //   setIsEditing(false);
-                      // }}
-                    >
-                      <td className="bold-name-cell">
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <ManufacturerFavicon mfgId={m.id} />
-                          <span>{m.name}</span>
-                        </div>
-                      </td>
-                      <td>
-                        {m.city || "N/A"}
-                        {m.stateOrProvince ? `, ${m.stateOrProvince}` : ""}
-                      </td>
-                      <td>{m.country || "N/A"}</td>
-                      <td className="text-mono">{m.phoneNumber || "N/A"}</td>
+              <div className="detail-panel-header">
+                <h3> Products for {selectedMfg.name}</h3>
+              </div>
+
+              {relatedProducts.length === 0 ? (
+                <div className="empty-state" style={{ padding: "20px 0" }}>
+                  No products registered for this manufacturer.
+                </div>
+              ) : (
+                <table className="split-view-table">
+                  <thead>
+                    <tr>
+                      <th>Model</th>
+                      <th>Part Number</th>
+                      <th>Category</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {relatedProducts.map((p) => (
+                      <tr
+                        key={p.id}
+                        className="table-row-item"
+                        style={{ cursor: "default" }}
+                      >
+                        <td className="bold-name-cell">{p.name}</td>
+                        <td className="bold-name-cell">{p.partNumber}</td>
+                        <td>
+                          <span
+                            className="type-badge-pill"
+                            style={{ margin: 0 }}
+                          >
+                            {p.productType}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           ) : null}
         </div>
