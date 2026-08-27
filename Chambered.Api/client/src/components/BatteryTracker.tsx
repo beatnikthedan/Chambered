@@ -1,6 +1,16 @@
 import React from 'react'
 
-export default function BatteryTracker({ hasBattery, form, setForm }) {
+export interface BatteryTrackerProps {
+  hasBattery: boolean;
+  form: {
+    batteryLastChangedDate?: string | null;
+    batteryExpirationDate?: string | null;
+    [key: string]: any;
+  };
+  setForm: React.Dispatch<React.SetStateAction<any>>;
+}
+
+export default function BatteryTracker({ hasBattery, form, setForm }: BatteryTrackerProps) {
     if (!hasBattery) return null
 
     return (
@@ -16,7 +26,7 @@ export default function BatteryTracker({ hasBattery, form, setForm }) {
                     <input
                         type="date"
                         value={form.batteryLastChangedDate || ''}
-                                            onChange={(e) => setForm(prev => ({ ...prev, batteryLastChangedDate: e.target.value }))}
+                        onChange={(e) => setForm((prev: any) => ({ ...prev, batteryLastChangedDate: e.target.value }))}
                     />
                 </div>
 
@@ -26,7 +36,7 @@ export default function BatteryTracker({ hasBattery, form, setForm }) {
                     <input
                         type="date"
                         value={form.batteryExpirationDate || ''}
-                        onChange={(e) => setForm(prev => ({ ...prev, batteryExpirationDate: e.target.value }))}
+                        onChange={(e) => setForm((prev: any) => ({ ...prev, batteryExpirationDate: e.target.value }))}
                     />
                 </div>
 

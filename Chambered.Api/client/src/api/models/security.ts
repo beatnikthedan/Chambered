@@ -28,6 +28,8 @@ export interface Security {
   partNumber?: string | null;
   /** @nullable */
   sku?: string | null;
+  /** @nullable */
+  webPageUrl?: string | null;
   id?: number;
   /** @nullable */
   created?: string | null;

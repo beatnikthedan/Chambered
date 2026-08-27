@@ -23,6 +23,8 @@ export interface Product {
   /** @nullable */
   sku?: string | null;
   /** @nullable */
+  webPageUrl?: string | null;
+  /** @nullable */
   productDocuments?: ProductDocument[] | null;
   id?: number;
   /** @nullable */

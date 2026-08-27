@@ -3,7 +3,6 @@ import { useStore } from "../StoreContext";
 import "./Armory.css";
 import BatteryTracker from "../components/BatteryTracker";
 import SubmitButton from "../components/SubmitButton";
-import buildQuery from "odata-query";
 import {
   getArmoryItems,
   getUsersUsers,
@@ -15,6 +14,95 @@ import {
   patchArmoryItemsFromKey,
   deleteArmoryItemsFromKey
 } from "../api/endpoints";
+import type { ArmoryItem } from "../api/models/armoryItem";
+import type { Product } from "../api/models/product";
+import type { Vault } from "../api/models/vault";
+
+interface ExtendedArmoryItem extends ArmoryItem {
+  itemType: string;
+  manufacturer: string;
+  model: string;
+  caliber: string;
+  actionType: string;
+  storageLocation: string;
+  vaultId?: any;
+  isNfaItem?: boolean;
+  arsenalColor?: string;
+  arsenalName?: string;
+  partNumber?: string;
+  serialNumber?: string;
+  roundCount?: number;
+  [key: string]: any;
+}
+
+interface ExtendedProduct extends Product {
+  productType: string;
+  manufacturerName: string;
+  caliberName: string;
+  hasBattery?: boolean;
+}
+
+interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+}
+
+interface MaintenanceTask {
+  id: number;
+  description: string;
+  category: string;
+  dueDate: string | null;
+  enableNotifications: boolean;
+  isCompleted: boolean;
+}
+
+interface ArmoryForm {
+  id: number;
+  pewpewModelId: string | number;
+  firearmModelId: string | number;
+  arsenalId: string | number;
+  manufacturer: string;
+  model: string;
+  caliber: string;
+  barrelLengthInches: string | number;
+  twistRate: string;
+  threadPitch: string;
+  actionType: string;
+  name: string;
+  description: string;
+  serialNumber: string;
+  notes: string;
+  purchasePrice: string | number;
+  estimatedValue: string | number;
+  purchaseDateString: string;
+  condition: string;
+  imageUrl: string;
+  roundCount: string | number;
+  owner?: any;
+  ownerId: string;
+  beneficiary?: any;
+  beneficiaryId: string;
+  storageLocation: string;
+  vaultId: string | number;
+  notesMarkdown: string;
+  opticManufacturer: string;
+  opticModel: string;
+  opticReticle: string;
+  opticSerial: string;
+  opticBattery: string;
+  isOpticMounted: boolean;
+  isNfaItem: boolean;
+  nfaFormType: string;
+  taxStampDocumentUrl: string;
+  stampApprovalDate: string;
+  batteryLastChangedDate: string;
+  batteryType: string;
+  itemType: string;
+  productId?: number;
+  parentItemId?: number | null;
+  [key: string]: any;
+}
 
 export default function Armory() {
   const store = useStore();
@@ -23,7 +111,7 @@ export default function Armory() {
   // Memoized dynamic enums strictly loaded from the database
   const actionTypes = useMemo(() => {
     if (enums && enums.actionTypes) {
-      return enums.actionTypes.map((e) => e.label);
+      return enums.actionTypes.map((e: any) => e.label);
     }
     return [];
   }, [enums]);
@@ -43,28 +131,28 @@ export default function Armory() {
   }, [enums]);
 
   // State lists
-  const [armoryItems, setArmoryItems] = useState([]);
-  const [vaultLocations, setVaultLocations] = useState([]);
-  const [ammoLots, setAmmoLots] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [armoryItems, setArmoryItems] = useState<ExtendedArmoryItem[]>([]);
+  const [vaultLocations, setVaultLocations] = useState<Vault[]>([]);
+  const [products, setProducts] = useState<ExtendedProduct[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
 
   // Filter conditions
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterCaliber, setFilterCaliber] = useState("");
-  const [filterAction, setFilterAction] = useState("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filterCaliber, setFilterCaliber] = useState<string>("");
+  const [filterAction, setFilterAction] = useState<string>("");
 
   // Modal control & edit mode state
-  const [showModal, setShowModal] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState("general");
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'tree'
-  const [selectedExistingId, setSelectedExistingId] = useState("");
-  const [expandedNodes, setExpandedNodes] = useState({});
-  const toggleNode = (id) => {
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("general");
+  const [viewMode, setViewMode] = useState<"grid" | "tree">("grid"); // 'grid' | 'tree'
+  const [selectedExistingId, setSelectedExistingId] = useState<string>("");
+  const [expandedNodes, setExpandedNodes] = useState<Record<number, boolean>>({});
+  
+  const toggleNode = (id: number) => {
     setExpandedNodes((prev) => ({
       ...prev,
       [id]: prev[id] === false ? true : false,
@@ -72,13 +160,13 @@ export default function Armory() {
   };
 
   // New accessory inline creation state
-  const [newAccProductId, setNewAccProductId] = useState("");
-  const [newAccSerialNumber, setNewAccSerialNumber] = useState("");
-  const [newAccCondition, setNewAccCondition] = useState("Excellent");
-  const [isCreatingAcc, setIsCreatingAcc] = useState(false);
+  const [newAccProductId, setNewAccProductId] = useState<string>("");
+  const [newAccSerialNumber, setNewAccSerialNumber] = useState<string>("");
+  const [newAccCondition, setNewAccCondition] = useState<string>("Excellent");
+  const [isCreatingAcc, setIsCreatingAcc] = useState<boolean>(false);
 
   // Form State
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<ArmoryForm>({
     id: 0,
     pewpewModelId: 0,
     firearmModelId: 0,
@@ -121,31 +209,19 @@ export default function Armory() {
   });
 
   // Dynamic lists inside the modal
-  const [customManufacturer, setCustomManufacturer] = useState("");
-  const [customModel, setCustomModel] = useState("");
-  const [showSerial, setShowSerial] = useState(false);
-  const [coverSourceType, setCoverSourceType] = useState("web");
-  const [accessoriesList, setAccessoriesList] = useState([]);
-  const [maintenanceTasks, setMaintenanceTasks] = useState([]);
-  const [rangeSessions, setRangeSessions] = useState([]);
-  const [attachments, setAttachments] = useState([]);
-  const [activeAccordionId, setActiveAccordionId] = useState(null);
-
-  // Maintenance Task inputs
-  const [newTaskText, setNewTaskText] = useState("");
-  const [newTaskCategory, setNewTaskCategory] = useState("Clean");
-  const [newTaskDueDate, setNewTaskDueDate] = useState("");
-  const [newTaskNotification, setNewTaskNotification] = useState(false);
-  const [taskFilterStatus, setTaskFilterStatus] = useState("All");
-  const [taskFilterCategory, setTaskFilterCategory] = useState("All");
+  const [accessoriesList, setAccessoriesList] = useState<any[]>([]);
+  const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTask[]>([]);
+  const [rangeSessions, setRangeSessions] = useState<any[]>([]);
+  const [attachments, setAttachments] = useState<any[]>([]);
 
   // Accessories inputs
-  const [newAccessoryName, setNewAccessoryName] = useState("");
+  const [newAccessoryName, setNewAccessoryName] = useState<string>("");
 
   // Ref for markdown toolbar manipulations
-  const markdownTextareaRef = useRef(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [showSerial, setShowSerial] = useState<boolean>(false);
 
   // Load backend collections
   const fetchArmoryItems = async () => {
@@ -158,7 +234,7 @@ export default function Armory() {
         filter
       });
       if (res.status === 200) {
-        const mappedItems = (res.data.value || []).map((item) => {
+        const mappedItems = (res.data.value || []).map((item: any) => {
           const product = item.product || {};
           const manufacturer = product.manufacturer || {};
           const caliber = product.caliber || {};
@@ -179,7 +255,7 @@ export default function Armory() {
             storageLocation: item.vault?.name || "",
             vaultId: item.vaultId || "",
             isNfaItem: !!product.isNfaItem,
-          };
+          } as ExtendedArmoryItem;
         });
         setArmoryItems(mappedItems);
       } else {
@@ -221,11 +297,6 @@ export default function Armory() {
     }
   };
 
-  const fetchAmmoLots = async () => {
-    // Ammo lots and munitions deleted on the backend
-    setAmmoLots([]);
-  };
-
   const fetchProducts = async () => {
     try {
       const res = await getProducts({
@@ -233,7 +304,7 @@ export default function Armory() {
       });
       if (res.status === 200) {
         const rawProducts = res.data.value || [];
-        const mappedProducts = rawProducts.map((p) => {
+        const mappedProducts = rawProducts.map((p: any) => {
           let type = "Product";
           if (p["@odata.type"]) {
             const parts = p["@odata.type"].split(".");
@@ -244,7 +315,7 @@ export default function Armory() {
             productType: type,
             manufacturerName: p.manufacturer?.name || "Unknown Brand",
             caliberName: p.caliber?.name || "N/A",
-          };
+          } as ExtendedProduct;
         });
         setProducts(mappedProducts);
       }
@@ -256,7 +327,6 @@ export default function Armory() {
   useEffect(() => {
     fetchArmoryItems();
     fetchVaultLocations();
-    fetchAmmoLots();
     fetchProducts();
     fetchUsers();
   }, [store.activeArsenalId]);
@@ -288,47 +358,6 @@ export default function Armory() {
     });
   }, [armoryItems, searchQuery, filterCaliber, filterAction]);
 
-  const filteredAmmoLots = useMemo(() => {
-    if (!form.caliber) return [];
-    return ammoLots.filter((lot) => {
-      const lotCaliber = lot.caliber || lot.cartridge?.name || "";
-      return lotCaliber.toLowerCase() === form.caliber.toLowerCase();
-    });
-  }, [ammoLots, form.caliber]);
-
-  const filteredTasks = useMemo(() => {
-    return maintenanceTasks.filter((task) => {
-      const statusMatch =
-        taskFilterStatus === "All" ||
-        (taskFilterStatus === "Active" && !task.isCompleted) ||
-        (taskFilterStatus === "Completed" && task.isCompleted);
-
-      const categoryMatch =
-        taskFilterCategory === "All" || task.category === taskFilterCategory;
-      return statusMatch && categoryMatch;
-    });
-  }, [maintenanceTasks, taskFilterStatus, taskFilterCategory]);
-
-  // Event handlers
-  const quickIncrementRounds = async (id, e) => {
-    e.stopPropagation();
-    const item = armoryItems.find((x) => x.id === id);
-    if (!item) return;
-    const newRoundCount = (item.roundCount || 0) + 50;
-    try {
-      const res = await putArmoryItemsFromKey(id, { ...item, roundCount: newRoundCount });
-      if (res.status === 200 || res.status === 204) {
-        setArmoryItems((prev) =>
-          prev.map((it) =>
-            it.id === id ? { ...it, roundCount: newRoundCount } : it,
-          ),
-        );
-      }
-    } catch (err) {
-      console.error("Increment rounds error", err);
-    }
-  };
-
   const handleAttachAccessory = async () => {
     const accessoryId = parseInt(selectedExistingId) || 0;
     if (!accessoryId) return;
@@ -337,7 +366,7 @@ export default function Armory() {
     if (!accessoryItem) return;
 
     try {
-      const payload = {
+      const payload: any = {
         ...(accessoryItem["@odata.type"] ? { "@odata.type": accessoryItem["@odata.type"] } : {}),
         parentItemId: form.id,
       };
@@ -354,12 +383,12 @@ export default function Armory() {
     }
   };
 
-  const handleDetachAccessory = async (accessoryId) => {
+  const handleDetachAccessory = async (accessoryId: number) => {
     const accessoryItem = armoryItems.find((x) => x.id === accessoryId);
     if (!accessoryItem) return;
 
     try {
-      const payload = {
+      const payload: any = {
         ...(accessoryItem["@odata.type"] ? { "@odata.type": accessoryItem["@odata.type"] } : {}),
         parentItemId: null,
       };
@@ -402,7 +431,7 @@ export default function Armory() {
                 ? "LightArmoryItem"
                 : "ArmoryItem";
 
-      const payload = {
+      const payload: any = {
         ...(resolvedItemType !== "ArmoryItem"
           ? { "@odata.type": `#Chambered.Data.Models.${resolvedItemType}` }
           : {}),
@@ -441,10 +470,6 @@ export default function Armory() {
   const openCreateModal = () => {
     setIsEditMode(false);
     setActiveTab("general");
-    setCustomManufacturer("");
-    setCustomModel("");
-    setShowSerial(false);
-    setCoverSourceType("web");
     setAccessoriesList([]);
     setMaintenanceTasks([]);
     setRangeSessions([]);
@@ -497,13 +522,9 @@ export default function Armory() {
     setShowModal(true);
   };
 
-  const openEditModal = (item) => {
+  const openEditModal = (item: ExtendedArmoryItem) => {
     setIsEditMode(true);
     setActiveTab("general");
-    setCustomManufacturer("");
-    setCustomModel("");
-    setCoverSourceType("web");
-    setShowSerial(false);
     setSelectedExistingId("");
 
     let dateString = "";
@@ -513,6 +534,7 @@ export default function Armory() {
 
     setForm({
       ...item,
+      id: item.id || 0,
       pewpewModelId: item.productId || item.pewpewModelId || item.firearmModelId || 0,
       firearmModelId: item.productId || item.firearmModelId || item.pewpewModelId || 0,
       arsenalId: item.arsenalId || store.activeArsenalId || 1,
@@ -541,6 +563,15 @@ export default function Armory() {
         ? item.batteryLastChangedDate.split("T")[0]
         : "",
       itemType: item.itemType || "",
+      name: item.name || "",
+      description: item.description || "",
+      serialNumber: item.serialNumber || "",
+      notes: item.notes || "",
+      purchasePrice: item.purchasePrice || "",
+      estimatedValue: item.estimatedValue || "",
+      condition: item.condition ? (typeof item.condition === 'string' ? item.condition : (item.condition as any).name || "") : "Good",
+      imageUrl: item.imageUrl || "",
+      roundCount: item.roundCount || 0,
     });
 
     try {
@@ -568,7 +599,6 @@ export default function Armory() {
     }
 
     setAttachments([]);
-
     setShowModal(true);
   };
 
@@ -576,15 +606,15 @@ export default function Armory() {
     setShowModal(false);
   };
 
-  const handleProductSelectChange = (e) => {
+  const handleProductSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const prodId = parseInt(e.target.value) || 0;
     if (prodId > 0) {
       const p = products.find((prod) => prod.id === prodId);
       if (p) {
         setForm((prev) => ({
           ...prev,
-          pewpewModelId: p.id,
-          firearmModelId: p.id,
+          pewpewModelId: p.id!,
+          firearmModelId: p.id!,
           manufacturer: p.manufacturerName || "",
           model: p.model || "",
           caliber: p.caliberName || "",
@@ -617,124 +647,8 @@ export default function Armory() {
     }
   };
 
-  // Sub-items lists management
-  const addAccessoryItem = () => {
-    const name = newAccessoryName.trim();
-    if (!name) return;
-    if (!accessoriesList.includes(name)) {
-      setAccessoriesList([...accessoriesList, name]);
-    }
-    setNewAccessoryName("");
-  };
-
-  const removeAccessoryItem = (index) => {
-    setAccessoriesList((prev) => prev.filter((_, idx) => idx !== index));
-  };
-
-  const addMaintenanceTaskItem = () => {
-    const desc = newTaskText.trim();
-    if (!desc) return;
-
-    setMaintenanceTasks([
-      ...maintenanceTasks,
-      {
-        id: Date.now(),
-        description: desc,
-        category: newTaskCategory,
-        dueDate: newTaskDueDate || null,
-        enableNotifications: newTaskNotification,
-        isCompleted: false,
-      },
-    ]);
-
-    setNewTaskText("");
-    setNewTaskDueDate("");
-    setNewTaskNotification(false);
-  };
-
-  const toggleTaskStatus = (id) => {
-    setMaintenanceTasks((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, isCompleted: !t.isCompleted } : t,
-      ),
-    );
-  };
-
-  const removeTaskItem = (id) => {
-    setMaintenanceTasks((prev) => prev.filter((t) => t.id !== id));
-  };
-
-  const removeAttachmentFile = (id) => {
-    setAttachments((prev) => prev.filter((a) => a.id !== id));
-  };
-
-  // Formatting Notes helpers
-  const insertMarkdownTag = (syntax) => {
-    const box = markdownTextareaRef.current;
-    if (!box) return;
-
-    const start = box.selectionStart;
-    const end = box.selectionEnd;
-    const origText = form.notesMarkdown || "";
-    const selectedText = origText.substring(start, end);
-
-    let result = "";
-    if (syntax === "- " || syntax === "> ") {
-      result =
-        origText.substring(0, start) +
-        "\n" +
-        syntax +
-        selectedText +
-        origText.substring(end);
-    } else {
-      result =
-        origText.substring(0, start) +
-        syntax +
-        selectedText +
-        syntax +
-        origText.substring(end);
-    }
-
-    setForm((prev) => ({ ...prev, notesMarkdown: result }));
-
-    setTimeout(() => {
-      box.focus();
-      const offset = start + syntax.length;
-      box.setSelectionRange(offset, offset + selectedText.length);
-    }, 50);
-  };
-
-  const renderMarkdown = (text) => {
-    if (!text)
-      return '<p style="color: var(--text-muted); font-style: italic;">No formatted logs created yet. Use formatting bar options above.</p>';
-
-    let html = text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\n/g, "<br>");
-
-    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-    html = html.replace(/__(.*?)__/g, "<u>$1</u>");
-    html = html.replace(
-      /^&gt;\s+(.*?)(?:<br>|$)/gm,
-      '<blockquote style="border-left: 3px solid var(--color-primary); padding-left: 10px; margin: 6px 0; color: var(--text-secondary);">$1</blockquote>',
-    );
-    html = html.replace(
-      /^-\s+(.*?)(?:<br>|$)/gm,
-      '<li style="margin-left: 18px; color: var(--text-primary);">$1</li>',
-    );
-    html = html.replace(
-      /`(.*?)`/g,
-      '<code style="background-color: #17181f; padding: 2px 6px; border-radius: 4px; font-family: monospace; border: 1px solid var(--border-solid); color: #e5c158;">$1</code>',
-    );
-
-    return html;
-  };
-
   // CRUD actions
-  const handleSave = async (e) => {
+  const handleSave = async (e?: React.FormEvent) => {
     if (e && e.preventDefault) e.preventDefault();
 
     if (!form.pewpewModelId && !form.productId) {
@@ -744,37 +658,30 @@ export default function Armory() {
 
     setIsSaving(true);
     try {
-      const isEdit = isEditMode;
-      const url = isEdit ? `/api/v1/ArmoryItems/${form.id}` : "/api/v1/ArmoryItems";
-      const method = isEdit ? "PUT" : "POST";
-
-      // 1. Determine concrete subclass and attach ONLY its specific database fields
       const resolvedItemType = form.itemType || activeItemType || "ArmoryItem";
 
-      // 2. Build a clean payload matching the C# ArmoryItem base properties exactly
-      const payload = {
+      // Build a clean payload matching the C# ArmoryItem base properties exactly
+      const payload: any = {
         ...(resolvedItemType && resolvedItemType !== "ArmoryItem"
           ? { "@odata.type": `#Chambered.Data.Models.${resolvedItemType}` }
           : {}),
         id: form.id || 0,
-        productId: form.productId || form.pewpewModelId || form.firearmModelId || 0,
+        productId: form.productId || Number(form.pewpewModelId) || Number(form.firearmModelId) || 0,
         name: form.name || form.model || "Armory Item",
         description: form.description || "",
         condition: form.condition || "Unknown",
         imageUrl: form.imageUrl || "",
         notesMarkdown: form.notes || form.notesMarkdown || "",
         
-        // Numerical and Date conversions
-        purchasePrice: form.purchasePrice ? parseFloat(form.purchasePrice) : null,
-        estimatedValue: form.estimatedValue ? parseFloat(form.estimatedValue) : null,
+        purchasePrice: form.purchasePrice ? parseFloat(form.purchasePrice as string) : null,
+        estimatedValue: form.estimatedValue ? parseFloat(form.estimatedValue as string) : null,
         purchaseDate: form.purchaseDateString ? new Date(form.purchaseDateString).toISOString() : null,
         
-        // Relational constraints (must map raw foreign keys)
         ownerId: form.ownerId || null,
         beneficiaryId: form.beneficiaryId || null,
-        vaultId: form.vaultId ? parseInt(form.vaultId) : null,
-        arsenalId: parseInt(form.arsenalId) || store.activeArsenalId,
-        parentItemId: form.parentItemId ? parseInt(form.parentItemId) : null,
+        vaultId: form.vaultId ? parseInt(form.vaultId as string) : null,
+        arsenalId: parseInt(form.arsenalId as string) || store.activeArsenalId,
+        parentItemId: form.parentItemId ? parseInt(form.parentItemId as any) : null,
       };
 
       // Add Serial Number fields if the subclass supports it
@@ -797,13 +704,13 @@ export default function Armory() {
 
       // Add PewPew custom subclass specifications
       if (resolvedItemType === "PewArmoryItem") {
-        payload.roundCount = parseInt(form.roundCount) || 0;
-        payload.barrelLengthInches = form.barrelLengthInches ? parseFloat(form.barrelLengthInches) : null;
+        payload.roundCount = parseInt(form.roundCount as string) || 0;
+        payload.barrelLengthInches = form.barrelLengthInches ? parseFloat(form.barrelLengthInches as string) : null;
         payload.twistRate = form.twistRate || "";
         payload.threadPitch = form.threadPitch || "";
       }
 
-      // 3. Perform the API Request
+      // Perform the API Request
       const res = isEditMode
         ? await putArmoryItemsFromKey(form.id, payload)
         : await postArmoryItems(payload);
@@ -821,6 +728,7 @@ export default function Armory() {
         // Map saved entity values cleanly back into the form state
         setForm({
           ...savedItem,
+          id: savedItem.id || 0,
           pewpewModelId: savedItem.productId || savedItem.pewpewModelId || savedItem.firearmModelId || "",
           firearmModelId: savedItem.productId || savedItem.firearmModelId || savedItem.pewpewModelId || "",
           purchaseDateString: savedItem.purchaseDate ? savedItem.purchaseDate.split("T")[0] : "",
@@ -830,6 +738,16 @@ export default function Armory() {
           isNfaItem: !!savedItem.product?.isNfaItem,
           stampApprovalDate: savedItem.stampApprovalDate ? savedItem.stampApprovalDate.split("T")[0] : "",
           batteryLastChangedDate: savedItem.batteryLastChangedDate ? savedItem.batteryLastChangedDate.split("T")[0] : "",
+          name: savedItem.name || "",
+          description: savedItem.description || "",
+          serialNumber: savedItem.serialNumber || "",
+          notes: savedItem.notes || "",
+          purchasePrice: savedItem.purchasePrice || "",
+          estimatedValue: savedItem.estimatedValue || "",
+          condition: savedItem.condition ? (typeof savedItem.condition === 'string' ? savedItem.condition : (savedItem.condition as any).name || "") : "Good",
+          imageUrl: savedItem.imageUrl || "",
+          roundCount: savedItem.roundCount || 0,
+          itemType: savedItem.itemType || resolvedItemType,
         });
 
         setSaveSuccess(true);
@@ -846,9 +764,9 @@ export default function Armory() {
   };
 
   // Triggers when you click "Remove" on the card
-  const handleDeleteClick = (id, e) => {
+  const handleDeleteClick = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setDeleteConfirmId(id); // Stores the ID of the item you want to delete and opens the modal
+    setDeleteConfirmId(id);
   };
 
   // Triggers when you click "Yes, Delete" in the confirmation modal
@@ -864,22 +782,11 @@ export default function Armory() {
     } catch (err) {
       console.error(err);
     } finally {
-      setDeleteConfirmId(null); // Resets state, closing the modal
+      setDeleteConfirmId(null);
     }
   };
 
-  const isCompactUnit = (action) => {
-    if (!action) return false;
-    const l = action.toLowerCase();
-    return (
-      l.includes("pistol") ||
-      l.includes("revolver") ||
-      l.includes("sidearm") ||
-      l.includes("semi-automatic")
-    );
-  };
-
-  const getConditionClass = (cond) => {
+  const getConditionClass = (cond?: string | null) => {
     if (!cond) return "badge-success";
     const c = cond.toLowerCase();
     if (c.includes("unfired") || c.includes("excel") || c.includes("very"))
@@ -888,19 +795,19 @@ export default function Armory() {
     return "badge-danger";
   };
 
-  const formatCurrency = (val) => {
+  const formatCurrency = (val: number) => {
     return new Intl.NumberFormat(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(val);
   };
 
-  const renderTreeNode = (item, depth = 0) => {
+  const renderTreeNode = (item: ExtendedArmoryItem, depth = 0) => {
     const children = armoryItems.filter(
       (child) => child.parentItemId === item.id,
     );
     const hasChildren = children.length > 0;
-    const isExpanded = expandedNodes[item.id] !== false; // default to expanded
+    const isExpanded = expandedNodes[item.id!] !== false; // default to expanded
 
     return (
       <div
@@ -919,7 +826,7 @@ export default function Armory() {
                 className="btn-toggle-tree"
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleNode(item.id);
+                  toggleNode(item.id!);
                 }}
               >
                 {isExpanded ? "▼" : "►"}
@@ -944,7 +851,7 @@ export default function Armory() {
                 SN: {item.serialNumber}
               </span>
             )}
-            {item.roundCount > 0 && (
+            {item.roundCount !== undefined && item.roundCount > 0 && (
               <span
                 className="tree-hub-inventory-count"
                 style={{ marginLeft: "8px" }}
@@ -997,7 +904,7 @@ export default function Armory() {
     form.itemType ||
     (() => {
       if (!form.pewpewModelId) return "ArmoryItem";
-      const p = products.find((prod) => prod.id === form.pewpewModelId);
+      const p = products.find((prod) => prod.id === Number(form.pewpewModelId));
       if (!p) return "ArmoryItem";
       if (p.productType === "PewPew") return "PewArmoryItem";
       if (p.productType === "Suppressor") return "SuppressorArmoryItem";
@@ -1014,7 +921,7 @@ export default function Armory() {
       activeItemType === "LightArmoryItem"
     )
       return true;
-    const p = products.find((prod) => prod.id === form.pewpewModelId);
+    const p = products.find((prod) => prod.id === Number(form.pewpewModelId));
     return p?.hasBattery || false;
   })();
 
@@ -1154,9 +1061,9 @@ export default function Armory() {
                   <div className="item-silhouette">🛡️</div>
                 )}
                 <span
-                  className={`badge item-badge-condition ${getConditionClass(item.condition)}`}
+                  className={`badge item-badge-condition ${getConditionClass(item.condition ? (typeof item.condition === 'string' ? item.condition : (item.condition as any).name || "") : "")}`}
                 >
-                  {item.condition}
+                  {item.condition ? (typeof item.condition === 'string' ? item.condition : (item.condition as any).name || "") : ""}
                 </span>
               </div>
 
@@ -1170,12 +1077,6 @@ export default function Armory() {
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         style={{ color: "inherit", textDecoration: "none" }}
-                        onMouseOver={(e) =>
-                          (e.target.style.textDecoration = "underline")
-                        }
-                        onMouseOut={(e) =>
-                          (e.target.style.textDecoration = "none")
-                        }
                       >
                         {item.manufacturer}
                       </a>
@@ -1193,12 +1094,6 @@ export default function Armory() {
                           textDecoration: "none",
                           fontWeight: "600",
                         }}
-                        onMouseOver={(e) =>
-                          (e.target.style.textDecoration = "underline")
-                        }
-                        onMouseOut={(e) =>
-                          (e.target.style.textDecoration = "none")
-                        }
                       >
                         {item.model}
                       </a>
@@ -1240,7 +1135,7 @@ export default function Armory() {
 
                 <div className="item-card-actions">
                   <button
-                    onClick={(e) => handleDeleteClick(item.id, e)}
+                    onClick={(e) => handleDeleteClick(item.id!, e)}
                     className="btn btn-danger btn-small"
                   >
                     Remove
@@ -1314,10 +1209,10 @@ export default function Armory() {
                       </select>
                     </div>
 
-                    {form.pewpewModelId > 0 &&
+                    {Number(form.pewpewModelId) > 0 &&
                       (() => {
                         const selectedProduct = products.find(
-                          (p) => p.id === form.pewpewModelId,
+                          (p) => p.id === Number(form.pewpewModelId),
                         );
                         return (
                           <div
@@ -1418,10 +1313,10 @@ export default function Armory() {
                                   >
                                     Manufacturer:
                                   </strong>{" "}
-                                  {selectedProduct?.manufacturerWebPageUrl ? (
+                                  {(selectedProduct as any)?.manufacturerWebPageUrl ? (
                                     <a
                                       href={
-                                        selectedProduct.manufacturerWebPageUrl
+                                        (selectedProduct as any).manufacturerWebPageUrl
                                       }
                                       target="_blank"
                                       rel="noopener noreferrer"
@@ -1430,13 +1325,6 @@ export default function Armory() {
                                         fontWeight: "600",
                                         textDecoration: "none",
                                       }}
-                                      onMouseOver={(e) =>
-                                        (e.target.style.textDecoration =
-                                          "underline")
-                                      }
-                                      onMouseOut={(e) =>
-                                        (e.target.style.textDecoration = "none")
-                                      }
                                     >
                                       {form.manufacturer} ↗
                                     </a>
@@ -1457,9 +1345,9 @@ export default function Armory() {
                                   >
                                     Model Name:
                                   </strong>{" "}
-                                  {selectedProduct?.webPageUrl ? (
+                                  {(selectedProduct as any)?.webPageUrl ? (
                                     <a
-                                      href={selectedProduct.webPageUrl}
+                                      href={(selectedProduct as any).webPageUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       style={{
@@ -1467,13 +1355,6 @@ export default function Armory() {
                                         fontWeight: "600",
                                         textDecoration: "none",
                                       }}
-                                      onMouseOver={(e) =>
-                                        (e.target.style.textDecoration =
-                                          "underline")
-                                      }
-                                      onMouseOut={(e) =>
-                                        (e.target.style.textDecoration = "none")
-                                      }
                                     >
                                       {form.model} ↗
                                     </a>
@@ -1688,7 +1569,7 @@ export default function Armory() {
                               }
                             >
                               <option value="">-- Select ATF Form --</option>
-                              {nfaFormTypes.map((f) => (
+                              {nfaFormTypes.map((f: any) => (
                                 <option key={f.value} value={f.value}>
                                   {f.label}
                                 </option>
@@ -1795,7 +1676,7 @@ export default function Armory() {
                     <div className="form-item full-row">
                       <label>Description</label>
                       <textarea
-                        rows="3"
+                        rows={3}
                         value={form.description || ""}
                         onChange={(e) =>
                           setForm({ ...form, description: e.target.value })
@@ -1852,7 +1733,7 @@ export default function Armory() {
                           setForm({ ...form, condition: e.target.value })
                         }
                       >
-                        {conditions.map((p) => (
+                        {conditions.map((p: any) => (
                           <option key={p.id} value={p.name}>
                             {p.label}
                           </option>
@@ -1929,7 +1810,7 @@ export default function Armory() {
                         }
                         required
                       >
-                        {store.arsenals.map((ars) => (
+                        {store.arsenals.map((ars: any) => (
                           <option key={ars.id} value={ars.id}>
                             {ars.name}
                           </option>
@@ -2105,7 +1986,7 @@ export default function Armory() {
                                       minWidth: "0",
                                     }}
                                     onClick={() =>
-                                      handleDetachAccessory(acc.id)
+                                      handleDetachAccessory(acc.id!)
                                     }
                                   >
                                     Detach

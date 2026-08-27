@@ -9,6 +9,7 @@ using Chambered.Core.Security;
 using Chambered.Core.Services;
 using Chambered.Data;
 using Chambered.Data.Enums;
+using Chambered.Data.Models;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
 using Chambered.Infrastructure.Services;
@@ -249,8 +250,8 @@ builder.Services.AddScoped<IFileStorageRepository>(sp =>
         : sp.GetRequiredService<LocalFileStorageRepository>();
 });
 
-builder.Services.AddScoped<IDocumentService<Chambered.Data.Models.ProductDocument, ProductDocumentType>, ProductDocumentService>();
-builder.Services.AddScoped<IDocumentService<Chambered.Data.Models.ArmoryItemDocument, ArmoryItemDocumentType>, ArmoryItemDocumentService>();
+builder.Services.AddScoped<IDocumentService<ProductDocument, ProductDocumentType>, ProductDocumentService>();
+builder.Services.AddScoped<IDocumentService<ArmoryItemDocument, ArmoryItemDocumentType>, ArmoryItemDocumentService>();
 
 // Configure decoupled favicon retrieval service
 builder.Services.AddHttpClient<IFaveIconService, FaveIconService>();

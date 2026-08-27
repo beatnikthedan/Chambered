@@ -1,9 +1,15 @@
 import React from "react";
+import type { ArmoryItem } from "../api/models/armoryItem";
+
+export interface ArmoryItemCardProps {
+  item: ArmoryItem & { imageUrl?: string | null; condition?: { name?: string | null } | any };
+  onSelect?: (item: ArmoryItem & { imageUrl?: string | null; condition?: { name?: string | null } | any }) => void;
+}
 
 export default function ArmoryItemCard({
   item,
   onSelect,
-}) {
+}: ArmoryItemCardProps) {
   if (!item) return null;
 
   const imageUrl = item.imageUrl ? (
@@ -86,7 +92,7 @@ export default function ArmoryItemCard({
             whiteSpace: "nowrap",
           }}
         >
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#10B981" }}></span>
+          <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#10B981", marginRight: "6px" }}></span>
           IN STOCK
         </div>
       </div>
@@ -115,7 +121,7 @@ export default function ArmoryItemCard({
             </span>
           )}
 
-          {item.condition && (
+          {item.condition && typeof item.condition === 'object' && item.condition.name && (
             <span
               style={{
                 backgroundColor: "#1c1e27",

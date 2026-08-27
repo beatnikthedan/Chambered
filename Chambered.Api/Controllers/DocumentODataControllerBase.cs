@@ -49,7 +49,7 @@ namespace Chambered.Api.Controllers
         [EnableQuery]
         public virtual IQueryable<TDto> Get()
         {
-            return _db.Set<TDocument>().Select(doc => MapToDto(doc));
+            return _db.Set<TDocument>().AsEnumerable().Select(doc => MapToDto(doc)).AsQueryable();
         }
 
         /// <summary>

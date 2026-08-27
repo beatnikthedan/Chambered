@@ -11,18 +11,24 @@ import "./Login.css";
 import "../components/VersionControl.tsx";
 import { VersionControl } from "../components/VersionControl.tsx";
 
+interface PasswordStrengthInfo {
+  score: number;
+  label: string;
+  className: string;
+}
+
 export default function Login() {
   const store = useStore();
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const [mode, setMode] = useState(() => {
+  const [mode, setMode] = useState<"setup" | "login" | "register">(() => {
     if (store.isInitialized === false) return "setup";
     return "login";
   });
@@ -37,7 +43,7 @@ export default function Login() {
   }, [store.isInitialized, mode]);
 
   // Simple real-time password strength validation score: 0 to 4
-  const getPasswordStrength = (pwd) => {
+  const getPasswordStrength = (pwd: string): PasswordStrengthInfo => {
     if (!pwd) return { score: 0, label: "", className: "" };
     let score = 1;
     if (pwd.length >= 8) score++;
@@ -63,7 +69,7 @@ export default function Login() {
 
   const pwdStrength = getPasswordStrength(password);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
     setIsSubmitting(true);
@@ -101,18 +107,18 @@ export default function Login() {
             if (loginSuccess) navigate("/");
           } else {
             throw new Error(
-              res.data?.detail ||
+              (res.data as any)?.detail ||
                 "Registration is restricted by administrators.",
             );
           }
-        } catch (err) {
+        } catch (err: any) {
           throw new Error(
             err.message ||
               "Self-registration is restricted. Please contact your administrator.",
           );
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       setErrorMessage(
         err.message || "Authentication or profile creation failed.",
       );
@@ -123,17 +129,15 @@ export default function Login() {
 
   const {
     data: loginResponse,
-    isLoading: loginLoading,
-    error: loginError,
   } = useGetSettingsLoginSettings();
 
   const loginPolicy = loginResponse?.data;
 
   // Fetch configured providers from the backend (/api/v1/Account/providers)
   const { data: providersResponse } = useGetAccountConfiguredProviders();
-  const oidcProviders = providersResponse?.data || [];
+  const oidcProviders = (providersResponse?.data as string[]) || [];
 
-  const handleOidcLogin = (providerName) => {
+  const handleOidcLogin = (providerName: string) => {
     const redirectUri = `${window.location.origin}/`;
 
     // Dynamically build the versioned URL using Orval's generated builder function
@@ -144,8 +148,6 @@ export default function Login() {
 
     window.location.href = challengeUrl;
   };
-
-  const localLoginEnabled = store.localLoginEnabled !== false;
 
   return (
     <div className="login-page">

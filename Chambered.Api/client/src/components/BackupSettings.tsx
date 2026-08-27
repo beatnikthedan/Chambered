@@ -10,10 +10,11 @@ import {
   useDeleteBackupsBackupFromFileName,
   getGetBackupsBackupsQueryKey,
 } from "../api/endpoints";
+import type { BackupFileInfo } from "../api/models/backupFileInfo";
 
 export default function BackupSettings() {
   const queryClient = useQueryClient();
-  const formatBytes = (bytes) => {
+  const formatBytes = (bytes: number | null | undefined) => {
     if (!bytes || bytes === 0) return "0 B";
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB", "TB"];
@@ -25,17 +26,15 @@ export default function BackupSettings() {
     data: backupSettingsData,
     isLoading: backupSettingsLoading,
     error: backupSettingsError,
-    refetch: backupSettingsFetch,
   } = useGetBackupsBackupSettings();
 
   const backupSettings = backupSettingsData?.data;
 
-  const [backups, setBackups] = useState([]);
+  const [backups, setBackups] = useState<BackupFileInfo[]>([]);
 
   const {
     data: backupsData,
     isLoading: backupsLoading,
-    error: backupsError,
   } = useGetBackupsBackups();
 
   useEffect(() => {
@@ -53,14 +52,14 @@ export default function BackupSettings() {
   /// <summary>
   /// Mutation to trigger the immediate manual creation of a database backup artifact.
   /// </summary>
-  const { mutate: createBackup, isPending: isCreating } =
+  const { mutate: createBackup } =
     usePostBackupsCreateBackup({
       mutation: {
         onSuccess: () => {
           alert("Backup artifact created successfully!");
           refreshBackupsList();
         },
-        onError: (err) => {
+        onError: (err: any) => {
           alert(
             `Failed to create backup: ${err?.message || "Internal server error"}`,
           );
@@ -70,14 +69,14 @@ export default function BackupSettings() {
   /// <summary>
   /// Mutation to upload a database backup artifact file to the storage server.
   /// </summary>
-  const { mutate: uploadBackup, isPending: isUploading } =
+  const { mutate: uploadBackup } =
     usePostBackupsUploadBackup({
       mutation: {
         onSuccess: () => {
           alert("Backup artifact uploaded successfully!");
           refreshBackupsList();
         },
-        onError: (err) => {
+        onError: (err: any) => {
           alert(`Upload failed: ${err?.message || "Internal server error"}`);
         },
       },
@@ -85,14 +84,14 @@ export default function BackupSettings() {
   /// <summary>
   /// Mutation to restore the database system using a specified backup file.
   /// </summary>
-  const { mutate: restoreBackup, isPending: isRestoring } =
+  const { mutate: restoreBackup } =
     usePostBackupsRestoreBackupFromFileName({
       mutation: {
-        onSuccess: (res) => {
+        onSuccess: (res: any) => {
           alert(res?.message || "System database restored successfully!");
           refreshBackupsList();
         },
-        onError: (err) => {
+        onError: (err: any) => {
           alert(
             `Restore action failed: ${err?.message || "Internal server error"}`,
           );
@@ -102,14 +101,14 @@ export default function BackupSettings() {
   /// <summary>
   /// Mutation to permanently delete a specified backup file from storage.
   /// </summary>
-  const { mutate: deleteBackup, isPending: isDeleting } =
+  const { mutate: deleteBackup } =
     useDeleteBackupsBackupFromFileName({
       mutation: {
         onSuccess: () => {
           alert("Backup file permanently deleted.");
           refreshBackupsList();
         },
-        onError: (err) => {
+        onError: (err: any) => {
           alert(
             `Failed to delete backup file: ${err?.message || "Internal server error"}`,
           );
@@ -122,13 +121,13 @@ export default function BackupSettings() {
   const handleCreateBackup = () => {
     createBackup();
   };
-  const handleUploadBackup = (e) => {
+  const handleUploadBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       uploadBackup({ data: { file } });
     }
   };
-  const handleRestoreBackup = (fileName) => {
+  const handleRestoreBackup = (fileName: string) => {
     if (
       window.confirm(
         `Are you sure you want to restore the system database from ${fileName}? All current unsaved changes will be overwritten.`,
@@ -137,7 +136,7 @@ export default function BackupSettings() {
       restoreBackup({ fileName });
     }
   };
-  const handleDeleteBackup = (fileName) => {
+  const handleDeleteBackup = (fileName: string) => {
     if (
       window.confirm(
         `Are you sure you want to permanently delete the backup file ${fileName}?`,
@@ -150,7 +149,7 @@ export default function BackupSettings() {
   /// Authenticated binary file download wrapper.
   /// Downloads backup programmatically via fetch relying on automatically attached session cookies.
   /// </summary>
-  const handleDownloadBackup = async (fileName) => {
+  const handleDownloadBackup = async (fileName: string) => {
     try {
       const response = await fetch(`/api/v1/backups/${fileName}/download`, {
         method: "GET",
@@ -171,7 +170,7 @@ export default function BackupSettings() {
       // Cleanup temporary window resources
       document.body.removeChild(tempLink);
       window.URL.revokeObjectURL(blobUrl);
-    } catch (err) {
+    } catch (err: any) {
       alert(`Download failed: ${err.message}`);
     }
   };
@@ -191,7 +190,8 @@ export default function BackupSettings() {
           <input
             type="checkbox"
             id="autoBackupsHeader"
-            checked={backupSettings?.enabled}
+            checked={backupSettings?.enabled || false}
+            onChange={() => {}}
             style={{
               width: "20px",
               height: "20px",
@@ -269,15 +269,7 @@ export default function BackupSettings() {
         ) : backupSettingsError ? (
           <div className="vaults-error-card">
             <span className="err-icon">⚠️</span>
-            <p>{error}</p>
-            {/* <button
-              className="btn btn-secondary btn-small"
-              onClick={() =>
-                queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] })
-              }
-            >
-              Retry
-            </button> */}
+            <p>{(backupSettingsError as any)?.message || "Failed to load backup settings"}</p>
           </div>
         ) : backupSettings === null ? (
           <div className="empty-state panel">
@@ -301,7 +293,7 @@ export default function BackupSettings() {
               <input
                 type="text"
                 readOnly
-                value={backupSettings.backupPath}
+                value={backupSettings?.backupPath || ""}
                 className="text-mono readonly-input"
               />
             </div>
@@ -311,7 +303,7 @@ export default function BackupSettings() {
               <input
                 type="text"
                 readOnly
-                value={backupSettings.cronSchedule}
+                value={backupSettings?.cronSchedule || ""}
                 className="readonly-input"
               />
             </div>
@@ -322,7 +314,7 @@ export default function BackupSettings() {
                 type="number"
                 min="1"
                 readOnly
-                value={backupSettings.retentionCount}
+                value={backupSettings?.retentionCount || 0}
                 className="readonly-input"
               />
             </div>
@@ -348,90 +340,93 @@ export default function BackupSettings() {
                 </tr>
               </thead>
               <tbody>
-                {backups.map((b) => (
-                  <tr key={b.fileName}>
-                    <td
-                      className="text-bold text-mono"
-                      style={{ wordBreak: "break-all" }}
-                    >
-                      {b.fileName}
-                    </td>
-                    <td>{b.date}</td>
-                    <td>{formatBytes(b.sizeInBytes)}</td>
-                    <td>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "12px",
-                          justifyContent: "flex-end",
-                          alignItems: "center",
-                        }}
+                {backups.map((b) => {
+                  const filename = b.fileName || "unknown-backup";
+                  return (
+                    <tr key={filename}>
+                      <td
+                        className="text-bold text-mono"
+                        style={{ wordBreak: "break-all" }}
                       >
-                        <button
-                          className="btn btn-secondary btn-mini"
-                          onClick={() => handleRestoreBackup(b.fileName)}
-                        >
-                          Restore
-                        </button>
-
-                        <button
-                          className="btn-icon"
-                          title="Download Backup"
-                          onClick={() => handleDownloadBackup(b.fileName)}
+                        {filename}
+                      </td>
+                      <td>{b.date}</td>
+                      <td>{formatBytes(b.sizeInBytes)}</td>
+                      <td>
+                        <div
                           style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "inherit",
-                            padding: 0,
+                            display: "flex",
+                            gap: "12px",
+                            justifyContent: "flex-end",
+                            alignItems: "center",
                           }}
                         >
-                          <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                          <button
+                            className="btn btn-secondary btn-mini"
+                            onClick={() => handleRestoreBackup(filename)}
                           >
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                          </svg>
-                        </button>
+                            Restore
+                          </button>
 
-                        <button
-                          className="btn-icon"
-                          title="Delete Backup"
-                          onClick={() => handleDeleteBackup(b.fileName)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "#e53e3e",
-                            padding: 0,
-                          }}
-                        >
-                          <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                          <button
+                            className="btn-icon"
+                            title="Download Backup"
+                            onClick={() => handleDownloadBackup(filename)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              color: "inherit",
+                              padding: 0,
+                            }}
                           >
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <polyline points="7 10 12 15 17 10" />
+                              <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                          </button>
+
+                          <button
+                            className="btn-icon"
+                            title="Delete Backup"
+                            onClick={() => handleDeleteBackup(filename)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              color: "#e53e3e",
+                              padding: 0,
+                            }}
+                          >
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

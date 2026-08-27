@@ -26,6 +26,7 @@ namespace Chambered.Data.Configuration
 
             builder.Property(p => p.PartNumber).IsRequired().HasMaxLength(100);
             builder.Property(p => p.Sku).HasMaxLength(50);
+            builder.Property(p => p.WebPageUrl).HasMaxLength(2048);
 
             #region Dynamic Specifications (JSON Mapping)
 

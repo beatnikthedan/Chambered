@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, ReactNode } from "react";
 import {
   Routes,
   Route,
@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import { useStore } from "./StoreContext";
 import "./App.css";
-import "./components/VersionControl.tsx";
+import "./components/VersionControl";
 
 // Lazy loaded views stubs
 import Dashboard from "./views/Dashboard";
@@ -22,11 +22,14 @@ import Vaults from "./views/Vaults";
 import Catalog from "./views/Catalog";
 
 // Route guarding components
-// Route guarding components
 import { ARSENAL_ICONS } from "./components/ArsenalIcons";
-import { VersionControl } from "./components/VersionControl.tsx";
+import { VersionControl } from "./components/VersionControl";
 
-function ProtectedRoute({ children }) {
+interface RouteProps {
+  children: ReactNode;
+}
+
+function ProtectedRoute({ children }: RouteProps) {
   const { isAuthenticated, loading } = useStore();
 
   if (loading) {
@@ -42,10 +45,10 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }
 
-function GuestRoute({ children }) {
+function GuestRoute({ children }: RouteProps) {
   const { isAuthenticated, loading } = useStore();
 
   if (loading) {
@@ -61,7 +64,7 @@ function GuestRoute({ children }) {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }
 
 export default function App() {
@@ -69,20 +72,20 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showAccountModal, setShowAccountModal] = useState(false);
-  const [showArsenalDropdown, setShowArsenalDropdown] = useState(false);
-  const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
+  const [showAccountModal, setShowAccountModal] = useState<boolean>(false);
+  const [showArsenalDropdown, setShowArsenalDropdown] = useState<boolean>(false);
+  const [showThemeMenu, setShowThemeMenu] = useState<boolean>(false);
 
   const activeArsenal = store.arsenals.find(
     (a) => a.id === store.activeArsenalId,
   );
 
   // Use refs for outside clicks
-  const profileDropdownRef = useRef(null);
-  const arsenalDropdownRef = useRef(null);
-  const themeDropdownRef = useRef(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const arsenalDropdownRef = useRef<HTMLDivElement>(null);
+  const themeDropdownRef = useRef<HTMLDivElement>(null);
 
   // Compute view title based on active pathname
   const getRouteTitle = () => {
@@ -112,29 +115,30 @@ export default function App() {
     navigate("/login");
   };
 
-  const selectArsenal = async (id) => {
+  const selectArsenal = async (id: number) => {
     await store.selectArsenal(id);
     setShowArsenalDropdown(false);
   };
 
   // Handle outside clicks to close popovers
   useEffect(() => {
-    const handleOutsideClick = (e) => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as Node;
       if (
         profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(e.target)
+        !profileDropdownRef.current.contains(target)
       ) {
         setShowProfileMenu(false);
       }
       if (
         arsenalDropdownRef.current &&
-        !arsenalDropdownRef.current.contains(e.target)
+        !arsenalDropdownRef.current.contains(target)
       ) {
         setShowArsenalDropdown(false);
       }
       if (
         themeDropdownRef.current &&
-        !themeDropdownRef.current.contains(e.target)
+        !themeDropdownRef.current.contains(target)
       ) {
         setShowThemeMenu(false);
       }
@@ -146,7 +150,7 @@ export default function App() {
     };
   }, []);
 
-  const [theme, setTheme] = useState("stealth");
+  const [theme, setTheme] = useState<string>("stealth");
 
   return (
     <div
@@ -216,7 +220,11 @@ export default function App() {
                     <div
                       key={ars.id}
                       className={`arsenal-popover-item ${ars.id === store.activeArsenalId ? "active" : ""}`}
-                      onClick={() => selectArsenal(ars.id)}
+                      onClick={() => {
+                        if (ars.id !== undefined) {
+                          selectArsenal(ars.id);
+                        }
+                      }}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -635,7 +643,7 @@ export default function App() {
                       />
                     ) : (
                       <div className="user-initials-avatar">
-                        {store.user.username[0].toUpperCase()}
+                        {store.user.username ? store.user.username[0].toUpperCase() : ""}
                       </div>
                     )}
                   </button>
@@ -668,7 +676,7 @@ export default function App() {
                               className="large-modal-avatar user-initials-avatar"
                               style={{ fontSize: "24px" }}
                             >
-                              {store.user.username[0].toUpperCase()}
+                              {store.user.username ? store.user.username[0].toUpperCase() : ""}
                             </div>
                           )}
                           <div className="avatar-explain">

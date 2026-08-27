@@ -1,9 +1,18 @@
 import React from 'react'
 
-/**
- * A highly unified, premium reusable Submit Button for all forms across Chambered.
- * Handles loading spin, success checkmarks, and automatic disabled states cleanly.
- */
+interface SubmitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  isSaving: boolean;
+  saveSuccess: boolean;
+  isEditMode: boolean;
+  createLabel?: string;
+  updateLabel?: string;
+  savingLabel?: string;
+  successLabel?: string;
+  disabled?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
 export default function SubmitButton({
   isSaving,
   saveSuccess,
@@ -16,8 +25,7 @@ export default function SubmitButton({
   className = 'btn btn-primary',
   style = {},
   ...props
-}) {
-  // Automatically swap primary class to success class to change background color on success
+}: SubmitButtonProps) {
   const resolvedClassName = saveSuccess 
     ? className.replace('btn-primary', 'btn-success') 
     : className;

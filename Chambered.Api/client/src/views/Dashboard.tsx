@@ -2,32 +2,60 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../StoreContext'
 import './Dashboard.css'
 
+interface CaliberBreakdownItem {
+  caliber: string;
+  count: number;
+}
+
+interface ArmoryActionBreakdownItem {
+  actionType: string;
+  count: number;
+}
+
+interface RecentActivityItem {
+  title: string;
+  description: string;
+  date: string;
+}
+
+interface DashboardStats {
+  totalArmoryItems: number;
+  totalRounds: number;
+  handloadedRounds: number;
+  factoryRounds: number;
+  totalArmoryValue: number;
+  cumulativeRoundsFired: number;
+  caliberBreakdown?: CaliberBreakdownItem[];
+  armoryActionBreakdown?: ArmoryActionBreakdownItem[];
+  recentActivities?: RecentActivityItem[];
+}
+
 export default function Dashboard() {
   const store = useStore()
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string>('')
 
   const maxCaliberCount = useMemo(() => {
     if (!stats || !stats.caliberBreakdown || !stats.caliberBreakdown.length) return 1
     return Math.max(...stats.caliberBreakdown.map(c => c.count))
   }, [stats])
 
-  const calculateBarWidth = (count, max) => {
+  const calculateBarWidth = (count: number, max: number) => {
     if (max === 0) return 0
     const pct = count / max
     return Math.max(10, Math.floor(pct * 270)) // max width 270px in our SVG viewbox
   }
 
-  const formatNumber = (num) => {
+  const formatNumber = (num: number) => {
     return new Intl.NumberFormat().format(num)
   }
 
-  const formatCurrency = (val) => {
+  const formatCurrency = (val: number) => {
     return new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)
   }
 
-  const formatDate = (dateStr) => {
+  const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
@@ -46,7 +74,7 @@ export default function Dashboard() {
       } else {
         setError(`Server returned code ${res.status}`)
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Network error.')
     } finally {
       setLoading(false)

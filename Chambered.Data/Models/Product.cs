@@ -46,6 +46,11 @@ namespace Chambered.Data.Models
         /// </summary>
         public string? Sku { get; set; }
 
+        /// <summary>
+        /// Gets or sets the manufacturer web page URL for this product catalog reference.
+        /// </summary>
+        public string? WebPageUrl { get; set; }
+
         #endregion
 
         #region Dynamic Specifications

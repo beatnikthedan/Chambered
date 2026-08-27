@@ -11,7 +11,11 @@ import {
   useDeleteUsersUserFromId,
 } from "../api/endpoints";
 
-export default function UserSettings({ currentUserId }) {
+export interface UserSettingsProps {
+  currentUserId?: string | null;
+}
+
+export default function UserSettings({ currentUserId }: UserSettingsProps) {
   const store = useStore();
   const currentUserIsAdmin = store.user?.roles?.includes("Admin") || false;
 
@@ -51,7 +55,7 @@ export default function UserSettings({ currentUserId }) {
   const updateMutation = usePutUsersUpdateUserFromId();
   const deleteMutation = useDeleteUsersUserFromId();
 
-  const users = currentUserIsAdmin
+  const users: any[] = currentUserIsAdmin
     ? adminUsersData?.data || []
     : profileData?.data
       ? [profileData.data]
@@ -67,12 +71,12 @@ export default function UserSettings({ currentUserId }) {
       : null;
 
   // State for Modal Dialog & Form Input
-  const [showUserForm, setShowUserForm] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [showUserForm, setShowUserForm] = useState<boolean>(false);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [userForm, setUserForm] = useState({
     username: "",
     email: "",
@@ -81,7 +85,7 @@ export default function UserSettings({ currentUserId }) {
   });
 
   // Calculate Password Strength in real time
-  const getPasswordStrength = (pwd) => {
+  const getPasswordStrength = (pwd: string) => {
     if (!pwd)
       return { score: 0, text: "None", color: "transparent", percent: 0 };
     let score = 0;
@@ -117,7 +121,7 @@ export default function UserSettings({ currentUserId }) {
   };
 
   // Open Edit Modal
-  const handleOpenEditModal = (usr) => {
+  const handleOpenEditModal = (usr: any) => {
     setIsEditMode(true);
     setSelectedUser(usr);
     setUserForm({
@@ -130,7 +134,7 @@ export default function UserSettings({ currentUserId }) {
   };
 
   // Handle User Deletion (Live API connection)
-  const handleDeleteUser = async (userId, username) => {
+  const handleDeleteUser = async (userId: string, username: string) => {
     if (window.confirm(`Are you sure you want to remove user "${username}"?`)) {
       try {
         await deleteMutation.mutateAsync({ id: userId });
@@ -139,14 +143,14 @@ export default function UserSettings({ currentUserId }) {
         } else {
           refetchProfile();
         }
-      } catch (err) {
+      } catch (err: any) {
         alert(err.message || "Failed to delete user.");
       }
     }
   };
 
   // Handle Form Submission (Create or Edit)
-  const handleFormSubmit = async (e) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setSaveSuccess(false);
@@ -194,7 +198,7 @@ export default function UserSettings({ currentUserId }) {
           isAdmin: false,
         });
       }, 1000);
-    } catch (err) {
+    } catch (err: any) {
       alert(err.message || `Failed to ${isEditMode ? "update" : "add"} user.`);
     } finally {
       setIsSaving(false);
@@ -334,7 +338,7 @@ export default function UserSettings({ currentUserId }) {
                       {/* Delete Button (Red trash icon) */}
                       <button
                         className="btn-action-delete"
-                        disabled={isSelf}
+                        disabled={isSelf ? true : false}
                         onClick={() => handleDeleteUser(usr.id, usr.username)}
                         title={
                           isSelf
@@ -374,17 +378,9 @@ export default function UserSettings({ currentUserId }) {
         ) : loginError ? (
           <div className="vaults-error-card">
             <span className="err-icon">⚠️</span>
-            <p>{loginError?.message || "Failed to load."}</p>
-            {/* <button
-              className="btn btn-secondary btn-small"
-              onClick={() =>
-                queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] })
-              }
-            >
-              Retry
-            </button> */}
+            <p>{(loginError as any)?.message || "Failed to load."}</p>
           </div>
-        ) : loginPolicy === null ? (
+        ) : loginPolicy === null || loginPolicy === undefined ? (
           <div className="empty-state panel">
             <h3>You have no items in your Vaults.</h3>
             <p style={{ marginTop: "4px", color: "var(--text-muted)" }}>
@@ -394,51 +390,6 @@ export default function UserSettings({ currentUserId }) {
         ) : (
           <div className="policy-card">
             <div className="policy-card-title">Session Policy</div>
-
-            {/* <div className="policy-row">
-            <div className="policy-info">
-              <span className="policy-label">Require TOTP for owners</span>
-              <span className="policy-sublabel">
-                Enforces multi-factor authentication for Owner level roles
-              </span>
-            </div>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={sessionPolicy.requireTotp}
-                onChange={(e) =>
-                  setSessionPolicy({
-                    ...sessionPolicy,
-                    requireTotp: e.target.checked,
-                  })
-                }
-              />
-              <span className="slider"></span>
-            </label>
-          </div>
-
-          <div className="policy-row">
-            <div className="policy-info">
-              <span className="policy-label">Auto-provision OIDC users</span>
-              <span className="policy-sublabel">
-                Automatically create local profile upon successful identity
-                provider login
-              </span>
-            </div>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={sessionPolicy.autoProvision}
-                onChange={(e) =>
-                  setSessionPolicy({
-                    ...sessionPolicy,
-                    autoProvision: e.target.checked,
-                  })
-                }
-              />
-              <span className="slider"></span>
-            </label>
-          </div> */}
 
             <div className="policy-row">
               <div className="policy-info">
@@ -450,8 +401,8 @@ export default function UserSettings({ currentUserId }) {
               <input
                 style={{ width: 60 }}
                 type="number"
-                //placeholder="7"
-                value={loginPolicy.sessionLifetime}
+                value={loginPolicy.sessionLifetime || 0}
+                readOnly
               />
             </div>
 
@@ -465,7 +416,8 @@ export default function UserSettings({ currentUserId }) {
               <label className="switch">
                 <input
                   type="checkbox"
-                  checked={loginPolicy.disableLocalUsers}
+                  checked={loginPolicy.disableLocalUsers || false}
+                  readOnly
                 />
                 <span className="slider"></span>
               </label>
@@ -483,7 +435,8 @@ export default function UserSettings({ currentUserId }) {
               <label className="switch">
                 <input
                   type="checkbox"
-                  checked={loginPolicy.disableNewUserRegistration}
+                  checked={loginPolicy.disableNewUserRegistration || false}
+                  readOnly
                 />
                 <span className="slider"></span>
               </label>
@@ -500,17 +453,9 @@ export default function UserSettings({ currentUserId }) {
         ) : policyError ? (
           <div className="vaults-error-card">
             <span className="err-icon">⚠️</span>
-            <p>{policyError?.message || "Failed to load."}</p>
-            {/* <button
-              className="btn btn-secondary btn-small"
-              onClick={() =>
-                queryClient.invalidateQueries({ queryKey: ["/api/v1/Vaults"] })
-              }
-            >
-              Retry
-            </button> */}
+            <p>{(policyError as any)?.message || "Failed to load."}</p>
           </div>
-        ) : passwordPolicy === null ? (
+        ) : passwordPolicy === null || passwordPolicy === undefined ? (
           <div className="empty-state panel">
             <h3>You have no items in your Vaults.</h3>
             <p style={{ marginTop: "4px", color: "var(--text-muted)" }}>
@@ -533,7 +478,7 @@ export default function UserSettings({ currentUserId }) {
                 className="policy-length-input"
                 min="6"
                 max="64"
-                value={passwordPolicy.minLength}
+                value={passwordPolicy.minLength || 0}
                 readOnly
               />
             </div>
@@ -548,7 +493,7 @@ export default function UserSettings({ currentUserId }) {
               <label className="switch">
                 <input
                   type="checkbox"
-                  checked={passwordPolicy.requireUpper}
+                  checked={passwordPolicy.requireUpper || false}
                   disabled
                 />
                 <span className="slider"></span>
@@ -565,7 +510,7 @@ export default function UserSettings({ currentUserId }) {
               <label className="switch">
                 <input
                   type="checkbox"
-                  checked={passwordPolicy.requireLower}
+                  checked={passwordPolicy.requireLower || false}
                   disabled
                 />
                 <span className="slider"></span>
@@ -582,7 +527,7 @@ export default function UserSettings({ currentUserId }) {
               <label className="switch">
                 <input
                   type="checkbox"
-                  checked={passwordPolicy.requireNumbers}
+                  checked={passwordPolicy.requireNumbers || false}
                   disabled
                 />
                 <span className="slider"></span>
@@ -599,7 +544,7 @@ export default function UserSettings({ currentUserId }) {
               <label className="switch">
                 <input
                   type="checkbox"
-                  checked={passwordPolicy.requireSpecial}
+                  checked={passwordPolicy.requireSpecial || false}
                   disabled
                 />
                 <span className="slider"></span>
@@ -671,7 +616,7 @@ export default function UserSettings({ currentUserId }) {
                 {/* Password Strength Indicator */}
                 {userForm.password && (
                   <div className="strength-container">
-                    <div className="strength-bar-bg">
+                     <div className="strength-bar-bg">
                       <div
                         className="strength-bar-fill"
                         style={{
@@ -714,6 +659,7 @@ export default function UserSettings({ currentUserId }) {
                   multiple
                   disabled
                   value={[]}
+                  onChange={() => {}}
                   className="policy-lifetime-select"
                   style={{ width: "100%", opacity: 0.6 }}
                 >

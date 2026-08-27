@@ -6,7 +6,6 @@ import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import ChargeLadder from "../components/ChargeLoader";
-import ArmoryItemCard from "../components/ArmoryItemCard";
 
 // ==========================================
 // [PULLING DATA] & [SAVING DATA] - Imports generated OData hooks from the API client.
@@ -17,7 +16,6 @@ import {
   useGetArmoryItems,
   usePatchArmoryItemsFromKey,
 } from "../api/endpoints";
-import VaultCard from "../components/VaultCard";
 
 export default function Munitions() {
   // ==========================================
@@ -31,13 +29,13 @@ export default function Munitions() {
   // ==========================================
 
   // Holds the editable text of the item name in the textbox.
-  const [itemName, setItemName] = useState("");
+  const [itemName, setItemName] = useState<string>("");
 
   // Holds the database ID of the currently loaded item (needed so we know WHICH record to update on save).
-  const [itemId, setItemId] = useState(null);
+  const [itemId, setItemId] = useState<number | null>(null);
 
   // Boolean to toggle the visibility of the green success banner after a successful save.
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
   // ==========================================
   // [PULLING DATA] - Hook invocation to query the database.
@@ -46,7 +44,7 @@ export default function Munitions() {
   // - select: "id,name" -> only load the 'id' and 'name' fields from the DB.
   // - filter: "product/manufacturer/name eq 'Glock'" -> only load items made by Glock.
   // ==========================================
-  const { data, isLoading, error } = useGetArmoryItems({
+  const { data } = useGetArmoryItems({
     top: 1,
     select: "id,name",
     filter: "product/manufacturer/name eq 'Glock'",
@@ -70,7 +68,7 @@ export default function Munitions() {
         // React Query will automatically re-run the GET hook above in the background to grab the updated name.
         queryClient.invalidateQueries({ queryKey: ["/api/v1/ArmoryItems"] });
       },
-      onError: (err) => {
+      onError: (err: any) => {
         alert("Failed to save changes: " + (err.message || "Unknown error"));
       },
     },
@@ -87,7 +85,7 @@ export default function Munitions() {
     const armoryItems = data?.data?.value || [];
 
     if (armoryItems.length > 0) {
-      setItemId(armoryItems[0].id); // Saves the database ID (e.g. 1) to state
+      setItemId(armoryItems[0].id || null); // Saves the database ID (e.g. 1) to state
       setItemName(armoryItems[0].name || ""); // Loads the initial name into our textbox state
     }
   }, [data]); // This effect is triggered whenever 'data' shifts from undefined to loaded
@@ -118,7 +116,6 @@ export default function Munitions() {
   return (
     <div style={{ padding: "20px" }}>
       <div>{ChargeLadder()}</div>
-      {/* <div>{ArmoryItemCard(null, null)}</div> */}
     </div>
   );
 }

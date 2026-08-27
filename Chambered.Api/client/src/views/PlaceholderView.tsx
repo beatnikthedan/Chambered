@@ -37,8 +37,8 @@ export default function PlaceholderView() {
         </div>
         
         <div className="interactive-progress">
-          <div class="progress-bar">
-            <div class="progress-fill"></div>
+          <div className="progress-bar">
+            <div className="progress-fill"></div>
           </div>
           <span className="progress-text">Planned Module — Status: In Development Queue</span>
         </div>

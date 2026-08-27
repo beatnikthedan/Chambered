@@ -15,24 +15,33 @@ import {
   useDeleteArsenalsFromKey,
   useGetUsersUsers,
 } from "../api/endpoints";
+import type { Arsenal } from "../api/models/arsenal";
+import type { ChamberedUser } from "../api/models/chamberedUser";
+
+interface ArsenalFormState {
+  id: number;
+  name: string;
+  description: string | null;
+  colorHex: string;
+  iconName: string;
+}
 
 export default function ArsenalSettings() {
   const store = useStore();
   const queryClient = useQueryClient();
-  const [arsenals, setArsenals] = useState([]);
-  const [selectedArsenal, setSelectedArsenal] = useState(null);
-  const [showArsenalForm, setShowArsenalForm] = useState(false);
-  const [isEditArsenalMode, setIsEditArsenalMode] = useState(false);
-  const [arsenalSaveSuccess, setArsenalSaveSuccess] = useState(false);
+  const [arsenals, setArsenals] = useState<Arsenal[]>([]);
+  const [selectedArsenal, setSelectedArsenal] = useState<ArsenalFormState | null>(null);
+  const [showArsenalForm, setShowArsenalForm] = useState<boolean>(false);
+  const [isEditArsenalMode, setIsEditArsenalMode] = useState<boolean>(false);
+  const [arsenalSaveSuccess, setArsenalSaveSuccess] = useState<boolean>(false);
 
   const {
     data: usersData,
     isLoading: loadingUsers,
     error: usersError,
-    refetch: refetchUsersList,
   } = useGetUsersUsers();
 
-  const users = usersData?.data ?? [];
+  const users: (ChamberedUser & { username?: string | null })[] = usersData?.data ?? [];
 
   const updateArsenalMutation = usePutArsenalsFromKey({
     mutation: {
@@ -41,7 +50,7 @@ export default function ArsenalSettings() {
         setArsenalSaveSuccess(true);
         setTimeout(() => setArsenalSaveSuccess(false), 2000);
       },
-      onError: (err) => {
+      onError: (err: any) => {
         alert("Failed to save changes: " + (err?.message || "Unknown error"));
       },
     },
@@ -54,7 +63,7 @@ export default function ArsenalSettings() {
         setArsenalSaveSuccess(true);
         setTimeout(() => setArsenalSaveSuccess(false), 2000);
       },
-      onError: (err) => {
+      onError: (err: any) => {
         alert("Failed to create arsenal: " + (err?.message || "Unknown error"));
       },
     },
@@ -65,7 +74,7 @@ export default function ArsenalSettings() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["/api/v1/Arsenals"] });
       },
-      onError: (err) => {
+      onError: () => {
         alert(
           "Failed to delete arsenal. Make sure no items or sub-arsenals depend on it.",
         );
@@ -73,7 +82,7 @@ export default function ArsenalSettings() {
     },
   });
 
-  const handleDelete = async (arsenalId) => {
+  const handleDelete = async (arsenalId: number) => {
     if (arsenalId > 0) {
       try {
         await deleteArsenalMutation.mutateAsync({ key: arsenalId });
@@ -83,11 +92,11 @@ export default function ArsenalSettings() {
     }
   };
 
-  const handleSaveArsenal = async (e) => {
+  const handleSaveArsenal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedArsenal || !selectedArsenal.name.trim()) return;
 
-    const payload = {
+    const payload: any = {
       id: selectedArsenal.id || 0,
       name: selectedArsenal.name || "",
       description: selectedArsenal.description || null,
@@ -140,21 +149,27 @@ export default function ArsenalSettings() {
     setShowArsenalForm(true);
   };
 
-  const openEditModal = (arsenal) => {
+  const openEditModal = (arsenal: Arsenal) => {
     setIsEditArsenalMode(true);
-    const usersList = arsenal.ChamberedUsers || arsenal.chamberedUsers || [];
-    setSelectedUserIds(usersList.map((u) => u.id));
-    setSelectedArsenal({ ...arsenal });
+    const usersList = (arsenal as any).ChamberedUsers || arsenal.chamberedUsers || [];
+    setSelectedUserIds(usersList.map((u: any) => u.id).filter((id: any): id is string => !!id));
+    setSelectedArsenal({
+      id: arsenal.id || 0,
+      name: arsenal.name || "",
+      description: arsenal.description || null,
+      colorHex: arsenal.colorHex || "#2563eb",
+      iconName: arsenal.iconName || "shield",
+    });
     setShowArsenalForm(true);
   };
 
   const savingArsenal =
     createArsenalMutation.isPending || updateArsenalMutation.isPending;
 
-  const [selectedUserIds, setSelectedUserIds] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
-  const toggleUser = (userId) => {
+  const toggleUser = (userId: string) => {
     setSelectedUserIds((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
@@ -162,9 +177,10 @@ export default function ArsenalSettings() {
     );
   };
 
-  const filteredUsers = users.filter((u) =>
-    u?.username.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filteredUsers = users.filter((u) => {
+    const name = u?.username ?? u?.userName ?? "";
+    return name.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <section className="settings-sec">
@@ -186,7 +202,7 @@ export default function ArsenalSettings() {
       ) : arsenalsError ? (
         <div className="arsenals-error-card">
           <span className="err-icon">⚠️</span>
-          <p>{arsenalsError?.message || "Failed to load arsenals"}</p>
+          <p>{(arsenalsError as any)?.message || "Failed to load arsenals"}</p>
           <button
             className="btn btn-secondary btn-small"
             onClick={() =>
@@ -254,7 +270,11 @@ export default function ArsenalSettings() {
                       <span
                         className="badge badge-secondary"
                         style={{ cursor: "pointer" }}
-                        onClick={() => store.selectArsenal(arsenal.id)}
+                        onClick={() => {
+                          if (arsenal.id !== undefined) {
+                            store.selectArsenal(arsenal.id);
+                          }
+                        }}
                       >
                         Click to Switch
                       </span>
@@ -296,7 +316,11 @@ export default function ArsenalSettings() {
                       <button
                         className="btn-action-delete"
                         disabled={store.arsenals.length <= 1}
-                        onClick={() => handleDelete(arsenal.id)}
+                        onClick={() => {
+                          if (arsenal.id !== undefined) {
+                            handleDelete(arsenal.id);
+                          }
+                        }}
                         title="Remove arsenal and all its items"
                         style={{
                           width: "74px",
@@ -400,7 +424,7 @@ export default function ArsenalSettings() {
                         })
                       }
                       placeholder="Describe this arsenal..."
-                      rows="3"
+                      rows={3}
                       className="form-textarea-abs"
                     />
                   </div>
@@ -514,9 +538,10 @@ export default function ArsenalSettings() {
                         !usersError &&
                         filteredUsers.map((user) => {
                           const userId = user.id;
-                          const isSelected = selectedUserIds.includes(user.id);
+                          if (!userId) return null;
+                          const isSelected = selectedUserIds.includes(userId);
                           const displayName =
-                            user.username ?? user.name ?? "Unknown User";
+                            user.username ?? user.userName ?? "Unknown User";
 
                           return (
                             <button

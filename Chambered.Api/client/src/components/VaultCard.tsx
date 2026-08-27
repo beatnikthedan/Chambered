@@ -1,5 +1,24 @@
 import React from "react";
 
+export interface VaultCardProps {
+  title?: string;
+  subtitle?: string | null;
+  currentCount?: number;
+  totalCount?: number;
+  unit?: string;
+  temp?: string;
+  tempColor?: string;
+  humidity?: string;
+  humidityColor?: string;
+  value?: string;
+  statusText?: string;
+  statusColor?: string;
+  arsenalColor?: string;
+  selected?: boolean;
+  warningText?: string | null;
+  onClick?: () => void;
+}
+
 export default function VaultCard({
   title = "Vault",
   subtitle,
@@ -17,7 +36,7 @@ export default function VaultCard({
   selected = false,
   warningText = null,
   onClick,
-}) {
+}: VaultCardProps) {
   const safeCurrent = Number(currentCount) || 0;
   const safeTotal = Number(totalCount) || 1;
   const fillPercentage = Math.min(
@@ -38,15 +57,12 @@ export default function VaultCard({
         backgroundColor: selected ? "#1f2937" : "#181920",
         borderRadius: "16px",
         overflow: "hidden",
-
-        // 2. CHANGE THESE TWO LINES:
         border: selected
           ? `2px solid ${arsenalColor}`
           : `1px solid ${deselectedBorderColor}`,
         borderLeft: selected
           ? `12px solid ${arsenalColor}`
           : `1px solid ${deselectedBorderColor}`,
-
         boxShadow: selected ? `-4px 0 16px -2px ${arsenalColor}66` : "none",
         padding: "24px",
         fontFamily: "system-ui, -apple-system, sans-serif",

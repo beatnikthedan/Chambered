@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState } from "react";
 import { useStore } from "../StoreContext";
 import "./Settings.css";
 
@@ -11,7 +11,7 @@ import ArsenalSettings from "../components/ArsenalSettings";
 
 export default function Settings() {
   const store = useStore();
-  const [activeView, setActiveView] = useState("arsenals");
+  const [activeView, setActiveView] = useState<string>("arsenals");
 
   return (
     <div className="layout-grid">
@@ -30,12 +30,6 @@ export default function Settings() {
                 {store.arsenals?.length ?? null}
               </span>
             </li>
-            {/* <li
-              className={`menu-item ${activeView === "units" ? "active" : ""}`}
-              onClick={() => setActiveView("units")}
-            >
-              <span>Units & formats</span>
-            </li> */}
             <li
               className={`menu-item ${activeView === "backup" ? "active" : ""}`}
               onClick={() => setActiveView("backup")}
@@ -139,7 +133,7 @@ export default function Settings() {
           <ImportExportSettings store={store} />
         )}
 
-        {activeView === "users" && <UserSettings currentUserId={1} />}
+        {activeView === "users" && <UserSettings currentUserId="1" />}
 
         {activeView === "auth" && <AuthSettings />}
 
