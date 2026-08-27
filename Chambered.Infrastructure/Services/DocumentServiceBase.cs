@@ -10,6 +10,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Chambered.Infrastructure.Configuration;
+
 namespace Chambered.Infrastructure.Services
 {
     /// <summary>
@@ -23,14 +25,20 @@ namespace Chambered.Infrastructure.Services
     {
         protected readonly ChamberedDbContext Db;
         protected readonly IFileStorageRepository Repository;
+        protected readonly FileStorageConfiguration Config;
         protected readonly ILogger Logger;
 
         protected abstract string ParentFolderName { get; }
 
-        protected DocumentServiceBase(ChamberedDbContext db, IFileStorageRepository repository, ILogger logger)
+        protected DocumentServiceBase(
+            ChamberedDbContext db,
+            IFileStorageRepository repository,
+            FileStorageConfiguration config,
+            ILogger logger)
         {
             Db = db;
             Repository = repository;
+            Config = config;
             Logger = logger;
         }
 
@@ -66,11 +74,7 @@ namespace Chambered.Infrastructure.Services
                 ContentType = contentType,
                 StorageKey = fileMetadata.StorageKey,
                 FileSizeBytes = fileMetadata.SizeInBytes,
-                IsEncrypted = Repository.GetType().Name.Contains("S3") || Repository.GetType().Name.Contains("Local") 
-                    ? true // Or wait, let's look at config but true is safe if encryption is toggled on the repo. 
-                    // Let's actually check if repository is configured with encryption if possible, or just set it to the metadata value if it writes CENC magic header.
-                    // Wait, we can set IsEncrypted based on whether encryption is configured. Or we can just set it!
-                    : false,
+                IsEncrypted = Config.EnableEncryption,
                 UploadedAt = DateTimeOffset.UtcNow
             };
 

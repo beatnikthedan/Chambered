@@ -9,7 +9,7 @@ import ProductDocumentsTable from "../components/ProductDocumentsTable";
 import {
   useGetProducts,
   usePostProducts,
-  usePutProductsFromKey,
+  usePatchProductsFromKey,
   useDeleteProductsFromKey,
   useGetManufacturers,
   usePostManufacturers,
@@ -23,7 +23,7 @@ import type { Product } from "../api/models/product";
 import type { Manufacturer } from "../api/models/manufacturer";
 import type { Caliber } from "../api/models/caliber";
 
-interface ExtendedProduct extends Omit<Product, 'productType'> {
+interface ExtendedProduct extends Omit<Product, "productType"> {
   productType: string;
   manufacturerName: string;
   caliberName: string;
@@ -84,16 +84,53 @@ interface ProductForm {
 const extractSpecifications = (product: any): Record<string, any> => {
   if (!product) return {};
   const staticKeys = new Set([
-    "id", "name", "partNumber", "sku", "manufacturerId", "description", "webPageUrl", 
-    "productType", "created", "modified", "createdBy", "modifiedBy", "manufacturer", 
-    "productDocuments", "armoryItems", "caliberId", "pewPewCategory", "actionType", 
-    "isNfaItem", "caliber", "minMagnification", "maxMagnification", "objectiveDiameterMm", 
-    "opticType", "reticle", "adjustmentUnits", "tubeDiameter", "isIlluminated", 
-    "hasBattery", "batteryType", "threadPitch", "attachmentType", "material", 
-    "soundReductionDb", "isFullAutoRated", "isUserServiceable", "lumens", "candela", 
-    "mountType", "laserColor", "hasRemoteSwitchPort", "isInfraredCapable", "lockType",
-    "manufacturerName", "caliberName",
-    "@odata.type", "@odata.context"
+    "id",
+    "name",
+    "partNumber",
+    "sku",
+    "manufacturerId",
+    "description",
+    "webPageUrl",
+    "productType",
+    "created",
+    "modified",
+    "createdBy",
+    "modifiedBy",
+    "manufacturer",
+    "productDocuments",
+    "armoryItems",
+    "caliberId",
+    "pewPewCategory",
+    "actionType",
+    "isNfaItem",
+    "caliber",
+    "minMagnification",
+    "maxMagnification",
+    "objectiveDiameterMm",
+    "opticType",
+    "reticle",
+    "adjustmentUnits",
+    "tubeDiameter",
+    "isIlluminated",
+    "hasBattery",
+    "batteryType",
+    "threadPitch",
+    "attachmentType",
+    "material",
+    "soundReductionDb",
+    "isFullAutoRated",
+    "isUserServiceable",
+    "lumens",
+    "candela",
+    "mountType",
+    "laserColor",
+    "hasRemoteSwitchPort",
+    "isInfraredCapable",
+    "lockType",
+    "manufacturerName",
+    "caliberName",
+    "@odata.type",
+    "@odata.context",
   ]);
 
   const specs: Record<string, any> = {};
@@ -133,7 +170,8 @@ export default function Catalog() {
   const { data: calibersData, isLoading: calibersLoading } = useGetCalibers();
 
   // Selected records
-  const [selectedProduct, setSelectedProduct] = useState<ExtendedProduct | null>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<ExtendedProduct | null>(null);
   const [selectedMfg, setSelectedMfg] = useState<Manufacturer | null>(null);
 
   // Layout View Modes ("table" or "card")
@@ -149,7 +187,9 @@ export default function Catalog() {
   const [activeTab, setActiveTab] = useState<string>("general"); // 'general' | 'subclass' | 'specifications'
 
   // Dynamic specifications key-value editor local state
-  const [customSpecs, setCustomSpecs] = useState<{ key: string; value: string }[]>([]);
+  const [customSpecs, setCustomSpecs] = useState<
+    { key: string; value: string }[]
+  >([]);
 
   // Search & Sorting popovers active states
   const [showFilterPopover, setShowFilterPopover] = useState<boolean>(false);
@@ -204,7 +244,9 @@ export default function Catalog() {
   // Manufacturers search/sort
   const [mfgSearchTerm, setMfgSearchTerm] = useState<string>("");
   const [mfgSortKey, setMfgSortKey] = useState<string>("name");
-  const [mfgSortDirection, setMfgSortDirection] = useState<"asc" | "desc">("asc");
+  const [mfgSortDirection, setMfgSortDirection] = useState<"asc" | "desc">(
+    "asc",
+  );
 
   // Enums memoizations
   const suppressorMaterials = enums?.suppressorMaterials || [];
@@ -272,18 +314,15 @@ export default function Catalog() {
   });
 
   // Query Related Physical Armory Items for Product Bottom-Right Panel
-  const {
-    data: relatedArmoryItemsData,
-    isLoading: relatedArmoryItemsLoading,
-  } = useGetProductsArmoryItemsFromKey(
-    selectedProduct?.id || 0,
-    undefined,
-    {
+  const { data: relatedArmoryItemsData, isLoading: relatedArmoryItemsLoading } =
+    useGetProductsArmoryItemsFromKey(selectedProduct?.id || 0, undefined, {
       query: {
-        enabled: !isManufacturersPage && !!selectedProduct?.id && selectedProduct.id > 0,
+        enabled:
+          !isManufacturersPage &&
+          !!selectedProduct?.id &&
+          selectedProduct.id > 0,
       },
-    }
-  );
+    });
 
   // Mutations
   const createProductMutation = usePostProducts({
@@ -309,7 +348,7 @@ export default function Catalog() {
     },
   });
 
-  const updateProductMutation = usePutProductsFromKey({
+  const updateProductMutation = usePatchProductsFromKey({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
@@ -431,7 +470,10 @@ export default function Catalog() {
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
         setShowSortPopover(false);
       }
-      if (mfgSortRef.current && !mfgSortRef.current.contains(e.target as Node)) {
+      if (
+        mfgSortRef.current &&
+        !mfgSortRef.current.contains(e.target as Node)
+      ) {
         setShowMfgSortPopover(false);
       }
     };
@@ -484,8 +526,10 @@ export default function Catalog() {
 
     // Manufacturer filters
     if (selectedMfgFilters.length > 0) {
-      result = result.filter((p) =>
-        p.manufacturerId !== undefined && selectedMfgFilters.includes(p.manufacturerId),
+      result = result.filter(
+        (p) =>
+          p.manufacturerId !== undefined &&
+          selectedMfgFilters.includes(p.manufacturerId),
       );
     }
 
@@ -588,6 +632,38 @@ export default function Catalog() {
     }
   }, [processedManufacturers, selectedMfg, isManufacturersPage]);
 
+  // Sync selectedProduct with the fresh data from the list
+  useEffect(() => {
+    if (selectedProduct && processedProducts.length > 0) {
+      const freshProduct = processedProducts.find(
+        (p) => p.id === selectedProduct.id,
+      );
+      if (freshProduct) {
+        if (freshProduct !== selectedProduct) {
+          setSelectedProduct(freshProduct);
+        }
+      } else {
+        setSelectedProduct(processedProducts[0] || null);
+      }
+    }
+  }, [processedProducts, selectedProduct]);
+
+  // Sync selectedMfg with the fresh data from the list
+  useEffect(() => {
+    if (selectedMfg && processedManufacturers.length > 0) {
+      const freshMfg = processedManufacturers.find(
+        (m) => m.id === selectedMfg.id,
+      );
+      if (freshMfg) {
+        if (freshMfg !== selectedMfg) {
+          setSelectedMfg(freshMfg);
+        }
+      } else {
+        setSelectedMfg(processedManufacturers[0] || null);
+      }
+    }
+  }, [processedManufacturers, selectedMfg]);
+
   // Sync custom specifications editor
   useEffect(() => {
     if (form.specifications) {
@@ -601,7 +677,9 @@ export default function Catalog() {
     }
   }, [form.specifications]);
 
-  const updateSpecsDictionary = (updatedPairs: { key: string; value: string }[]) => {
+  const updateSpecsDictionary = (
+    updatedPairs: { key: string; value: string }[],
+  ) => {
     const dictionary: Record<string, string> = {};
     updatedPairs.forEach((p) => {
       if (p.key.trim()) {
@@ -611,7 +689,11 @@ export default function Catalog() {
     setForm((f) => ({ ...f, specifications: dictionary }));
   };
 
-  const handleCustomSpecChange = (index: number, field: "key" | "value", val: string) => {
+  const handleCustomSpecChange = (
+    index: number,
+    field: "key" | "value",
+    val: string,
+  ) => {
     const updated = customSpecs.map((spec, i) => {
       if (i === index) {
         return { ...spec, [field]: val };
@@ -684,12 +766,13 @@ export default function Catalog() {
     if (!selectedProduct) return;
     setIsEditMode(true);
     setActiveTab("general");
-    
+
     // Map specifications dictionary into customSpecs array for the editor
     const specs = extractSpecifications(selectedProduct);
-    const specsArray = Object.entries(specs).map(
-      ([key, value]) => ({ key, value: String(value) })
-    );
+    const specsArray = Object.entries(specs).map(([key, value]) => ({
+      key,
+      value: String(value),
+    }));
     setCustomSpecs(specsArray);
 
     setForm({
@@ -800,9 +883,12 @@ export default function Catalog() {
       payload.actionType = form.actionType || null;
       payload.isNfaItem = !!form.isNfaItem;
     } else if (type === "Optic") {
-      payload.minMagnification = parseFloat(form.minMagnification as string) || 1.0;
-      payload.maxMagnification = parseFloat(form.maxMagnification as string) || 1.0;
-      payload.objectiveDiameterMm = parseInt(form.objectiveDiameterMm as string, 10) || 0;
+      payload.minMagnification =
+        parseFloat(form.minMagnification as string) || 1.0;
+      payload.maxMagnification =
+        parseFloat(form.maxMagnification as string) || 1.0;
+      payload.objectiveDiameterMm =
+        parseInt(form.objectiveDiameterMm as string, 10) || 0;
       payload.opticType = form.opticType || null;
       payload.reticle = form.reticle || null;
       payload.adjustmentUnits = form.adjustmentUnits || null;
@@ -815,7 +901,8 @@ export default function Catalog() {
       payload.threadPitch = form.threadPitch || null;
       payload.attachmentType = form.attachmentType || null;
       payload.material = form.material || null;
-      payload.soundReductionDb = parseInt(form.soundReductionDb as string, 10) || null;
+      payload.soundReductionDb =
+        parseInt(form.soundReductionDb as string, 10) || null;
       payload.isFullAutoRated = !!form.isFullAutoRated;
       payload.isUserServiceable = !!form.isUserServiceable;
     } else if (type === "PewPewLight") {
@@ -831,7 +918,11 @@ export default function Catalog() {
 
     // Clean payload of navigation objects to avoid OData issues
     Object.keys(payload).forEach((key) => {
-      if (payload[key] !== null && typeof payload[key] === "object" && key !== "specifications") {
+      if (
+        payload[key] !== null &&
+        typeof payload[key] === "object" &&
+        key !== "specifications"
+      ) {
         delete payload[key];
       }
     });
@@ -892,25 +983,25 @@ export default function Catalog() {
     }
   };
 
-  const handleDeleteProduct = async () => {
+  const handleDeleteProduct = () => {
     if (!selectedProduct?.id) return;
     if (
       window.confirm(
         `Are you sure you want to permanently delete "${selectedProduct.name}"?`,
       )
     ) {
-      await deleteProductMutation.mutateAsync({ key: selectedProduct.id });
+      deleteProductMutation.mutate({ key: selectedProduct.id });
     }
   };
 
-  const handleDeleteMfg = async () => {
+  const handleDeleteMfg = () => {
     if (!selectedMfg?.id) return;
     if (
       window.confirm(
         `Are you sure you want to permanently delete manufacturer "${selectedMfg.name}"?`,
       )
     ) {
-      await deleteMfgMutation.mutateAsync({ key: selectedMfg.id });
+      deleteMfgMutation.mutate({ key: selectedMfg.id });
     }
   };
 
@@ -1008,7 +1099,12 @@ export default function Catalog() {
   }
 
   if (productsError || mfgsError) {
-    return <div className="error-alert">Error loading catalog: {(productsError as any)?.message || (mfgsError as any)?.message}</div>;
+    return (
+      <div className="error-alert">
+        Error loading catalog:{" "}
+        {(productsError as any)?.message || (mfgsError as any)?.message}
+      </div>
+    );
   }
 
   return (
@@ -1271,8 +1367,8 @@ export default function Catalog() {
                 <thead>
                   <tr>
                     <th>Type</th>
-                    <th>Model Name</th>
                     <th>Manufacturer</th>
+                    <th>Model Name</th>
                     <th>Part Number / SKU</th>
                   </tr>
                 </thead>
@@ -1292,8 +1388,8 @@ export default function Catalog() {
                           {p.productType}
                         </span>
                       </td>
-                      <td className="bold-name-cell">{p.name}</td>
                       <td>{p.manufacturerName}</td>
+                      <td className="bold-name-cell">{p.name}</td>
                       <td className="text-muted text-mono">
                         {p.partNumber || "N/A"} / {p.sku || "N/A"}
                       </td>
@@ -1489,135 +1585,133 @@ export default function Catalog() {
                     </div>
                   )}
 
-                   {/* Specifications Key-Value Details */}
+                  {/* Specifications Key-Value Details */}
                   {(() => {
                     const specs = extractSpecifications(selectedProduct);
-                    return Object.keys(specs).length > 0 && (
-                      <div className="details-specs-block">
-                        <h3>Manual Specifications</h3>
-                        <div className="specs-table">
-                          {Object.entries(specs).map(
-                            ([key, value]) => (
+                    return (
+                      Object.keys(specs).length > 0 && (
+                        <div className="details-specs-block">
+                          <h3>Manual Specifications</h3>
+                          <div className="specs-table">
+                            {Object.entries(specs).map(([key, value]) => (
                               <div key={key} className="specs-table-row">
                                 <span className="key-col">{key}</span>
                                 <span className="val-col">{String(value)}</span>
                               </div>
-                            ),
-                          )}
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      )
                     );
                   })()}
-
-                  <hr className="detail-divider" />
-                  <ProductDocumentsTable productId={selectedProduct.id || 0} readOnly={true} />
                 </div>
               </div>
             )
+          ) : /* ==================== MANUFACTURERS DETAIL PANEL ==================== */
+          !selectedMfg ? (
+            <div className="empty-detail-state">
+              <span className="icon">🏢</span>
+              <h3>No Manufacturer Selected</h3>
+              <p>
+                Select a manufacturer from the list on the left, or add a
+                brand-new corporate record.
+              </p>
+              <button className="add-master-btn" onClick={startAddMfg}>
+                + Add Manufacturer
+              </button>
+            </div>
           ) : (
-            /* ==================== MANUFACTURERS DETAIL PANEL ==================== */
-            !selectedMfg ? (
-              <div className="empty-detail-state">
-                <span className="icon">🏢</span>
-                <h3>No Manufacturer Selected</h3>
-                <p>
-                  Select a manufacturer from the list on the left, or add a
-                  brand-new corporate record.
-                </p>
-                <button className="add-master-btn" onClick={startAddMfg}>
-                  + Add Manufacturer
-                </button>
-              </div>
-            ) : (
-              <div className="detail-view-container">
-                <div className="detail-panel-header">
-                  <h3>Manufacturer Details</h3>
-                  <div className="header-actions">
-                    <button
-                      className="btn btn-secondary edit-btn"
-                      onClick={startEditMfg}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn delete-btn"
-                      onClick={handleDeleteMfg}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                <div className="detail-view-body">
-                  {saveSuccess && (
-                    <div className="detail-save-toast">
-                      ✓ Manufacturer updated successfully
-                    </div>
-                  )}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      marginBottom: "16px",
-                    }}
+            <div className="detail-view-container">
+              <div className="detail-panel-header">
+                <h3>Manufacturer Details</h3>
+                <div className="header-actions">
+                  <button
+                    className="btn btn-secondary edit-btn"
+                    onClick={startEditMfg}
                   >
-                    <ManufacturerFavicon mfgId={selectedMfg.id} />
-                    <h2 style={{ margin: 0 }}>{selectedMfg.name}</h2>
-                  </div>
-
-                  <div className="mfg-contact-details" style={{ fontSize: "14px", lineHeight: "1.6" }}>
-                    {selectedMfg.webPageUrl && (
-                      <p style={{ margin: "6px 0" }}>
-                        <strong>Website:</strong>{" "}
-                        <a
-                          href={selectedMfg.webPageUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{ color: "var(--primary-color)", textDecoration: "none" }}
-                        >
-                          {selectedMfg.webPageUrl}
-                        </a>
-                      </p>
-                    )}
-                    {selectedMfg.phoneNumber && (
-                      <p style={{ margin: "6px 0" }}>
-                        <strong>Phone:</strong> {selectedMfg.phoneNumber}
-                      </p>
-                    )}
-                    {(selectedMfg.streetAddress ||
-                      selectedMfg.city ||
-                      selectedMfg.stateOrProvince ||
-                      selectedMfg.postalCode ||
-                      selectedMfg.country) && (
-                      <p style={{ margin: "12px 0 6px 0" }}>
-                        <strong>Corporate Headquarters:</strong>
-                        <br />
-                        <span style={{ color: "var(--text-muted)" }}>
-                          {selectedMfg.streetAddress && (
-                            <>
-                              {selectedMfg.streetAddress}
-                              <br />
-                            </>
-                          )}
-                          {selectedMfg.city}
-                          {selectedMfg.stateOrProvince
-                            ? `, ${selectedMfg.stateOrProvince}`
-                            : ""}{" "}
-                          {selectedMfg.postalCode}
-                          {selectedMfg.country && (
-                            <>
-                              <br />
-                              {selectedMfg.country}
-                            </>
-                          )}
-                        </span>
-                      </p>
-                    )}
-                  </div>
+                    Edit
+                  </button>
+                  <button className="btn delete-btn" onClick={handleDeleteMfg}>
+                    Delete
+                  </button>
                 </div>
               </div>
-            )
+
+              <div className="detail-view-body">
+                {saveSuccess && (
+                  <div className="detail-save-toast">
+                    ✓ Manufacturer updated successfully
+                  </div>
+                )}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <ManufacturerFavicon mfgId={selectedMfg.id} />
+                  <h2 style={{ margin: 0 }}>{selectedMfg.name}</h2>
+                </div>
+
+                <div
+                  className="mfg-contact-details"
+                  style={{ fontSize: "14px", lineHeight: "1.6" }}
+                >
+                  {selectedMfg.webPageUrl && (
+                    <p style={{ margin: "6px 0" }}>
+                      <strong>Website:</strong>{" "}
+                      <a
+                        href={selectedMfg.webPageUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          color: "var(--primary-color)",
+                          textDecoration: "none",
+                        }}
+                      >
+                        {selectedMfg.webPageUrl}
+                      </a>
+                    </p>
+                  )}
+                  {selectedMfg.phoneNumber && (
+                    <p style={{ margin: "6px 0" }}>
+                      <strong>Phone:</strong> {selectedMfg.phoneNumber}
+                    </p>
+                  )}
+                  {(selectedMfg.streetAddress ||
+                    selectedMfg.city ||
+                    selectedMfg.stateOrProvince ||
+                    selectedMfg.postalCode ||
+                    selectedMfg.country) && (
+                    <p style={{ margin: "12px 0 6px 0" }}>
+                      <strong>Corporate Headquarters:</strong>
+                      <br />
+                      <span style={{ color: "var(--text-muted)" }}>
+                        {selectedMfg.streetAddress && (
+                          <>
+                            {selectedMfg.streetAddress}
+                            <br />
+                          </>
+                        )}
+                        {selectedMfg.city}
+                        {selectedMfg.stateOrProvince
+                          ? `, ${selectedMfg.stateOrProvince}`
+                          : ""}{" "}
+                        {selectedMfg.postalCode}
+                        {selectedMfg.country && (
+                          <>
+                            <br />
+                            {selectedMfg.country}
+                          </>
+                        )}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
@@ -1629,7 +1723,9 @@ export default function Catalog() {
               <div className="empty-detail-state">
                 <span className="icon">🛡️</span>
                 <h3>No Product Selected</h3>
-                <p>Select a product model to inspect physical armory inventory.</p>
+                <p>
+                  Select a product model to inspect physical armory inventory.
+                </p>
               </div>
             ) : (
               <div className="detail-view-container">
@@ -1643,7 +1739,8 @@ export default function Catalog() {
                 ) : !relatedArmoryItemsData?.data?.value ||
                   relatedArmoryItemsData.data.value.length === 0 ? (
                   <div className="empty-state" style={{ padding: "20px 0" }}>
-                    No physical instances registered in your armory for this model.
+                    No physical instances registered in your armory for this
+                    model.
                   </div>
                 ) : (
                   <table className="app-table">
@@ -1656,81 +1753,87 @@ export default function Catalog() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(relatedArmoryItemsData.data.value || []).map((item: any) => (
-                        <tr
-                          key={item.id}
-                          className="table-row-item"
-                          style={{ cursor: "default" }}
-                        >
-                          <td className="bold-name-cell">{item.serialNumber || "N/A"}</td>
-                          <td>{item.name || "N/A"}</td>
-                          <td>
-                            <span
-                              className={`badge item-badge-condition ${getConditionClass(item.condition)}`}
-                            >
-                              {item.condition}
-                            </span>
-                          </td>
-                          <td className="text-mono">
-                            {item.roundCount !== undefined ? item.roundCount : "—"}
-                          </td>
-                        </tr>
-                      ))}
+                      {(relatedArmoryItemsData.data.value || []).map(
+                        (item: any) => (
+                          <tr
+                            key={item.id}
+                            className="table-row-item"
+                            style={{ cursor: "default" }}
+                          >
+                            <td className="bold-name-cell">
+                              {item.serialNumber || "N/A"}
+                            </td>
+                            <td>{item.name || "N/A"}</td>
+                            <td>
+                              <span
+                                className={`badge item-badge-condition ${getConditionClass(item.condition)}`}
+                              >
+                                {item.condition}
+                              </span>
+                            </td>
+                            <td className="text-mono">
+                              {item.roundCount !== undefined
+                                ? item.roundCount
+                                : "—"}
+                            </td>
+                          </tr>
+                        ),
+                      )}
                     </tbody>
                   </table>
                 )}
               </div>
             )
+          ) : /* ==================== RELATED PRODUCTS BY MANUFACTURER ==================== */
+          !selectedMfg ? (
+            <div className="empty-detail-state">
+              <span className="icon">📦</span>
+              <h3>No Manufacturer Selected</h3>
+              <p>Select a manufacturer to inspect registered product models.</p>
+            </div>
           ) : (
-            /* ==================== RELATED PRODUCTS BY MANUFACTURER ==================== */
-            !selectedMfg ? (
-              <div className="empty-detail-state">
-                <span className="icon">📦</span>
-                <h3>No Manufacturer Selected</h3>
-                <p>Select a manufacturer to inspect registered product models.</p>
+            <div className="detail-view-container">
+              <div className="detail-panel-header">
+                <h3>Products by {selectedMfg.name}</h3>
               </div>
-            ) : (
-              <div className="detail-view-container">
-                <div className="detail-panel-header">
-                  <h3>Products by {selectedMfg.name}</h3>
-                </div>
 
-                {relatedProducts.length === 0 ? (
-                  <div className="empty-state" style={{ padding: "20px 0" }}>
-                    No products registered for this manufacturer.
-                  </div>
-                ) : (
-                  <table className="app-table">
-                    <thead>
-                      <tr>
-                        <th>Model Name</th>
-                        <th>Part Number</th>
-                        <th>Class Type</th>
+              {relatedProducts.length === 0 ? (
+                <div className="empty-state" style={{ padding: "20px 0" }}>
+                  No products registered for this manufacturer.
+                </div>
+              ) : (
+                <table className="app-table">
+                  <thead>
+                    <tr>
+                      <th>Model Name</th>
+                      <th>Part Number</th>
+                      <th>Class Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {relatedProducts.map((p) => (
+                      <tr
+                        key={p.id}
+                        className="table-row-item"
+                        style={{ cursor: "default" }}
+                      >
+                        <td className="bold-name-cell">{p.name}</td>
+                        <td className="bold-name-cell">
+                          {p.partNumber || "—"}
+                        </td>
+                        <td>
+                          <span
+                            className={`type-badge ${p.productType.toLowerCase()}`}
+                          >
+                            {p.productType}
+                          </span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {relatedProducts.map((p) => (
-                        <tr
-                          key={p.id}
-                          className="table-row-item"
-                          style={{ cursor: "default" }}
-                        >
-                          <td className="bold-name-cell">{p.name}</td>
-                          <td className="bold-name-cell">{p.partNumber || "—"}</td>
-                          <td>
-                            <span
-                              className={`type-badge ${p.productType.toLowerCase()}`}
-                            >
-                              {p.productType}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -1904,7 +2007,7 @@ export default function Catalog() {
                         }
                         placeholder="Enter product description..."
                       />
-                    </div>                  
+                    </div>
 
                     <div className="form-item full-row">
                       <label>Web Page URL</label>
@@ -1982,7 +2085,10 @@ export default function Catalog() {
                           </select>
                         </div>
 
-                        <div className="form-item checkbox-row" style={{ alignSelf: "center", marginTop: "14px" }}>
+                        <div
+                          className="form-item checkbox-row"
+                          style={{ alignSelf: "center", marginTop: "14px" }}
+                        >
                           <label className="checkbox-container">
                             <input
                               type="checkbox"
@@ -2077,7 +2183,10 @@ export default function Catalog() {
                             onChange={(e) =>
                               setForm({
                                 ...form,
-                                objectiveDiameterMm: parseInt(e.target.value, 10),
+                                objectiveDiameterMm: parseInt(
+                                  e.target.value,
+                                  10,
+                                ),
                               })
                             }
                           />
@@ -2096,7 +2205,13 @@ export default function Catalog() {
                         </div>
 
                         <div className="form-item full-row">
-                          <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}>
+                          <label
+                            style={{
+                              display: "block",
+                              marginBottom: "8px",
+                              fontWeight: "bold",
+                            }}
+                          >
                             Turret Adjustment Units (Select All That Apply)
                           </label>
                           <div
@@ -2270,13 +2385,17 @@ export default function Catalog() {
                             onChange={(e) =>
                               setForm({
                                 ...form,
-                                soundReductionDb: parseInt(e.target.value, 10) || 0,
+                                soundReductionDb:
+                                  parseInt(e.target.value, 10) || 0,
                               })
                             }
                           />
                         </div>
 
-                        <div className="form-item checkbox-row full-row" style={{ marginTop: "14px" }}>
+                        <div
+                          className="form-item checkbox-row full-row"
+                          style={{ marginTop: "14px" }}
+                        >
                           <label className="checkbox-container">
                             <input
                               type="checkbox"
@@ -2378,7 +2497,10 @@ export default function Catalog() {
                           </select>
                         </div>
 
-                        <div className="form-item checkbox-row full-row" style={{ marginTop: "14px" }}>
+                        <div
+                          className="form-item checkbox-row full-row"
+                          style={{ marginTop: "14px" }}
+                        >
                           <label className="checkbox-container">
                             <input
                               type="checkbox"
@@ -2453,8 +2575,18 @@ export default function Catalog() {
 
                 {/* TAB: ATTACHMENTS & DOCUMENTS */}
                 {activeTab === "documents" && (
-                  <div style={{ padding: "10px 0", overflowY: "auto", flex: 1, maxHeight: "550px" }}>
-                    <ProductDocumentsTable productId={form.id} readOnly={false} />
+                  <div
+                    style={{
+                      padding: "10px 0",
+                      overflowY: "auto",
+                      flex: 1,
+                      maxHeight: "550px",
+                    }}
+                  >
+                    <ProductDocumentsTable
+                      productId={form.id}
+                      readOnly={false}
+                    />
                   </div>
                 )}
 
@@ -2588,7 +2720,10 @@ export default function Catalog() {
                 margin: 0,
               }}
             >
-              <div className="modal-tabs-body-content" style={{ padding: "20px" }}>
+              <div
+                className="modal-tabs-body-content"
+                style={{ padding: "20px" }}
+              >
                 <div className="form-grid">
                   <div className="form-item full-row">
                     <label>Official Corporate Name</label>
@@ -2696,7 +2831,13 @@ export default function Catalog() {
               </div>
 
               {/* Modal Footer Controls */}
-              <div className="modal-footer-row-container" style={{ borderTop: "1px solid rgba(255,255,255,0.1)", padding: "16px 20px" }}>
+              <div
+                className="modal-footer-row-container"
+                style={{
+                  borderTop: "1px solid rgba(255,255,255,0.1)",
+                  padding: "16px 20px",
+                }}
+              >
                 <button
                   type="button"
                   className="btn btn-secondary"

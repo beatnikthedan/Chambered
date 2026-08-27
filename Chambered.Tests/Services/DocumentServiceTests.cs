@@ -15,6 +15,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
+using Chambered.Infrastructure.Configuration;
+
 namespace Chambered.Tests.Services
 {
     /// <summary>
@@ -24,6 +26,7 @@ namespace Chambered.Tests.Services
     {
         private readonly SqliteConnection _connection;
         private readonly ChamberedDbContext _db;
+        private readonly FileStorageConfiguration _config;
         private readonly Mock<IFileStorageRepository> _repoMock;
         private readonly Mock<ILogger<ProductDocumentService>> _loggerMock;
 
@@ -39,6 +42,7 @@ namespace Chambered.Tests.Services
             _db = new ChamberedDbContext(options);
             _db.Database.EnsureCreated();
 
+            _config = new FileStorageConfiguration { EnableEncryption = false };
             _repoMock = new Mock<IFileStorageRepository>();
             _loggerMock = new Mock<ILogger<ProductDocumentService>>();
         }
@@ -47,7 +51,7 @@ namespace Chambered.Tests.Services
         public async Task Upload_WithNonExistentParentId_ShouldThrowKeyNotFoundException()
         {
             // Arrange
-            var service = new ProductDocumentService(_db, _repoMock.Object, _loggerMock.Object);
+            var service = new ProductDocumentService(_db, _repoMock.Object, _config, _loggerMock.Object);
             using var fileStream = new MemoryStream(new byte[100]);
 
             // Act & Assert
@@ -112,7 +116,7 @@ namespace Chambered.Tests.Services
                 failingDb.Products.Add(p);
                 await failingDb.SaveChangesAsync();
 
-                var service = new ProductDocumentService(failingDb, _repoMock.Object, _loggerMock.Object);
+                var service = new ProductDocumentService(failingDb, _repoMock.Object, _config, _loggerMock.Object);
                 using var fileStream = new MemoryStream(new byte[100]);
 
                 // Act & Assert
@@ -159,7 +163,7 @@ namespace Chambered.Tests.Services
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FileMetadata(storageKey, "application/pdf", 100, "hash123"));
 
-            var service = new ProductDocumentService(_db, _repoMock.Object, _loggerMock.Object);
+            var service = new ProductDocumentService(_db, _repoMock.Object, _config, _loggerMock.Object);
             using var fileStream = new MemoryStream(new byte[100]);
 
             // Act - Upload
@@ -247,7 +251,7 @@ namespace Chambered.Tests.Services
             _repoMock.Setup(r => r.OpenStreamAsync(doc2.StorageKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new MemoryStream(new byte[75]));
 
-            var service = new ProductDocumentService(_db, _repoMock.Object, _loggerMock.Object);
+            var service = new ProductDocumentService(_db, _repoMock.Object, _config, _loggerMock.Object);
 
             // Act - Query Metadata
             var documentsList = await service.GetDocumentsByParentIdAsync(product.Id, CancellationToken.None);
@@ -275,6 +279,24 @@ namespace Chambered.Tests.Services
             _db.Dispose();
             _connection.Close();
             _connection.Dispose();
+        }
+
+        [Fact]
+        public void QueryRealDatabaseDocuments()
+        {
+            using var connection = new SqliteConnection(@"Data Source=c:\Users\christianbaker\source\repos\Chambered\Chambered.Api\chambered.db");
+            connection.Open();
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT Id, ProductId, FileName, Type FROM ProductDocuments";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var id = reader.GetValue(0);
+                var prodId = reader.GetValue(1);
+                var name = reader.GetValue(2);
+                var type = reader.GetValue(3);
+                Console.WriteLine($"[DB_DOC] ID: {id} | ProductId: {prodId} | Name: {name} | Type: {type}");
+            }
         }
 
         /// <summary>

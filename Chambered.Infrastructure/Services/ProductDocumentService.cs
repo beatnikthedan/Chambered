@@ -9,6 +9,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Chambered.Infrastructure.Configuration;
+
 namespace Chambered.Infrastructure.Services
 {
     /// <summary>
@@ -19,8 +21,9 @@ namespace Chambered.Infrastructure.Services
         public ProductDocumentService(
             ChamberedDbContext db,
             IFileStorageRepository repository,
+            FileStorageConfiguration config,
             ILogger<ProductDocumentService> logger)
-            : base(db, repository, logger)
+            : base(db, repository, config, logger)
         {
         }
 

@@ -12,6 +12,23 @@ interface ProductDocumentsTableProps {
   readOnly?: boolean;
 }
 
+const documentTypesMap: Record<number | string, string> = {
+  0: "📘 Owner's Manual",
+  1: "📐 Schematic / Parts Diagram",
+  2: "🛡️ Warranty Document",
+  3: "⚠️ Recall Notice",
+  4: "📊 Spec Sheet",
+  5: "🖼️ Product Image / Picture",
+  6: "📦 Other / Unknown",
+  "OwnerManual": "📘 Owner's Manual",
+  "PartsDiagram": "📐 Schematic / Parts Diagram",
+  "WarrantyDocument": "🛡️ Warranty Document",
+  "RecallNotice": "⚠️ Recall Notice",
+  "SpecSheet": "📊 Spec Sheet",
+  "ProductImage": "🖼️ Product Image / Picture",
+  "Unknown": "📦 Other / Unknown",
+};
+
 export default function ProductDocumentsTable({ productId, readOnly = false }: ProductDocumentsTableProps) {
   const queryClient = useQueryClient();
   const [docType, setDocType] = useState<string>("OwnerManual");
@@ -35,7 +52,10 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
     },
   });
 
-  const documents = documentsData?.data?.value || [];
+  const rawData = documentsData?.data;
+  const documents = Array.isArray(rawData)
+    ? rawData
+    : (rawData as any)?.value || [];
 
   const refreshDocumentsList = () => {
     queryClient.invalidateQueries({
@@ -262,7 +282,7 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
                   </td>
                   <td style={{ width: "18%" }}>
                     <span className="type-badge-pill" style={{ fontSize: "10px", padding: "2px 8px" }}>
-                      {d.type}
+                      {documentTypesMap[d.type] || d.type}
                     </span>
                   </td>
                   <td style={{ width: "12%" }}>{formatBytes(d.fileSizeBytes)}</td>
