@@ -462,75 +462,123 @@ export default function App() {
             </div>
 
             {store.user && (
-               <div className="header-right">
-                 {/* Theme Selector Dropdown */}
-                 <div className="arsenal-selector-container" ref={themeDropdownRef}>
-                   <button
-                     className="arsenal-selector-btn"
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       setShowThemeMenu(!showThemeMenu);
-                     }}
-                     style={{
-                       display: "flex",
-                       alignItems: "center",
-                       gap: "10px",
-                     }}
-                   >
-                     <span
-                       style={{
-                         display: "flex",
-                         alignItems: "center",
-                         justifyContent: "center",
-                       }}
-                     >
-                       {theme === "stealth" && "👻"}
-                       {theme === "goldstandard" && "💰"}
-                       {theme === "tactical" && "⚔️"}
-                       {theme === "west" && "🤠"}
-                       {theme === "grayman" && "🕶️"}
-                       {theme === "hunter" && "🦌"}
-                     </span>
-                     <span
-                       className="ars-name"
-                       style={{ flexGrow: 1, textAlign: "left", marginLeft: "2px" }}
-                     >
-                       {theme === "stealth" && <span style={{color: "#56b6c2", fontWeight: "600"}}>Stealth</span>}
-                       {theme === "goldstandard" && <span style={{color: "#f5d261", fontWeight: "600"}}>Gold Standard</span>}
-                       {theme === "tactical" && <span style={{color: "#4fd1c5", fontWeight: "600"}}>Tactical</span>}
-                       {theme === "west" && <span style={{color: "#8b7355", fontWeight: "600"}}>The West</span>}
-                       {theme === "grayman" && <span style={{color: "#8c8c8c", fontWeight: "600"}}>Gray Man</span>}
-                       {theme === "hunter" && <span style={{color: "#6b8c55", fontWeight: "600"}}>Hunter</span>}
-                     </span>
-                     <span className="ars-chevron">▼</span>
-                   </button>
-                   {showThemeMenu && (
-                     <div
-                       className="arsenal-dropdown-popover"
-                       onClick={(e) => e.stopPropagation()}
-                     >
-                       {[
-                         { id: "stealth", name: "Stealth", colorHex: "#56b6c2", iconName: "ghost" },
-                         { id: "goldstandard", name: "Gold Standard", colorHex: "#f5d261", iconName: "shield" },
-                         { id: "tactical", name: "Tactical", colorHex: "#4fd1c5", iconName: "sword" },
-                         { id: "west", name: "The West", colorHex: "#8b7355", iconName: "mask" },
-                         { id: "grayman", name: "Gray Man", colorHex: "#8c8c8c", iconName: "user" },
-                         { id: "hunter", name: "Hunter", colorHex: "#6b8c55", iconName: "crosshair" }
-                       ].map((t) => (
-                         <div
-                           key={t.id}
-                           className={`arsenal-popover-item ${t.id === theme ? "active" : ""}`}
-                           onClick={() => {
-                             setTheme(t.id);
-                             setShowThemeMenu(false);
-                           }}
-                           style={{
-                             display: "flex",
-                             alignItems: "center",
-                             gap: "10px",
-                             borderLeft: `3px solid ${t.colorHex}`,
-                           }}
-                         >
+              <div className="header-right">
+                {/* Theme Selector Dropdown */}
+                <div
+                  className="arsenal-selector-container"
+                  ref={themeDropdownRef}
+                >
+                  <button
+                    className="arsenal-selector-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowThemeMenu(!showThemeMenu);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    ></span>
+                    <span
+                      className="ars-name"
+                      style={{
+                        flexGrow: 1,
+                        textAlign: "left",
+                        marginLeft: "2px",
+                      }}
+                    >
+                      {theme === "stealth" && (
+                        <span style={{ color: "#56b6c2", fontWeight: "600" }}>
+                          Stealth
+                        </span>
+                      )}
+                      {theme === "goldstandard" && (
+                        <span style={{ color: "#f5d261", fontWeight: "600" }}>
+                          Gold Standard
+                        </span>
+                      )}
+                      {theme === "tactical" && (
+                        <span style={{ color: "#4fd1c5", fontWeight: "600" }}>
+                          Tactical
+                        </span>
+                      )}
+                      {theme === "west" && (
+                        <span style={{ color: "#8b7355", fontWeight: "600" }}>
+                          The West
+                        </span>
+                      )}
+                      {theme === "grayman" && (
+                        <span style={{ color: "#8c8c8c", fontWeight: "600" }}>
+                          Gray Man
+                        </span>
+                      )}
+                      {theme === "hunter" && (
+                        <span style={{ color: "#6b8c55", fontWeight: "600" }}>
+                          Hunter
+                        </span>
+                      )}
+                    </span>
+                    <span className="ars-chevron">▼</span>
+                  </button>
+                  {showThemeMenu && (
+                    <div
+                      className="arsenal-dropdown-popover"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {[
+                        {
+                          id: "stealth",
+                          name: "Stealth",
+                          colorHex: "#56b6c2",
+                        },
+                        {
+                          id: "goldstandard",
+                          name: "Gold Standard",
+                          colorHex: "#f5d261",
+                        },
+                        {
+                          id: "tactical",
+                          name: "Tactical",
+                          colorHex: "#4fd1c5",
+                        },
+                        {
+                          id: "west",
+                          name: "The West",
+                          colorHex: "#8b7355",
+                        },
+                        {
+                          id: "grayman",
+                          name: "Gray Man",
+                          colorHex: "#8c8c8c",
+                        },
+                        {
+                          id: "hunter",
+                          name: "Hunter",
+                          colorHex: "#6b8c55",
+                        },
+                      ].map((t) => (
+                        <div
+                          key={t.id}
+                          className={`arsenal-popover-item ${t.id === theme ? "active" : ""}`}
+                          onClick={() => {
+                            setTheme(t.id);
+                            setShowThemeMenu(false);
+                          }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            borderLeft: `3px solid ${t.colorHex}`,
+                          }}
+                        >
                           <span
                             style={{
                               display: "flex",
@@ -538,32 +586,33 @@ export default function App() {
                               justifyContent: "center",
                               fontSize: "16px",
                             }}
-                          >
-                            {theme === t.id ? (t.iconName === "ghost" && "👻") : (t.iconName === "shield" && "💰") : (t.iconName === "sword" && "⚔️") : (t.iconName === "mask" && "🤠") : (t.iconName === "user" && "🕶️") : (t.iconName === "crosshair" && "🦌"))}
-                          </span>
+                          ></span>
                           <span
                             className="ars-name"
-                            style={{ flexGrow: 1, textAlign: "left", marginLeft: "2px" }}
+                            style={{
+                              flexGrow: 1,
+                              textAlign: "left",
+                              marginLeft: "2px",
+                            }}
                           >
                             {t.name}
                           </span>
-                          </span>
                         </div>
-                       ))}
-                     </div>
-                   )}
-                 </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-                 {/* Settings link */}
-                 {store.user.roles?.includes("Admin") && (
-                   <Link
-                     to="/settings"
-                     className="header-action-btn"
-                     title="Settings Menu"
-                   >
-                     <span className="btn-icon">⚙️</span>
-                   </Link>
-                 )}
+                {/* Settings link */}
+                {store.user.roles?.includes("Admin") && (
+                  <Link
+                    to="/settings"
+                    className="header-action-btn"
+                    title="Settings Menu"
+                  >
+                    <span className="btn-icon">⚙️</span>
+                  </Link>
+                )}
 
                 {/* Profile dropdown wrapper */}
                 <div

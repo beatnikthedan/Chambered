@@ -338,11 +338,9 @@ export default function Armory() {
 
     try {
       const payload = {
+        ...(accessoryItem["@odata.type"] ? { "@odata.type": accessoryItem["@odata.type"] } : {}),
         parentItemId: form.id,
       };
-      if (accessoryItem["@odata.type"]) {
-        payload["@odata.type"] = accessoryItem["@odata.type"];
-      }
 
       const res = await patchArmoryItemsFromKey(accessoryId, payload);
       if (res.status === 200 || res.status === 204) {
@@ -362,11 +360,9 @@ export default function Armory() {
 
     try {
       const payload = {
+        ...(accessoryItem["@odata.type"] ? { "@odata.type": accessoryItem["@odata.type"] } : {}),
         parentItemId: null,
       };
-      if (accessoryItem["@odata.type"]) {
-        payload["@odata.type"] = accessoryItem["@odata.type"];
-      }
 
       const res = await patchArmoryItemsFromKey(accessoryId, payload);
       if (res.status === 200 || res.status === 204) {
@@ -407,16 +403,15 @@ export default function Armory() {
                 : "ArmoryItem";
 
       const payload = {
+        ...(resolvedItemType !== "ArmoryItem"
+          ? { "@odata.type": `#Chambered.Data.Models.${resolvedItemType}` }
+          : {}),
         productId: p.id,
         parentItemId: form.id,
         condition: newAccCondition,
         arsenalId: form.arsenalId || store.activeArsenalId || 1,
         name: `${p.manufacturerName} ${p.name || ""}`.trim() || "Accessory",
       };
-
-      if (resolvedItemType !== "ArmoryItem") {
-        payload["@odata.type"] = `#Chambered.Data.Models.${resolvedItemType}`;
-      }
 
       if (
         ["PewArmoryItem", "SuppressorArmoryItem", "OpticArmoryItem"].includes(
@@ -753,8 +748,14 @@ export default function Armory() {
       const url = isEdit ? `/api/v1/ArmoryItems/${form.id}` : "/api/v1/ArmoryItems";
       const method = isEdit ? "PUT" : "POST";
 
-      // 1. Build a clean payload matching the C# ArmoryItem base properties exactly
+      // 1. Determine concrete subclass and attach ONLY its specific database fields
+      const resolvedItemType = form.itemType || activeItemType || "ArmoryItem";
+
+      // 2. Build a clean payload matching the C# ArmoryItem base properties exactly
       const payload = {
+        ...(resolvedItemType && resolvedItemType !== "ArmoryItem"
+          ? { "@odata.type": `#Chambered.Data.Models.${resolvedItemType}` }
+          : {}),
         id: form.id || 0,
         productId: form.productId || form.pewpewModelId || form.firearmModelId || 0,
         name: form.name || form.model || "Armory Item",
@@ -775,12 +776,6 @@ export default function Armory() {
         arsenalId: parseInt(form.arsenalId) || store.activeArsenalId,
         parentItemId: form.parentItemId ? parseInt(form.parentItemId) : null,
       };
-
-      // 2. Determine concrete subclass and attach ONLY its specific database fields
-      const resolvedItemType = form.itemType || activeItemType || "ArmoryItem";
-      if (resolvedItemType && resolvedItemType !== "ArmoryItem") {
-        payload["@odata.type"] = `#Chambered.Data.Models.${resolvedItemType}`;
-      }
 
       // Add Serial Number fields if the subclass supports it
       if (["PewArmoryItem", "SuppressorArmoryItem", "OpticArmoryItem"].includes(resolvedItemType)) {
@@ -826,6 +821,8 @@ export default function Armory() {
         // Map saved entity values cleanly back into the form state
         setForm({
           ...savedItem,
+          pewpewModelId: savedItem.productId || savedItem.pewpewModelId || savedItem.firearmModelId || "",
+          firearmModelId: savedItem.productId || savedItem.firearmModelId || savedItem.pewpewModelId || "",
           purchaseDateString: savedItem.purchaseDate ? savedItem.purchaseDate.split("T")[0] : "",
           ownerId: savedItem.ownerId || "",
           beneficiaryId: savedItem.beneficiaryId || "",
