@@ -211,23 +211,79 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   GLOBAL CHAMEBRED MODALS & SPA FORM STYLES (DRY & DYNAMIC)
-   ========================================================================== */
+    GLOBAL CHAMEBRED MODALS & SPA FORM STYLES (DRY & DYNAMIC)
+    ========================================================================== */
+
+.theme-stealth {
+  --bg-main: #1e2026;
+  --bg-panel: #282c34;
+  --bg-sidebar: #282c34;
+  --bg-input: #2e333d;
+  --bg-card: #25272f;
+  --bg-modal: #1a1b20;
+
+  --color-primary: #61afef;
+  --color-primary-hover: #4897fb;
+  --color-accent: #e5c07b;
+  --color-danger: #f06345;
+  --color-success: #4cd6b9;
+
+  --text-primary: #dcdfe4;
+  --text-secondary: #abb2bf;
+  --text-muted: #5c6370;
+
+  --border-light: rgba(93, 107, 131, 0.2);
+  --border-glow: rgba(97, 175, 239, 0.25);
+  --border-solid: #3e4451;
+}
+
+.theme-goldstandard {
+  --bg-main: #1a1a1a;
+  --bg-panel: #1e1e1e;
+  --bg-sidebar: #1e1e1e;
+  --bg-input: #2d2d2d;
+  --bg-card: #1e1e1e;
+  --bg-modal: #161616;
+
+  --color-primary: #f5d261;
+  --color-primary-hover: #e8c44d;
+  --color-accent: #e8a04c;
+  --color-danger: #7c7c7c;
+  --color-success: #f5d261;
+
+  --text-primary: #cccccc;
+  --text-secondary: #999999;
+  --text-muted: #7c7c7c;
+
+  --border-light: rgba(180, 180, 180, 0.08);
+  --border-glow: rgba(245, 210, 97, 0.3);
+  --border-solid: #2d2d2d;
+}
+
+.theme-tactical {
+  --bg-main: #151920;
+  --bg-panel: #1a202c;
+  --bg-sidebar: #1a202c;
+  --bg-input: #232836;
+  --bg-card: #181c29;
+  --bg-modal: #12151b;
+
+  --color-primary: #4fd1c5;
+  --color-primary-hover: #38b2ac;
+  --color-accent: #60a5fa;
+  --color-danger: #fc8181;
+  --color-success: #4fd1c5;
+
+  --text-primary: #e2e8f0;
+  --text-secondary: #cbd5e1;
+  --text-muted: #6b7280;
+
+  --border-light: rgba(93, 107, 131, 0.15);
+  --border-glow: rgba(79, 209, 197, 0.3);
+  --border-solid: #2d3748;
+}
 
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
 
 /* 
    Single unified layout style for all modal boxes across views.

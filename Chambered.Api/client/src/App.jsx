@@ -73,6 +73,7 @@ export default function App() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showArsenalDropdown, setShowArsenalDropdown] = useState(false);
+
   const activeArsenal = store.arsenals.find(
     (a) => a.id === store.activeArsenalId,
   );
@@ -137,10 +138,56 @@ export default function App() {
     };
   }, []);
 
+  const [theme, setTheme] = useState("stealth");
+
   return (
     <div
-      className={`app-container ${store.isAuthenticated ? "logged-in" : ""}`}
+      className={`app-container ${store.isAuthenticated ? "logged-in" : ""} theme-${theme}`}
+      style={{ fontFamily: "var(--font-body)" }}
     >
+      {/* Theme Selector */}
+      <div className="theme-selector">
+        <button
+          className="theme-btn"
+          onClick={() => setTheme("stealth")}
+          style={{
+            backgroundColor:
+              theme === "stealth" ? "rgba(86, 182, 194, 0.2)" : "transparent",
+            color: theme === "stealth" ? "#56b6c2" : "var(--text-secondary)",
+            fontWeight: theme === "stealth" ? "600" : "400",
+          }}
+        >
+          Stealth
+        </button>
+        <button
+          className="theme-btn"
+          onClick={() => setTheme("goldstandard")}
+          style={{
+            backgroundColor:
+              theme === "goldstandard"
+                ? "rgba(245, 210, 97, 0.2)"
+                : "transparent",
+            color:
+              theme === "goldstandard" ? "#f5d261" : "var(--text-secondary)",
+            fontWeight: theme === "goldstandard" ? "600" : "400",
+          }}
+        >
+          Gold Standard
+        </button>
+        <button
+          className="theme-btn"
+          onClick={() => setTheme("tactical")}
+          style={{
+            backgroundColor:
+              theme === "tactical" ? "rgba(79, 209, 197, 0.2)" : "transparent",
+            color: theme === "tactical" ? "#4fd1c5" : "var(--text-secondary)",
+            fontWeight: theme === "tactical" ? "600" : "400",
+          }}
+        >
+          Tactical
+        </button>
+      </div>
+
       {/* Collapsible Sidebar */}
       {store.isAuthenticated && (
         <aside className={`sidebar ${isSidebarCollapsed ? "collapsed" : ""}`}>
