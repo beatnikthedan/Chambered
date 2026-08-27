@@ -13,6 +13,7 @@ using Chambered.Infrastructure.Extensions;
 using Chambered.Infrastructure.Services;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
+using Chambered.Infrastructure.Services.FileStorageRepositories;
 using Chambered.Infrastructure.Services.Identity;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.HttpLogging;
@@ -228,7 +229,20 @@ builder.Services.AddScoped<IBackupService, SqliteBackupService>();
 
 builder.Services.AddHostedService<BackupSchedulerWorker>();
 
+builder.Services.Configure<Chambered.Infrastructure.Configuration.FileStorageConfiguration>(builder.Configuration.GetSection(nameof(Chambered.Infrastructure.Configuration.FileStorageConfiguration)));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Chambered.Infrastructure.Configuration.FileStorageConfiguration>>().Value);
+builder.Services.AddScoped<LocalFileStorageRepository>();
+builder.Services.AddScoped<S3FileStorageRepository>();
+builder.Services.AddScoped<Chambered.Core.Services.IFileStorageRepository>(sp =>
+{
+    var config = sp.GetRequiredService<Chambered.Infrastructure.Configuration.FileStorageConfiguration>();
+    return config.Provider == Chambered.Infrastructure.Configuration.StorageProviderType.S3
+        ? sp.GetRequiredService<Chambered.Infrastructure.Services.FileStorageRepositories.S3FileStorageRepository>()
+        : sp.GetRequiredService<Chambered.Infrastructure.Services.FileStorageRepositories.LocalFileStorageRepository>();
+});
 
+builder.Services.AddScoped<Chambered.Core.Services.IDocumentService<Chambered.Data.Models.ProductDocument, Chambered.Data.Enums.ProductDocumentType>, Chambered.Infrastructure.Services.ProductDocumentService>();
+builder.Services.AddScoped<Chambered.Core.Services.IDocumentService<Chambered.Data.Models.ArmoryItemDocument, Chambered.Data.Enums.ArmoryItemDocumentType>, Chambered.Infrastructure.Services.ArmoryItemDocumentService>();
 
 // Configure decoupled favicon retrieval service
 builder.Services.AddHttpClient<IFaveIconService, FaveIconService>();

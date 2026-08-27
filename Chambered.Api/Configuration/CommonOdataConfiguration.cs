@@ -24,10 +24,6 @@ namespace Chambered.Api.Configuration
             builder.ComplexType<GitHubReleaseDto>();
 
             builder.EntitySet<Caliber>("Calibers");
-            builder.EntitySet<Document>("Documents");
-
-            var documentsColl = builder.EntityType<Document>().Collection;
-            documentsColl.Function("GetDocumentTypes").ReturnsCollection<EnumDto>();
 
             switch (apiVersion.MajorVersion)
             {
@@ -37,16 +33,6 @@ namespace Chambered.Api.Configuration
                         caliber.Property(c => c.Name).IsRequired();
                         caliber.Property(c => c.Name).MaxLength = 100;
                         caliber.Property(c => c.AlternateNames).MaxLength = 250;
-
-                        var document = builder.EntityType<Document>();
-                        document.Property(d => d.Title).IsRequired();
-                        document.Property(d => d.Title).MaxLength = 150;
-                        document.Property(d => d.FileData).IsRequired();
-                        document.Property(d => d.FileName).IsRequired();
-                        document.Property(d => d.FileName).MaxLength = 255;
-                        document.Property(d => d.ContentType).IsRequired();
-                        document.Property(d => d.ContentType).MaxLength = 100;
-                        document.Property(d => d.FileSizeBytes).IsRequired();
 
                         break;
                     }

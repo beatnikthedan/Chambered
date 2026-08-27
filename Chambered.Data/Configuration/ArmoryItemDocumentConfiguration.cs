@@ -1,29 +1,27 @@
-﻿using Chambered.Data.Models;
+using Chambered.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Chambered.Data.Configuration
 {
-    public abstract class ArmoryItemDocumentConfiguration : IEntityTypeConfiguration<ArmoryItemDocument>
+    /// <summary>
+    /// Configures constraints, relationship mapping, and database keys for <see cref="ArmoryItemDocument"/>.
+    /// </summary>
+    public class ArmoryItemDocumentConfiguration : ExternalDocumentConfiguration<ArmoryItemDocument>
     {
-        public void Configure(EntityTypeBuilder<ArmoryItemDocument> builder)
+        /// <inheritdoc/>
+        public override void Configure(EntityTypeBuilder<ArmoryItemDocument> builder)
         {
-            builder.HasKey(d => d.Id);;
+            base.Configure(builder);
 
             builder.Property(d => d.Type)
                 .IsRequired()
                 .HasConversion<int>();
 
-            builder.Property(d => d.FileName)
-                .IsRequired()
-                .HasMaxLength(255);
-
-            builder.Property(d => d.ContentType)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            builder.Property(d => d.FileSizeBytes)
-                .IsRequired();
+            builder.HasOne(d => d.ArmoryItem)
+                .WithMany(a => a.ArmoryItemDocuments)
+                .HasForeignKey(d => d.ArmoryItemId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

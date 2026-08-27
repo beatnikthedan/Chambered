@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Chambered.Core.Services.Identity.Dto;
+using BeatnikToolKit.EntityFramework.Services.Identity.Dto;
 using Chambered.Data;
 using Chambered.Data.Models;
 using Chambered.Infrastructure.Services.Identity;

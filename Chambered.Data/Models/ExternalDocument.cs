@@ -1,4 +1,4 @@
-﻿using Chambered.Data.Enums;
+using Chambered.Data.Enums;
 
 namespace Chambered.Data.Models
 {
@@ -18,6 +18,16 @@ namespace Chambered.Data.Models
         /// Gets or sets the original file name.
         /// </summary>
         public string FileName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the unique file storage path/key.
+        /// </summary>
+        public string StorageKey { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the file is encrypted.
+        /// </summary>
+        public bool IsEncrypted { get; set; }
 
         /// <summary>
         /// Gets or sets the file size in bytes.

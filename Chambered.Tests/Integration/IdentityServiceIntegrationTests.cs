@@ -1,4 +1,6 @@
 using BeatnikToolKit.EntityFramework.Services.Identity;
+using BeatnikToolKit.EntityFramework.Services.Identity.Dto;
+using BeatnikToolKit.Services;
 using Chambered.Core.Security;
 using Chambered.Data;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +10,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System;
+using System.Collections.Generic;
+using System.Net.Mail;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace Chambered.Tests.Integration
 {
@@ -51,17 +59,19 @@ namespace Chambered.Tests.Integration
             {
                 {"Jwt:Key", "AntigravitySuperSecureDevSecretKey123!"},
                 {"Jwt:Issuer", "ChamberedServer"},
-                {"Jwt:ExpireDays", "7"}
+                {"Jwt:ExpireDays", "7"},
+                {"ADMIN_EMAIL", "admin@chambered.com"},
+                {"ADMIN_PASSWORD", "SecurePassword123!"}
             };
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(inMemorySettings)
                 .Build();
             services.AddSingleton<IConfiguration>(configuration);
 
-            var mockEmailService = new Mock<Chambered.Core.Services.IEmailService>();
+            var mockEmailService = new Mock<IEmailService>();
             mockEmailService.Setup(e => e.SendEmailAsync(
-                It.IsAny<System.Net.Mail.MailMessage>(),
-                It.IsAny<System.Threading.CancellationToken>()))
+                It.IsAny<MailMessage>(),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
             services.AddSingleton(mockEmailService.Object);
 
@@ -71,8 +81,8 @@ namespace Chambered.Tests.Integration
             services.AddSingleton<Microsoft.AspNetCore.Http.IHttpContextAccessor>(mockHttpContextAccessor.Object);
 
             services.AddSingleton<IAuthorizationRulebook, ChamberedRulebook>();
-            services.AddScoped<IdentityService>();
-            services.AddScoped<AuthenticationService>();
+            services.AddScoped<IdentityService<ChamberedDbContext, ChamberedUser>>();
+            services.AddScoped<AuthenticationService<ChamberedUser>>();
 
             _serviceProvider = services.BuildServiceProvider();
             
@@ -89,9 +99,9 @@ namespace Chambered.Tests.Integration
         [Fact]
         public async Task CreateUserAsync_ShouldWriteAlphanumericUsernameToDatabase()
         {
-            await _serviceProvider.SeedIdentityData();
+            await _serviceProvider.SeedIdentityData<ChamberedDbContext, ChamberedUser>();
 
-            var identityService = _serviceProvider.GetRequiredService<IdentityService>();
+            var identityService = _serviceProvider.GetRequiredService<IdentityService<ChamberedDbContext, ChamberedUser>>();
             var createDto = new CreateUserRequestDto(
                 Email: "admin@chambered.com",
                 Roles: new[] { "Admin" },
@@ -117,15 +127,15 @@ namespace Chambered.Tests.Integration
         [Fact]
         public async Task Seeding_And_LoginAsync_ShouldSucceedWithRealPasswordHashingAndClaims()
         {
-            var authenticationService = _serviceProvider.GetRequiredService<AuthenticationService>();
+            var authenticationService = _serviceProvider.GetRequiredService<AuthenticationService<ChamberedUser>>();
             var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
             Environment.SetEnvironmentVariable("ADMIN_EMAIL", "admin@chambered.com");
             Environment.SetEnvironmentVariable("ADMIN_PASSWORD", "SecurePassword123!");
 
-            await _serviceProvider.SeedIdentityData();
+            await _serviceProvider.SeedIdentityData<ChamberedDbContext, ChamberedUser>();
 
-            await _serviceProvider.SeedAdminUser();
+            await _serviceProvider.SeedAdminUser<ChamberedDbContext, ChamberedUser>();
 
             var loginRequest = new LoginRequestDto("admin", "SecurePassword123!", false);
             var loginResult = await authenticationService.LoginAsync(loginRequest);

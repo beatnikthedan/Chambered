@@ -30,9 +30,6 @@ namespace Chambered.Data.Configuration
             builder.Property(a => a.EstimatedValue)
                 .HasPrecision(18, 2);
 
-            builder.Property(a => a.ImageUrl)
-                .HasMaxLength(2048);
-
             builder.Property(a => a.NotesMarkdown)
                 .HasMaxLength(2048);
 

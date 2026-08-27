@@ -46,8 +46,6 @@ namespace Chambered.Api.Configuration
                         product.Property(p => p.PartNumber).IsRequired();
                         product.Property(p => p.PartNumber).MaxLength = 100;
                         product.Property(p => p.Sku).MaxLength = 50;
-                        product.Property(p => p.WebPageUrl).MaxLength = 2048;
-                        product.Property(p => p.ImageContentType).MaxLength = 100;
 
                         var optic = builder.EntityType<Optic>();
                         optic.Property(o => o.MinMagnification).Precision = 2;

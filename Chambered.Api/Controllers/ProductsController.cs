@@ -33,9 +33,9 @@ public class ProductsController : ODataControllerBase<Product, int>
     }
 
     [EnableQuery]
-    [ProducesResponseType(typeof(IEnumerable<Document>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<ProductDocument>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetDocuments([FromRoute] int key)
+    public async Task<ActionResult> GetProductDocuments([FromRoute] int key)
     {
         return await GetNavigationPropertyAsync(key);
     }
