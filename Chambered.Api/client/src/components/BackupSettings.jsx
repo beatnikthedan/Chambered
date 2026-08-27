@@ -336,7 +336,7 @@ export default function BackupSettings() {
           </div>
         ) : (
           <div className="table-container">
-            <table className="settings-table">
+            <table className="app-table">
               <thead>
                 <tr>
                   <th>Backup File</th>

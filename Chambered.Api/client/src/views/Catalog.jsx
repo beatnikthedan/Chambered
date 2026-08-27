@@ -1008,7 +1008,7 @@ export default function Catalog() {
                 No matching catalog products found.
               </div>
             ) : viewMode === "table" ? (
-              <table className="split-view-table">
+              <table className="app-table">
                 <thead>
                   <tr>
                     <th>Type</th>
@@ -1072,7 +1072,7 @@ export default function Catalog() {
           processedManufacturers.length === 0 ? (
             <div className="empty-state">No matching manufacturers found.</div>
           ) : mfgViewMode === "table" ? (
-            <table className="split-view-table">
+            <table className="app-table">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -2933,7 +2933,7 @@ export default function Catalog() {
                   No products registered for this manufacturer.
                 </div>
               ) : (
-                <table className="split-view-table">
+                <table className="app-table">
                   <thead>
                     <tr>
                       <th>Model</th>

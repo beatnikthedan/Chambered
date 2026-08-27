@@ -252,7 +252,7 @@ export default function UserSettings({ currentUserId }) {
         </div>
       ) : (
         <div className="table-container">
-          <table className="settings-table">
+          <table className="app-table">
             <thead>
               <tr>
                 <th>User</th>

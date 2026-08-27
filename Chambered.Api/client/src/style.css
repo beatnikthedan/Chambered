@@ -283,8 +283,6 @@ input:focus, select:focus, textarea:focus {
   --border-solid: #2d3748;
 }
 
-.modal-overlay {
-
 /* 
    Single unified layout style for all modal boxes across views.
    Using 'height: auto' allows the modal to shrink to fit the content,
@@ -487,6 +485,7 @@ input:focus, select:focus, textarea:focus {
 
 .item-card-actions,
 .vault-card-actions,
+.product-card-actions,
 .card-footer {
   display: flex;
   gap: 10px;
@@ -494,3 +493,53 @@ input:focus, select:focus, textarea:focus {
   padding-top: 12px;
   border-top: 1px solid var(--border-solid);
 }
+
+/* ==========================================================================
+   UNIFIED APP TABLE COMPONENT SYSTEM
+   ========================================================================== */
+
+.app-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.app-table th,
+.app-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-solid);
+}
+
+.app-table th {
+  background: var(--bg-input);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.app-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+/* Row interaction variants */
+.app-table tr.table-row-item {
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.app-table tr.table-row-item:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.app-table tr.table-row-item.selected {
+  background-color: rgba(240, 98, 146, 0.04);
+}
+
+.app-table tr.table-row-item.selected .bold-name-cell {
+  color: var(--color-primary);
+}
+
