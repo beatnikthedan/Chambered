@@ -552,35 +552,88 @@ export default function App() {
                       className="profile-dropdown-menu"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="dropdown-header-sec">
-                        <div className="header-username">
-                          {store.user.username}
-                        </div>
-                        {store.user.email && (
-                          <div className="header-email">{store.user.email}</div>
-                        )}
-                        {store.user.roles && store.user.roles.length > 0 && (
-                          <div className="header-role">
-                            {store.user.roles[0]}
-                          </div>
-                        )}
+                      <div className="modal-header-row">
+                        <h3>Your Profile Details</h3>
+                        <button
+                          className="close-modal-btn"
+                          onClick={() => setShowProfileMenu(false)}
+                        >
+                          ×
+                        </button>
                       </div>
-                      <div className="dropdown-divider-line"></div>
-                      <button
-                        className="dropdown-option-btn"
-                        onClick={() => {
-                          setShowAccountModal(true);
-                          setShowProfileMenu(false);
-                        }}
-                      >
-                        Account Details
-                      </button>
-                      <button
-                        className="dropdown-option-btn logout-option"
-                        onClick={handleLogout}
-                      >
-                        Sign Out
-                      </button>
+
+                      <div className="account-modal-content">
+                        <div className="profile-preview-row">
+                          {store.user.gravatarUrl ? (
+                            <img
+                              src={`${store.user.gravatarUrl}&s=120`}
+                              className="large-modal-avatar"
+                              alt="Gravatar"
+                            />
+                          ) : (
+                            <div
+                              className="large-modal-avatar user-initials-avatar"
+                              style={{ fontSize: "24px" }}
+                            >
+                              {store.user.username[0].toUpperCase()}
+                            </div>
+                          )}
+                          <div className="avatar-explain">
+                            <span className="badge badge-success">
+                              Gravatar Enabled
+                            </span>
+                            <p>
+                              Your avatar is pulled automatically from
+                              gravatar.com using your email hash.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="details-list">
+                          <div className="detail-item">
+                            <span className="item-label">Account Name</span>
+                            <span className="item-val">
+                              {store.user.username}
+                            </span>
+                          </div>
+                          {store.user.email && (
+                            <div className="detail-item">
+                              <span className="item-label">
+                                Registered Email
+                              </span>
+                              <span className="item-val">
+                                {store.user.email}
+                              </span>
+                            </div>
+                          )}
+                          <div className="detail-item">
+                            <span className="item-label">Internal ID</span>
+                            <span className="item-val text-mono">
+                              {store.user.id}
+                            </span>
+                          </div>
+                          {store.user.roles && store.user.roles.length > 0 && (
+                            <div className="detail-item">
+                              <span className="item-label">
+                                Role Authorization
+                              </span>
+                              <span className="item-val">
+                                <span className="badge badge-danger">
+                                  {store.user.roles[0]}
+                                </span>
+                              </span>
+                            </div>
+                          )}
+                          <div className="footer-row">
+                            <button
+                              className="btn btn-primary logout-option"
+                              onClick={handleLogout}
+                            >
+                              Sign Out
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -710,91 +763,6 @@ export default function App() {
           )}
         </div>
       </main>
-
-      {/* Account Details Modal */}
-      {showAccountModal && store.user && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowAccountModal(false)}
-        >
-          <div
-            className="account-modal-card"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header-row">
-              <h3>Your Profile Details</h3>
-              <button
-                className="close-modal-btn"
-                onClick={() => setShowAccountModal(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="account-modal-content">
-              <div className="profile-preview-row">
-                {store.user.gravatarUrl ? (
-                  <img
-                    src={`${store.user.gravatarUrl}&s=120`}
-                    className="large-modal-avatar"
-                    alt="Gravatar"
-                  />
-                ) : (
-                  <div
-                    className="large-modal-avatar user-initials-avatar"
-                    style={{ fontSize: "24px" }}
-                  >
-                    {store.user.username[0].toUpperCase()}
-                  </div>
-                )}
-                <div className="avatar-explain">
-                  <span className="badge badge-success">Gravatar Enabled</span>
-                  <p>
-                    Your avatar is pulled automatically from gravatar.com using
-                    your email hash.
-                  </p>
-                </div>
-              </div>
-
-              <div className="details-list">
-                <div className="detail-item">
-                  <span className="item-label">Account Name</span>
-                  <span className="item-val">{store.user.username}</span>
-                </div>
-                {store.user.email && (
-                  <div className="detail-item">
-                    <span className="item-label">Registered Email</span>
-                    <span className="item-val">{store.user.email}</span>
-                  </div>
-                )}
-                <div className="detail-item">
-                  <span className="item-label">Internal ID</span>
-                  <span className="item-val text-mono">{store.user.id}</span>
-                </div>
-                {store.user.roles && store.user.roles.length > 0 && (
-                  <div className="detail-item">
-                    <span className="item-label">Role Authorization</span>
-                    <span className="item-val">
-                      <span className="badge badge-danger">
-                        {store.user.roles[0]}
-                      </span>
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="modal-footer-row">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowAccountModal(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
