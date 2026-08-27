@@ -5,12 +5,19 @@ import React, { useState, useEffect } from "react";
 // ==========================================
 import { useQueryClient } from "@tanstack/react-query";
 
+import ChargeLadder from "../components/ChargeLoader";
+import ArmoryItemCard from "../components/ArmoryItemCard";
+
 // ==========================================
 // [PULLING DATA] & [SAVING DATA] - Imports generated OData hooks from the API client.
 // - useArmoryGetGET: Hook for pulling multiple records (collection-get)
 // - useArmoryPatchByKeyPATCH: Hook for partially updating a single record by its key (PATCH)
 // ==========================================
-import { useGetArmoryItems, usePatchArmoryItemsFromKey } from "../api/endpoints";
+import {
+  useGetArmoryItems,
+  usePatchArmoryItemsFromKey,
+} from "../api/endpoints";
+import VaultCard from "../components/VaultCard";
 
 export default function Munitions() {
   // ==========================================
@@ -107,99 +114,11 @@ export default function Munitions() {
   // ==========================================
   // [UI & RENDER] - Conditional renders for loading and error states.
   // ==========================================
-  if (isLoading) {
-    return (
-      <div style={{ padding: "20px" }}>
-        <p>Loading armory data...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ padding: "20px", color: "red" }}>
-        <p>Error loading armory: {error.message || "Unknown error"}</p>
-      </div>
-    );
-  }
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Munitions: Pulling & Saving Armory Data</h2>
-
-      {/* [UI & FEEDBACK] - Shows a green confirmation banner after saving is completed */}
-      {saveSuccess && (
-        <div
-          style={{
-            padding: "10px",
-            backgroundColor: "#2e7d32",
-            color: "white",
-            borderRadius: "4px",
-            marginBottom: "15px",
-            maxWidth: "400px",
-          }}
-        >
-          ✓ Item name successfully updated in the database!
-        </div>
-      )}
-
-      <div
-        style={{
-          marginTop: "15px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-          maxWidth: "400px",
-        }}
-      >
-        <label htmlFor="armory-name" style={{ fontWeight: "bold" }}>
-          First Glock Item Name (Database ID: {itemId}):
-        </label>
-
-        {/* 
-          [UI & LOCAL STATE] - Controlled Input element.
-          - value={itemName}: Binds the input's text directly to our local React state.
-          - onChange: Triggers whenever you type, updating our local React state immediately.
-        */}
-        <input
-          id="armory-name"
-          type="text"
-          value={itemName}
-          onChange={(e) => setItemName(e.target.value)}
-          style={{
-            padding: "8px 12px",
-            fontSize: "16px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            backgroundColor: "#222",
-            color: "#fff",
-          }}
-        />
-
-        {/* 
-          [SAVING DATA] - Save Button.
-          - onClick={handleSave}: Fires the PATCH mutation when clicked.
-          - disabled={saveMutation.isPending}: Disables the button while a save is in progress to prevent double-saving.
-        */}
-        <button
-          onClick={handleSave}
-          disabled={saveMutation.isPending || !itemId}
-          style={{
-            marginTop: "10px",
-            padding: "10px 20px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            color: "#fff",
-            backgroundColor: saveMutation.isPending ? "#555" : "#0056b3",
-            border: "none",
-            borderRadius: "4px",
-            cursor: saveMutation.isPending ? "not-allowed" : "pointer",
-          }}
-        >
-          {/* Changes the button text dynamically while saving */}
-          {saveMutation.isPending ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
+      <div>{ChargeLadder()}</div>
+      {/* <div>{ArmoryItemCard(null, null)}</div> */}
     </div>
   );
 }
