@@ -57,35 +57,12 @@ namespace Chambered.Data.Models
 
         #endregion
 
-        #region External Links & Reference
-
-        /// <summary>
-        /// Gets or sets the official manufacturer web page URL.
-        /// </summary>
-        public string? WebPageUrl { get; set; }
-
-        #endregion
-
-        #region Embedded Media
-
-        /// <summary>
-        /// Gets or sets raw image binary data for the product preview image (stored offline).
-        /// </summary>
-        public byte[]? ImageData { get; set; }
-
-        /// <summary>
-        /// Gets or sets the MIME content type for the embedded image (e.g., "image/jpeg", "image/png").
-        /// </summary>
-        public string? ImageContentType { get; set; }
-
-        #endregion
-
         #region Navigation Properties
 
         /// <summary>
         /// Gets or sets the collection of embedded offline reference documents (manuals, diagrams, etc.).
         /// </summary>
-        public ICollection<Document> Documents { get; set; } = new List<Document>();
+        public ICollection<ProductDocument> ProductDocuments { get; set; } = new List<ProductDocument>();
 
         /// <summary>
         /// Gets or sets individual inventory items belonging to this firearm model.

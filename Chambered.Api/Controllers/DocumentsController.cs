@@ -29,6 +29,6 @@ public class DocumentsController : ODataControllerBase<Document, int>
     [HttpGet]
     public IActionResult GetDocumentTypes()
     {
-        return Ok(GetEnumValues<DocumentType>());
+        return Ok(GetEnumValues<ProductDocumentType>());
     }
 }
