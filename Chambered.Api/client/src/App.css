@@ -362,7 +362,8 @@
   border-radius: var(--radius-md);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
   padding: 8px;
-  min-width: 220px;
+  width: 440px;
+  min-width: 400px;
   z-index: 500;
   animation: dropdownIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
