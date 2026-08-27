@@ -6,24 +6,21 @@
  * OpenAPI spec version: 1.0
  */
 import type { Product } from './product';
+import type { ProductDocumentType } from './productDocumentType';
 
-export interface Manufacturer {
+export interface ProductDocument {
+  type?: ProductDocumentType;
   /** @nullable */
-  name?: string | null;
+  productId?: number | null;
   /** @nullable */
-  webPageUrl?: string | null;
+  contentType?: string | null;
   /** @nullable */
-  phoneNumber?: string | null;
+  fileName?: string | null;
   /** @nullable */
-  streetAddress?: string | null;
-  /** @nullable */
-  city?: string | null;
-  /** @nullable */
-  stateOrProvince?: string | null;
-  /** @nullable */
-  postalCode?: string | null;
-  /** @nullable */
-  country?: string | null;
+  storageKey?: string | null;
+  isEncrypted?: boolean;
+  fileSizeBytes?: number;
+  uploadedAt?: string;
   id?: number;
   /** @nullable */
   created?: string | null;
@@ -33,6 +30,5 @@ export interface Manufacturer {
   createdBy?: string | null;
   /** @nullable */
   modifiedBy?: string | null;
-  /** @nullable */
-  products?: Product[] | null;
+  product?: Product;
 }

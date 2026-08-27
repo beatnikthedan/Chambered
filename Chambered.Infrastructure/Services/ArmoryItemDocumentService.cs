@@ -5,6 +5,7 @@ using Chambered.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,6 +43,13 @@ namespace Chambered.Infrastructure.Services
         protected override void SetDocumentType(ArmoryItemDocument document, ArmoryItemDocumentType type)
         {
             document.Type = type;
+        }
+
+        protected override async Task<IEnumerable<ArmoryItemDocument>> QueryDocumentsByParentIdAsync(int parentId, CancellationToken cancellationToken)
+        {
+            return await Db.ArmoryItemDocuments
+                .Where(d => d.ArmoryItemId == parentId)
+                .ToListAsync(cancellationToken);
         }
     }
 }

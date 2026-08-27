@@ -37,6 +37,7 @@ namespace Chambered.Infrastructure.Services
         protected abstract Task VerifyParentExistsAsync(int parentId, CancellationToken cancellationToken);
         protected abstract void SetParentRelation(TDocument document, int parentId);
         protected abstract void SetDocumentType(TDocument document, TEnum type);
+        protected abstract Task<System.Collections.Generic.IEnumerable<TDocument>> QueryDocumentsByParentIdAsync(int parentId, CancellationToken cancellationToken);
 
         public async Task<AttachmentResult> UploadDocumentAsync(
             int parentId,
@@ -144,6 +145,39 @@ namespace Chambered.Infrastructure.Services
             // 2. Remove DB metadata record
             Db.Set<TDocument>().Remove(document);
             await Db.SaveChangesAsync(cancellationToken);
+        }
+
+        public Task<System.Collections.Generic.IEnumerable<TDocument>> GetDocumentsByParentIdAsync(int parentId, CancellationToken cancellationToken = default)
+        {
+            return QueryDocumentsByParentIdAsync(parentId, cancellationToken);
+        }
+
+        public async Task<AttachmentDownloadResult> DownloadAllDocumentsAsync(int parentId, CancellationToken cancellationToken = default)
+        {
+            var documents = await QueryDocumentsByParentIdAsync(parentId, cancellationToken);
+
+            var zipMemoryStream = new MemoryStream();
+            using (var archive = new System.IO.Compression.ZipArchive(zipMemoryStream, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
+            {
+                foreach (var doc in documents)
+                {
+                    try
+                    {
+                        var entry = archive.CreateEntry(doc.FileName, System.IO.Compression.CompressionLevel.Optimal);
+                        using var entryStream = entry.Open();
+                        using var docStream = await Repository.OpenStreamAsync(doc.StorageKey, cancellationToken);
+                        await docStream.CopyToAsync(entryStream, cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogWarning(ex, "Failed to include file {FileName} with storage key {StorageKey} in ZIP archive.", doc.FileName, doc.StorageKey);
+                    }
+                }
+            }
+
+            zipMemoryStream.Seek(0, SeekOrigin.Begin);
+            var zipFileName = $"{ParentFolderName.ToLower()}_{parentId}_documents.zip";
+            return new AttachmentDownloadResult(zipMemoryStream, zipFileName, "application/zip");
         }
     }
 }

@@ -8,9 +8,9 @@
 import type { ActionType } from './actionType';
 import type { ArmoryItem } from './armoryItem';
 import type { Caliber } from './caliber';
-import type { Document } from './document';
 import type { Manufacturer } from './manufacturer';
 import type { PewPewCategory } from './pewPewCategory';
+import type { ProductDocument } from './productDocument';
 
 export interface PewPew {
   pewPewCategory?: PewPewCategory;
@@ -21,19 +21,13 @@ export interface PewPew {
   name?: string | null;
   /** @nullable */
   description?: string | null;
+  manufacturerId?: number;
   /** @nullable */
   productType?: string | null;
   /** @nullable */
   partNumber?: string | null;
   /** @nullable */
   sku?: string | null;
-  manufacturerId?: number;
-  /** @nullable */
-  webPageUrl?: string | null;
-  /** @nullable */
-  imageData?: string | null;
-  /** @nullable */
-  imageContentType?: string | null;
   id?: number;
   /** @nullable */
   created?: string | null;
@@ -46,7 +40,7 @@ export interface PewPew {
   caliber?: Caliber;
   manufacturer?: Manufacturer;
   /** @nullable */
-  documents?: Document[] | null;
+  productDocuments?: ProductDocument[] | null;
   /** @nullable */
   armoryItems?: ArmoryItem[] | null;
 }

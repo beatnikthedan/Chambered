@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Asp.Versioning.OData;
+using Chambered.Api.Dto;
 using Chambered.Api.Models;
 using Chambered.Data.Models;
 using Microsoft.OData.ModelBuilder;

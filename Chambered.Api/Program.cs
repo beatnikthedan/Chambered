@@ -8,6 +8,7 @@ using Chambered.Api.Swagger;
 using Chambered.Core.Security;
 using Chambered.Core.Services;
 using Chambered.Data;
+using Chambered.Data.Enums;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
 using Chambered.Infrastructure.Services;
@@ -131,6 +132,13 @@ builder.Services.AddControllers(options =>
         options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
     });
 
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
+
 builder.Services.AddHttpLogging(l =>
 {
     l.LoggingFields = HttpLoggingFields.All;
@@ -229,20 +237,20 @@ builder.Services.AddScoped<IBackupService, SqliteBackupService>();
 
 builder.Services.AddHostedService<BackupSchedulerWorker>();
 
-builder.Services.Configure<Chambered.Infrastructure.Configuration.FileStorageConfiguration>(builder.Configuration.GetSection(nameof(Chambered.Infrastructure.Configuration.FileStorageConfiguration)));
-builder.Services.AddSingleton(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Chambered.Infrastructure.Configuration.FileStorageConfiguration>>().Value);
+builder.Services.Configure<FileStorageConfiguration>(builder.Configuration.GetSection(nameof(FileStorageConfiguration)));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<FileStorageConfiguration>>().Value);
 builder.Services.AddScoped<LocalFileStorageRepository>();
 builder.Services.AddScoped<S3FileStorageRepository>();
-builder.Services.AddScoped<Chambered.Core.Services.IFileStorageRepository>(sp =>
+builder.Services.AddScoped<IFileStorageRepository>(sp =>
 {
-    var config = sp.GetRequiredService<Chambered.Infrastructure.Configuration.FileStorageConfiguration>();
-    return config.Provider == Chambered.Infrastructure.Configuration.StorageProviderType.S3
-        ? sp.GetRequiredService<Chambered.Infrastructure.Services.FileStorageRepositories.S3FileStorageRepository>()
-        : sp.GetRequiredService<Chambered.Infrastructure.Services.FileStorageRepositories.LocalFileStorageRepository>();
+    var config = sp.GetRequiredService<FileStorageConfiguration>();
+    return config.Provider == StorageProviderType.S3
+        ? sp.GetRequiredService<S3FileStorageRepository>()
+        : sp.GetRequiredService<LocalFileStorageRepository>();
 });
 
-builder.Services.AddScoped<Chambered.Core.Services.IDocumentService<Chambered.Data.Models.ProductDocument, Chambered.Data.Enums.ProductDocumentType>, Chambered.Infrastructure.Services.ProductDocumentService>();
-builder.Services.AddScoped<Chambered.Core.Services.IDocumentService<Chambered.Data.Models.ArmoryItemDocument, Chambered.Data.Enums.ArmoryItemDocumentType>, Chambered.Infrastructure.Services.ArmoryItemDocumentService>();
+builder.Services.AddScoped<IDocumentService<Chambered.Data.Models.ProductDocument, ProductDocumentType>, ProductDocumentService>();
+builder.Services.AddScoped<IDocumentService<Chambered.Data.Models.ArmoryItemDocument, ArmoryItemDocumentType>, ArmoryItemDocumentService>();
 
 // Configure decoupled favicon retrieval service
 builder.Services.AddHttpClient<IFaveIconService, FaveIconService>();
@@ -324,6 +332,7 @@ await app.ApplyMigrations<ChamberedDbContext>(async services =>
 //     }
 // });
 
+app.UseResponseCompression();
 app.UseRouting();
 
 app.UseAuthentication();

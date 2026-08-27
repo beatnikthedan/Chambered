@@ -196,6 +196,80 @@ namespace Chambered.Tests.Services
             _repoMock.Verify(r => r.DeleteStreamAsync(storageKey, It.IsAny<CancellationToken>()), Times.Once);
         }
 
+        [Fact]
+        public async Task QueryAndZipping_ShouldRetrieveAllLinkedDocumentsAndPackageThem()
+        {
+            // Arrange
+            var manufacturer = new Manufacturer
+            {
+                Name = "Glock"
+            };
+            _db.Manufacturers.Add(manufacturer);
+            await _db.SaveChangesAsync();
+
+            var product = new Product
+            {
+                ManufacturerId = manufacturer.Id,
+                Name = "Glock 19 Gen5",
+                PartNumber = "G19G5",
+                Sku = "GL195",
+                ProductType = "PewPew"
+            };
+            _db.Products.Add(product);
+            await _db.SaveChangesAsync();
+
+            var doc1 = new ProductDocument
+            {
+                ProductId = product.Id,
+                FileName = "spec_sheet.pdf",
+                ContentType = "application/pdf",
+                StorageKey = $"products/{product.Id}/spec_sheet.pdf",
+                IsEncrypted = false,
+                FileSizeBytes = 100,
+                Type = ProductDocumentType.SpecSheet
+            };
+            var doc2 = new ProductDocument
+            {
+                ProductId = product.Id,
+                FileName = "manual.pdf",
+                ContentType = "application/pdf",
+                StorageKey = $"products/{product.Id}/manual.pdf",
+                IsEncrypted = false,
+                FileSizeBytes = 100,
+                Type = ProductDocumentType.OwnerManual
+            };
+
+            _db.ProductDocuments.AddRange(doc1, doc2);
+            await _db.SaveChangesAsync();
+
+            _repoMock.Setup(r => r.OpenStreamAsync(doc1.StorageKey, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new MemoryStream(new byte[50]));
+            _repoMock.Setup(r => r.OpenStreamAsync(doc2.StorageKey, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new MemoryStream(new byte[75]));
+
+            var service = new ProductDocumentService(_db, _repoMock.Object, _loggerMock.Object);
+
+            // Act - Query Metadata
+            var documentsList = await service.GetDocumentsByParentIdAsync(product.Id, CancellationToken.None);
+
+            // Assert Metadata
+            Assert.NotNull(documentsList);
+            Assert.Equal(2, System.Linq.Enumerable.Count(documentsList));
+
+            // Act - ZIP Download
+            var zipResult = await service.DownloadAllDocumentsAsync(product.Id, CancellationToken.None);
+
+            // Assert ZIP Output
+            Assert.NotNull(zipResult);
+            Assert.Equal("application/zip", zipResult.ContentType);
+            Assert.Contains(".zip", zipResult.FileName);
+
+            using var zipArchive = new System.IO.Compression.ZipArchive(zipResult.FileStream);
+            Assert.Equal(2, zipArchive.Entries.Count);
+            Assert.Equal("spec_sheet.pdf", zipArchive.Entries[0].Name);
+            Assert.Equal("manual.pdf", zipArchive.Entries[1].Name);
+        }
+
         public void Dispose()
         {
             _db.Dispose();

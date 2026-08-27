@@ -5,25 +5,22 @@
  * An OData and version-compliant API for Chambered inventory tracking.
  * OpenAPI spec version: 1.0
  */
-import type { Product } from './product';
+import type { ArmoryItem } from './armoryItem';
+import type { ArmoryItemDocumentType } from './armoryItemDocumentType';
 
-export interface Manufacturer {
+export interface ArmoryItemDocument {
+  type?: ArmoryItemDocumentType;
   /** @nullable */
-  name?: string | null;
+  armoryItemId?: number | null;
   /** @nullable */
-  webPageUrl?: string | null;
+  contentType?: string | null;
   /** @nullable */
-  phoneNumber?: string | null;
+  fileName?: string | null;
   /** @nullable */
-  streetAddress?: string | null;
-  /** @nullable */
-  city?: string | null;
-  /** @nullable */
-  stateOrProvince?: string | null;
-  /** @nullable */
-  postalCode?: string | null;
-  /** @nullable */
-  country?: string | null;
+  storageKey?: string | null;
+  isEncrypted?: boolean;
+  fileSizeBytes?: number;
+  uploadedAt?: string;
   id?: number;
   /** @nullable */
   created?: string | null;
@@ -33,6 +30,5 @@ export interface Manufacturer {
   createdBy?: string | null;
   /** @nullable */
   modifiedBy?: string | null;
-  /** @nullable */
-  products?: Product[] | null;
+  armoryItem?: ArmoryItem;
 }
