@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStore } from "../StoreContext";
 import "./Catalog.css";
 import SubmitButton from "../components/SubmitButton";
@@ -19,6 +19,7 @@ import {
   useGetManufacturersFaviconFromKey,
   useGetProductsArmoryItemsFromKey,
   useGetProductsProductDocumentsFromKey,
+  useGetProductsProductTypes,
 } from "../api/endpoints";
 import type { Product } from "../api/models/product";
 import type { Manufacturer } from "../api/models/manufacturer";
@@ -192,6 +193,11 @@ export default function Catalog() {
   const store = useStore();
   const { enums } = store || {};
 
+  const { data: productTypesData } = useGetProductsProductTypes();
+  const productTypes = useMemo(() => {
+    return productTypesData?.data?.value || [];
+  }, [productTypesData]);
+
   const isManufacturersPage = location.pathname.includes("/manufacturers");
 
   // Fetch collections via Orval
@@ -308,6 +314,23 @@ export default function Catalog() {
   const [mfgSortDirection, setMfgSortDirection] = useState<"asc" | "desc">(
     "asc",
   );
+
+  // Quick Add state
+  const [quickAddType, setQuickAddType] = useState<string>("Product");
+  const [quickAddMfgId, setQuickAddMfgId] = useState<string>("");
+  const [quickAddModel, setQuickAddModel] = useState<string>("");
+  const [quickAddPartNo, setQuickAddPartNo] = useState<string>("");
+  const [isQuickSaving, setIsQuickSaving] = useState<boolean>(false);
+  const [quickSaveSuccess, setQuickSaveSuccess] = useState<boolean>(false);
+
+  const handleHeaderSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
 
   // Enums memoizations
   const suppressorMaterials = enums?.suppressorMaterials || [];
@@ -915,70 +938,65 @@ export default function Catalog() {
     setShowMfgModal(true);
   };
 
-  // Form Saves
-  const handleSaveProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) return;
-
-    setIsSaving(true);
-    const type = form.productType || "Product";
+  const buildProductPayload = (targetForm: ProductForm) => {
+    const type = targetForm.productType || "Product";
     const payload: any = {};
     if (type !== "Product") {
       payload["@odata.type"] = `#Chambered.Data.Models.${type}`;
     }
 
-    payload.id = form.id || 0;
-    payload.name = form.name || "";
-    payload.partNumber = form.partNumber || "";
-    payload.sku = form.sku || "";
-    payload.manufacturerId = parseInt(form.manufacturerId as string, 10) || 0;
-    payload.description = form.description || null;
-    payload.webPageUrl = form.webPageUrl || null;
-    payload.coverImageId = form.coverImageId ? parseInt(form.coverImageId as any, 10) : null;
+    payload.id = targetForm.id || 0;
+    payload.name = targetForm.name || "";
+    payload.partNumber = targetForm.partNumber || "";
+    payload.sku = targetForm.sku || "";
+    payload.manufacturerId = parseInt(targetForm.manufacturerId as string, 10) || 0;
+    payload.description = targetForm.description || null;
+    payload.webPageUrl = targetForm.webPageUrl || null;
+    payload.coverImageId = targetForm.coverImageId ? parseInt(targetForm.coverImageId as any, 10) : null;
 
-    if (form.specifications) {
-      Object.entries(form.specifications).forEach(([key, value]) => {
+    if (targetForm.specifications) {
+      Object.entries(targetForm.specifications).forEach(([key, value]) => {
         payload[key] = value;
       });
     }
 
     if (type === "PewPew") {
-      payload.caliberId = parseInt(form.caliberId as string, 10) || null;
-      payload.pewPewCategory = form.pewPewCategory || null;
-      payload.actionType = form.actionType || null;
-      payload.isNfaItem = !!form.isNfaItem;
+      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
+      payload.pewPewCategory = targetForm.pewPewCategory || null;
+      payload.actionType = targetForm.actionType || null;
+      payload.isNfaItem = !!targetForm.isNfaItem;
     } else if (type === "Optic") {
       payload.minMagnification =
-        parseFloat(form.minMagnification as string) || 1.0;
+        parseFloat(targetForm.minMagnification as string) || 1.0;
       payload.maxMagnification =
-        parseFloat(form.maxMagnification as string) || 1.0;
+        parseFloat(targetForm.maxMagnification as string) || 1.0;
       payload.objectiveDiameterMm =
-        parseInt(form.objectiveDiameterMm as string, 10) || 0;
-      payload.opticType = form.opticType || null;
-      payload.reticle = form.reticle || null;
-      payload.adjustmentUnits = form.adjustmentUnits || null;
-      payload.tubeDiameter = form.tubeDiameter || null;
-      payload.isIlluminated = !!form.isIlluminated;
-      payload.hasBattery = !!form.hasBattery;
-      payload.batteryType = form.hasBattery ? form.batteryType : null;
+        parseInt(targetForm.objectiveDiameterMm as string, 10) || 0;
+      payload.opticType = targetForm.opticType || null;
+      payload.reticle = targetForm.reticle || null;
+      payload.adjustmentUnits = targetForm.adjustmentUnits || null;
+      payload.tubeDiameter = targetForm.tubeDiameter || null;
+      payload.isIlluminated = !!targetForm.isIlluminated;
+      payload.hasBattery = !!targetForm.hasBattery;
+      payload.batteryType = targetForm.hasBattery ? targetForm.batteryType : null;
     } else if (type === "Suppressor") {
-      payload.caliberId = parseInt(form.caliberId as string, 10) || null;
-      payload.threadPitch = form.threadPitch || null;
-      payload.attachmentType = form.attachmentType || null;
-      payload.material = form.material || null;
+      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
+      payload.threadPitch = targetForm.threadPitch || null;
+      payload.attachmentType = targetForm.attachmentType || null;
+      payload.material = targetForm.material || null;
       payload.soundReductionDb =
-        parseInt(form.soundReductionDb as string, 10) || null;
-      payload.isFullAutoRated = !!form.isFullAutoRated;
-      payload.isUserServiceable = !!form.isUserServiceable;
+        parseInt(targetForm.soundReductionDb as string, 10) || null;
+      payload.isFullAutoRated = !!targetForm.isFullAutoRated;
+      payload.isUserServiceable = !!targetForm.isUserServiceable;
     } else if (type === "PewPewLight") {
-      payload.lumens = parseInt(form.lumens as string, 10) || 0;
-      payload.candela = parseInt(form.candela as string, 10) || 0;
-      payload.mountType = form.mountType || null;
-      payload.laserColor = form.laserColor || null;
-      payload.hasRemoteSwitchPort = !!form.hasRemoteSwitchPort;
-      payload.isInfraredCapable = !!form.isInfraredCapable;
+      payload.lumens = parseInt(targetForm.lumens as string, 10) || 0;
+      payload.candela = parseInt(targetForm.candela as string, 10) || 0;
+      payload.mountType = targetForm.mountType || null;
+      payload.laserColor = targetForm.laserColor || null;
+      payload.hasRemoteSwitchPort = !!targetForm.hasRemoteSwitchPort;
+      payload.isInfraredCapable = !!targetForm.isInfraredCapable;
     } else if (type === "Security") {
-      payload.lockType = form.lockType || null;
+      payload.lockType = targetForm.lockType || null;
     }
 
     // Clean payload of navigation objects to avoid OData issues
@@ -991,6 +1009,78 @@ export default function Catalog() {
         delete payload[key];
       }
     });
+
+    return payload;
+  };
+
+  const handleQuickAddSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickAddModel.trim() || !quickAddMfgId) return;
+
+    setIsQuickSaving(true);
+
+    const tempForm: ProductForm = {
+      id: 0,
+      productType: quickAddType as any,
+      name: quickAddModel.trim(),
+      description: "",
+      partNumber: quickAddPartNo.trim(),
+      sku: "",
+      manufacturerId: quickAddMfgId,
+      webPageUrl: "",
+      specifications: {},
+      caliberId: calibersList[0]?.id || "",
+      pewPewCategory: pewPewCategories[0]?.id || "",
+      actionType: actionTypes[0]?.id || "",
+      isNfaItem: false,
+      minMagnification: "",
+      maxMagnification: "",
+      objectiveDiameterMm: "",
+      opticType: opticTypes[0]?.id || "",
+      reticle: opticReticles[0]?.id || "",
+      adjustmentUnits: opticAdjustmentUnits[0]?.id || "",
+      tubeDiameter: quickAddType === "Optic" ? "Unknown" : "",
+      isIlluminated: false,
+      hasBattery: false,
+      batteryType: batteryTypes[0]?.id || "",
+      threadPitch: "",
+      attachmentType: suppressorAttachmentTypes[0]?.id || "",
+      material: suppressorMaterials[0]?.id || "",
+      soundReductionDb: "",
+      isFullAutoRated: false,
+      isUserServiceable: false,
+      lumens: "",
+      candela: "",
+      mountType: lightMountTypes[0]?.id || "",
+      laserColor: laserColors[0]?.id || "",
+      hasRemoteSwitchPort: false,
+      isInfraredCapable: false,
+      lockType: lockTypes[0]?.id || "",
+      coverImageId: null,
+    };
+
+    const payload = buildProductPayload(tempForm);
+
+    try {
+      await createProductMutation.mutateAsync({ data: payload });
+      setQuickSaveSuccess(true);
+      setTimeout(() => setQuickSaveSuccess(false), 2000);
+      setQuickAddModel("");
+      setQuickAddPartNo("");
+    } catch (err) {
+      console.error("Failed to quick add product:", err);
+    } finally {
+      setIsQuickSaving(false);
+    }
+  };
+
+  // Form Saves
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim()) return;
+
+    setIsSaving(true);
+    const payload = buildProductPayload(form);
 
     try {
       if (form.id > 0) {
@@ -1007,7 +1097,7 @@ export default function Catalog() {
         setSelectedProduct({
           ...cleanedSelected,
           ...payload,
-          productType: type,
+          productType: form.productType || "Product",
         } as ExtendedProduct);
       } else {
         await createProductMutation.mutateAsync({ data: payload });
@@ -1071,22 +1161,6 @@ export default function Catalog() {
   };
 
   // Helper labels & display
-  const getProductTypeLabel = (type: string) => {
-    switch (type) {
-      case "PewPew":
-        return "🏷️ PewPew";
-      case "Optic":
-        return "🔭 Optic / Scope";
-      case "Suppressor":
-        return "🤫 Suppressor";
-      case "PewPewLight":
-        return "🔦 PewPew Light";
-      case "Security":
-        return "🛡️ Security / Vault";
-      default:
-        return "📦 General";
-    }
-  };
 
   const renderSubAttributesText = (p: ExtendedProduct) => {
     if (p.productType === "PewPew") {
@@ -1203,7 +1277,7 @@ export default function Catalog() {
                     className={`control-popover-btn ${selectedTypeFilters.length > 0 || selectedMfgFilters.length > 0 ? "active-filters" : ""}`}
                     onClick={() => setShowFilterPopover(!showFilterPopover)}
                   >
-                    🔍 Filter
+                    Filter
                     {selectedTypeFilters.length + selectedMfgFilters.length >
                       0 && (
                       <span className="filter-badge">
@@ -1285,56 +1359,6 @@ export default function Catalog() {
                     </div>
                   )}
                 </div>
-
-                {/* ADVANCED SORT BUTTON */}
-                <div className="popover-wrapper" ref={sortRef}>
-                  <button
-                    className="control-popover-btn"
-                    onClick={() => setShowSortPopover(!showSortPopover)}
-                  >
-                    ⇅ Sort ({sortKey})
-                  </button>
-                  {showSortPopover && (
-                    <div className="abs-popover-panel sort-popover">
-                      <div className="popover-sec">
-                        <h5>Sort By</h5>
-                        {[
-                          "name",
-                          "sku",
-                          "partNumber",
-                          "manufacturer",
-                          "type",
-                        ].map((key) => (
-                          <button
-                            key={key}
-                            className={`sort-option-btn ${sortKey === key ? "active" : ""}`}
-                            onClick={() => setSortKey(key)}
-                          >
-                            {key.toUpperCase()}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="popover-divider"></div>
-                      <div className="popover-sec">
-                        <h5>Direction</h5>
-                        <div className="btn-group-toggle">
-                          <button
-                            className={`direction-btn ${sortDirection === "asc" ? "active" : ""}`}
-                            onClick={() => setSortDirection("asc")}
-                          >
-                            Ascending (A-Z)
-                          </button>
-                          <button
-                            className={`direction-btn ${sortDirection === "desc" ? "active" : ""}`}
-                            onClick={() => setSortDirection("desc")}
-                          >
-                            Descending (Z-A)
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </>
             ) : (
               /* MANUFACTURERS SORT BUTTON */
@@ -1395,7 +1419,7 @@ export default function Catalog() {
                 }
                 title="Table View"
               >
-                📊 List
+                List
               </button>
               <button
                 className={`toggle-icon-btn ${(isManufacturersPage ? mfgViewMode : viewMode) === "card" ? "active" : ""}`}
@@ -1406,7 +1430,7 @@ export default function Catalog() {
                 }
                 title="Card View"
               >
-                🎴 Cards
+                Cards
               </button>
             </div>
 
@@ -1414,7 +1438,7 @@ export default function Catalog() {
               className="add-master-btn"
               onClick={isManufacturersPage ? startAddMfg : startAddProduct}
             >
-              + Add {isManufacturersPage ? "Manufacturer" : "Product"}
+              Add {isManufacturersPage ? "Manufacturer" : "Product"}
             </button>
           </div>
         </div>
@@ -1428,27 +1452,109 @@ export default function Catalog() {
                 No matching catalog products found.
               </div>
             ) : viewMode === "table" ? (
-              <table className="app-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Manufacturer</th>
-                    <th>Model Name</th>
-                    <th>Part Number / SKU</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {processedProducts.map((p) => (
-                    <tr
-                      key={p.id}
-                      className={`table-row-item ${selectedProduct?.id === p.id ? "selected" : ""}`}
-                      onClick={() => {
-                        setSelectedProduct(p);
-                      }}
+              <>
+                {/* QUICK ADD ROW */}
+                <div className="quick-add-container">
+                  <span className="quick-add-label">QUICK ADD</span>
+                  <form className="quick-add-form" onSubmit={handleQuickAddSave}>
+                    <select
+                      className="quick-add-select"
+                      value={quickAddType}
+                      onChange={(e) => setQuickAddType(e.target.value)}
                     >
-                      <td className="type-badge-cell" style={{ verticalAlign: "middle" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          {p.coverImageId && (
+                      {productTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="quick-add-select"
+                      value={quickAddMfgId}
+                      onChange={(e) => setQuickAddMfgId(e.target.value)}
+                    >
+                      <option value="">-- Select Manufacturer --</option>
+                      {manufacturersList.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="text"
+                      className="quick-add-input"
+                      placeholder="Model Name"
+                      value={quickAddModel}
+                      onChange={(e) => setQuickAddModel(e.target.value)}
+                    />
+
+                    <input
+                      type="text"
+                      className="quick-add-input"
+                      placeholder="Part Number"
+                      value={quickAddPartNo}
+                      onChange={(e) => setQuickAddPartNo(e.target.value)}
+                    />
+
+                    <SubmitButton
+                      isSaving={isQuickSaving}
+                      saveSuccess={quickSaveSuccess}
+                      isEditMode={false}
+                      createLabel="Save"
+                      style={{ height: "38px" }}
+                    />
+                  </form>
+                </div>
+
+                <table className="app-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: "40px" }}></th>
+                      <th
+                        onClick={() => handleHeaderSort("type")}
+                        style={{ cursor: "pointer", userSelect: "none", textAlign: "center" }}
+                      >
+                        Type {sortKey === "type" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                      </th>
+                      <th
+                        onClick={() => handleHeaderSort("manufacturer")}
+                        style={{ cursor: "pointer", userSelect: "none" }}
+                      >
+                        Manufacturer {sortKey === "manufacturer" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                      </th>
+                      <th
+                        onClick={() => handleHeaderSort("name")}
+                        style={{ cursor: "pointer", userSelect: "none" }}
+                      >
+                        Model Name {sortKey === "name" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                      </th>
+                      <th
+                        onClick={() => handleHeaderSort("partNumber")}
+                        style={{ cursor: "pointer", userSelect: "none" }}
+                      >
+                        Part Number {sortKey === "partNumber" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                      </th>
+                      <th
+                        onClick={() => handleHeaderSort("sku")}
+                        style={{ cursor: "pointer", userSelect: "none" }}
+                      >
+                        SKU {sortKey === "sku" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {processedProducts.map((p) => (
+                      <tr
+                        key={p.id}
+                        className={`table-row-item ${selectedProduct?.id === p.id ? "selected" : ""}`}
+                        onClick={() => {
+                          setSelectedProduct(p);
+                        }}
+                      >
+                        <td style={{ width: "40px", verticalAlign: "middle", textAlign: "center" }}>
+                          {p.coverImageId ? (
                             <SecureImage
                               src={`/api/v1/ProductDocuments/${p.coverImageId}/Download`}
                               alt={p.name}
@@ -1461,23 +1567,35 @@ export default function Catalog() {
                                 backgroundColor: "var(--bg-input)",
                               }}
                             />
+                          ) : (
+                            <div
+                              style={{
+                                width: "28px",
+                                height: "28px",
+                                borderRadius: "4px",
+                                border: "1px solid var(--border-color)",
+                                backgroundColor: "transparent",
+                                boxSizing: "border-box",
+                              }}
+                            />
                           )}
+                        </td>
+                        <td className="type-badge-cell" style={{ verticalAlign: "middle", textAlign: "center" }}>
                           <span
                             className={`type-badge ${p.productType.toLowerCase()}`}
                           >
                             {p.productType}
                           </span>
-                        </div>
-                      </td>
-                      <td>{p.manufacturerName}</td>
-                      <td className="bold-name-cell">{p.name}</td>
-                      <td className="text-muted text-mono">
-                        {p.partNumber || "N/A"} / {p.sku || "N/A"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                        <td>{p.manufacturerName}</td>
+                        <td className="bold-name-cell">{p.name}</td>
+                        <td className="text-muted text-mono">{p.partNumber || "N/A"}</td>
+                        <td className="text-muted text-mono">{p.sku || "N/A"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
             ) : (
               /* CARD VIEW MODE */
               <div className="split-view-cards-grid">
@@ -1570,6 +1688,50 @@ export default function Catalog() {
             </div>
           )}
         </div>
+
+        {/* TABLE FOOTER ROW */}
+        {!isManufacturersPage && viewMode === "table" && productsList.length > 0 && (
+          <div className="table-footer-row">
+            <div>
+              {processedProducts.length} of {productsList.length} products
+            </div>
+            <div className="footer-actions">
+              <button
+                type="button"
+                className="footer-btn"
+                onClick={() => alert("GRT import functionality is a stub.")}
+              >
+                Import
+              </button>
+              <button
+                type="button"
+                className="footer-btn"
+                onClick={() => {
+                  const headers = ["Type", "Manufacturer", "Model Name", "Part Number", "SKU"];
+                  const rows = processedProducts.map((p) => [
+                    p.productType,
+                    p.manufacturerName,
+                    p.name,
+                    p.partNumber || "N/A",
+                    p.sku || "N/A"
+                  ]);
+                  const csvContent = [headers.join(","), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(","))].join("\n");
+                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.setAttribute("href", url);
+                  link.setAttribute("download", `products_export_${new Date().toISOString().slice(0,10)}.csv`);
+                  link.style.visibility = "hidden";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                Export
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* RIGHT 1/3: DETAILS COLUMN WITH DUAL TILED MASTER-DETAIL VIEW */}
@@ -1594,7 +1756,7 @@ export default function Catalog() {
               <div className="detail-view-container">
                 <div className="detail-panel-header">
                   <span className="type-badge-pill">
-                    {getProductTypeLabel(selectedProduct.productType)}
+                    {selectedProduct.productType}
                   </span>
                   <div className="header-actions">
                     <button
@@ -1949,11 +2111,11 @@ export default function Catalog() {
                   onClick={() => setActiveTab("subclass")}
                   type="button"
                 >
-                  {form.productType === "PewPew" && "📐 PewPew Specs"}
-                  {form.productType === "Optic" && "🔭 Optical Specs"}
-                  {form.productType === "Suppressor" && "🤫 Suppressor Specs"}
-                  {form.productType === "PewPewLight" && "🔦 Light Specs"}
-                  {form.productType === "Security" && "🛡️ Security Specs"}
+                  {form.productType === "PewPew" && "PewPew Specs"}
+                  {form.productType === "Optic" && "Optical Specs"}
+                  {form.productType === "Suppressor" && "Suppressor Specs"}
+                  {form.productType === "PewPewLight" && "Light Specs"}
+                  {form.productType === "Security" && "Security Specs"}
                 </button>
               )}
 
@@ -1999,12 +2161,11 @@ export default function Catalog() {
                         }
                         disabled={isEditMode}
                       >
-                        <option value="Product">Base Product (Generic)</option>
-                        <option value="PewPew">PewPew</option>
-                        <option value="Optic">Optic / Scope</option>
-                        <option value="Suppressor">Suppressor</option>
-                        <option value="PewPewLight">PewPew Light</option>
-                        <option value="Security">Security</option>
+                        {productTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
                       </select>
                     </div>
 

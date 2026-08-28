@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Chambered.Api.Models;
 using Chambered.Data;
 using Chambered.Data.Enums;
 using Chambered.Data.Models;
@@ -108,5 +109,25 @@ public class ProductsController : ODataControllerBase<Product, int>
     public IActionResult GetSuppressorMaterials()
     {
         return Ok(GetEnumValues<SuppressorMaterial>());
+    }
+
+    /// <summary>
+    /// Gets the list of available product types, including the base Product type and all of its derived subclasses.
+    /// </summary>
+    /// <returns>A list of product type names.</returns>
+    [HttpGet]
+    [ProducesResponseType(typeof(ODataValue<string>), StatusCodes.Status200OK)]
+    public ActionResult<IEnumerable<string>> GetProductTypes()
+    {
+        var baseType = typeof(Product);
+        var types = System.Reflection.Assembly.GetAssembly(baseType)!
+            .GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && (t == baseType || t.IsSubclassOf(baseType)))
+            .Select(t => t.Name)
+            .OrderBy(name => name == "Product" ? 0 : 1)
+            .ThenBy(name => name)
+            .ToList();
+
+        return Ok(types);
     }
 }

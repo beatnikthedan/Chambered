@@ -34,6 +34,7 @@ namespace Chambered.Api.Configuration
             productColl.Function("GetPewPewCategories").ReturnsCollection<EnumDto>();
             productColl.Function("GetSuppressorAttachmentTypes").ReturnsCollection<EnumDto>();
             productColl.Function("GetSuppressorMaterials").ReturnsCollection<EnumDto>();
+            productColl.Function("GetProductTypes").ReturnsCollection<string>();
 
             switch (apiVersion.MajorVersion)
             {
