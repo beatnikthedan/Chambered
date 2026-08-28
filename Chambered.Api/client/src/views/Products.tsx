@@ -5,6 +5,7 @@ import { useStore } from "../StoreContext";
 import "./Products.css";
 import SubmitButton from "../components/SubmitButton";
 import ProductDocumentsTable from "../components/ProductDocumentsTable";
+import ProductCard from "../Cards/ProductCard";
 
 import {
   useGetProducts,
@@ -132,46 +133,6 @@ const extractSpecifications = (product: any): Record<string, any> => {
   return specs;
 };
 
-function ProductListCard({
-  p,
-  isSelected,
-  onClick,
-}: {
-  p: ExtendedProduct;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const imageUrl = p.coverImageId
-    ? `/api/v1/ProductDocuments/${p.coverImageId}/Download`
-    : null;
-  const blobUrl = useSecureImage(imageUrl);
-
-  return (
-    <div
-      className={`catalog-list-card ${isSelected ? "selected" : ""}`}
-      onClick={onClick}
-      style={{
-        backgroundImage: blobUrl
-          ? `linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.85)), url(${blobUrl})`
-          : undefined,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        transition: "all 0.2s ease-in-out",
-      }}
-    >
-      <span className="card-badge">{p.productType}</span>
-      <span className="mfg-tag">{p.manufacturerName}</span>
-      <h4>{p.name}</h4>
-      <span className="sku-part-info">
-        PN: {p.partNumber || "None"} | SKU: {p.sku || "None"}
-      </span>
-      <p className="card-desc-preview">
-        {p.description || "No model description loaded."}
-      </p>
-    </div>
-  );
-}
-
 export default function Products() {
   const queryClient = useQueryClient();
   const store = useStore();
@@ -192,11 +153,13 @@ export default function Products() {
       "manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber",
   });
 
-  const { data: manufacturersData, isLoading: mfgsLoading } = useGetManufacturers();
+  const { data: manufacturersData, isLoading: mfgsLoading } =
+    useGetManufacturers();
   const { data: calibersData, isLoading: calibersLoading } = useGetCalibers();
 
   // Selected records
-  const [selectedProduct, setSelectedProduct] = useState<ExtendedProduct | null>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<ExtendedProduct | null>(null);
 
   // Fetch documents for the selected product to populate cover image selector
   const { data: selectedProductDocsData } =
@@ -224,7 +187,9 @@ export default function Products() {
   const [activeTab, setActiveTab] = useState<string>("general"); // 'general' | 'subclass' | 'specifications'
 
   // Dynamic specifications key-value editor local state
-  const [customSpecs, setCustomSpecs] = useState<{ key: string; value: string }[]>([]);
+  const [customSpecs, setCustomSpecs] = useState<
+    { key: string; value: string }[]
+  >([]);
 
   // Search & Sorting popovers active states
   const [showFilterPopover, setShowFilterPopover] = useState<boolean>(false);
@@ -285,15 +250,18 @@ export default function Products() {
   const lightMountTypes = enums?.lightMountTypes || [];
   const lockTypes = enums?.lockTypes || [];
 
-  const documentTypes = useMemo(() => [
-    { id: "0", name: "UserManual" },
-    { id: "1", name: "Schematic" },
-    { id: "2", name: "Warranty" },
-    { id: "3", name: "Invoice" },
-    { id: "4", name: "Receipt" },
-    { id: "5", name: "ProductImage" },
-    { id: "6", name: "Other" }
-  ], []);
+  const documentTypes = useMemo(
+    () => [
+      { id: "0", name: "UserManual" },
+      { id: "1", name: "Schematic" },
+      { id: "2", name: "Warranty" },
+      { id: "3", name: "Invoice" },
+      { id: "4", name: "Receipt" },
+      { id: "5", name: "ProductImage" },
+      { id: "6", name: "Other" },
+    ],
+    [],
+  );
 
   // Edit/Create Form State
   const [form, setForm] = useState<ProductForm>({
@@ -997,9 +965,7 @@ export default function Products() {
                               );
                             }}
                           />
-                          <span>
-                            {type === "Product" ? "General" : type}
-                          </span>
+                          <span>{type === "Product" ? "General" : type}</span>
                         </label>
                       ))}
                     </div>
@@ -1244,9 +1210,7 @@ export default function Products() {
                       <td className="text-muted text-mono">
                         {p.partNumber || "N/A"}
                       </td>
-                      <td className="text-muted text-mono">
-                        {p.sku || "N/A"}
-                      </td>
+                      <td className="text-muted text-mono">{p.sku || "N/A"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1256,9 +1220,8 @@ export default function Products() {
             /* CARD VIEW MODE */
             <div className="split-view-cards-grid">
               {processedProducts.map((p) => (
-                <ProductListCard
-                  key={p.id}
-                  p={p}
+                <ProductCard
+                  item={p}
                   isSelected={selectedProduct?.id === p.id}
                   onClick={() => setSelectedProduct(p)}
                 />
@@ -1302,9 +1265,7 @@ export default function Products() {
                   const csvContent = [
                     headers.join(","),
                     ...rows.map((e) =>
-                      e
-                        .map((val) => `"${val.replace(/"/g, '""')}"`)
-                        .join(","),
+                      e.map((val) => `"${val.replace(/"/g, '""')}"`).join(","),
                     ),
                   ].join("\n");
                   const blob = new Blob([csvContent], {
@@ -1718,7 +1679,9 @@ export default function Products() {
                           </option>
                           {productDocuments
                             .filter((doc) => {
-                              const typeStr = String(doc.type || "").toLowerCase();
+                              const typeStr = String(
+                                doc.type || "",
+                              ).toLowerCase();
                               if (
                                 typeStr === "productimage" ||
                                 typeStr === "6" ||
@@ -2307,7 +2270,10 @@ export default function Products() {
                       maxHeight: "550px",
                     }}
                   >
-                    <ProductDocumentsTable productId={form.id} readOnly={false} />
+                    <ProductDocumentsTable
+                      productId={form.id}
+                      readOnly={false}
+                    />
                   </div>
                 )}
 
