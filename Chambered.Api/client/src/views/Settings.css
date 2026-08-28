@@ -74,32 +74,6 @@
   border-radius: var(--radius-sm);
 }
 
-.settings-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  font-size: 13px;
-}
-
-.settings-table th,
-.settings-table td {
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border-solid);
-}
-
-.settings-table th {
-  background: var(--bg-input);
-  font-family: var(--font-heading);
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-
-.settings-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.01);
-}
 
 .text-bold {
   font-weight: 600;

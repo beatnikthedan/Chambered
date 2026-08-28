@@ -6,30 +6,28 @@
  * OpenAPI spec version: 1.0
  */
 import type { ArmoryItem } from './armoryItem';
-import type { Document } from './document';
 import type { Manufacturer } from './manufacturer';
+import type { ProductDocument } from './productDocument';
 
 export interface Product {
   /** @nullable */
   name?: string | null;
   /** @nullable */
   description?: string | null;
+  manufacturerId?: number;
+  manufacturer?: Manufacturer;
   /** @nullable */
   productType?: string | null;
   /** @nullable */
   partNumber?: string | null;
   /** @nullable */
   sku?: string | null;
-  manufacturerId?: number;
-  manufacturer?: Manufacturer;
   /** @nullable */
   webPageUrl?: string | null;
   /** @nullable */
-  imageData?: string | null;
+  coverImageId?: number | null;
   /** @nullable */
-  imageContentType?: string | null;
-  /** @nullable */
-  documents?: Document[] | null;
+  productDocuments?: ProductDocument[] | null;
   id?: number;
   /** @nullable */
   created?: string | null;

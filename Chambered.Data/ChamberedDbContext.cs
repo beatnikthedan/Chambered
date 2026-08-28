@@ -1,6 +1,5 @@
 using BeatnikToolKit.EntityFramework.Utility;
 using Chambered.Data.Enums;
-using Chambered.Data.Interfaces;
 using Chambered.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +20,6 @@ namespace Chambered.Data
         public DbSet<ArmoryItem> ArmoryItems { get; set; }
         public DbSet<Arsenal> Arsenals { get; set; }
         public DbSet<Caliber> Calibers { get; set; }
-        public DbSet<Document> Documents { get; set; }
         public DbSet<Manufacturer> Manufacturers { get; set; }
 
 
@@ -42,7 +40,8 @@ namespace Chambered.Data
 
 
 
-
+        public DbSet<ProductDocument> ProductDocuments { get; set; }
+        public DbSet<ArmoryItemDocument> ArmoryItemDocuments { get; set; }
 
 
 
@@ -108,8 +107,8 @@ namespace Chambered.Data
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
             configurationBuilder.Properties<ActionType>().HaveConversion<int>();
+            configurationBuilder.Properties<ArmoryItemDocumentType>().HaveConversion<int>();
             configurationBuilder.Properties<BatteryType>().HaveConversion<int>();
-            configurationBuilder.Properties<DocumentType>().HaveConversion<int>();
             configurationBuilder.Properties<ItemCondition>().HaveConversion<int>();
             configurationBuilder.Properties<LaserColor>().HaveConversion<int>();
             configurationBuilder.Properties<LightMountType>().HaveConversion<int>();
@@ -119,6 +118,7 @@ namespace Chambered.Data
             configurationBuilder.Properties<OpticReticle>().HaveConversion<int>();
             configurationBuilder.Properties<OpticType>().HaveConversion<int>();
             configurationBuilder.Properties<PewPewCategory>().HaveConversion<int>();
+            configurationBuilder.Properties<ProductDocumentType>().HaveConversion<int>();
             configurationBuilder.Properties<SuppressorAttachmentType>().HaveConversion<int>();
             configurationBuilder.Properties<SuppressorMaterial>().HaveConversion<int>();
             configurationBuilder.Properties<VaultCategory>().HaveConversion<int>();

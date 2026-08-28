@@ -34,5 +34,5 @@ export interface Manufacturer {
   /** @nullable */
   modifiedBy?: string | null;
   /** @nullable */
-  product?: Product[] | null;
+  products?: Product[] | null;
 }

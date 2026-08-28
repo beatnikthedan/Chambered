@@ -403,23 +403,6 @@
   color: var(--text-secondary);
 }
 
-.attachments-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.attachments-table th, .attachments-table td {
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-solid);
-}
-
-.attachments-table th {
-  color: var(--text-secondary);
-  font-weight: 600;
-  background-color: #17181f;
-}
 
 .clickable-attachment-link {
   color: var(--color-primary);
@@ -503,29 +486,6 @@
   font-weight: 600;
 }
 
-/* Technical Ammo loads configuration table */
-.lots-compact-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  border: 1px solid var(--border-solid);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.lots-compact-table th, .lots-compact-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-solid);
-}
-
-.lots-compact-table th {
-  background-color: #17181f;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.05em;
-}
 
 .lot-row-notes-tag {
   background-color: rgba(255, 255, 255, 0.05);
@@ -686,33 +646,6 @@
   font-size: 11px;
 }
 
-.tasks-master-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.tasks-master-table th, .tasks-master-table td {
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-solid);
-}
-
-.tasks-master-table th {
-  background-color: #17181f;
-  color: var(--text-secondary);
-}
-
-.task-row-checkbox {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.tasks-master-table tr.completed .task-text-cell {
-  text-decoration: line-through;
-  color: var(--text-muted);
-}
 
 /* Expandable range shot accordion lists */
 .range-history-panel-scroll {

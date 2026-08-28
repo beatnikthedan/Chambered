@@ -8,11 +8,14 @@ using Chambered.Api.Swagger;
 using Chambered.Core.Security;
 using Chambered.Core.Services;
 using Chambered.Data;
+using Chambered.Data.Enums;
+using Chambered.Data.Models;
 using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Extensions;
 using Chambered.Infrastructure.Services;
 using Chambered.Infrastructure.Services.BackupServices;
 using Chambered.Infrastructure.Services.EmailServices;
+using Chambered.Infrastructure.Services.FileStorageRepositories;
 using Chambered.Infrastructure.Services.Identity;
 using Chambered.Infrastructure.Services.NotificationServices;
 using Microsoft.AspNetCore.HttpLogging;
@@ -130,6 +133,13 @@ builder.Services.AddControllers(options =>
         options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
     });
 
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
+
 builder.Services.AddHttpLogging(l =>
 {
     l.LoggingFields = HttpLoggingFields.All;
@@ -228,7 +238,20 @@ builder.Services.AddScoped<IBackupService, SqliteBackupService>();
 
 builder.Services.AddHostedService<BackupSchedulerWorker>();
 
+builder.Services.Configure<FileStorageConfiguration>(builder.Configuration.GetSection(nameof(FileStorageConfiguration)));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<FileStorageConfiguration>>().Value);
+builder.Services.AddScoped<LocalFileStorageRepository>();
+builder.Services.AddScoped<S3FileStorageRepository>();
+builder.Services.AddScoped<IFileStorageRepository>(sp =>
+{
+    var config = sp.GetRequiredService<FileStorageConfiguration>();
+    return config.Provider == StorageProviderType.S3
+        ? sp.GetRequiredService<S3FileStorageRepository>()
+        : sp.GetRequiredService<LocalFileStorageRepository>();
+});
 
+builder.Services.AddScoped<IDocumentService<ProductDocument, ProductDocumentType>, ProductDocumentService>();
+builder.Services.AddScoped<IDocumentService<ArmoryItemDocument, ArmoryItemDocumentType>, ArmoryItemDocumentService>();
 
 // Configure decoupled favicon retrieval service
 builder.Services.AddHttpClient<IFaveIconService, FaveIconService>();
@@ -310,6 +333,7 @@ await app.ApplyMigrations<ChamberedDbContext>(async services =>
 //     }
 // });
 
+app.UseResponseCompression();
 app.UseRouting();
 
 app.UseAuthentication();

@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Asp.Versioning.OData;
+using Chambered.Api.Dto;
 using Chambered.Api.Models;
 using Chambered.Data.Models;
 using Microsoft.OData.ModelBuilder;
@@ -34,7 +35,6 @@ namespace Chambered.Api.Configuration
                         armoryItem.Property(a => a.Name).IsRequired();
                         armoryItem.Property(a => a.Name).MaxLength = 100;
                         armoryItem.Property(a => a.Description).MaxLength = 500;
-                        armoryItem.Property(a => a.ImageUrl).MaxLength = 2048;
                         armoryItem.Property(a => a.NotesMarkdown).MaxLength = 2048;
 
                         var pewArmory = builder.EntityType<PewArmoryItem>();

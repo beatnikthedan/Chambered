@@ -7,9 +7,9 @@
  */
 import type { ArmoryItem } from './armoryItem';
 import type { BatteryType } from './batteryType';
-import type { Document } from './document';
 import type { LockType } from './lockType';
 import type { Manufacturer } from './manufacturer';
+import type { ProductDocument } from './productDocument';
 
 export interface Security {
   lockType?: LockType;
@@ -21,19 +21,17 @@ export interface Security {
   name?: string | null;
   /** @nullable */
   description?: string | null;
+  manufacturerId?: number;
   /** @nullable */
   productType?: string | null;
   /** @nullable */
   partNumber?: string | null;
   /** @nullable */
   sku?: string | null;
-  manufacturerId?: number;
   /** @nullable */
   webPageUrl?: string | null;
   /** @nullable */
-  imageData?: string | null;
-  /** @nullable */
-  imageContentType?: string | null;
+  coverImageId?: number | null;
   id?: number;
   /** @nullable */
   created?: string | null;
@@ -45,7 +43,7 @@ export interface Security {
   modifiedBy?: string | null;
   manufacturer?: Manufacturer;
   /** @nullable */
-  documents?: Document[] | null;
+  productDocuments?: ProductDocument[] | null;
   /** @nullable */
   armoryItems?: ArmoryItem[] | null;
 }

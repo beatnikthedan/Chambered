@@ -131,23 +131,14 @@ namespace Chambered.Data.Models
 
         #endregion
 
-        #region Supplemental Notes & Media
-
-        /// <summary>
-        /// Gets or sets the image URL for the specific individual item photo.
-        /// </summary>
-        public string? ImageUrl { get; set; }
-
         /// <summary>
         /// Gets or sets Markdown-formatted custom user notes, modification history, or build details.
         /// </summary>
         public string? NotesMarkdown { get; set; }
 
-        #endregion
-
         #region Entity Relationships
 
-        //public ICollection<Accessory> Accessories { get; set; } = new List<Accessory>();
+        public ICollection<ArmoryItemDocument> ArmoryItemDocuments { get; set; } = new List<ArmoryItemDocument>();
         //public ICollection<MaintenanceLog> MaintenanceLogs { get; set; } = new List<MaintenanceLog>();
         //public ICollection<RangeSessionLog> RangeLogs { get; set; } = new List<RangeSessionLog>();
 

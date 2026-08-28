@@ -45,7 +45,7 @@ export default function ImportExportSettings({ usersList = [], store = {} }) {
         </div>
       ) : (
         <div className="table-container">
-          <table className="settings-table">
+          <table className="app-table">
             <thead>
               <tr>
                 <th>Arsenal Name</th>

@@ -25,6 +25,7 @@
     <ProjectReference Include="..\Chambered.Core\Chambered.Core.csproj" />
     <ProjectReference Include="..\Chambered.Infrastructure\Chambered.Infrastructure.csproj" />
     <ProjectReference Include="..\Chambered.Api\Chambered.Api.csproj" />
+    <ProjectReference Include="..\BeatnikToolKit.EntityFramework\BeatnikToolKit.EntityFramework.csproj" />
   </ItemGroup>
 
 </Project>

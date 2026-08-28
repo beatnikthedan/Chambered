@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Asp.Versioning.OData;
+using Chambered.Api.Dto;
 using Chambered.Api.Models;
 using Chambered.Data.Models;
 using Microsoft.OData.ModelBuilder;
@@ -33,6 +34,7 @@ namespace Chambered.Api.Configuration
             productColl.Function("GetPewPewCategories").ReturnsCollection<EnumDto>();
             productColl.Function("GetSuppressorAttachmentTypes").ReturnsCollection<EnumDto>();
             productColl.Function("GetSuppressorMaterials").ReturnsCollection<EnumDto>();
+            productColl.Function("GetProductTypes").ReturnsCollection<string>();
 
             switch (apiVersion.MajorVersion)
             {
@@ -47,7 +49,8 @@ namespace Chambered.Api.Configuration
                         product.Property(p => p.PartNumber).MaxLength = 100;
                         product.Property(p => p.Sku).MaxLength = 50;
                         product.Property(p => p.WebPageUrl).MaxLength = 2048;
-                        product.Property(p => p.ImageContentType).MaxLength = 100;
+                        product.Property(p => p.CoverImageId);
+                        product.Ignore(p => p.CoverImage);
 
                         var optic = builder.EntityType<Optic>();
                         optic.Property(o => o.MinMagnification).Precision = 2;

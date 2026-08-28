@@ -106,6 +106,17 @@ public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) 
 
         _db.Entry(existing).CurrentValues.SetValues(update);
 
+        // Reset read-only after save properties (such as the discriminator "ItemType") to prevent EF Core from throwing
+        foreach (var property in _db.Entry(existing).Properties)
+        {
+            var behavior = property.Metadata.GetAfterSaveBehavior();
+            if (behavior != Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Save || property.Metadata.Name == "ItemType")
+            {
+                property.CurrentValue = property.OriginalValue;
+                property.IsModified = false;
+            }
+        }
+
         await UpdateRelationsAsync(existing, update);
 
         try
@@ -229,7 +240,21 @@ public abstract class ODataControllerBase<TEntity, TKey>(ChamberedDbContext db) 
                 var incomingRef = incomingReferenceEntry.CurrentValue;
                 if (incomingRef == null)
                 {
-                    referenceEntry.CurrentValue = null;
+                    // Only set the navigation reference to null if there is no foreign key or if the foreign key itself is null
+                    var foreignKey = (referenceEntry.Metadata as INavigation)?.ForeignKey;
+                    if (foreignKey != null)
+                    {
+                        var fkProp = foreignKey.Properties[0].Name;
+                        var incomingFkValue = updateEntry.Property(fkProp).CurrentValue;
+                        if (incomingFkValue == null)
+                        {
+                            referenceEntry.CurrentValue = null;
+                        }
+                    }
+                    else
+                    {
+                        referenceEntry.CurrentValue = null;
+                    }
                 }
                 else
                 {

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { ArmoryItem as __ArmoryItem } from './armoryItem';
+import type { ArmoryItemDocument } from './armoryItemDocument';
 import type { Arsenal } from './arsenal';
 import type { ChamberedUser } from './chamberedUser';
 import type { ItemCondition } from './itemCondition';
@@ -40,9 +41,9 @@ export interface ArmoryItem {
   /** @nullable */
   parentItemId?: number | null;
   /** @nullable */
-  imageUrl?: string | null;
-  /** @nullable */
   notesMarkdown?: string | null;
+  /** @nullable */
+  armoryItemDocuments?: ArmoryItemDocument[] | null;
   id?: number;
   /** @nullable */
   created?: string | null;

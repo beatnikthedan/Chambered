@@ -1,12 +1,13 @@
 using Chambered.Data.Enums;
 using Chambered.Data.Interfaces;
+using Chambered.Data.Relationships;
 
 namespace Chambered.Data.Models
 {
     /// <summary>
     /// Represents a specific product line or catalog entry offered by a manufacturer.
     /// </summary>
-    public class Product : ModelBase<int>, IItemIdentifier
+    public class Product : ModelBase<int>, IItemIdentifier, IHasManufacturer
     {
         #region IItemIdentifier
 
@@ -15,6 +16,16 @@ namespace Chambered.Data.Models
 
         /// <inheritdoc/>
         public string? Description { get; set; } = string.Empty;
+
+        #endregion
+
+        #region IHasManufacturer
+
+        /// <inheritdoc/>
+        public int ManufacturerId { get; set; }
+
+        /// <inheritdoc/>
+        public Manufacturer Manufacturer { get; set; } = null!;
 
         #endregion
 
@@ -36,14 +47,9 @@ namespace Chambered.Data.Models
         public string? Sku { get; set; }
 
         /// <summary>
-        /// Gets or sets the foreign key for the manufacturer.
+        /// Gets or sets the manufacturer web page URL for this product catalog reference.
         /// </summary>
-        public int ManufacturerId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the navigation property for the manufacturer.
-        /// </summary>
-        public Manufacturer Manufacturer { get; set; } = null!;
+        public string? WebPageUrl { get; set; }
 
         #endregion
 
@@ -56,35 +62,22 @@ namespace Chambered.Data.Models
 
         #endregion
 
-        #region External Links & Reference
-
-        /// <summary>
-        /// Gets or sets the official manufacturer web page URL.
-        /// </summary>
-        public string? WebPageUrl { get; set; }
-
-        #endregion
-
-        #region Embedded Media
-
-        /// <summary>
-        /// Gets or sets raw image binary data for the product preview image (stored offline).
-        /// </summary>
-        public byte[]? ImageData { get; set; }
-
-        /// <summary>
-        /// Gets or sets the MIME content type for the embedded image (e.g., "image/jpeg", "image/png").
-        /// </summary>
-        public string? ImageContentType { get; set; }
-
-        #endregion
-
         #region Navigation Properties
+
+        /// <summary>
+        /// Gets or sets the foreign key of the selected secure cover image.
+        /// </summary>
+        public int? CoverImageId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the navigation property of the selected secure cover image.
+        /// </summary>
+        public virtual ProductDocument? CoverImage { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of embedded offline reference documents (manuals, diagrams, etc.).
         /// </summary>
-        public ICollection<Document> Documents { get; set; } = new List<Document>();
+        public ICollection<ProductDocument> ProductDocuments { get; set; } = new List<ProductDocument>();
 
         /// <summary>
         /// Gets or sets individual inventory items belonging to this firearm model.

@@ -180,7 +180,7 @@ export default function ApiKeysSettings({ usersList = [] }) {
         </div>
       ) : (
         <div className="table-container">
-          <table className="settings-table">
+          <table className="app-table">
             <thead>
               <tr>
                 <th>Key Name</th>

@@ -211,26 +211,149 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   GLOBAL CHAMEBRED MODALS & SPA FORM STYLES (DRY & DYNAMIC)
-   ========================================================================== */
+    GLOBAL CHAMEBRED MODALS & SPA FORM STYLES (DRY & DYNAMIC)
+    ========================================================================== */
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+.theme-stealth {
+  --bg-main: #1e2026;
+  --bg-panel: #282c34;
+  --bg-sidebar: #282c34;
+  --bg-input: #2e333d;
+  --bg-card: #25272f;
+  --bg-modal: #1a1b20;
+
+  --color-primary: #61afef;
+  --color-primary-hover: #4897fb;
+  --color-accent: #e5c07b;
+  --color-danger: #f06345;
+  --color-success: #4cd6b9;
+
+  --text-primary: #dcdfe4;
+  --text-secondary: #abb2bf;
+  --text-muted: #5c6370;
+
+  --border-light: rgba(93, 107, 131, 0.2);
+  --border-glow: rgba(97, 175, 239, 0.25);
+  --border-solid: #3e4451;
+}
+
+.theme-goldstandard {
+  --bg-main: #1a1a1a;
+  --bg-panel: #1e1e1e;
+  --bg-sidebar: #1e1e1e;
+  --bg-input: #2d2d2d;
+  --bg-card: #1e1e1e;
+  --bg-modal: #161616;
+
+  --color-primary: #f5d261;
+  --color-primary-hover: #e8c44d;
+  --color-accent: #e8a04c;
+  --color-danger: #7c7c7c;
+  --color-success: #f5d261;
+
+  --text-primary: #cccccc;
+  --text-secondary: #999999;
+  --text-muted: #7c7c7c;
+
+  --border-light: rgba(180, 180, 180, 0.08);
+  --border-glow: rgba(245, 210, 97, 0.3);
+  --border-solid: #2d2d2d;
+}
+
+.theme-tactical {
+  --bg-main: #151920;
+  --bg-panel: #1a202c;
+  --bg-sidebar: #1a202c;
+  --bg-input: #232836;
+  --bg-card: #181c29;
+  --bg-modal: #12151b;
+
+  --color-primary: #4fd1c5;
+  --color-primary-hover: #38b2ac;
+  --color-accent: #60a5fa;
+  --color-danger: #fc8181;
+  --color-success: #4fd1c5;
+
+  --text-primary: #e2e8f0;
+  --text-secondary: #cbd5e1;
+  --text-muted: #6b7280;
+
+  --border-light: rgba(93, 107, 131, 0.15);
+  --border-glow: rgba(79, 209, 197, 0.3);
+  --border-solid: #2d3748;
+}
+
+.theme-west {
+  --bg-main: #3d2e2a;
+  --bg-panel: #4a3a35;
+  --bg-sidebar: #4a3a35;
+  --bg-input: #52403b;
+  --bg-card: #3d2e2a;
+  --bg-modal: #2f2320;
+
+  --color-primary: #8b7355;
+  --color-primary-hover: #9c8166;
+  --color-accent: #6b5542;
+  --color-danger: #a95e50;
+  --color-success: #8b7355;
+
+  --text-primary: #f5e6d3;
+  --text-secondary: #d4c4af;
+  --text-muted: #a39182;
+
+  --border-light: rgba(139, 115, 85, 0.15);
+  --border-glow: rgba(139, 115, 85, 0.4);
+  --border-solid: #52403b;
+}
+
+.theme-grayman {
+  --bg-main: #2a2a2a;
+  --bg-panel: #333333;
+  --bg-sidebar: #333333;
+  --bg-input: #3c3c3c;
+  --bg-card: #252525;
+  --bg-modal: #1a1a1a;
+
+  --color-primary: #8c8c8c;
+  --color-primary-hover: #999999;
+  --color-accent: #666666;
+  --color-danger: #5a5a5a;
+  --color-success: #7c7c7c;
+
+  --text-primary: #d0d0d0;
+  --text-secondary: #999999;
+  --text-muted: #666666;
+
+  --border-light: rgba(140, 140, 140, 0.08);
+  --border-glow: rgba(140, 140, 140, 0.3);
+  --border-solid: #3c3c3c;
+}
+
+.theme-hunter {
+  --bg-main: #2d3a2e;
+  --bg-panel: #354438;
+  --bg-sidebar: #354438;
+  --bg-input: #404f42;
+  --bg-card: #2d3a2e;
+  --bg-modal: #1e2722;
+
+  --color-primary: #6b8c55;
+  --color-primary-hover: #7aa366;
+  --color-accent: #4f6348;
+  --color-danger: #a95e50;
+  --color-success: #5a7a4d;
+
+  --text-primary: #e8f0e0;
+  --text-secondary: #b8c8b8;
+  --text-muted: #7a8e7a;
+
+  --border-light: rgba(107, 140, 85, 0.12);
+  --border-glow: rgba(107, 140, 85, 0.35);
+  --border-solid: #404f42;
 }
 
 /* 
-   Single unified layout style for all modal boxes across views.
+    Single unified layout style for all modal boxes across views.
    Using 'height: auto' allows the modal to shrink to fit the content,
    while 'max-height' prevents the modal from overflowing the screen.
 */
@@ -431,6 +554,7 @@ input:focus, select:focus, textarea:focus {
 
 .item-card-actions,
 .vault-card-actions,
+.product-card-actions,
 .card-footer {
   display: flex;
   gap: 10px;
@@ -438,3 +562,53 @@ input:focus, select:focus, textarea:focus {
   padding-top: 12px;
   border-top: 1px solid var(--border-solid);
 }
+
+/* ==========================================================================
+   UNIFIED APP TABLE COMPONENT SYSTEM
+   ========================================================================== */
+
+.app-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.app-table th,
+.app-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-solid);
+}
+
+.app-table th {
+  background: var(--bg-input);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.app-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+/* Row interaction variants */
+.app-table tr.table-row-item {
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.app-table tr.table-row-item:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.app-table tr.table-row-item.selected {
+  background-color: rgba(240, 98, 146, 0.04);
+}
+
+.app-table tr.table-row-item.selected .bold-name-cell {
+  color: var(--color-primary);
+}
+
