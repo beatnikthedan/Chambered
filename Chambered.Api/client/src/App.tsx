@@ -19,7 +19,8 @@ import Settings from "./views/Settings";
 import Login from "./views/Login";
 import PlaceholderView from "./views/PlaceholderView";
 import Vaults from "./views/Vaults";
-import Catalog from "./views/Catalog";
+import Products from "./views/Products";
+import Manufacturers from "./views/Manufacturers";
 
 // Route guarding components
 import { ARSENAL_ICONS } from "./components/ArsenalIcons";
@@ -75,7 +76,8 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
   const [showAccountModal, setShowAccountModal] = useState<boolean>(false);
-  const [showArsenalDropdown, setShowArsenalDropdown] = useState<boolean>(false);
+  const [showArsenalDropdown, setShowArsenalDropdown] =
+    useState<boolean>(false);
   const [showThemeMenu, setShowThemeMenu] = useState<boolean>(false);
 
   const activeArsenal = store.arsenals.find(
@@ -101,8 +103,10 @@ export default function App() {
         return "Chambered Armory";
       case "/munitions":
         return "Chambered Munitions";
-      case "/catalog":
-        return "Product Catalog";
+      case "/catalog/products":
+        return "Products Catalog";
+      case "/catalog/manufacturers":
+        return "Product Manufacturers";
       case "/settings":
         return "System Settings";
       default:
@@ -420,7 +424,7 @@ export default function App() {
             <hr className="sidebar-divider" />
             <div className="nav-group">
               <Link
-                to="/catalog"
+                to="/catalog/products"
                 className={`nav-item ${location.pathname.startsWith("/catalog") ? "active" : ""}`}
                 title="Catalog"
               >
@@ -432,11 +436,12 @@ export default function App() {
                 location.pathname.startsWith("/catalog") && (
                   <div className="nav-sub-items">
                     <Link
-                      to="/catalog"
-                      className={`sub-nav-item ${location.pathname === "/catalog" || location.pathname === "/catalog/products" ? "active" : ""}`}
+                      to="/catalog/products"
+                      className={`sub-nav-item ${location.pathname === "/catalog/products" ? "active" : ""}`}
                     >
                       <span className="sub-text">Products</span>
                     </Link>
+
                     <Link
                       to="/catalog/manufacturers"
                       className={`sub-nav-item ${location.pathname === "/catalog/manufacturers" ? "active" : ""}`}
@@ -643,7 +648,9 @@ export default function App() {
                       />
                     ) : (
                       <div className="user-initials-avatar">
-                        {store.user.username ? store.user.username[0].toUpperCase() : ""}
+                        {store.user.username
+                          ? store.user.username[0].toUpperCase()
+                          : ""}
                       </div>
                     )}
                   </button>
@@ -676,7 +683,9 @@ export default function App() {
                               className="large-modal-avatar user-initials-avatar"
                               style={{ fontSize: "24px" }}
                             >
-                              {store.user.username ? store.user.username[0].toUpperCase() : ""}
+                              {store.user.username
+                                ? store.user.username[0].toUpperCase()
+                                : ""}
                             </div>
                           )}
                           <div className="avatar-explain">
@@ -839,14 +848,24 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
-                path="/catalog/*"
+                path="/catalog/products"
                 element={
                   <ProtectedRoute>
-                    <Catalog />
+                    <Products />
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/catalog/manufacturers"
+                element={
+                  <ProtectedRoute>
+                    <Manufacturers />
+                  </ProtectedRoute>
+                }
+              />
+
 
               {/* Guest Route */}
               <Route

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStore } from "../StoreContext";
-import "./Catalog.css";
+import "./Products.css";
 import SubmitButton from "../components/SubmitButton";
 import ProductDocumentsTable from "../components/ProductDocumentsTable";
 
@@ -12,11 +12,7 @@ import {
   usePatchProductsFromKey,
   useDeleteProductsFromKey,
   useGetManufacturers,
-  usePostManufacturers,
-  usePutManufacturersFromKey,
-  useDeleteManufacturersFromKey,
   useGetCalibers,
-  useGetManufacturersFaviconFromKey,
   useGetProductsArmoryItemsFromKey,
   useGetProductsProductDocumentsFromKey,
   useGetProductsProductTypes,
@@ -31,18 +27,6 @@ interface ExtendedProduct extends Omit<Product, "productType"> {
   manufacturerName: string;
   caliberName: string;
   [key: string]: any;
-}
-
-interface MfgForm {
-  id: number;
-  name: string;
-  webPageUrl: string;
-  phoneNumber: string;
-  streetAddress: string;
-  city: string;
-  stateOrProvince: string;
-  postalCode: string;
-  country: string;
 }
 
 interface ProductForm {
@@ -148,7 +132,7 @@ const extractSpecifications = (product: any): Record<string, any> => {
   return specs;
 };
 
-function CatalogListCard({
+function ProductListCard({
   p,
   isSelected,
   onClick,
@@ -157,7 +141,9 @@ function CatalogListCard({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  const imageUrl = p.coverImageId ? `/api/v1/ProductDocuments/${p.coverImageId}/Download` : null;
+  const imageUrl = p.coverImageId
+    ? `/api/v1/ProductDocuments/${p.coverImageId}/Download`
+    : null;
   const blobUrl = useSecureImage(imageUrl);
 
   return (
@@ -186,9 +172,7 @@ function CatalogListCard({
   );
 }
 
-export default function Catalog() {
-  const location = useLocation();
-  const navigate = useNavigate();
+export default function Products() {
   const queryClient = useQueryClient();
   const store = useStore();
   const { enums } = store || {};
@@ -197,8 +181,6 @@ export default function Catalog() {
   const productTypes = useMemo(() => {
     return productTypesData?.data?.value || [];
   }, [productTypesData]);
-
-  const isManufacturersPage = location.pathname.includes("/manufacturers");
 
   // Fetch collections via Orval
   const {
@@ -210,29 +192,19 @@ export default function Catalog() {
       "manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber",
   });
 
-  const {
-    data: manufacturersData,
-    isLoading: mfgsLoading,
-    error: mfgsError,
-  } = useGetManufacturers();
-
+  const { data: manufacturersData, isLoading: mfgsLoading } = useGetManufacturers();
   const { data: calibersData, isLoading: calibersLoading } = useGetCalibers();
 
   // Selected records
-  const [selectedProduct, setSelectedProduct] =
-    useState<ExtendedProduct | null>(null);
-  const [selectedMfg, setSelectedMfg] = useState<Manufacturer | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ExtendedProduct | null>(null);
 
   // Fetch documents for the selected product to populate cover image selector
-  const { data: selectedProductDocsData } = useGetProductsProductDocumentsFromKey(
-    selectedProduct?.id || 0,
-    undefined,
-    {
+  const { data: selectedProductDocsData } =
+    useGetProductsProductDocumentsFromKey(selectedProduct?.id || 0, undefined, {
       query: {
         enabled: !!selectedProduct?.id && selectedProduct.id > 0,
       },
-    }
-  );
+    });
 
   const productDocumentsRaw = selectedProductDocsData?.data;
   const productDocuments = useMemo(() => {
@@ -243,25 +215,20 @@ export default function Catalog() {
 
   // Layout View Modes ("table" or "card")
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
-  const [mfgViewMode, setMfgViewMode] = useState<"table" | "card">("table");
 
   // Interaction State (Modal overlays replace inline isEditing)
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [showMfgModal, setShowMfgModal] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("general"); // 'general' | 'subclass' | 'specifications'
 
   // Dynamic specifications key-value editor local state
-  const [customSpecs, setCustomSpecs] = useState<
-    { key: string; value: string }[]
-  >([]);
+  const [customSpecs, setCustomSpecs] = useState<{ key: string; value: string }[]>([]);
 
   // Search & Sorting popovers active states
   const [showFilterPopover, setShowFilterPopover] = useState<boolean>(false);
   const [showSortPopover, setShowSortPopover] = useState<boolean>(false);
-  const [showMfgSortPopover, setShowMfgSortPopover] = useState<boolean>(false);
 
   // Base Data arrays
   const productsList = useMemo(
@@ -272,25 +239,6 @@ export default function Catalog() {
     () => (manufacturersData?.data?.value || []) as Manufacturer[],
     [manufacturersData],
   );
-
-  const relatedProducts = useMemo(() => {
-    if (!selectedMfg) return [];
-    return productsList
-      .filter((p) => p.manufacturerId === selectedMfg.id)
-      .map((p) => {
-        let type = p.productType;
-        if (!type && p["@odata.type"]) {
-          const parts = p["@odata.type"].split(".");
-          type = parts[parts.length - 1];
-        }
-        if (!type) type = "Product";
-        return {
-          ...p,
-          productType: type,
-        } as ExtendedProduct;
-      });
-  }, [productsList, selectedMfg]);
-
   const calibersList = useMemo(
     () => (calibersData?.data?.value || []) as Caliber[],
     [calibersData],
@@ -299,21 +247,13 @@ export default function Catalog() {
   // References for clicks outside popovers
   const filterRef = useRef<HTMLDivElement | null>(null);
   const sortRef = useRef<HTMLDivElement | null>(null);
-  const mfgSortRef = useRef<HTMLDivElement | null>(null);
 
   // Search, Sorters & Filters state
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedTypeFilters, setSelectedTypeFilters] = useState<string[]>([]);
   const [selectedMfgFilters, setSelectedMfgFilters] = useState<number[]>([]);
   const [sortKey, setSortKey] = useState<string>("name");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); // "asc" | "desc"
-
-  // Manufacturers search/sort
-  const [mfgSearchTerm, setMfgSearchTerm] = useState<string>("");
-  const [mfgSortKey, setMfgSortKey] = useState<string>("name");
-  const [mfgSortDirection, setMfgSortDirection] = useState<"asc" | "desc">(
-    "asc",
-  );
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Quick Add state
   const [quickAddType, setQuickAddType] = useState<string>("Product");
@@ -344,6 +284,16 @@ export default function Catalog() {
   const laserColors = enums?.laserColors || [];
   const lightMountTypes = enums?.lightMountTypes || [];
   const lockTypes = enums?.lockTypes || [];
+
+  const documentTypes = useMemo(() => [
+    { id: "0", name: "UserManual" },
+    { id: "1", name: "Schematic" },
+    { id: "2", name: "Warranty" },
+    { id: "3", name: "Invoice" },
+    { id: "4", name: "Receipt" },
+    { id: "5", name: "ProductImage" },
+    { id: "6", name: "Other" }
+  ], []);
 
   // Edit/Create Form State
   const [form, setForm] = useState<ProductForm>({
@@ -386,26 +336,11 @@ export default function Catalog() {
     coverImageId: null,
   });
 
-  const [mfgForm, setMfgForm] = useState<MfgForm>({
-    id: 0,
-    name: "",
-    webPageUrl: "",
-    phoneNumber: "",
-    streetAddress: "",
-    city: "",
-    stateOrProvince: "",
-    postalCode: "",
-    country: "",
-  });
-
   // Query Related Physical Armory Items for Product Bottom-Right Panel
   const { data: relatedArmoryItemsData, isLoading: relatedArmoryItemsLoading } =
     useGetProductsArmoryItemsFromKey(selectedProduct?.id || 0, undefined, {
       query: {
-        enabled:
-          !isManufacturersPage &&
-          !!selectedProduct?.id &&
-          selectedProduct.id > 0,
+        enabled: !!selectedProduct?.id && selectedProduct.id > 0,
       },
     });
 
@@ -459,93 +394,6 @@ export default function Catalog() {
     },
   });
 
-  const createMfgMutation = usePostManufacturers({
-    mutation: {
-      onSuccess: (res) => {
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/Manufacturers"] });
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-        setIsSaving(false);
-        if (res?.data) {
-          const newMfg = res.data;
-          setSelectedMfg(newMfg);
-          setMfgForm((prev) => ({
-            ...prev,
-            id: newMfg.id,
-          }));
-        }
-      },
-      onError: (err: any) => {
-        alert(
-          "Failed to create manufacturer: " + (err?.message || "Unknown error"),
-        );
-        setIsSaving(false);
-      },
-    },
-  });
-
-  const updateMfgMutation = usePutManufacturersFromKey({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/Manufacturers"] });
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-        setIsSaving(false);
-      },
-      onError: (err: any) => {
-        alert(
-          "Failed to save manufacturer: " + (err?.message || "Unknown error"),
-        );
-        setIsSaving(false);
-      },
-    },
-  });
-
-  const deleteMfgMutation = useDeleteManufacturersFromKey({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/Manufacturers"] });
-        setSelectedMfg(null);
-      },
-      onError: (err: any) =>
-        alert(
-          "Failed to delete manufacturer: " + (err?.message || "Unknown error"),
-        ),
-    },
-  });
-
-  const ManufacturerFavicon = ({ mfgId }: { mfgId?: number }) => {
-    const { data, isLoading, isError } = useGetManufacturersFaviconFromKey(
-      mfgId || 0,
-      undefined,
-      {
-        query: {
-          retry: false,
-          staleTime: 24 * 60 * 60 * 1000,
-          enabled: !!mfgId,
-        },
-      },
-    );
-
-    if (isLoading) {
-      return <span className="mfg-favicon-placeholder loading" />;
-    }
-
-    if (isError || !data?.data?.base64Data) {
-      return <span className="mfg-favicon-placeholder text-icon">🏢</span>;
-    }
-
-    const { base64Data, contentType } = data.data;
-
-    return (
-      <img
-        src={`data:${contentType};base64,${base64Data}`}
-        alt="Logo"
-        className="mfg-favicon-img"
-      />
-    );
-  };
-
   // Handle outside clicks for popovers
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -554,12 +402,6 @@ export default function Catalog() {
       }
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
         setShowSortPopover(false);
-      }
-      if (
-        mfgSortRef.current &&
-        !mfgSortRef.current.contains(e.target as Node)
-      ) {
-        setShowMfgSortPopover(false);
       }
     };
     document.addEventListener("click", handleOutsideClick);
@@ -657,65 +499,12 @@ export default function Catalog() {
     sortDirection,
   ]);
 
-  // Process and sort manufacturers list
-  const processedManufacturers = useMemo(() => {
-    let result = [...manufacturersList];
-
-    // Search filter
-    if (mfgSearchTerm.trim() !== "") {
-      const search = mfgSearchTerm.toLowerCase();
-      result = result.filter(
-        (m) =>
-          m.name!.toLowerCase().includes(search) ||
-          (m.city && m.city.toLowerCase().includes(search)) ||
-          (m.country && m.country.toLowerCase().includes(search)),
-      );
-    }
-
-    // Sorting
-    result.sort((a, b) => {
-      let valA = "";
-      let valB = "";
-
-      if (mfgSortKey === "name") {
-        valA = a.name!.toLowerCase();
-        valB = b.name!.toLowerCase();
-      } else if (mfgSortKey === "city") {
-        valA = (a.city || "").toLowerCase();
-        valB = (b.city || "").toLowerCase();
-      } else if (mfgSortKey === "country") {
-        valA = (a.country || "").toLowerCase();
-        valB = (b.country || "").toLowerCase();
-      }
-
-      if (valA < valB) return mfgSortDirection === "asc" ? -1 : 1;
-      if (valA > valB) return mfgSortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return result;
-  }, [manufacturersList, mfgSearchTerm, mfgSortKey, mfgSortDirection]);
-
   // Automatically select first item if none is selected
   useEffect(() => {
-    if (
-      !selectedProduct &&
-      processedProducts.length > 0 &&
-      !isManufacturersPage
-    ) {
+    if (!selectedProduct && processedProducts.length > 0) {
       setSelectedProduct(processedProducts[0]);
     }
-  }, [processedProducts, selectedProduct, isManufacturersPage]);
-
-  useEffect(() => {
-    if (
-      !selectedMfg &&
-      processedManufacturers.length > 0 &&
-      isManufacturersPage
-    ) {
-      setSelectedMfg(processedManufacturers[0]);
-    }
-  }, [processedManufacturers, selectedMfg, isManufacturersPage]);
+  }, [processedProducts, selectedProduct]);
 
   // Sync selectedProduct with the fresh data from the list
   useEffect(() => {
@@ -732,22 +521,6 @@ export default function Catalog() {
       }
     }
   }, [processedProducts, selectedProduct]);
-
-  // Sync selectedMfg with the fresh data from the list
-  useEffect(() => {
-    if (selectedMfg && processedManufacturers.length > 0) {
-      const freshMfg = processedManufacturers.find(
-        (m) => m.id === selectedMfg.id,
-      );
-      if (freshMfg) {
-        if (freshMfg !== selectedMfg) {
-          setSelectedMfg(freshMfg);
-        }
-      } else {
-        setSelectedMfg(processedManufacturers[0] || null);
-      }
-    }
-  }, [processedManufacturers, selectedMfg]);
 
   // Sync custom specifications editor
   useEffect(() => {
@@ -853,7 +626,6 @@ export default function Catalog() {
     setIsEditMode(true);
     setActiveTab("general");
 
-    // Map specifications dictionary into customSpecs array for the editor
     const specs = extractSpecifications(selectedProduct);
     const specsArray = Object.entries(specs).map(([key, value]) => ({
       key,
@@ -903,41 +675,6 @@ export default function Catalog() {
     setShowModal(true);
   };
 
-  // Switch right panel to editing mode with a blank manufacturer
-  const startAddMfg = () => {
-    setIsEditMode(false);
-    setMfgForm({
-      id: 0,
-      name: "",
-      webPageUrl: "",
-      phoneNumber: "",
-      streetAddress: "",
-      city: "",
-      stateOrProvince: "",
-      postalCode: "",
-      country: "",
-    });
-    setShowMfgModal(true);
-  };
-
-  // Switch right panel to editing mode with selected manufacturer
-  const startEditMfg = () => {
-    if (!selectedMfg) return;
-    setIsEditMode(true);
-    setMfgForm({
-      id: selectedMfg.id || 0,
-      name: selectedMfg.name || "",
-      webPageUrl: selectedMfg.webPageUrl || "",
-      phoneNumber: selectedMfg.phoneNumber || "",
-      streetAddress: selectedMfg.streetAddress || "",
-      city: selectedMfg.city || "",
-      stateOrProvince: selectedMfg.stateOrProvince || "",
-      postalCode: selectedMfg.postalCode || "",
-      country: selectedMfg.country || "",
-    });
-    setShowMfgModal(true);
-  };
-
   const buildProductPayload = (targetForm: ProductForm) => {
     const type = targetForm.productType || "Product";
     const payload: any = {};
@@ -949,10 +686,13 @@ export default function Catalog() {
     payload.name = targetForm.name || "";
     payload.partNumber = targetForm.partNumber || "";
     payload.sku = targetForm.sku || "";
-    payload.manufacturerId = parseInt(targetForm.manufacturerId as string, 10) || 0;
+    payload.manufacturerId =
+      parseInt(targetForm.manufacturerId as string, 10) || 0;
     payload.description = targetForm.description || null;
     payload.webPageUrl = targetForm.webPageUrl || null;
-    payload.coverImageId = targetForm.coverImageId ? parseInt(targetForm.coverImageId as any, 10) : null;
+    payload.coverImageId = targetForm.coverImageId
+      ? parseInt(targetForm.coverImageId as any, 10)
+      : null;
 
     if (targetForm.specifications) {
       Object.entries(targetForm.specifications).forEach(([key, value]) => {
@@ -978,7 +718,9 @@ export default function Catalog() {
       payload.tubeDiameter = targetForm.tubeDiameter || null;
       payload.isIlluminated = !!targetForm.isIlluminated;
       payload.hasBattery = !!targetForm.hasBattery;
-      payload.batteryType = targetForm.hasBattery ? targetForm.batteryType : null;
+      payload.batteryType = targetForm.hasBattery
+        ? targetForm.batteryType
+        : null;
     } else if (type === "Suppressor") {
       payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
       payload.threadPitch = targetForm.threadPitch || null;
@@ -1108,36 +850,6 @@ export default function Catalog() {
     }
   };
 
-  const handleSaveMfg = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!mfgForm.name.trim()) return;
-
-    setIsSaving(true);
-    const payload = {
-      id: mfgForm.id || 0,
-      name: mfgForm.name || "",
-      webPageUrl: mfgForm.webPageUrl || null,
-      phoneNumber: mfgForm.phoneNumber || null,
-      streetAddress: mfgForm.streetAddress || null,
-      city: mfgForm.city || null,
-      stateOrProvince: mfgForm.stateOrProvince || null,
-      postalCode: mfgForm.postalCode || null,
-      country: mfgForm.country || null,
-    };
-
-    try {
-      if (mfgForm.id > 0) {
-        await updateMfgMutation.mutateAsync({ key: mfgForm.id, data: payload });
-        setSelectedMfg(payload);
-      } else {
-        await createMfgMutation.mutateAsync({ data: payload });
-      }
-    } catch (err) {
-      console.error(err);
-      setIsSaving(false);
-    }
-  };
-
   const handleDeleteProduct = () => {
     if (!selectedProduct?.id) return;
     if (
@@ -1149,19 +861,7 @@ export default function Catalog() {
     }
   };
 
-  const handleDeleteMfg = () => {
-    if (!selectedMfg?.id) return;
-    if (
-      window.confirm(
-        `Are you sure you want to permanently delete manufacturer "${selectedMfg.name}"?`,
-      )
-    ) {
-      deleteMfgMutation.mutate({ key: selectedMfg.id });
-    }
-  };
-
   // Helper labels & display
-
   const renderSubAttributesText = (p: ExtendedProduct) => {
     if (p.productType === "PewPew") {
       return `Category: ${p.pewPewCategory || "N/A"} | Caliber: ${p.caliberName || "Unknown"} | Action: ${p.actionType || "N/A"}`;
@@ -1232,16 +932,14 @@ export default function Catalog() {
     );
   };
 
-  // LOADING STATES
   if (productsLoading || mfgsLoading || calibersLoading) {
     return <div className="loading-state">Loading catalog data...</div>;
   }
 
-  if (productsError || mfgsError) {
+  if (productsError) {
     return (
       <div className="error-alert">
-        Error loading catalog:{" "}
-        {(productsError as any)?.message || (mfgsError as any)?.message}
+        Error loading catalog: {(productsError as any)?.message}
       </div>
     );
   }
@@ -1255,442 +953,322 @@ export default function Catalog() {
           <div className="search-filters-group">
             <input
               type="text"
-              placeholder={
-                isManufacturersPage
-                  ? "Search manufacturers by name or location..."
-                  : "Search model, SKU, or manufacturer..."
-              }
+              placeholder="Search model, SKU, or manufacturer..."
               className="search-input"
-              value={isManufacturersPage ? mfgSearchTerm : searchTerm}
-              onChange={(e) =>
-                isManufacturersPage
-                  ? setMfgSearchTerm(e.target.value)
-                  : setSearchTerm(e.target.value)
-              }
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
 
-            {!isManufacturersPage ? (
-              <>
-                {/* ADVANCED FILTER BUTTON */}
-                <div className="popover-wrapper" ref={filterRef}>
-                  <button
-                    className={`control-popover-btn ${selectedTypeFilters.length > 0 || selectedMfgFilters.length > 0 ? "active-filters" : ""}`}
-                    onClick={() => setShowFilterPopover(!showFilterPopover)}
-                  >
-                    Filter
-                    {selectedTypeFilters.length + selectedMfgFilters.length >
-                      0 && (
-                      <span className="filter-badge">
-                        {selectedTypeFilters.length + selectedMfgFilters.length}
-                      </span>
-                    )}
-                  </button>
-                  {showFilterPopover && (
-                    <div className="abs-popover-panel filter-popover">
-                      <div className="popover-sec">
-                        <h5>Product Types</h5>
-                        <div className="options-grid">
-                          {[
-                            "PewPew",
-                            "Optic",
-                            "Suppressor",
-                            "PewPewLight",
-                            "Security",
-                            "Product",
-                          ].map((type) => (
-                            <label key={type} className="popover-checkbox">
-                              <input
-                                type="checkbox"
-                                checked={selectedTypeFilters.includes(type)}
-                                onChange={() => {
-                                  setSelectedTypeFilters((prev) =>
-                                    prev.includes(type)
-                                      ? prev.filter((t) => t !== type)
-                                      : [...prev, type],
-                                  );
-                                }}
-                              />
-                              <span>
-                                {type === "Product" ? "General" : type}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="popover-sec">
-                        <h5>Manufacturers</h5>
-                        <div className="options-grid scrollable-options">
-                          {manufacturersList.map((m) => (
-                            <label key={m.id} className="popover-checkbox">
-                              <input
-                                type="checkbox"
-                                checked={selectedMfgFilters.includes(m.id!)}
-                                onChange={() => {
-                                  setSelectedMfgFilters((prev) =>
-                                    prev.includes(m.id!)
-                                      ? prev.filter((id) => id !== m.id)
-                                      : [...prev, m.id!],
-                                  );
-                                }}
-                              />
-                              <span>{m.name}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="popover-actions">
-                        <button
-                          className="clear-btn"
-                          onClick={() => {
-                            setSelectedTypeFilters([]);
-                            setSelectedMfgFilters([]);
-                            setSearchTerm("");
-                          }}
-                        >
-                          Clear All
-                        </button>
-                        <button
-                          className="close-btn"
-                          onClick={() => setShowFilterPopover(false)}
-                        >
-                          Apply
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              /* MANUFACTURERS SORT BUTTON */
-              <div className="popover-wrapper" ref={mfgSortRef}>
-                <button
-                  className="control-popover-btn"
-                  onClick={() => setShowMfgSortPopover(!showMfgSortPopover)}
-                >
-                  ⇅ Sort ({mfgSortKey})
-                </button>
-                {showMfgSortPopover && (
-                  <div className="abs-popover-panel sort-popover">
-                    <div className="popover-sec">
-                      <h5>Sort By</h5>
-                      {["name", "city", "country"].map((key) => (
-                        <button
-                          key={key}
-                          className={`sort-option-btn ${mfgSortKey === key ? "active" : ""}`}
-                          onClick={() => setMfgSortKey(key)}
-                        >
-                          {key.toUpperCase()}
-                        </button>
+            {/* ADVANCED FILTER BUTTON */}
+            <div className="popover-wrapper" ref={filterRef}>
+              <button
+                className={`control-popover-btn ${selectedTypeFilters.length > 0 || selectedMfgFilters.length > 0 ? "active-filters" : ""}`}
+                onClick={() => setShowFilterPopover(!showFilterPopover)}
+              >
+                Filter
+                {selectedTypeFilters.length + selectedMfgFilters.length > 0 && (
+                  <span className="filter-badge">
+                    {selectedTypeFilters.length + selectedMfgFilters.length}
+                  </span>
+                )}
+              </button>
+              {showFilterPopover && (
+                <div className="abs-popover-panel filter-popover">
+                  <div className="popover-sec">
+                    <h5>Product Types</h5>
+                    <div className="options-grid">
+                      {[
+                        "PewPew",
+                        "Optic",
+                        "Suppressor",
+                        "PewPewLight",
+                        "Security",
+                        "Product",
+                      ].map((type) => (
+                        <label key={type} className="popover-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedTypeFilters.includes(type)}
+                            onChange={() => {
+                              setSelectedTypeFilters((prev) =>
+                                prev.includes(type)
+                                  ? prev.filter((t) => t !== type)
+                                  : [...prev, type],
+                              );
+                            }}
+                          />
+                          <span>
+                            {type === "Product" ? "General" : type}
+                          </span>
+                        </label>
                       ))}
                     </div>
-                    <div className="popover-divider"></div>
-                    <div className="popover-sec">
-                      <h5>Direction</h5>
-                      <div className="btn-group-toggle">
-                        <button
-                          className={`direction-btn ${mfgSortDirection === "asc" ? "active" : ""}`}
-                          onClick={() => setMfgSortDirection("asc")}
-                        >
-                          Ascending (A-Z)
-                        </button>
-                        <button
-                          className={`direction-btn ${mfgSortDirection === "desc" ? "active" : ""}`}
-                          onClick={() => setMfgSortDirection("desc")}
-                        >
-                          Descending (Z-A)
-                        </button>
-                      </div>
+                  </div>
+                  <div className="popover-sec">
+                    <h5>Manufacturers</h5>
+                    <div className="options-grid scrollable-options">
+                      {manufacturersList.map((m) => (
+                        <label key={m.id} className="popover-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedMfgFilters.includes(m.id!)}
+                            onChange={() => {
+                              setSelectedMfgFilters((prev) =>
+                                prev.includes(m.id!)
+                                  ? prev.filter((id) => id !== m.id)
+                                  : [...prev, m.id!],
+                              );
+                            }}
+                          />
+                          <span>{m.name}</span>
+                        </label>
+                      ))}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+                  <div className="popover-actions">
+                    <button
+                      className="clear-btn"
+                      onClick={() => {
+                        setSelectedTypeFilters([]);
+                        setSelectedMfgFilters([]);
+                        setSearchTerm("");
+                      }}
+                    >
+                      Clear All
+                    </button>
+                    <button
+                      className="close-btn"
+                      onClick={() => setShowFilterPopover(false)}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* VIEW SWITCHER & ADD BUTTONS */}
           <div className="actions-right-group">
             <div className="view-mode-toggle">
               <button
-                className={`toggle-icon-btn ${(isManufacturersPage ? mfgViewMode : viewMode) === "table" ? "active" : ""}`}
-                onClick={() =>
-                  isManufacturersPage
-                    ? setMfgViewMode("table")
-                    : setViewMode("table")
-                }
+                className={`toggle-icon-btn ${viewMode === "table" ? "active" : ""}`}
+                onClick={() => setViewMode("table")}
                 title="Table View"
               >
                 List
               </button>
               <button
-                className={`toggle-icon-btn ${(isManufacturersPage ? mfgViewMode : viewMode) === "card" ? "active" : ""}`}
-                onClick={() =>
-                  isManufacturersPage
-                    ? setMfgViewMode("card")
-                    : setViewMode("card")
-                }
+                className={`toggle-icon-btn ${viewMode === "card" ? "active" : ""}`}
+                onClick={() => setViewMode("card")}
                 title="Card View"
               >
                 Cards
               </button>
             </div>
 
-            <button
-              className="add-master-btn"
-              onClick={isManufacturersPage ? startAddMfg : startAddProduct}
-            >
-              Add {isManufacturersPage ? "Manufacturer" : "Product"}
+            <button className="add-master-btn" onClick={startAddProduct}>
+              Add Product
             </button>
           </div>
         </div>
 
         {/* MASTER LIST CONTENT CONTAINER */}
         <div className="master-list-scroller">
-          {!isManufacturersPage ? (
-            /* PRODUCTS SUBPAGE */
-            processedProducts.length === 0 ? (
-              <div className="empty-state">
-                No matching catalog products found.
-              </div>
-            ) : viewMode === "table" ? (
-              <>
-                {/* QUICK ADD ROW */}
-                <div className="quick-add-container">
-                  <span className="quick-add-label">QUICK ADD</span>
-                  <form className="quick-add-form" onSubmit={handleQuickAddSave}>
-                    <select
-                      className="quick-add-select"
-                      value={quickAddType}
-                      onChange={(e) => setQuickAddType(e.target.value)}
-                    >
-                      {productTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      className="quick-add-select"
-                      value={quickAddMfgId}
-                      onChange={(e) => setQuickAddMfgId(e.target.value)}
-                    >
-                      <option value="">-- Select Manufacturer --</option>
-                      {manufacturersList.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    <input
-                      type="text"
-                      className="quick-add-input"
-                      placeholder="Model Name"
-                      value={quickAddModel}
-                      onChange={(e) => setQuickAddModel(e.target.value)}
-                    />
-
-                    <input
-                      type="text"
-                      className="quick-add-input"
-                      placeholder="Part Number"
-                      value={quickAddPartNo}
-                      onChange={(e) => setQuickAddPartNo(e.target.value)}
-                    />
-
-                    <SubmitButton
-                      isSaving={isQuickSaving}
-                      saveSuccess={quickSaveSuccess}
-                      isEditMode={false}
-                      createLabel="Save"
-                      style={{ height: "38px" }}
-                    />
-                  </form>
-                </div>
-
-                <table className="app-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: "40px" }}></th>
-                      <th
-                        onClick={() => handleHeaderSort("type")}
-                        style={{ cursor: "pointer", userSelect: "none", textAlign: "center" }}
-                      >
-                        Type {sortKey === "type" && (sortDirection === "asc" ? " ▲" : " ▼")}
-                      </th>
-                      <th
-                        onClick={() => handleHeaderSort("manufacturer")}
-                        style={{ cursor: "pointer", userSelect: "none" }}
-                      >
-                        Manufacturer {sortKey === "manufacturer" && (sortDirection === "asc" ? " ▲" : " ▼")}
-                      </th>
-                      <th
-                        onClick={() => handleHeaderSort("name")}
-                        style={{ cursor: "pointer", userSelect: "none" }}
-                      >
-                        Model Name {sortKey === "name" && (sortDirection === "asc" ? " ▲" : " ▼")}
-                      </th>
-                      <th
-                        onClick={() => handleHeaderSort("partNumber")}
-                        style={{ cursor: "pointer", userSelect: "none" }}
-                      >
-                        Part Number {sortKey === "partNumber" && (sortDirection === "asc" ? " ▲" : " ▼")}
-                      </th>
-                      <th
-                        onClick={() => handleHeaderSort("sku")}
-                        style={{ cursor: "pointer", userSelect: "none" }}
-                      >
-                        SKU {sortKey === "sku" && (sortDirection === "asc" ? " ▲" : " ▼")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {processedProducts.map((p) => (
-                      <tr
-                        key={p.id}
-                        className={`table-row-item ${selectedProduct?.id === p.id ? "selected" : ""}`}
-                        onClick={() => {
-                          setSelectedProduct(p);
-                        }}
-                      >
-                        <td style={{ width: "40px", verticalAlign: "middle", textAlign: "center" }}>
-                          {p.coverImageId ? (
-                            <SecureImage
-                              src={`/api/v1/ProductDocuments/${p.coverImageId}/Download`}
-                              alt={p.name}
-                              style={{
-                                width: "28px",
-                                height: "28px",
-                                objectFit: "cover",
-                                borderRadius: "4px",
-                                border: "1px solid var(--border-color)",
-                                backgroundColor: "var(--bg-input)",
-                              }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                width: "28px",
-                                height: "28px",
-                                borderRadius: "4px",
-                                border: "1px solid var(--border-color)",
-                                backgroundColor: "transparent",
-                                boxSizing: "border-box",
-                              }}
-                            />
-                          )}
-                        </td>
-                        <td className="type-badge-cell" style={{ verticalAlign: "middle", textAlign: "center" }}>
-                          <span
-                            className={`type-badge ${p.productType.toLowerCase()}`}
-                          >
-                            {p.productType}
-                          </span>
-                        </td>
-                        <td>{p.manufacturerName}</td>
-                        <td className="bold-name-cell">{p.name}</td>
-                        <td className="text-muted text-mono">{p.partNumber || "N/A"}</td>
-                        <td className="text-muted text-mono">{p.sku || "N/A"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </>
-            ) : (
-              /* CARD VIEW MODE */
-              <div className="split-view-cards-grid">
-                {processedProducts.map((p) => (
-                  <CatalogListCard
-                    key={p.id}
-                    p={p}
-                    isSelected={selectedProduct?.id === p.id}
-                    onClick={() => setSelectedProduct(p)}
-                  />
-                ))}
-              </div>
-            )
-          ) : /* MANUFACTURERS SUBPAGE */
-          processedManufacturers.length === 0 ? (
-            <div className="empty-state">No matching manufacturers found.</div>
-          ) : mfgViewMode === "table" ? (
-            <table className="app-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>City / State</th>
-                  <th>Country</th>
-                  <th>Contact Phone</th>
-                </tr>
-              </thead>
-              <tbody>
-                {processedManufacturers.map((m) => (
-                  <tr
-                    key={m.id}
-                    className={`table-row-item ${selectedMfg?.id === m.id ? "selected" : ""}`}
-                    onClick={() => {
-                      setSelectedMfg(m);
-                    }}
+          {processedProducts.length === 0 ? (
+            <div className="empty-state">
+              No matching catalog products found.
+            </div>
+          ) : viewMode === "table" ? (
+            <>
+              {/* QUICK ADD ROW */}
+              <div className="quick-add-container">
+                <span className="quick-add-label">QUICK ADD</span>
+                <form className="quick-add-form" onSubmit={handleQuickAddSave}>
+                  <select
+                    className="quick-add-select"
+                    value={quickAddType}
+                    onChange={(e) => setQuickAddType(e.target.value)}
                   >
-                    <td className="bold-name-cell">
-                      <div
+                    {productTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="quick-add-select"
+                    value={quickAddMfgId}
+                    onChange={(e) => setQuickAddMfgId(e.target.value)}
+                  >
+                    <option value="">-- Select Manufacturer --</option>
+                    {manufacturersList.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="text"
+                    className="quick-add-input"
+                    placeholder="Model Name"
+                    value={quickAddModel}
+                    onChange={(e) => setQuickAddModel(e.target.value)}
+                  />
+
+                  <input
+                    type="text"
+                    className="quick-add-input"
+                    placeholder="Part Number"
+                    value={quickAddPartNo}
+                    onChange={(e) => setQuickAddPartNo(e.target.value)}
+                  />
+
+                  <SubmitButton
+                    isSaving={isQuickSaving}
+                    saveSuccess={quickSaveSuccess}
+                    isEditMode={false}
+                    createLabel="Save"
+                    style={{ height: "38px" }}
+                  />
+                </form>
+              </div>
+
+              <table className="app-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "40px" }}></th>
+                    <th
+                      onClick={() => handleHeaderSort("type")}
+                      style={{
+                        cursor: "pointer",
+                        userSelect: "none",
+                        textAlign: "center",
+                      }}
+                    >
+                      Type{" "}
+                      {sortKey === "type" &&
+                        (sortDirection === "asc" ? " ▲" : " ▼")}
+                    </th>
+                    <th
+                      onClick={() => handleHeaderSort("manufacturer")}
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      Manufacturer{" "}
+                      {sortKey === "manufacturer" &&
+                        (sortDirection === "asc" ? " ▲" : " ▼")}
+                    </th>
+                    <th
+                      onClick={() => handleHeaderSort("name")}
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      Model Name{" "}
+                      {sortKey === "name" &&
+                        (sortDirection === "asc" ? " ▲" : " ▼")}
+                    </th>
+                    <th
+                      onClick={() => handleHeaderSort("partNumber")}
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      Part Number{" "}
+                      {sortKey === "partNumber" &&
+                        (sortDirection === "asc" ? " ▲" : " ▼")}
+                    </th>
+                    <th
+                      onClick={() => handleHeaderSort("sku")}
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      SKU{" "}
+                      {sortKey === "sku" &&
+                        (sortDirection === "asc" ? " ▲" : " ▼")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {processedProducts.map((p) => (
+                    <tr
+                      key={p.id}
+                      className={`table-row-item ${selectedProduct?.id === p.id ? "selected" : ""}`}
+                      onClick={() => setSelectedProduct(p)}
+                    >
+                      <td
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
+                          width: "40px",
+                          verticalAlign: "middle",
+                          textAlign: "center",
                         }}
                       >
-                        <ManufacturerFavicon mfgId={m.id} />
-                        <span>{m.name}</span>
-                      </div>
-                    </td>
-                    <td>
-                      {m.city || "N/A"}
-                      {m.stateOrProvince ? `, ${m.stateOrProvince}` : ""}
-                    </td>
-                    <td>{m.country || "N/A"}</td>
-                    <td className="text-mono">{m.phoneNumber || "N/A"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        {p.coverImageId ? (
+                          <SecureImage
+                            src={`/api/v1/ProductDocuments/${p.coverImageId}/Download`}
+                            alt={p.name}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              objectFit: "cover",
+                              borderRadius: "4px",
+                              border: "1px solid var(--border-color)",
+                              backgroundColor: "var(--bg-input)",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "4px",
+                              border: "1px solid var(--border-color)",
+                              backgroundColor: "transparent",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        )}
+                      </td>
+                      <td
+                        className="type-badge-cell"
+                        style={{
+                          verticalAlign: "middle",
+                          textAlign: "center",
+                        }}
+                      >
+                        <span
+                          className={`type-badge ${p.productType.toLowerCase()}`}
+                        >
+                          {p.productType}
+                        </span>
+                      </td>
+                      <td>{p.manufacturerName}</td>
+                      <td className="bold-name-cell">{p.name}</td>
+                      <td className="text-muted text-mono">
+                        {p.partNumber || "N/A"}
+                      </td>
+                      <td className="text-muted text-mono">
+                        {p.sku || "N/A"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           ) : (
-            /* MANUFACTURERS CARD VIEW */
+            /* CARD VIEW MODE */
             <div className="split-view-cards-grid">
-              {processedManufacturers.map((m) => (
-                <div
-                  key={m.id}
-                  className={`catalog-list-card ${selectedMfg?.id === m.id ? "selected" : ""}`}
-                  onClick={() => {
-                    setSelectedMfg(m);
-                  }}
-                >
-                  <h4>{m.name}</h4>
-                  <p className="mfg-details-meta">
-                    📍 {m.city || "Unknown City"}
-                    {m.country ? `, ${m.country}` : ""}
-                  </p>
-                  {m.phoneNumber && (
-                    <p className="mfg-details-meta">📞 {m.phoneNumber}</p>
-                  )}
-                  {m.webPageUrl && (
-                    <a
-                      href={m.webPageUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="card-link"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Visit Official Site →
-                    </a>
-                  )}
-                </div>
+              {processedProducts.map((p) => (
+                <ProductListCard
+                  key={p.id}
+                  p={p}
+                  isSelected={selectedProduct?.id === p.id}
+                  onClick={() => setSelectedProduct(p)}
+                />
               ))}
             </div>
           )}
         </div>
 
         {/* TABLE FOOTER ROW */}
-        {!isManufacturersPage && viewMode === "table" && productsList.length > 0 && (
+        {viewMode === "table" && productsList.length > 0 && (
           <div className="table-footer-row">
             <div>
               {processedProducts.length} of {productsList.length} products
@@ -1707,20 +1285,38 @@ export default function Catalog() {
                 type="button"
                 className="footer-btn"
                 onClick={() => {
-                  const headers = ["Type", "Manufacturer", "Model Name", "Part Number", "SKU"];
+                  const headers = [
+                    "Type",
+                    "Manufacturer",
+                    "Model Name",
+                    "Part Number",
+                    "SKU",
+                  ];
                   const rows = processedProducts.map((p) => [
                     p.productType,
                     p.manufacturerName,
                     p.name,
                     p.partNumber || "N/A",
-                    p.sku || "N/A"
+                    p.sku || "N/A",
                   ]);
-                  const csvContent = [headers.join(","), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(","))].join("\n");
-                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                  const csvContent = [
+                    headers.join(","),
+                    ...rows.map((e) =>
+                      e
+                        .map((val) => `"${val.replace(/"/g, '""')}"`)
+                        .join(","),
+                    ),
+                  ].join("\n");
+                  const blob = new Blob([csvContent], {
+                    type: "text/csv;charset=utf-8;",
+                  });
                   const url = URL.createObjectURL(blob);
                   const link = document.createElement("a");
                   link.setAttribute("href", url);
-                  link.setAttribute("download", `products_export_${new Date().toISOString().slice(0,10)}.csv`);
+                  link.setAttribute(
+                    "download",
+                    `products_export_${new Date().toISOString().slice(0, 10)}.csv`,
+                  );
                   link.style.visibility = "hidden";
                   document.body.appendChild(link);
                   link.click();
@@ -1738,132 +1334,35 @@ export default function Catalog() {
       <div className="right-pane-column">
         {/* TOP PANEL: PRIMARY SELECTED META DETAILS */}
         <div className="detail-panel">
-          {!isManufacturersPage ? (
-            /* ==================== PRODUCTS DETAIL PANEL ==================== */
-            !selectedProduct ? (
-              <div className="empty-detail-state">
-                <span className="icon">📦</span>
-                <h3>No Product Selected</h3>
-                <p>
-                  Select a product from the list on the left, or add a brand-new
-                  entry.
-                </p>
-                <button className="add-master-btn" onClick={startAddProduct}>
-                  + Add Product
-                </button>
-              </div>
-            ) : (
-              <div className="detail-view-container">
-                <div className="detail-panel-header">
-                  <span className="type-badge-pill">
-                    {selectedProduct.productType}
-                  </span>
-                  <div className="header-actions">
-                    <button
-                      className="btn btn-secondary edit-btn"
-                      onClick={startEditProduct}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn delete-btn"
-                      onClick={handleDeleteProduct}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                <div className="detail-view-body">
-                  {saveSuccess && (
-                    <div className="detail-save-toast">
-                      ✓ Product updated successfully
-                    </div>
-                  )}
-                  <span className="detail-mfg">
-                    {selectedProduct.manufacturerName}
-                  </span>
-                  <h2>{selectedProduct.name}</h2>
-                  <div className="text-mono detail-pn-sku">
-                    <span>Part No: {selectedProduct.partNumber || "None"}</span>
-                    <span>SKU: {selectedProduct.sku || "None"}</span>
-                  </div>
-
-                  <p className="detail-desc">
-                    {selectedProduct.description ||
-                      "No model description loaded for this product catalog asset."}
-                  </p>
-
-                  {selectedProduct.webPageUrl && (
-                    <a
-                      href={selectedProduct.webPageUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="external-site-link"
-                    >
-                      🌐 Open Official Website
-                    </a>
-                  )}
-
-                  <hr className="detail-divider" />
-
-                  {/* Subclass Specs Detail Block */}
-                  {selectedProduct.productType !== "Product" && (
-                    <div className="details-specs-block">
-                      <h3>Technical Details</h3>
-                      <p className="sub-specs-text">
-                        {renderSubAttributesText(selectedProduct)}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Specifications Key-Value Details */}
-                  {(() => {
-                    const specs = extractSpecifications(selectedProduct);
-                    return (
-                      Object.keys(specs).length > 0 && (
-                        <div className="details-specs-block">
-                          <h3>Manual Specifications</h3>
-                          <div className="specs-table">
-                            {Object.entries(specs).map(([key, value]) => (
-                              <div key={key} className="specs-table-row">
-                                <span className="key-col">{key}</span>
-                                <span className="val-col">{String(value)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    );
-                  })()}
-                </div>
-              </div>
-            )
-          ) : /* ==================== MANUFACTURERS DETAIL PANEL ==================== */
-          !selectedMfg ? (
+          {!selectedProduct ? (
             <div className="empty-detail-state">
-              <span className="icon">🏢</span>
-              <h3>No Manufacturer Selected</h3>
+              <span className="icon">📦</span>
+              <h3>No Product Selected</h3>
               <p>
-                Select a manufacturer from the list on the left, or add a
-                brand-new corporate record.
+                Select a product from the list on the left, or add a brand-new
+                entry.
               </p>
-              <button className="add-master-btn" onClick={startAddMfg}>
-                + Add Manufacturer
+              <button className="add-master-btn" onClick={startAddProduct}>
+                + Add Product
               </button>
             </div>
           ) : (
             <div className="detail-view-container">
               <div className="detail-panel-header">
-                <h3>Manufacturer Details</h3>
+                <span className="type-badge-pill">
+                  {selectedProduct.productType}
+                </span>
                 <div className="header-actions">
                   <button
                     className="btn btn-secondary edit-btn"
-                    onClick={startEditMfg}
+                    onClick={startEditProduct}
                   >
                     Edit
                   </button>
-                  <button className="btn delete-btn" onClick={handleDeleteMfg}>
+                  <button
+                    className="btn delete-btn"
+                    onClick={handleDeleteProduct}
+                  >
                     Delete
                   </button>
                 </div>
@@ -1872,196 +1371,132 @@ export default function Catalog() {
               <div className="detail-view-body">
                 {saveSuccess && (
                   <div className="detail-save-toast">
-                    ✓ Manufacturer updated successfully
+                    ✓ Product updated successfully
                   </div>
                 )}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    marginBottom: "16px",
-                  }}
-                >
-                  <ManufacturerFavicon mfgId={selectedMfg.id} />
-                  <h2 style={{ margin: 0 }}>{selectedMfg.name}</h2>
+                <span className="detail-mfg">
+                  {selectedProduct.manufacturerName}
+                </span>
+                <h2>{selectedProduct.name}</h2>
+                <div className="text-mono detail-pn-sku">
+                  <span>Part No: {selectedProduct.partNumber || "None"}</span>
+                  <span>SKU: {selectedProduct.sku || "None"}</span>
                 </div>
 
-                <div
-                  className="mfg-contact-details"
-                  style={{ fontSize: "14px", lineHeight: "1.6" }}
-                >
-                  {selectedMfg.webPageUrl && (
-                    <p style={{ margin: "6px 0" }}>
-                      <strong>Website:</strong>{" "}
-                      <a
-                        href={selectedMfg.webPageUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          color: "var(--primary-color)",
-                          textDecoration: "none",
-                        }}
-                      >
-                        {selectedMfg.webPageUrl}
-                      </a>
+                <p className="detail-desc">
+                  {selectedProduct.description ||
+                    "No model description loaded for this product catalog asset."}
+                </p>
+
+                {selectedProduct.webPageUrl && (
+                  <a
+                    href={selectedProduct.webPageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="external-site-link"
+                  >
+                    🌐 Open Official Website
+                  </a>
+                )}
+
+                <hr className="detail-divider" />
+
+                {/* Subclass Specs Detail Block */}
+                {selectedProduct.productType !== "Product" && (
+                  <div className="details-specs-block">
+                    <h3>Technical Details</h3>
+                    <p className="sub-specs-text">
+                      {renderSubAttributesText(selectedProduct)}
                     </p>
-                  )}
-                  {selectedMfg.phoneNumber && (
-                    <p style={{ margin: "6px 0" }}>
-                      <strong>Phone:</strong> {selectedMfg.phoneNumber}
-                    </p>
-                  )}
-                  {(selectedMfg.streetAddress ||
-                    selectedMfg.city ||
-                    selectedMfg.stateOrProvince ||
-                    selectedMfg.postalCode ||
-                    selectedMfg.country) && (
-                    <p style={{ margin: "12px 0 6px 0" }}>
-                      <strong>Corporate Headquarters:</strong>
-                      <br />
-                      <span style={{ color: "var(--text-muted)" }}>
-                        {selectedMfg.streetAddress && (
-                          <>
-                            {selectedMfg.streetAddress}
-                            <br />
-                          </>
-                        )}
-                        {selectedMfg.city}
-                        {selectedMfg.stateOrProvince
-                          ? `, ${selectedMfg.stateOrProvince}`
-                          : ""}{" "}
-                        {selectedMfg.postalCode}
-                        {selectedMfg.country && (
-                          <>
-                            <br />
-                            {selectedMfg.country}
-                          </>
-                        )}
-                      </span>
-                    </p>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {/* Specifications Key-Value Details */}
+                {(() => {
+                  const specs = extractSpecifications(selectedProduct);
+                  return (
+                    Object.keys(specs).length > 0 && (
+                      <div className="details-specs-block">
+                        <h3>Manual Specifications</h3>
+                        <div className="specs-table">
+                          {Object.entries(specs).map(([key, value]) => (
+                            <div key={key} className="specs-table-row">
+                              <span className="key-col">{key}</span>
+                              <span className="val-col">{String(value)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  );
+                })()}
               </div>
             </div>
           )}
         </div>
 
-        {/* BOTTOM PANEL: RELATED / MASTER-DETAIL NAVIGATION ITEMS */}
+        {/* BOTTOM PANEL: RELATED PHYSICAL INVENTORY ITEMS */}
         <div className="detail-panel">
-          {!isManufacturersPage ? (
-            /* ==================== RELATED PHYSICAL INVENTORY ITEMS ==================== */
-            !selectedProduct ? (
-              <div className="empty-detail-state">
-                <span className="icon">🛡️</span>
-                <h3>No Product Selected</h3>
-                <p>
-                  Select a product model to inspect physical armory inventory.
-                </p>
-              </div>
-            ) : (
-              <div className="detail-view-container">
-                <div className="detail-panel-header">
-                  <h3>Related Physical Items</h3>
-                </div>
-                {relatedArmoryItemsLoading ? (
-                  <div className="loading-state" style={{ padding: "20px 0" }}>
-                    Loading physical armory inventory...
-                  </div>
-                ) : !relatedArmoryItemsData?.data?.value ||
-                  relatedArmoryItemsData.data.value.length === 0 ? (
-                  <div className="empty-state" style={{ padding: "20px 0" }}>
-                    No physical instances registered in your armory for this
-                    model.
-                  </div>
-                ) : (
-                  <table className="app-table">
-                    <thead>
-                      <tr>
-                        <th>Serial Number</th>
-                        <th>Name / Nickname</th>
-                        <th>Condition</th>
-                        <th>Round Count</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(relatedArmoryItemsData.data.value || []).map(
-                        (item: any) => (
-                          <tr
-                            key={item.id}
-                            className="table-row-item"
-                            style={{ cursor: "default" }}
-                          >
-                            <td className="bold-name-cell">
-                              {item.serialNumber || "N/A"}
-                            </td>
-                            <td>{item.name || "N/A"}</td>
-                            <td>
-                              <span
-                                className={`badge item-badge-condition ${getConditionClass(item.condition)}`}
-                              >
-                                {item.condition}
-                              </span>
-                            </td>
-                            <td className="text-mono">
-                              {item.roundCount !== undefined
-                                ? item.roundCount
-                                : "—"}
-                            </td>
-                          </tr>
-                        ),
-                      )}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )
-          ) : /* ==================== RELATED PRODUCTS BY MANUFACTURER ==================== */
-          !selectedMfg ? (
+          {!selectedProduct ? (
             <div className="empty-detail-state">
-              <span className="icon">📦</span>
-              <h3>No Manufacturer Selected</h3>
-              <p>Select a manufacturer to inspect registered product models.</p>
+              <span className="icon">🛡️</span>
+              <h3>No Product Selected</h3>
+              <p>
+                Select a product model to inspect physical armory inventory.
+              </p>
             </div>
           ) : (
             <div className="detail-view-container">
               <div className="detail-panel-header">
-                <h3>Products by {selectedMfg.name}</h3>
+                <h3>Related Physical Items</h3>
               </div>
-
-              {relatedProducts.length === 0 ? (
+              {relatedArmoryItemsLoading ? (
+                <div className="loading-state" style={{ padding: "20px 0" }}>
+                  Loading physical armory inventory...
+                </div>
+              ) : !relatedArmoryItemsData?.data?.value ||
+                relatedArmoryItemsData.data.value.length === 0 ? (
                 <div className="empty-state" style={{ padding: "20px 0" }}>
-                  No products registered for this manufacturer.
+                  No physical instances registered in your armory for this
+                  model.
                 </div>
               ) : (
                 <table className="app-table">
                   <thead>
                     <tr>
-                      <th>Model Name</th>
-                      <th>Part Number</th>
-                      <th>Class Type</th>
+                      <th>Serial Number</th>
+                      <th>Name / Nickname</th>
+                      <th>Condition</th>
+                      <th>Round Count</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {relatedProducts.map((p) => (
-                      <tr
-                        key={p.id}
-                        className="table-row-item"
-                        style={{ cursor: "default" }}
-                      >
-                        <td className="bold-name-cell">{p.name}</td>
-                        <td className="bold-name-cell">
-                          {p.partNumber || "—"}
-                        </td>
-                        <td>
-                          <span
-                            className={`type-badge ${p.productType.toLowerCase()}`}
-                          >
-                            {p.productType}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {(relatedArmoryItemsData.data.value || []).map(
+                      (item: any) => (
+                        <tr
+                          key={item.id}
+                          className="table-row-item"
+                          style={{ cursor: "default" }}
+                        >
+                          <td className="bold-name-cell">
+                            {item.serialNumber || "N/A"}
+                          </td>
+                          <td>{item.name || "N/A"}</td>
+                          <td>
+                            <span
+                              className={`badge item-badge-condition ${getConditionClass(item.condition)}`}
+                            >
+                              {item.condition}
+                            </span>
+                          </td>
+                          <td className="text-mono">
+                            {item.roundCount !== undefined
+                              ? item.roundCount
+                              : "—"}
+                          </td>
+                        </tr>
+                      ),
+                    )}
                   </tbody>
                 </table>
               )}
@@ -2260,7 +1695,9 @@ export default function Catalog() {
                           onChange={(e) =>
                             setForm({
                               ...form,
-                              coverImageId: e.target.value ? parseInt(e.target.value, 10) : null,
+                              coverImageId: e.target.value
+                                ? parseInt(e.target.value, 10)
+                                : null,
                             })
                           }
                           style={{
@@ -2276,17 +1713,32 @@ export default function Catalog() {
                             boxSizing: "border-box",
                           }}
                         >
-                          <option value="">-- No Cover Image (Default Placeholder) --</option>
+                          <option value="">
+                            -- No Cover Image (Default Placeholder) --
+                          </option>
                           {productDocuments
                             .filter((doc) => {
                               const typeStr = String(doc.type || "").toLowerCase();
-                              if (typeStr === "productimage" || typeStr === "6" || typeStr === "5") return true;
-                              const opt = documentTypes.find(o => o.id === typeStr || o.name?.toLowerCase() === typeStr);
-                              return opt ? opt.name?.toLowerCase() === "productimage" : false;
+                              if (
+                                typeStr === "productimage" ||
+                                typeStr === "6" ||
+                                typeStr === "5"
+                              )
+                                return true;
+                              const opt = documentTypes.find(
+                                (o) =>
+                                  o.id === typeStr ||
+                                  o.name?.toLowerCase() === typeStr,
+                              );
+                              return opt
+                                ? opt.name?.toLowerCase() === "productimage"
+                                : false;
                             })
                             .map((img) => (
                               <option key={img.id} value={img.id}>
-                                {img.fileName} ({((img.fileSizeBytes || 0) / 1024).toFixed(1)} KB)
+                                {img.fileName} (
+                                {((img.fileSizeBytes || 0) / 1024).toFixed(1)}{" "}
+                                KB)
                               </option>
                             ))}
                         </select>
@@ -2855,10 +2307,7 @@ export default function Catalog() {
                       maxHeight: "550px",
                     }}
                   >
-                    <ProductDocumentsTable
-                      productId={form.id}
-                      readOnly={false}
-                    />
+                    <ProductDocumentsTable productId={form.id} readOnly={false} />
                   </div>
                 )}
 
@@ -2943,177 +2392,6 @@ export default function Catalog() {
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowModal(false)}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </button>
-                <SubmitButton
-                  isSaving={isSaving}
-                  saveSuccess={saveSuccess}
-                  isEditMode={isEditMode}
-                />
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Manufacturer Modal */}
-      {showMfgModal && (
-        <div className="modal-overlay" onClick={() => setShowMfgModal(false)}>
-          <div
-            className="armory-center-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-title-bar">
-              <div className="title-left">
-                <span className="modal-title-icon">🏢</span>
-                <h3>
-                  {isEditMode
-                    ? "Modify Manufacturer Record"
-                    : "Add New Corporate Record"}
-                </h3>
-              </div>
-              <button
-                className="modal-close-x-btn"
-                onClick={() => setShowMfgModal(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <form
-              onSubmit={handleSaveMfg}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-                overflow: "hidden",
-                margin: 0,
-              }}
-            >
-              <div
-                className="modal-tabs-body-content"
-                style={{ padding: "20px" }}
-              >
-                <div className="form-grid">
-                  <div className="form-item full-row">
-                    <label>Official Corporate Name</label>
-                    <input
-                      type="text"
-                      value={mfgForm.name || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, name: e.target.value })
-                      }
-                      placeholder="e.g. Glock Ges.m.b.H."
-                      required
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Company Website URL</label>
-                    <input
-                      type="url"
-                      value={mfgForm.webPageUrl || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, webPageUrl: e.target.value })
-                      }
-                      placeholder="https://glock.com"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Support Phone Number</label>
-                    <input
-                      type="tel"
-                      value={mfgForm.phoneNumber || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, phoneNumber: e.target.value })
-                      }
-                      placeholder="e.g. +1 770-432-1202"
-                    />
-                  </div>
-
-                  <div className="form-item full-row">
-                    <label>Street Address</label>
-                    <input
-                      type="text"
-                      value={mfgForm.streetAddress || ""}
-                      onChange={(e) =>
-                        setMfgForm({
-                          ...mfgForm,
-                          streetAddress: e.target.value,
-                        })
-                      }
-                      placeholder="e.g. 6000 Highlands Parkway"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>City</label>
-                    <input
-                      type="text"
-                      value={mfgForm.city || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, city: e.target.value })
-                      }
-                      placeholder="e.g. Smyrna"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>State / Province</label>
-                    <input
-                      type="text"
-                      value={mfgForm.stateOrProvince || ""}
-                      onChange={(e) =>
-                        setMfgForm({
-                          ...mfgForm,
-                          stateOrProvince: e.target.value,
-                        })
-                      }
-                      placeholder="e.g. GA"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Postal / ZIP Code</label>
-                    <input
-                      type="text"
-                      value={mfgForm.postalCode || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, postalCode: e.target.value })
-                      }
-                      placeholder="e.g. 30082"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Country of Origin</label>
-                    <input
-                      type="text"
-                      value={mfgForm.country || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, country: e.target.value })
-                      }
-                      placeholder="e.g. United States"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer Controls */}
-              <div
-                className="modal-footer-row-container"
-                style={{
-                  borderTop: "1px solid rgba(255,255,255,0.1)",
-                  padding: "16px 20px",
-                }}
-              >
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowMfgModal(false)}
                   disabled={isSaving}
                 >
                   Cancel
