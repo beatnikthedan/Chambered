@@ -157,7 +157,9 @@ function CatalogListCard({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  const imageUrl = p.coverImageId ? `/api/v1/ProductDocuments/${p.coverImageId}/Download` : null;
+  const imageUrl = p.coverImageId
+    ? `/api/v1/ProductDocuments/${p.coverImageId}/Download`
+    : null;
   const blobUrl = useSecureImage(imageUrl);
 
   return (
@@ -224,15 +226,12 @@ export default function Catalog() {
   const [selectedMfg, setSelectedMfg] = useState<Manufacturer | null>(null);
 
   // Fetch documents for the selected product to populate cover image selector
-  const { data: selectedProductDocsData } = useGetProductsProductDocumentsFromKey(
-    selectedProduct?.id || 0,
-    undefined,
-    {
+  const { data: selectedProductDocsData } =
+    useGetProductsProductDocumentsFromKey(selectedProduct?.id || 0, undefined, {
       query: {
         enabled: !!selectedProduct?.id && selectedProduct.id > 0,
       },
-    }
-  );
+    });
 
   const productDocumentsRaw = selectedProductDocsData?.data;
   const productDocuments = useMemo(() => {
@@ -949,10 +948,13 @@ export default function Catalog() {
     payload.name = targetForm.name || "";
     payload.partNumber = targetForm.partNumber || "";
     payload.sku = targetForm.sku || "";
-    payload.manufacturerId = parseInt(targetForm.manufacturerId as string, 10) || 0;
+    payload.manufacturerId =
+      parseInt(targetForm.manufacturerId as string, 10) || 0;
     payload.description = targetForm.description || null;
     payload.webPageUrl = targetForm.webPageUrl || null;
-    payload.coverImageId = targetForm.coverImageId ? parseInt(targetForm.coverImageId as any, 10) : null;
+    payload.coverImageId = targetForm.coverImageId
+      ? parseInt(targetForm.coverImageId as any, 10)
+      : null;
 
     if (targetForm.specifications) {
       Object.entries(targetForm.specifications).forEach(([key, value]) => {
@@ -978,7 +980,9 @@ export default function Catalog() {
       payload.tubeDiameter = targetForm.tubeDiameter || null;
       payload.isIlluminated = !!targetForm.isIlluminated;
       payload.hasBattery = !!targetForm.hasBattery;
-      payload.batteryType = targetForm.hasBattery ? targetForm.batteryType : null;
+      payload.batteryType = targetForm.hasBattery
+        ? targetForm.batteryType
+        : null;
     } else if (type === "Suppressor") {
       payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
       payload.threadPitch = targetForm.threadPitch || null;
@@ -1456,7 +1460,10 @@ export default function Catalog() {
                 {/* QUICK ADD ROW */}
                 <div className="quick-add-container">
                   <span className="quick-add-label">QUICK ADD</span>
-                  <form className="quick-add-form" onSubmit={handleQuickAddSave}>
+                  <form
+                    className="quick-add-form"
+                    onSubmit={handleQuickAddSave}
+                  >
                     <select
                       className="quick-add-select"
                       value={quickAddType}
@@ -1514,33 +1521,47 @@ export default function Catalog() {
                       <th style={{ width: "40px" }}></th>
                       <th
                         onClick={() => handleHeaderSort("type")}
-                        style={{ cursor: "pointer", userSelect: "none", textAlign: "center" }}
+                        style={{
+                          cursor: "pointer",
+                          userSelect: "none",
+                          textAlign: "center",
+                        }}
                       >
-                        Type {sortKey === "type" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                        Type{" "}
+                        {sortKey === "type" &&
+                          (sortDirection === "asc" ? " ▲" : " ▼")}
                       </th>
                       <th
                         onClick={() => handleHeaderSort("manufacturer")}
                         style={{ cursor: "pointer", userSelect: "none" }}
                       >
-                        Manufacturer {sortKey === "manufacturer" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                        Manufacturer{" "}
+                        {sortKey === "manufacturer" &&
+                          (sortDirection === "asc" ? " ▲" : " ▼")}
                       </th>
                       <th
                         onClick={() => handleHeaderSort("name")}
                         style={{ cursor: "pointer", userSelect: "none" }}
                       >
-                        Model Name {sortKey === "name" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                        Model Name{" "}
+                        {sortKey === "name" &&
+                          (sortDirection === "asc" ? " ▲" : " ▼")}
                       </th>
                       <th
                         onClick={() => handleHeaderSort("partNumber")}
                         style={{ cursor: "pointer", userSelect: "none" }}
                       >
-                        Part Number {sortKey === "partNumber" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                        Part Number{" "}
+                        {sortKey === "partNumber" &&
+                          (sortDirection === "asc" ? " ▲" : " ▼")}
                       </th>
                       <th
                         onClick={() => handleHeaderSort("sku")}
                         style={{ cursor: "pointer", userSelect: "none" }}
                       >
-                        SKU {sortKey === "sku" && (sortDirection === "asc" ? " ▲" : " ▼")}
+                        SKU{" "}
+                        {sortKey === "sku" &&
+                          (sortDirection === "asc" ? " ▲" : " ▼")}
                       </th>
                     </tr>
                   </thead>
@@ -1553,7 +1574,13 @@ export default function Catalog() {
                           setSelectedProduct(p);
                         }}
                       >
-                        <td style={{ width: "40px", verticalAlign: "middle", textAlign: "center" }}>
+                        <td
+                          style={{
+                            width: "40px",
+                            verticalAlign: "middle",
+                            textAlign: "center",
+                          }}
+                        >
                           {p.coverImageId ? (
                             <SecureImage
                               src={`/api/v1/ProductDocuments/${p.coverImageId}/Download`}
@@ -1580,7 +1607,13 @@ export default function Catalog() {
                             />
                           )}
                         </td>
-                        <td className="type-badge-cell" style={{ verticalAlign: "middle", textAlign: "center" }}>
+                        <td
+                          className="type-badge-cell"
+                          style={{
+                            verticalAlign: "middle",
+                            textAlign: "center",
+                          }}
+                        >
                           <span
                             className={`type-badge ${p.productType.toLowerCase()}`}
                           >
@@ -1589,8 +1622,12 @@ export default function Catalog() {
                         </td>
                         <td>{p.manufacturerName}</td>
                         <td className="bold-name-cell">{p.name}</td>
-                        <td className="text-muted text-mono">{p.partNumber || "N/A"}</td>
-                        <td className="text-muted text-mono">{p.sku || "N/A"}</td>
+                        <td className="text-muted text-mono">
+                          {p.partNumber || "N/A"}
+                        </td>
+                        <td className="text-muted text-mono">
+                          {p.sku || "N/A"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1690,48 +1727,68 @@ export default function Catalog() {
         </div>
 
         {/* TABLE FOOTER ROW */}
-        {!isManufacturersPage && viewMode === "table" && productsList.length > 0 && (
-          <div className="table-footer-row">
-            <div>
-              {processedProducts.length} of {productsList.length} products
+        {!isManufacturersPage &&
+          viewMode === "table" &&
+          productsList.length > 0 && (
+            <div className="table-footer-row">
+              <div>
+                {processedProducts.length} of {productsList.length} products
+              </div>
+              <div className="footer-actions">
+                <button
+                  type="button"
+                  className="footer-btn"
+                  onClick={() => alert("GRT import functionality is a stub.")}
+                >
+                  Import
+                </button>
+                <button
+                  type="button"
+                  className="footer-btn"
+                  onClick={() => {
+                    const headers = [
+                      "Type",
+                      "Manufacturer",
+                      "Model Name",
+                      "Part Number",
+                      "SKU",
+                    ];
+                    const rows = processedProducts.map((p) => [
+                      p.productType,
+                      p.manufacturerName,
+                      p.name,
+                      p.partNumber || "N/A",
+                      p.sku || "N/A",
+                    ]);
+                    const csvContent = [
+                      headers.join(","),
+                      ...rows.map((e) =>
+                        e
+                          .map((val) => `"${val.replace(/"/g, '""')}"`)
+                          .join(","),
+                      ),
+                    ].join("\n");
+                    const blob = new Blob([csvContent], {
+                      type: "text/csv;charset=utf-8;",
+                    });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute(
+                      "download",
+                      `products_export_${new Date().toISOString().slice(0, 10)}.csv`,
+                    );
+                    link.style.visibility = "hidden";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                >
+                  Export
+                </button>
+              </div>
             </div>
-            <div className="footer-actions">
-              <button
-                type="button"
-                className="footer-btn"
-                onClick={() => alert("GRT import functionality is a stub.")}
-              >
-                Import
-              </button>
-              <button
-                type="button"
-                className="footer-btn"
-                onClick={() => {
-                  const headers = ["Type", "Manufacturer", "Model Name", "Part Number", "SKU"];
-                  const rows = processedProducts.map((p) => [
-                    p.productType,
-                    p.manufacturerName,
-                    p.name,
-                    p.partNumber || "N/A",
-                    p.sku || "N/A"
-                  ]);
-                  const csvContent = [headers.join(","), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(","))].join("\n");
-                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement("a");
-                  link.setAttribute("href", url);
-                  link.setAttribute("download", `products_export_${new Date().toISOString().slice(0,10)}.csv`);
-                  link.style.visibility = "hidden";
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-              >
-                Export
-              </button>
-            </div>
-          </div>
-        )}
+          )}
       </div>
 
       {/* RIGHT 1/3: DETAILS COLUMN WITH DUAL TILED MASTER-DETAIL VIEW */}
@@ -2260,7 +2317,9 @@ export default function Catalog() {
                           onChange={(e) =>
                             setForm({
                               ...form,
-                              coverImageId: e.target.value ? parseInt(e.target.value, 10) : null,
+                              coverImageId: e.target.value
+                                ? parseInt(e.target.value, 10)
+                                : null,
                             })
                           }
                           style={{
@@ -2276,17 +2335,34 @@ export default function Catalog() {
                             boxSizing: "border-box",
                           }}
                         >
-                          <option value="">-- No Cover Image (Default Placeholder) --</option>
+                          <option value="">
+                            -- No Cover Image (Default Placeholder) --
+                          </option>
                           {productDocuments
                             .filter((doc) => {
-                              const typeStr = String(doc.type || "").toLowerCase();
-                              if (typeStr === "productimage" || typeStr === "6" || typeStr === "5") return true;
-                              const opt = documentTypes.find(o => o.id === typeStr || o.name?.toLowerCase() === typeStr);
-                              return opt ? opt.name?.toLowerCase() === "productimage" : false;
+                              const typeStr = String(
+                                doc.type || "",
+                              ).toLowerCase();
+                              if (
+                                typeStr === "productimage" ||
+                                typeStr === "6" ||
+                                typeStr === "5"
+                              )
+                                return true;
+                              const opt = documentTypes.find(
+                                (o) =>
+                                  o.id === typeStr ||
+                                  o.name?.toLowerCase() === typeStr,
+                              );
+                              return opt
+                                ? opt.name?.toLowerCase() === "productimage"
+                                : false;
                             })
                             .map((img) => (
                               <option key={img.id} value={img.id}>
-                                {img.fileName} ({((img.fileSizeBytes || 0) / 1024).toFixed(1)} KB)
+                                {img.fileName} (
+                                {((img.fileSizeBytes || 0) / 1024).toFixed(1)}{" "}
+                                KB)
                               </option>
                             ))}
                         </select>
