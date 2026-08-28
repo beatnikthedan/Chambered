@@ -25,6 +25,8 @@ export interface Product {
   /** @nullable */
   webPageUrl?: string | null;
   /** @nullable */
+  coverImageId?: number | null;
+  /** @nullable */
   productDocuments?: ProductDocument[] | null;
   id?: number;
   /** @nullable */

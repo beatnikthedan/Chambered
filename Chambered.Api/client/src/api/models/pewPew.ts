@@ -30,6 +30,8 @@ export interface PewPew {
   sku?: string | null;
   /** @nullable */
   webPageUrl?: string | null;
+  /** @nullable */
+  coverImageId?: number | null;
   id?: number;
   /** @nullable */
   created?: string | null;

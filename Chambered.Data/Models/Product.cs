@@ -65,6 +65,16 @@ namespace Chambered.Data.Models
         #region Navigation Properties
 
         /// <summary>
+        /// Gets or sets the foreign key of the selected secure cover image.
+        /// </summary>
+        public int? CoverImageId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the navigation property of the selected secure cover image.
+        /// </summary>
+        public virtual ProductDocument? CoverImage { get; set; }
+
+        /// <summary>
         /// Gets or sets the collection of embedded offline reference documents (manuals, diagrams, etc.).
         /// </summary>
         public ICollection<ProductDocument> ProductDocuments { get; set; } = new List<ProductDocument>();

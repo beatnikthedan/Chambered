@@ -18,10 +18,12 @@ import {
   useGetCalibers,
   useGetManufacturersFaviconFromKey,
   useGetProductsArmoryItemsFromKey,
+  useGetProductsProductDocumentsFromKey,
 } from "../api/endpoints";
 import type { Product } from "../api/models/product";
 import type { Manufacturer } from "../api/models/manufacturer";
 import type { Caliber } from "../api/models/caliber";
+import SecureImage, { useSecureImage } from "../components/SecureImage";
 
 interface ExtendedProduct extends Omit<Product, "productType"> {
   productType: string;
@@ -79,6 +81,7 @@ interface ProductForm {
   hasRemoteSwitchPort: boolean;
   isInfraredCapable: boolean;
   lockType: string;
+  coverImageId: number | null;
 }
 
 const extractSpecifications = (product: any): Record<string, any> => {
@@ -99,6 +102,8 @@ const extractSpecifications = (product: any): Record<string, any> => {
     "manufacturer",
     "productDocuments",
     "armoryItems",
+    "coverImageId",
+    "coverImage",
     "caliberId",
     "pewPewCategory",
     "actionType",
@@ -142,6 +147,44 @@ const extractSpecifications = (product: any): Record<string, any> => {
   return specs;
 };
 
+function CatalogListCard({
+  p,
+  isSelected,
+  onClick,
+}: {
+  p: ExtendedProduct;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const imageUrl = p.coverImageId ? `/api/v1/ProductDocuments/${p.coverImageId}/Download` : null;
+  const blobUrl = useSecureImage(imageUrl);
+
+  return (
+    <div
+      className={`catalog-list-card ${isSelected ? "selected" : ""}`}
+      onClick={onClick}
+      style={{
+        backgroundImage: blobUrl
+          ? `linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.85)), url(${blobUrl})`
+          : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        transition: "all 0.2s ease-in-out",
+      }}
+    >
+      <span className="card-badge">{p.productType}</span>
+      <span className="mfg-tag">{p.manufacturerName}</span>
+      <h4>{p.name}</h4>
+      <span className="sku-part-info">
+        PN: {p.partNumber || "None"} | SKU: {p.sku || "None"}
+      </span>
+      <p className="card-desc-preview">
+        {p.description || "No model description loaded."}
+      </p>
+    </div>
+  );
+}
+
 export default function Catalog() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -173,6 +216,24 @@ export default function Catalog() {
   const [selectedProduct, setSelectedProduct] =
     useState<ExtendedProduct | null>(null);
   const [selectedMfg, setSelectedMfg] = useState<Manufacturer | null>(null);
+
+  // Fetch documents for the selected product to populate cover image selector
+  const { data: selectedProductDocsData } = useGetProductsProductDocumentsFromKey(
+    selectedProduct?.id || 0,
+    undefined,
+    {
+      query: {
+        enabled: !!selectedProduct?.id && selectedProduct.id > 0,
+      },
+    }
+  );
+
+  const productDocumentsRaw = selectedProductDocsData?.data;
+  const productDocuments = useMemo(() => {
+    return Array.isArray(productDocumentsRaw)
+      ? productDocumentsRaw
+      : (productDocumentsRaw as any)?.value || [];
+  }, [productDocumentsRaw]);
 
   // Layout View Modes ("table" or "card")
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
@@ -299,6 +360,7 @@ export default function Catalog() {
     hasRemoteSwitchPort: false,
     isInfraredCapable: false,
     lockType: "",
+    coverImageId: null,
   });
 
   const [mfgForm, setMfgForm] = useState<MfgForm>({
@@ -756,6 +818,7 @@ export default function Catalog() {
       hasRemoteSwitchPort: false,
       isInfraredCapable: false,
       lockType: lockTypes[0]?.id || "",
+      coverImageId: null,
     });
     setCustomSpecs([]);
     setShowModal(true);
@@ -812,6 +875,7 @@ export default function Catalog() {
       hasRemoteSwitchPort: !!(selectedProduct as any).hasRemoteSwitchPort,
       isInfraredCapable: !!(selectedProduct as any).isInfraredCapable,
       lockType: (selectedProduct as any).lockType || "",
+      coverImageId: (selectedProduct as any).coverImageId || null,
     });
     setShowModal(true);
   };
@@ -870,6 +934,7 @@ export default function Catalog() {
     payload.manufacturerId = parseInt(form.manufacturerId as string, 10) || 0;
     payload.description = form.description || null;
     payload.webPageUrl = form.webPageUrl || null;
+    payload.coverImageId = form.coverImageId ? parseInt(form.coverImageId as any, 10) : null;
 
     if (form.specifications) {
       Object.entries(form.specifications).forEach(([key, value]) => {
@@ -1381,12 +1446,28 @@ export default function Catalog() {
                         setSelectedProduct(p);
                       }}
                     >
-                      <td className="type-badge-cell">
-                        <span
-                          className={`type-badge ${p.productType.toLowerCase()}`}
-                        >
-                          {p.productType}
-                        </span>
+                      <td className="type-badge-cell" style={{ verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          {p.coverImageId && (
+                            <SecureImage
+                              src={`/api/v1/ProductDocuments/${p.coverImageId}/Download`}
+                              alt={p.name}
+                              style={{
+                                width: "28px",
+                                height: "28px",
+                                objectFit: "cover",
+                                borderRadius: "4px",
+                                border: "1px solid var(--border-color)",
+                                backgroundColor: "var(--bg-input)",
+                              }}
+                            />
+                          )}
+                          <span
+                            className={`type-badge ${p.productType.toLowerCase()}`}
+                          >
+                            {p.productType}
+                          </span>
+                        </div>
                       </td>
                       <td>{p.manufacturerName}</td>
                       <td className="bold-name-cell">{p.name}</td>
@@ -1401,23 +1482,12 @@ export default function Catalog() {
               /* CARD VIEW MODE */
               <div className="split-view-cards-grid">
                 {processedProducts.map((p) => (
-                  <div
+                  <CatalogListCard
                     key={p.id}
-                    className={`catalog-list-card ${selectedProduct?.id === p.id ? "selected" : ""}`}
-                    onClick={() => {
-                      setSelectedProduct(p);
-                    }}
-                  >
-                    <span className="card-badge">{p.productType}</span>
-                    <span className="mfg-tag">{p.manufacturerName}</span>
-                    <h4>{p.name}</h4>
-                    <span className="sku-part-info">
-                      PN: {p.partNumber || "None"} | SKU: {p.sku || "None"}
-                    </span>
-                    <p className="card-desc-preview">
-                      {p.description || "No model description loaded."}
-                    </p>
-                  </div>
+                    p={p}
+                    isSelected={selectedProduct?.id === p.id}
+                    onClick={() => setSelectedProduct(p)}
+                  />
                 ))}
               </div>
             )
@@ -2020,6 +2090,47 @@ export default function Catalog() {
                         placeholder="https://manufacturersite.com/product"
                       />
                     </div>
+
+                    {form.id > 0 && (
+                      <div className="form-item full-row">
+                        <label>🖼️ Product Cover Image</label>
+                        <select
+                          value={form.coverImageId || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              coverImageId: e.target.value ? parseInt(e.target.value, 10) : null,
+                            })
+                          }
+                          style={{
+                            backgroundColor: "var(--bg-input)",
+                            border: "1px solid var(--border-color)",
+                            borderRadius: "var(--radius-md)",
+                            padding: "0 12px",
+                            color: "var(--text-primary)",
+                            fontSize: "13px",
+                            outline: "none",
+                            height: "38px",
+                            width: "100%",
+                            boxSizing: "border-box",
+                          }}
+                        >
+                          <option value="">-- No Cover Image (Default Placeholder) --</option>
+                          {productDocuments
+                            .filter((doc) => {
+                              const typeStr = String(doc.type || "").toLowerCase();
+                              if (typeStr === "productimage" || typeStr === "6" || typeStr === "5") return true;
+                              const opt = documentTypes.find(o => o.id === typeStr || o.name?.toLowerCase() === typeStr);
+                              return opt ? opt.name?.toLowerCase() === "productimage" : false;
+                            })
+                            .map((img) => (
+                              <option key={img.id} value={img.id}>
+                                {img.fileName} ({((img.fileSizeBytes || 0) / 1024).toFixed(1)} KB)
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 )}
 

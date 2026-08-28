@@ -28,6 +28,15 @@ namespace Chambered.Data.Configuration
             builder.Property(p => p.Sku).HasMaxLength(50);
             builder.Property(p => p.WebPageUrl).HasMaxLength(2048);
 
+            #region Cover Image Relationship
+
+            builder.HasOne(p => p.CoverImage)
+                .WithMany()
+                .HasForeignKey(p => p.CoverImageId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            #endregion
+
             #region Dynamic Specifications (JSON Mapping)
 
             builder.Property(e => e.Specifications)

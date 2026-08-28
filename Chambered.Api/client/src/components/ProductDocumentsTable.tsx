@@ -6,31 +6,28 @@ import {
   useDeleteProductDocumentsFromKey,
   getGetProductsProductDocumentsFromKeyQueryKey,
 } from "../api/endpoints";
+import SecureImage from "./SecureImage";
+
+import { useStore } from "../StoreContext";
 
 interface ProductDocumentsTableProps {
   productId: number;
   readOnly?: boolean;
 }
 
-const documentTypesMap: Record<number | string, string> = {
-  0: "📘 Owner's Manual",
-  1: "📐 Schematic / Parts Diagram",
-  2: "🛡️ Warranty Document",
-  3: "⚠️ Recall Notice",
-  4: "📊 Spec Sheet",
-  5: "🖼️ Product Image / Picture",
-  6: "📦 Other / Unknown",
-  "OwnerManual": "📘 Owner's Manual",
-  "PartsDiagram": "📐 Schematic / Parts Diagram",
-  "WarrantyDocument": "🛡️ Warranty Document",
-  "RecallNotice": "⚠️ Recall Notice",
-  "SpecSheet": "📊 Spec Sheet",
-  "ProductImage": "🖼️ Product Image / Picture",
-  "Unknown": "📦 Other / Unknown",
-};
-
 export default function ProductDocumentsTable({ productId, readOnly = false }: ProductDocumentsTableProps) {
   const queryClient = useQueryClient();
+  const store = useStore();
+  const { enums } = store || {};
+  const documentTypes = enums?.documentTypes || [];
+
+  const getDocumentTypeLabel = (typeVal: string | number) => {
+    const option = documentTypes.find(
+      (opt) => opt.id === String(typeVal) || opt.name === String(typeVal)
+    );
+    return option ? option.label : String(typeVal);
+  };
+
   const [docType, setDocType] = useState<string>("OwnerManual");
 
   const formatBytes = (bytes: number | undefined) => {
@@ -188,13 +185,11 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
                   boxSizing: "border-box",
                 }}
               >
-                <option value="OwnerManual">📘 Owner's Manual</option>
-                <option value="PartsDiagram">📐 Schematic / Parts Diagram</option>
-                <option value="WarrantyDocument">🛡️ Warranty Document</option>
-                <option value="RecallNotice">⚠️ Recall Notice</option>
-                <option value="SpecSheet">📊 Spec Sheet</option>
-                <option value="ProductImage">🖼️ Product Image / Picture</option>
-                <option value="Unknown">📦 Other / Unknown</option>
+                {documentTypes.map((opt) => (
+                  <option key={opt.id} value={opt.name}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
 
               <label
@@ -277,12 +272,35 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
             <tbody>
               {documents.map((d: any) => (
                 <tr key={d.id}>
-                  <td className="text-bold text-mono" style={{ wordBreak: "break-all", width: "35%" }}>
-                    {d.fileName}
+                  <td className="text-bold text-mono" style={{ wordBreak: "break-all", width: "35%", verticalAlign: "middle" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      {(() => {
+                        const typeStr = String(d.type || "").toLowerCase();
+                        if (typeStr === "productimage" || typeStr === "6" || typeStr === "5") return true;
+                        const opt = documentTypes.find(o => o.id === typeStr || o.name?.toLowerCase() === typeStr);
+                        return opt ? opt.name?.toLowerCase() === "productimage" : false;
+                      })() ? (
+                        <SecureImage
+                          src={`/api/v1/ProductDocuments/${d.id}/Download`}
+                          alt={d.fileName}
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                            objectFit: "cover",
+                            borderRadius: "var(--radius-sm, 4px)",
+                            border: "1px solid var(--border-color)",
+                            backgroundColor: "var(--bg-input)",
+                          }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: "16px", minWidth: "32px", textAlign: "center", display: "inline-block" }}>📄</span>
+                      )}
+                      <span>{d.fileName}</span>
+                    </div>
                   </td>
                   <td style={{ width: "18%" }}>
                     <span className="type-badge-pill" style={{ fontSize: "10px", padding: "2px 8px" }}>
-                      {documentTypesMap[d.type] || d.type}
+                      {getDocumentTypeLabel(d.type)}
                     </span>
                   </td>
                   <td style={{ width: "12%" }}>{formatBytes(d.fileSizeBytes)}</td>
