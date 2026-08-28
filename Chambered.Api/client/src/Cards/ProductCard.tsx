@@ -44,9 +44,7 @@ export default function ProductCard({
       <span className="sku-part-info">
         PN: {item.partNumber || "None"} | SKU: {item.sku || "None"}
       </span>
-      <p className="card-desc-preview">
-        {item.description || "No model description loaded."}
-      </p>
+      <p className="card-desc-preview">{item.description || ""}</p>
     </div>
   );
 }

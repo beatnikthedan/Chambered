@@ -1,21 +1,17 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStore } from "../StoreContext";
+import { useQueryClient } from "@tanstack/react-query";
 import "./Products.css";
 import SubmitButton from "../components/SubmitButton";
-import ProductDocumentsTable from "../components/ProductDocumentsTable";
 import ProductCard from "../Cards/ProductCard";
+import ProductForm from "../ModelForms/ProductForm";
 
 import {
   useGetProducts,
   usePostProducts,
-  usePatchProductsFromKey,
   useDeleteProductsFromKey,
   useGetManufacturers,
   useGetCalibers,
-  useGetProductsArmoryItemsFromKey,
-  useGetProductsProductDocumentsFromKey,
   useGetProductsProductTypes,
 } from "../api/endpoints";
 import type { Product } from "../api/models/product";
@@ -28,46 +24,6 @@ interface ExtendedProduct extends Omit<Product, "productType"> {
   manufacturerName: string;
   caliberName: string;
   [key: string]: any;
-}
-
-interface ProductForm {
-  id: number;
-  productType: string;
-  name: string;
-  description: string;
-  partNumber: string;
-  sku: string;
-  manufacturerId: string | number;
-  webPageUrl: string;
-  specifications: Record<string, any>;
-  caliberId: string | number;
-  pewPewCategory: string;
-  actionType: string;
-  isNfaItem: boolean;
-  minMagnification: string | number;
-  maxMagnification: string | number;
-  objectiveDiameterMm: string | number;
-  opticType: string;
-  reticle: string;
-  adjustmentUnits: string;
-  tubeDiameter: string;
-  isIlluminated: boolean;
-  hasBattery: boolean;
-  batteryType: string;
-  threadPitch: string;
-  attachmentType: string;
-  material: string;
-  soundReductionDb: string | number;
-  isFullAutoRated: boolean;
-  isUserServiceable: boolean;
-  lumens: string | number;
-  candela: string | number;
-  mountType: string;
-  laserColor: string;
-  hasRemoteSwitchPort: boolean;
-  isInfraredCapable: boolean;
-  lockType: string;
-  coverImageId: number | null;
 }
 
 const extractSpecifications = (product: any): Record<string, any> => {
@@ -161,35 +117,12 @@ export default function Products() {
   const [selectedProduct, setSelectedProduct] =
     useState<ExtendedProduct | null>(null);
 
-  // Fetch documents for the selected product to populate cover image selector
-  const { data: selectedProductDocsData } =
-    useGetProductsProductDocumentsFromKey(selectedProduct?.id || 0, undefined, {
-      query: {
-        enabled: !!selectedProduct?.id && selectedProduct.id > 0,
-      },
-    });
-
-  const productDocumentsRaw = selectedProductDocsData?.data;
-  const productDocuments = useMemo(() => {
-    return Array.isArray(productDocumentsRaw)
-      ? productDocumentsRaw
-      : (productDocumentsRaw as any)?.value || [];
-  }, [productDocumentsRaw]);
-
   // Layout View Modes ("table" or "card")
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
 
   // Interaction State (Modal overlays replace inline isEditing)
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>("general"); // 'general' | 'subclass' | 'specifications'
-
-  // Dynamic specifications key-value editor local state
-  const [customSpecs, setCustomSpecs] = useState<
-    { key: string; value: string }[]
-  >([]);
 
   // Search & Sorting popovers active states
   const [showFilterPopover, setShowFilterPopover] = useState<boolean>(false);
@@ -237,116 +170,18 @@ export default function Products() {
     }
   };
 
-  // Enums memoizations
-  const suppressorMaterials = enums?.suppressorMaterials || [];
-  const suppressorAttachmentTypes = enums?.suppressorAttachmentTypes || [];
-  const opticReticles = enums?.opticReticles || [];
-  const opticAdjustmentUnits = enums?.opticAdjustmentUnits || [];
-  const batteryTypes = enums?.batteryTypes || [];
-  const actionTypes = enums?.actionTypes || [];
-  const pewPewCategories = enums?.pewPewCategories || [];
-  const opticTypes = enums?.opticTypes || [];
-  const laserColors = enums?.laserColors || [];
-  const lightMountTypes = enums?.lightMountTypes || [];
-  const lockTypes = enums?.lockTypes || [];
-
-  const documentTypes = useMemo(
-    () => [
-      { id: "0", name: "UserManual" },
-      { id: "1", name: "Schematic" },
-      { id: "2", name: "Warranty" },
-      { id: "3", name: "Invoice" },
-      { id: "4", name: "Receipt" },
-      { id: "5", name: "ProductImage" },
-      { id: "6", name: "Other" },
-    ],
-    [],
-  );
-
-  // Edit/Create Form State
-  const [form, setForm] = useState<ProductForm>({
-    id: 0,
-    productType: "PewPew",
-    name: "",
-    description: "",
-    partNumber: "",
-    sku: "",
-    manufacturerId: "",
-    webPageUrl: "",
-    specifications: {},
-    caliberId: "",
-    pewPewCategory: "",
-    actionType: "",
-    isNfaItem: false,
-    minMagnification: "",
-    maxMagnification: "",
-    objectiveDiameterMm: "",
-    opticType: "",
-    reticle: "",
-    adjustmentUnits: "",
-    tubeDiameter: "",
-    isIlluminated: false,
-    hasBattery: false,
-    batteryType: "",
-    threadPitch: "",
-    attachmentType: "",
-    material: "",
-    soundReductionDb: "",
-    isFullAutoRated: false,
-    isUserServiceable: false,
-    lumens: "",
-    candela: "",
-    mountType: "",
-    laserColor: "",
-    hasRemoteSwitchPort: false,
-    isInfraredCapable: false,
-    lockType: "",
-    coverImageId: null,
-  });
-
-  // Query Related Physical Armory Items for Product Bottom-Right Panel
-  const { data: relatedArmoryItemsData, isLoading: relatedArmoryItemsLoading } =
-    useGetProductsArmoryItemsFromKey(selectedProduct?.id || 0, undefined, {
-      query: {
-        enabled: !!selectedProduct?.id && selectedProduct.id > 0,
-      },
-    });
-
-  // Mutations
+  // Mutation for Quick Add
   const createProductMutation = usePostProducts({
     mutation: {
       onSuccess: (res) => {
         queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-        setIsSaving(false);
         if (res?.data) {
           const newProd = res.data as any;
           setSelectedProduct(newProd);
-          setForm((prev) => ({
-            ...prev,
-            id: newProd.id,
-          }));
         }
       },
       onError: (err: any) => {
         alert("Failed to create product: " + (err?.message || "Unknown error"));
-        setIsSaving(false);
-      },
-    },
-  });
-
-  const updateProductMutation = usePatchProductsFromKey({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-        setIsSaving(false);
-      },
-      onError: (err: any) => {
-        alert("Failed to save product: " + (err?.message || "Unknown error"));
-        setIsSaving(false);
       },
     },
   });
@@ -490,101 +325,9 @@ export default function Products() {
     }
   }, [processedProducts, selectedProduct]);
 
-  // Sync custom specifications editor
-  useEffect(() => {
-    if (form.specifications) {
-      const pairs = Object.entries(form.specifications).map(([key, value]) => ({
-        key,
-        value: String(value),
-      }));
-      setCustomSpecs(pairs);
-    } else {
-      setCustomSpecs([]);
-    }
-  }, [form.specifications]);
-
-  const updateSpecsDictionary = (
-    updatedPairs: { key: string; value: string }[],
-  ) => {
-    const dictionary: Record<string, string> = {};
-    updatedPairs.forEach((p) => {
-      if (p.key.trim()) {
-        dictionary[p.key.trim()] = p.value;
-      }
-    });
-    setForm((f) => ({ ...f, specifications: dictionary }));
-  };
-
-  const handleCustomSpecChange = (
-    index: number,
-    field: "key" | "value",
-    val: string,
-  ) => {
-    const updated = customSpecs.map((spec, i) => {
-      if (i === index) {
-        return { ...spec, [field]: val };
-      }
-      return spec;
-    });
-    setCustomSpecs(updated);
-    updateSpecsDictionary(updated);
-  };
-
-  const addCustomSpec = () => {
-    const updated = [...customSpecs, { key: "", value: "" }];
-    setCustomSpecs(updated);
-  };
-
-  const removeCustomSpec = (index: number) => {
-    const updated = customSpecs.filter((_, i) => i !== index);
-    setCustomSpecs(updated);
-    updateSpecsDictionary(updated);
-  };
-
   // Switch right panel to editing mode with a blank product
   const startAddProduct = () => {
     setIsEditMode(false);
-    setActiveTab("general");
-    setForm({
-      id: 0,
-      productType: "PewPew",
-      name: "",
-      description: "",
-      partNumber: "",
-      sku: "",
-      manufacturerId: manufacturersList[0]?.id || "",
-      webPageUrl: "",
-      specifications: {},
-      caliberId: calibersList[0]?.id || "",
-      pewPewCategory: pewPewCategories[0]?.id || "",
-      actionType: actionTypes[0]?.id || "",
-      isNfaItem: false,
-      minMagnification: "",
-      maxMagnification: "",
-      objectiveDiameterMm: "",
-      opticType: opticTypes[0]?.id || "",
-      reticle: opticReticles[0]?.id || "",
-      adjustmentUnits: opticAdjustmentUnits[0]?.id || "",
-      tubeDiameter: "",
-      isIlluminated: false,
-      hasBattery: false,
-      batteryType: batteryTypes[0]?.id || "",
-      threadPitch: "",
-      attachmentType: suppressorAttachmentTypes[0]?.id || "",
-      material: suppressorMaterials[0]?.id || "",
-      soundReductionDb: "",
-      isFullAutoRated: false,
-      isUserServiceable: false,
-      lumens: "",
-      candela: "",
-      mountType: lightMountTypes[0]?.id || "",
-      laserColor: laserColors[0]?.id || "",
-      hasRemoteSwitchPort: false,
-      isInfraredCapable: false,
-      lockType: lockTypes[0]?.id || "",
-      coverImageId: null,
-    });
-    setCustomSpecs([]);
     setShowModal(true);
   };
 
@@ -592,135 +335,7 @@ export default function Products() {
   const startEditProduct = () => {
     if (!selectedProduct) return;
     setIsEditMode(true);
-    setActiveTab("general");
-
-    const specs = extractSpecifications(selectedProduct);
-    const specsArray = Object.entries(specs).map(([key, value]) => ({
-      key,
-      value: String(value),
-    }));
-    setCustomSpecs(specsArray);
-
-    setForm({
-      id: selectedProduct.id || 0,
-      productType: selectedProduct.productType || "Product",
-      name: selectedProduct.name || "",
-      description: selectedProduct.description || "",
-      partNumber: selectedProduct.partNumber || "",
-      sku: selectedProduct.sku || "",
-      manufacturerId: selectedProduct.manufacturerId || "",
-      webPageUrl: selectedProduct.webPageUrl || "",
-      specifications: extractSpecifications(selectedProduct),
-      caliberId: (selectedProduct as any).caliberId || "",
-      pewPewCategory: (selectedProduct as any).pewPewCategory || "",
-      actionType: (selectedProduct as any).actionType || "",
-      isNfaItem: !!(selectedProduct as any).isNfaItem,
-      minMagnification: (selectedProduct as any).minMagnification || "",
-      maxMagnification: (selectedProduct as any).maxMagnification || "",
-      objectiveDiameterMm: (selectedProduct as any).objectiveDiameterMm || "",
-      opticType: (selectedProduct as any).opticType || "",
-      reticle: (selectedProduct as any).reticle || "",
-      adjustmentUnits: (selectedProduct as any).adjustmentUnits || "",
-      tubeDiameter: (selectedProduct as any).tubeDiameter || "",
-      isIlluminated: !!(selectedProduct as any).isIlluminated,
-      hasBattery: !!(selectedProduct as any).hasBattery,
-      batteryType: (selectedProduct as any).batteryType || "",
-      threadPitch: (selectedProduct as any).threadPitch || "",
-      attachmentType: (selectedProduct as any).attachmentType || "",
-      material: (selectedProduct as any).material || "",
-      soundReductionDb: (selectedProduct as any).soundReductionDb || "",
-      isFullAutoRated: !!(selectedProduct as any).isFullAutoRated,
-      isUserServiceable: !!(selectedProduct as any).isUserServiceable,
-      lumens: (selectedProduct as any).lumens || "",
-      candela: (selectedProduct as any).candela || "",
-      mountType: (selectedProduct as any).mountType || "",
-      laserColor: (selectedProduct as any).laserColor || "",
-      hasRemoteSwitchPort: !!(selectedProduct as any).hasRemoteSwitchPort,
-      isInfraredCapable: !!(selectedProduct as any).isInfraredCapable,
-      lockType: (selectedProduct as any).lockType || "",
-      coverImageId: (selectedProduct as any).coverImageId || null,
-    });
     setShowModal(true);
-  };
-
-  const buildProductPayload = (targetForm: ProductForm) => {
-    const type = targetForm.productType || "Product";
-    const payload: any = {};
-    if (type !== "Product") {
-      payload["@odata.type"] = `#Chambered.Data.Models.${type}`;
-    }
-
-    payload.id = targetForm.id || 0;
-    payload.name = targetForm.name || "";
-    payload.partNumber = targetForm.partNumber || "";
-    payload.sku = targetForm.sku || "";
-    payload.manufacturerId =
-      parseInt(targetForm.manufacturerId as string, 10) || 0;
-    payload.description = targetForm.description || null;
-    payload.webPageUrl = targetForm.webPageUrl || null;
-    payload.coverImageId = targetForm.coverImageId
-      ? parseInt(targetForm.coverImageId as any, 10)
-      : null;
-
-    if (targetForm.specifications) {
-      Object.entries(targetForm.specifications).forEach(([key, value]) => {
-        payload[key] = value;
-      });
-    }
-
-    if (type === "PewPew") {
-      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
-      payload.pewPewCategory = targetForm.pewPewCategory || null;
-      payload.actionType = targetForm.actionType || null;
-      payload.isNfaItem = !!targetForm.isNfaItem;
-    } else if (type === "Optic") {
-      payload.minMagnification =
-        parseFloat(targetForm.minMagnification as string) || 1.0;
-      payload.maxMagnification =
-        parseFloat(targetForm.maxMagnification as string) || 1.0;
-      payload.objectiveDiameterMm =
-        parseInt(targetForm.objectiveDiameterMm as string, 10) || 0;
-      payload.opticType = targetForm.opticType || null;
-      payload.reticle = targetForm.reticle || null;
-      payload.adjustmentUnits = targetForm.adjustmentUnits || null;
-      payload.tubeDiameter = targetForm.tubeDiameter || null;
-      payload.isIlluminated = !!targetForm.isIlluminated;
-      payload.hasBattery = !!targetForm.hasBattery;
-      payload.batteryType = targetForm.hasBattery
-        ? targetForm.batteryType
-        : null;
-    } else if (type === "Suppressor") {
-      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
-      payload.threadPitch = targetForm.threadPitch || null;
-      payload.attachmentType = targetForm.attachmentType || null;
-      payload.material = targetForm.material || null;
-      payload.soundReductionDb =
-        parseInt(targetForm.soundReductionDb as string, 10) || null;
-      payload.isFullAutoRated = !!targetForm.isFullAutoRated;
-      payload.isUserServiceable = !!targetForm.isUserServiceable;
-    } else if (type === "PewPewLight") {
-      payload.lumens = parseInt(targetForm.lumens as string, 10) || 0;
-      payload.candela = parseInt(targetForm.candela as string, 10) || 0;
-      payload.mountType = targetForm.mountType || null;
-      payload.laserColor = targetForm.laserColor || null;
-      payload.hasRemoteSwitchPort = !!targetForm.hasRemoteSwitchPort;
-      payload.isInfraredCapable = !!targetForm.isInfraredCapable;
-    } else if (type === "Security") {
-      payload.lockType = targetForm.lockType || null;
-    }
-
-    // Clean payload of navigation objects to avoid OData issues
-    Object.keys(payload).forEach((key) => {
-      if (
-        payload[key] !== null &&
-        typeof payload[key] === "object" &&
-        key !== "specifications"
-      ) {
-        delete payload[key];
-      }
-    });
-
-    return payload;
   };
 
   const handleQuickAddSave = async (e: React.FormEvent) => {
@@ -729,47 +344,15 @@ export default function Products() {
 
     setIsQuickSaving(true);
 
-    const tempForm: ProductForm = {
-      id: 0,
-      productType: quickAddType as any,
-      name: quickAddModel.trim(),
-      description: "",
-      partNumber: quickAddPartNo.trim(),
-      sku: "",
-      manufacturerId: quickAddMfgId,
-      webPageUrl: "",
-      specifications: {},
-      caliberId: calibersList[0]?.id || "",
-      pewPewCategory: pewPewCategories[0]?.id || "",
-      actionType: actionTypes[0]?.id || "",
-      isNfaItem: false,
-      minMagnification: "",
-      maxMagnification: "",
-      objectiveDiameterMm: "",
-      opticType: opticTypes[0]?.id || "",
-      reticle: opticReticles[0]?.id || "",
-      adjustmentUnits: opticAdjustmentUnits[0]?.id || "",
-      tubeDiameter: quickAddType === "Optic" ? "Unknown" : "",
-      isIlluminated: false,
-      hasBattery: false,
-      batteryType: batteryTypes[0]?.id || "",
-      threadPitch: "",
-      attachmentType: suppressorAttachmentTypes[0]?.id || "",
-      material: suppressorMaterials[0]?.id || "",
-      soundReductionDb: "",
-      isFullAutoRated: false,
-      isUserServiceable: false,
-      lumens: "",
-      candela: "",
-      mountType: lightMountTypes[0]?.id || "",
-      laserColor: laserColors[0]?.id || "",
-      hasRemoteSwitchPort: false,
-      isInfraredCapable: false,
-      lockType: lockTypes[0]?.id || "",
-      coverImageId: null,
-    };
-
-    const payload = buildProductPayload(tempForm);
+    const type = quickAddType || "Product";
+    const payload: any = {};
+    if (type !== "Product") {
+      payload["@odata.type"] = `#Chambered.Data.Models.${type}`;
+    }
+    payload.id = 0;
+    payload.name = quickAddModel.trim();
+    payload.partNumber = quickAddPartNo.trim();
+    payload.manufacturerId = parseInt(quickAddMfgId, 10) || 0;
 
     try {
       await createProductMutation.mutateAsync({ data: payload });
@@ -781,40 +364,6 @@ export default function Products() {
       console.error("Failed to quick add product:", err);
     } finally {
       setIsQuickSaving(false);
-    }
-  };
-
-  // Form Saves
-  const handleSaveProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) return;
-
-    setIsSaving(true);
-    const payload = buildProductPayload(form);
-
-    try {
-      if (form.id > 0) {
-        await updateProductMutation.mutateAsync({
-          key: form.id,
-          data: payload,
-        });
-        const cleanedSelected = { ...selectedProduct } as any;
-        const oldSpecs = extractSpecifications(selectedProduct);
-        Object.keys(oldSpecs).forEach((key) => {
-          delete cleanedSelected[key];
-        });
-
-        setSelectedProduct({
-          ...cleanedSelected,
-          ...payload,
-          productType: form.productType || "Product",
-        } as ExtendedProduct);
-      } else {
-        await createProductMutation.mutateAsync({ data: payload });
-      }
-    } catch (err) {
-      console.error(err);
-      setIsSaving(false);
     }
   };
 
@@ -856,48 +405,6 @@ export default function Products() {
       return "badge-success";
     if (c.includes("good") || c.includes("fair")) return "badge-warning";
     return "badge-danger";
-  };
-
-  // Reusable control that renders BOTH the checkbox and the battery dropdown
-  const renderBatteryControl = (checkboxLabel = "Requires Battery") => {
-    return (
-      <>
-        <div
-          className="form-item checkbox-row full-row"
-          style={{ marginBottom: "14px" }}
-        >
-          <label className="checkbox-container">
-            <input
-              type="checkbox"
-              checked={form.hasBattery || false}
-              onChange={(e) =>
-                setForm({ ...form, hasBattery: e.target.checked })
-              }
-            />
-            <span className="checkmark"></span>
-            <span>{checkboxLabel}</span>
-          </label>
-        </div>
-
-        {form.hasBattery && (
-          <div className="form-item">
-            <label>Battery Type</label>
-            <select
-              value={form.batteryType || ""}
-              onChange={(e) =>
-                setForm({ ...form, batteryType: e.target.value })
-              }
-            >
-              {batteryTypes.map((bat: any) => (
-                <option key={bat.id} value={bat.id}>
-                  {bat.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </>
-    );
   };
 
   if (productsLoading || mfgsLoading || calibersLoading) {
@@ -1247,42 +754,42 @@ export default function Products() {
               <button
                 type="button"
                 className="footer-btn"
-                onClick={() => {
-                  const headers = [
-                    "Type",
-                    "Manufacturer",
-                    "Model Name",
-                    "Part Number",
-                    "SKU",
-                  ];
-                  const rows = processedProducts.map((p) => [
-                    p.productType,
-                    p.manufacturerName,
-                    p.name,
-                    p.partNumber || "N/A",
-                    p.sku || "N/A",
-                  ]);
-                  const csvContent = [
-                    headers.join(","),
-                    ...rows.map((e) =>
-                      e.map((val) => `"${val.replace(/"/g, '""')}"`).join(","),
-                    ),
-                  ].join("\n");
-                  const blob = new Blob([csvContent], {
-                    type: "text/csv;charset=utf-8;",
-                  });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement("a");
-                  link.setAttribute("href", url);
-                  link.setAttribute(
-                    "download",
-                    `products_export_${new Date().toISOString().slice(0, 10)}.csv`,
-                  );
-                  link.style.visibility = "hidden";
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
+                // onClick={() => {
+                //   const headers = [
+                //     "Type",
+                //     "Manufacturer",
+                //     "Model Name",
+                //     "Part Number",
+                //     "SKU",
+                //   ];
+                //   const rows = processedProducts.map((p) => [
+                //     p.productType,
+                //     p.manufacturerName,
+                //     p.name,
+                //     p.partNumber || "N/A",
+                //     p.sku || "N/A",
+                //   ]);
+                //   const csvContent = [
+                //     headers.join(","),
+                //     ...rows.map((e) =>
+                //       e.map((val) => `"${val.replace(/"/g, '""')}"`).join(","),
+                //     ),
+                //   ].join("\n");
+                //   const blob = new Blob([csvContent], {
+                //     type: "text/csv;charset=utf-8;",
+                //   });
+                //   const url = URL.createObjectURL(blob);
+                //   const link = document.createElement("a");
+                //   link.setAttribute("href", url);
+                //   link.setAttribute(
+                //     "download",
+                //     `products_export_${new Date().toISOString().slice(0, 10)}.csv`,
+                //   );
+                //   link.style.visibility = "hidden";
+                //   document.body.appendChild(link);
+                //   link.click();
+                //   document.body.removeChild(link);
+                // }}
               >
                 Export
               </button>
@@ -1330,11 +837,11 @@ export default function Products() {
               </div>
 
               <div className="detail-view-body">
-                {saveSuccess && (
+                {/* {saveSuccess && (
                   <div className="detail-save-toast">
                     ✓ Product updated successfully
                   </div>
-                )}
+                )} */}
                 <span className="detail-mfg">
                   {selectedProduct.manufacturerName}
                 </span>
@@ -1411,7 +918,7 @@ export default function Products() {
               <div className="detail-panel-header">
                 <h3>Related Physical Items</h3>
               </div>
-              {relatedArmoryItemsLoading ? (
+              {/* {relatedArmoryItemsLoading ? (
                 <div className="loading-state" style={{ padding: "20px 0" }}>
                   Loading physical armory inventory...
                 </div>
@@ -1460,7 +967,7 @@ export default function Products() {
                     )}
                   </tbody>
                 </table>
-              )}
+              )} */}
             </div>
           )}
         </div>
@@ -1468,909 +975,15 @@ export default function Products() {
 
       {/* Catalog Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div
-            className="armory-center-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-title-bar">
-              <div className="title-left">
-                <span className="modal-title-icon">🏷️</span>
-                <h3>
-                  {isEditMode
-                    ? "Modify Product Reference"
-                    : "Add New Catalog Reference"}
-                </h3>
-              </div>
-              <button
-                className="modal-close-x-btn"
-                onClick={() => setShowModal(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Modal navigation tabs with conditionally visible subclass-specific tab */}
-            <div className="modal-tabs-header-row">
-              <button
-                className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
-                onClick={() => setActiveTab("general")}
-                type="button"
-              >
-                General Details
-              </button>
-
-              {/* Subclass-specific conditional tab showing/hiding dynamically */}
-              {form.productType !== "Product" && (
-                <button
-                  className={`tab-btn ${activeTab === "subclass" ? "active" : ""}`}
-                  onClick={() => setActiveTab("subclass")}
-                  type="button"
-                >
-                  {form.productType === "PewPew" && "PewPew Specs"}
-                  {form.productType === "Optic" && "Optical Specs"}
-                  {form.productType === "Suppressor" && "Suppressor Specs"}
-                  {form.productType === "PewPewLight" && "Light Specs"}
-                  {form.productType === "Security" && "Security Specs"}
-                </button>
-              )}
-
-              {form.id > 0 && (
-                <button
-                  className={`tab-btn ${activeTab === "documents" ? "active" : ""}`}
-                  onClick={() => setActiveTab("documents")}
-                  type="button"
-                >
-                  📁 Attachments
-                </button>
-              )}
-
-              <button
-                className={`tab-btn ${activeTab === "specifications" ? "active" : ""}`}
-                onClick={() => setActiveTab("specifications")}
-                type="button"
-              >
-                User Specs
-              </button>
-            </div>
-
-            <form
-              onSubmit={handleSaveProduct}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-                overflow: "hidden",
-                margin: 0,
-              }}
-            >
-              <div className="modal-tabs-body-content">
-                {/* TAB: GENERAL */}
-                {activeTab === "general" && (
-                  <div className="form-grid">
-                    <div className="form-item">
-                      <label>Product Catalog Class Type</label>
-                      <select
-                        value={form.productType}
-                        onChange={(e) =>
-                          setForm({ ...form, productType: e.target.value })
-                        }
-                        disabled={isEditMode}
-                      >
-                        {productTypes.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-item">
-                      <label>Manufacturer</label>
-                      <select
-                        value={form.manufacturerId || ""}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            manufacturerId: parseInt(e.target.value, 10),
-                          })
-                        }
-                        required
-                      >
-                        <option value="">-- Select Manufacturer --</option>
-                        {manufacturersList.map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-item full-row">
-                      <label>Product Model Name</label>
-                      <input
-                        type="text"
-                        value={form.name || ""}
-                        onChange={(e) =>
-                          setForm({ ...form, name: e.target.value })
-                        }
-                        placeholder="e.g. 19 Gen 5"
-                        required
-                      />
-                    </div>
-
-                    <div className="form-item">
-                      <label>Manufacturer Part Number (MPN)</label>
-                      <input
-                        type="text"
-                        value={form.partNumber || ""}
-                        onChange={(e) =>
-                          setForm({ ...form, partNumber: e.target.value })
-                        }
-                        placeholder="e.g. UA1950712"
-                        required
-                      />
-                    </div>
-
-                    <div className="form-item">
-                      <label>Universal SKU / Product Number</label>
-                      <input
-                        type="text"
-                        value={form.sku || ""}
-                        onChange={(e) =>
-                          setForm({ ...form, sku: e.target.value })
-                        }
-                        placeholder="e.g. 764503030109"
-                      />
-                    </div>
-
-                    <div className="form-item full-row">
-                      <label>Description</label>
-                      <textarea
-                        rows={3}
-                        value={form.description || ""}
-                        onChange={(e) =>
-                          setForm({ ...form, description: e.target.value })
-                        }
-                        placeholder="Enter product description..."
-                      />
-                    </div>
-
-                    <div className="form-item full-row">
-                      <label>Web Page URL</label>
-                      <input
-                        type="url"
-                        value={form.webPageUrl || ""}
-                        onChange={(e) =>
-                          setForm({ ...form, webPageUrl: e.target.value })
-                        }
-                        placeholder="https://manufacturersite.com/product"
-                      />
-                    </div>
-
-                    {form.id > 0 && (
-                      <div className="form-item full-row">
-                        <label>🖼️ Product Cover Image</label>
-                        <select
-                          value={form.coverImageId || ""}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              coverImageId: e.target.value
-                                ? parseInt(e.target.value, 10)
-                                : null,
-                            })
-                          }
-                          style={{
-                            backgroundColor: "var(--bg-input)",
-                            border: "1px solid var(--border-color)",
-                            borderRadius: "var(--radius-md)",
-                            padding: "0 12px",
-                            color: "var(--text-primary)",
-                            fontSize: "13px",
-                            outline: "none",
-                            height: "38px",
-                            width: "100%",
-                            boxSizing: "border-box",
-                          }}
-                        >
-                          <option value="">
-                            -- No Cover Image (Default Placeholder) --
-                          </option>
-                          {productDocuments
-                            .filter((doc) => {
-                              const typeStr = String(
-                                doc.type || "",
-                              ).toLowerCase();
-                              if (
-                                typeStr === "productimage" ||
-                                typeStr === "6" ||
-                                typeStr === "5"
-                              )
-                                return true;
-                              const opt = documentTypes.find(
-                                (o) =>
-                                  o.id === typeStr ||
-                                  o.name?.toLowerCase() === typeStr,
-                              );
-                              return opt
-                                ? opt.name?.toLowerCase() === "productimage"
-                                : false;
-                            })
-                            .map((img) => (
-                              <option key={img.id} value={img.id}>
-                                {img.fileName} (
-                                {((img.fileSizeBytes || 0) / 1024).toFixed(1)}{" "}
-                                KB)
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* TAB: SUBCLASS SPECIFIC */}
-                {activeTab === "subclass" && (
-                  <div className="form-grid">
-                    {/* PewPew Subclass Form Controls */}
-                    {form.productType === "PewPew" && (
-                      <>
-                        <div className="form-item">
-                          <label>Caliber</label>
-                          <select
-                            value={form.caliberId || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                caliberId: parseInt(e.target.value, 10),
-                              })
-                            }
-                            required
-                          >
-                            <option value="">-- Select Caliber --</option>
-                            {calibersList.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="form-item">
-                          <label>PewPew Category</label>
-                          <select
-                            value={form.pewPewCategory || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                pewPewCategory: e.target.value,
-                              })
-                            }
-                          >
-                            {pewPewCategories.map((opt: any) => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="form-item">
-                          <label>Action Type</label>
-                          <select
-                            value={form.actionType || ""}
-                            onChange={(e) =>
-                              setForm({ ...form, actionType: e.target.value })
-                            }
-                          >
-                            {actionTypes.map((opt: any) => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div
-                          className="form-item checkbox-row"
-                          style={{ alignSelf: "center", marginTop: "14px" }}
-                        >
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isNfaItem || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isNfaItem: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>Is NFA Item</span>
-                          </label>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Optic Subclass Form Controls */}
-                    {form.productType === "Optic" && (
-                      <>
-                        <div className="form-item">
-                          <label>Optic Type</label>
-                          <select
-                            value={form.opticType || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                opticType: e.target.value,
-                              })
-                            }
-                          >
-                            {opticTypes.map((opt: any) => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="form-item">
-                          <label>Reticle Type</label>
-                          <select
-                            value={form.reticle || ""}
-                            onChange={(e) =>
-                              setForm({ ...form, reticle: e.target.value })
-                            }
-                          >
-                            {opticReticles.map((opt: any) => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="form-item">
-                          <label>Minimum Magnification</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={form.minMagnification || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                minMagnification: parseFloat(e.target.value),
-                              })
-                            }
-                          />
-                        </div>
-
-                        <div className="form-item">
-                          <label>Maximum Magnification</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={form.maxMagnification || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                maxMagnification: parseFloat(e.target.value),
-                              })
-                            }
-                          />
-                        </div>
-
-                        <div className="form-item">
-                          <label>Objective Lens Size (mm)</label>
-                          <input
-                            type="number"
-                            value={form.objectiveDiameterMm || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                objectiveDiameterMm: parseInt(
-                                  e.target.value,
-                                  10,
-                                ),
-                              })
-                            }
-                          />
-                        </div>
-
-                        <div className="form-item">
-                          <label>Tube / Body Diameter</label>
-                          <input
-                            type="text"
-                            value={form.tubeDiameter || ""}
-                            placeholder="e.g. 30mm, 34mm, 1-inch"
-                            onChange={(e) =>
-                              setForm({ ...form, tubeDiameter: e.target.value })
-                            }
-                          />
-                        </div>
-
-                        <div className="form-item full-row">
-                          <label
-                            style={{
-                              display: "block",
-                              marginBottom: "8px",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Turret Adjustment Units (Select All That Apply)
-                          </label>
-                          <div
-                            className="adjustment-units-grid"
-                            style={{
-                              display: "flex",
-                              gap: "20px",
-                              flexWrap: "wrap",
-                              padding: "10px",
-                              background: "rgba(255,255,255,0.05)",
-                              borderRadius: "6px",
-                              border: "1px solid rgba(255,255,255,0.1)",
-                            }}
-                          >
-                            {opticAdjustmentUnits
-                              .filter((opt: any) => opt.name !== "None")
-                              .map((opt: any) => {
-                                const isChecked = form.adjustmentUnits
-                                  ? form.adjustmentUnits
-                                      .split(",")
-                                      .map((s) => s.trim())
-                                      .includes(opt.label)
-                                  : false;
-                                return (
-                                  <label
-                                    key={opt.id}
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "8px",
-                                      cursor: "pointer",
-                                      userSelect: "none",
-                                    }}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={() => {
-                                        let current = form.adjustmentUnits
-                                          ? form.adjustmentUnits
-                                              .split(",")
-                                              .map((s) => s.trim())
-                                              .filter(Boolean)
-                                          : [];
-                                        if (current.includes(opt.label)) {
-                                          current = current.filter(
-                                            (u) => u !== opt.label,
-                                          );
-                                        } else {
-                                          current = [...current, opt.label];
-                                        }
-                                        setForm({
-                                          ...form,
-                                          adjustmentUnits: current.join(", "),
-                                        });
-                                      }}
-                                      style={{
-                                        cursor: "pointer",
-                                        width: "16px",
-                                        height: "16px",
-                                      }}
-                                    />
-                                    <span style={{ fontSize: "14px" }}>
-                                      {opt.label}
-                                    </span>
-                                  </label>
-                                );
-                              })}
-                          </div>
-                        </div>
-
-                        <div className="form-item checkbox-row full-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isIlluminated || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isIlluminated: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>Features Reticle Illumination</span>
-                          </label>
-                        </div>
-
-                        {renderBatteryControl(
-                          "Requires Battery Power (Illuminated Reticle / Dial)",
-                        )}
-                      </>
-                    )}
-
-                    {/* Suppressor Subclass Form Controls */}
-                    {form.productType === "Suppressor" && (
-                      <>
-                        <div className="form-item">
-                          <label>Caliber</label>
-                          <select
-                            value={form.caliberId || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                caliberId: parseInt(e.target.value, 10),
-                              })
-                            }
-                            required
-                          >
-                            <option value="">-- Select Caliber --</option>
-                            {calibersList.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="form-item">
-                          <label>Muzzle Thread Pitch</label>
-                          <input
-                            type="text"
-                            value={form.threadPitch || ""}
-                            placeholder="e.g. 1/2x28, 5/8x24"
-                            onChange={(e) =>
-                              setForm({ ...form, threadPitch: e.target.value })
-                            }
-                          />
-                        </div>
-
-                        <div className="form-item">
-                          <label>Attachment Type</label>
-                          <select
-                            value={form.attachmentType || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                attachmentType: e.target.value,
-                              })
-                            }
-                          >
-                            {suppressorAttachmentTypes.map((opt: any) => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="form-item">
-                          <label>Material</label>
-                          <select
-                            value={form.material || ""}
-                            onChange={(e) =>
-                              setForm({ ...form, material: e.target.value })
-                            }
-                          >
-                            {suppressorMaterials.map((opt: any) => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="form-item">
-                          <label>Sound Reduction Rating (dB)</label>
-                          <input
-                            type="number"
-                            value={form.soundReductionDb || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                soundReductionDb:
-                                  parseInt(e.target.value, 10) || 0,
-                              })
-                            }
-                          />
-                        </div>
-
-                        <div
-                          className="form-item checkbox-row full-row"
-                          style={{ marginTop: "14px" }}
-                        >
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isFullAutoRated || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isFullAutoRated: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>Rated for Sustained Full-Automatic Fire</span>
-                          </label>
-                        </div>
-
-                        <div className="form-item checkbox-row full-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isUserServiceable || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isUserServiceable: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>
-                              User Serviceable (Disassembles for cleaning)
-                            </span>
-                          </label>
-                        </div>
-                      </>
-                    )}
-
-                    {/* PewPewLight Subclass Form Controls */}
-                    {form.productType === "PewPewLight" && (
-                      <>
-                        <div className="form-item">
-                          <label>Luminous Flux (Lumens)</label>
-                          <input
-                            type="number"
-                            value={form.lumens || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                lumens: parseInt(e.target.value, 10),
-                              })
-                            }
-                          />
-                        </div>
-
-                        <div className="form-item">
-                          <label>Peak Beam Intensity (Candela)</label>
-                          <input
-                            type="number"
-                            value={form.candela || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                candela: parseInt(e.target.value, 10),
-                              })
-                            }
-                          />
-                        </div>
-
-                        <div className="form-item">
-                          <label>Mount Base Interface</label>
-                          <select
-                            value={form.mountType || ""}
-                            onChange={(e) =>
-                              setForm({ ...form, mountType: e.target.value })
-                            }
-                          >
-                            <option value="">-- Select Mount Type --</option>
-                            {lightMountTypes.map((opt: any) => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="form-item">
-                          <label>Laser Designator Spectrum</label>
-                          <select
-                            value={form.laserColor || ""}
-                            onChange={(e) =>
-                              setForm({ ...form, laserColor: e.target.value })
-                            }
-                          >
-                            {laserColors.map((opt: any) => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div
-                          className="form-item checkbox-row full-row"
-                          style={{ marginTop: "14px" }}
-                        >
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.hasRemoteSwitchPort || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  hasRemoteSwitchPort: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>
-                              Supports Pressure Switches (Tailcap switch port)
-                            </span>
-                          </label>
-                        </div>
-
-                        <div className="form-item checkbox-row full-row">
-                          <label className="checkbox-container">
-                            <input
-                              type="checkbox"
-                              checked={form.isInfraredCapable || false}
-                              onChange={(e) =>
-                                setForm({
-                                  ...form,
-                                  isInfraredCapable: e.target.checked,
-                                })
-                              }
-                            />
-                            <span className="checkmark"></span>
-                            <span>
-                              Features IR Illuminator / Night Vision Mode
-                            </span>
-                          </label>
-                        </div>
-
-                        {renderBatteryControl("Requires Battery Power")}
-                      </>
-                    )}
-
-                    {/* Security Subclass Form Controls */}
-                    {form.productType === "Security" && (
-                      <>
-                        <div className="form-item">
-                          <label>Lock Type</label>
-                          <select
-                            value={form.lockType || ""}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                lockType: e.target.value,
-                              })
-                            }
-                          >
-                            <option value="">-- Select Lock Type --</option>
-                            {lockTypes.map((opt: any) => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {renderBatteryControl(
-                          "Requires Battery Power (For locking mechanisms or electronic keypads)",
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* TAB: ATTACHMENTS & DOCUMENTS */}
-                {activeTab === "documents" && (
-                  <div
-                    style={{
-                      padding: "10px 0",
-                      overflowY: "auto",
-                      flex: 1,
-                      maxHeight: "550px",
-                    }}
-                  >
-                    <ProductDocumentsTable
-                      productId={form.id}
-                      readOnly={false}
-                    />
-                  </div>
-                )}
-
-                {/* TAB: DYNAMIC JSON SPECIFICATIONS */}
-                {activeTab === "specifications" && (
-                  <div className="specifications-editor-container">
-                    <div className="spec-info-card">
-                      <h4>💡 User Custom Specifications</h4>
-                      <p>
-                        You can store arbitrary metadata parameters that don't
-                        belong to predefined schemas. These fields compile
-                        dynamically into an offline JSON attribute dictionary on
-                        save.
-                      </p>
-                    </div>
-
-                    <div className="specs-editor-grid">
-                      <div className="specs-headers">
-                        <span>Parameter Key</span>
-                        <span>Parameter Specification Value</span>
-                        <span></span>
-                      </div>
-
-                      {customSpecs.length === 0 ? (
-                        <div className="no-specs-text">
-                          No custom parameters added yet.
-                        </div>
-                      ) : (
-                        customSpecs.map((spec, index) => (
-                          <div key={index} className="spec-editor-row">
-                            <input
-                              type="text"
-                              placeholder="e.g. Eye Relief"
-                              value={spec.key}
-                              onChange={(e) =>
-                                handleCustomSpecChange(
-                                  index,
-                                  "key",
-                                  e.target.value,
-                                )
-                              }
-                              required
-                            />
-                            <input
-                              type="text"
-                              placeholder="e.g. 4.5 inches"
-                              value={spec.value}
-                              onChange={(e) =>
-                                handleCustomSpecChange(
-                                  index,
-                                  "value",
-                                  e.target.value,
-                                )
-                              }
-                              required
-                            />
-                            <button
-                              type="button"
-                              className="remove-spec-btn"
-                              onClick={() => removeCustomSpec(index)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className="add-spec-btn"
-                      onClick={addCustomSpec}
-                    >
-                      + Add New Specification Key
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Modal Footer Controls */}
-              <div className="modal-footer-row-container">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowModal(false)}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </button>
-                <SubmitButton
-                  isSaving={isSaving}
-                  saveSuccess={saveSuccess}
-                  isEditMode={isEditMode}
-                />
-              </div>
-            </form>
-          </div>
-        </div>
+        <ProductForm
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          productId={isEditMode ? selectedProduct?.id || null : null}
+          onSaved={(savedProduct) => {
+            setSelectedProduct(savedProduct);
+            setShowModal(false);
+          }}
+        />
       )}
     </div>
   );

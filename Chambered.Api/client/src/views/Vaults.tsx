@@ -4,7 +4,7 @@ import { useStore } from "../StoreContext";
 import "./Vaults.css";
 import BatteryTracker from "../components/BatteryTracker";
 import SubmitButton from "../components/SubmitButton";
-import VaultCard from "../components/VaultCard";
+import VaultCard from "../Cards/VaultCard";
 
 import {
   useGetVaults,
