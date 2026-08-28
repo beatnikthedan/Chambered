@@ -1,4 +1,4 @@
-/* Catalog Split Screen View Layout Styling */
+/* Products Split Screen View Layout Styling */
 
 .catalog-split-view {
   display: flex;
@@ -57,7 +57,7 @@
   box-shadow: 0 0 0 2px rgba(240, 98, 146, 0.15);
 }
 
-/* POPOVER TRIGGER BUTTONS (AudioBookShelf style) */
+/* POPOVER TRIGGER BUTTONS */
 .popover-wrapper {
   position: relative;
 }
@@ -342,8 +342,6 @@
   padding-right: 4px;
 }
 
-
-
 .bold-name-cell {
   font-weight: 600;
   color: var(--text-primary);
@@ -464,28 +462,12 @@
   overflow: hidden;
 }
 
-.mfg-details-meta {
-  margin: 4px 0;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
 .right-pane-column {
-  flex: 1; /* Retains the 1/3 side column width */
+  flex: 1;
   display: flex;
-  flex-direction: column; /* Forces Pane 2 and Pane 3 to stack top-to-bottom */
-  gap: 16px; /* Spacing between Pane 2 and Pane 3 */
-  overflow-y: auto; /* Allows the right column to scroll if content exceeds screen height */
-}
-
-.card-link {
-  font-size: 12px;
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 600;
-  margin-top: auto;
-  padding-top: 10px;
-  display: inline-block;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
 }
 
 /* RIGHT DETAIL PANEL: 1/3 WIDTH */
@@ -980,23 +962,6 @@
   color: var(--text-primary);
 }
 
-/* GENERAL METADATA */
-.mfg-meta-item {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 6px 0;
-}
-
-.address-display {
-  font-size: 13px;
-  color: var(--text-secondary);
-  background-color: rgba(255, 255, 255, 0.01);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 12px;
-  line-height: 1.6;
-}
-
 /* STATES */
 .loading-state {
   text-align: center;
@@ -1016,49 +981,13 @@
   color: var(--text-muted);
 }
 
-.mfg-favicon-img {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  object-fit: contain;
-  vertical-align: middle;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background-color: #fff;
-}
-
-.mfg-favicon-placeholder {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  font-size: 13px;
-  vertical-align: middle;
-  background-color: #e9ecef;
-  color: #495057;
-}
-
-.mfg-favicon-placeholder.loading {
-  border: 2px solid rgba(0, 0, 0, 0.08);
-  border-top-color: #007bff;
-  background-color: transparent;
-  animation: mfg-spin 0.75s linear infinite;
-}
-
-@keyframes mfg-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* QUICK ADD PANEL STYLING */
 .quick-add-container {
   display: flex;
   align-items: center;
   gap: 16px;
-  background-color: rgba(var(--color-primary-rgb), 0.04); /* slight theme background overlay with opacity */
-  border: 1px dashed rgba(var(--color-primary-rgb), 0.4); /* theme color dashed border */
+  background-color: rgba(var(--color-primary-rgb), 0.04);
+  border: 1px dashed rgba(var(--color-primary-rgb), 0.4);
   border-radius: var(--radius-md);
   padding: 12px 16px;
   margin-bottom: 16px;
@@ -1069,7 +998,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--color-primary); /* theme color text */
+  color: var(--color-primary);
   white-space: nowrap;
 }
 
@@ -1112,7 +1041,7 @@
   border-bottom-right-radius: var(--radius-lg);
   font-size: 13px;
   color: var(--text-muted);
-  margin-top: auto; /* keeps footer at the bottom of the flex master panel */
+  margin-top: auto;
 }
 
 .footer-actions {
