@@ -24,7 +24,8 @@ namespace Chambered.Api.Configuration
             builder.EntityType<Security>().DerivesFrom<Product>();
 
             var productColl = builder.EntityType<Product>().Collection;
-            productColl.Function("GetActionTypes").ReturnsCollection<string>();
+            productColl.Function("GetProductTypes").ReturnsCollection<string>();
+            productColl.Function("GetActionTypes").ReturnsCollection<EnumDto>();
             productColl.Function("GetBatteryTypes").ReturnsCollection<EnumDto>();
             productColl.Function("GetCaseMaterials").ReturnsCollection<EnumDto>();
             productColl.Function("GetLaserColors").ReturnsCollection<EnumDto>();
@@ -32,6 +33,7 @@ namespace Chambered.Api.Configuration
             productColl.Function("GetLockTypes").ReturnsCollection<EnumDto>();
             productColl.Function("GetOpticAdjustmentUnits").ReturnsCollection<EnumDto>();
             productColl.Function("GetOpticReticles").ReturnsCollection<EnumDto>();
+            productColl.Function("GetOpticTypes").ReturnsCollection<EnumDto>();
             productColl.Function("GetPewPewCategories").ReturnsCollection<EnumDto>();
             productColl.Function("GetPowderBurnRates").ReturnsCollection<EnumDto>();
             productColl.Function("GetPowderShapes").ReturnsCollection<EnumDto>();

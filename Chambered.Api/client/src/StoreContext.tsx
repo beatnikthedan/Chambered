@@ -17,20 +17,29 @@ import {
   postAccountLogout,
   postUsersRegister,
   getProductsActionTypes,
+  getArmoryItemsArmoryItemDocumentTypes,
   getProductsBatteryTypes,
+  getProductsCaseMaterials,
+  getArmoryItemsItemConditions,
   getProductsLaserColors,
   getProductsLightMountTypes,
+  getProductsLockTypes,
+  getArmoryItemsNfaFormTypes,
   getProductsOpticAdjustmentUnits,
   getProductsOpticReticles,
   getProductsOpticTypes,
   getProductsPewPewCategories,
+  getProductsPowderBurnRates,
+  getProductsPowderShapes,
+  getProductsPowderTypes,
+  getProductsPrimerSizes,
+  getProductsPrimerTypes,
+  getProductsProductDocumentTypes,
+  getProductsProjectileMaterials,
+  getProductsProjectileProfiles,
   getProductsSuppressorAttachmentTypes,
   getProductsSuppressorMaterials,
-  getArmoryItemsItemConditions,
-  getArmoryItemsNfaFormTypes,
-  getVaultsLockTypes,
   getVaultsVaultCategories,
-  getProductDocumentsDocumentTypes,
 } from "./api/endpoints";
 import type { Arsenal } from "./api/models/arsenal";
 import type { UserResponseDto } from "./api/models/userResponseDto";
@@ -43,20 +52,29 @@ export interface EnumOption {
 
 export interface StoreEnums {
   actionTypes: EnumOption[];
+  armoryItemDocumentTypes: EnumOption[];
   batteryTypes: EnumOption[];
+  caseMaterials: EnumOption[];
+  itemConditions: EnumOption[];
   laserColors: EnumOption[];
   lightMountTypes: EnumOption[];
+  lockTypes: EnumOption[];
+  nfaFormTypes: EnumOption[];
   opticAdjustmentUnits: EnumOption[];
   opticReticles: EnumOption[];
   opticTypes: EnumOption[];
   pewPewCategories: EnumOption[];
+  powderBurnRates: EnumOption[];
+  powderShapes: EnumOption[];
+  powderTypes: EnumOption[];
+  primerSizes: EnumOption[];
+  primerTypes: EnumOption[];
+  productDocumentTypes: EnumOption[];
+  projectileMaterials: EnumOption[];
+  projectileProfiles: EnumOption[];
   suppressorAttachmentTypes: EnumOption[];
   suppressorMaterials: EnumOption[];
-  itemConditions: EnumOption[];
-  nfaFormTypes: EnumOption[];
-  lockTypes: EnumOption[];
   vaultCategories: EnumOption[];
-  documentTypes: EnumOption[];
 }
 
 export interface StoreContextType {
@@ -169,7 +187,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       const [
         actionTypes,
-        ammoItemDocumentTypes,
+        armoryItemDocumentTypes,
         batteryTypes,
         caseMaterials,
         itemConditions,
@@ -194,38 +212,56 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         vaultCategories,
       ] = await Promise.all([
         fetchEnum(getProductsActionTypes),
+        fetchEnum(getArmoryItemsArmoryItemDocumentTypes),
         fetchEnum(getProductsBatteryTypes),
+        fetchEnum(getProductsCaseMaterials),
+        fetchEnum(getArmoryItemsItemConditions),
         fetchEnum(getProductsLaserColors),
         fetchEnum(getProductsLightMountTypes),
+        fetchEnum(getProductsLockTypes),
+        fetchEnum(getArmoryItemsNfaFormTypes),
         fetchEnum(getProductsOpticAdjustmentUnits),
         fetchEnum(getProductsOpticReticles),
         fetchEnum(getProductsOpticTypes),
         fetchEnum(getProductsPewPewCategories),
+        fetchEnum(getProductsPowderBurnRates),
+        fetchEnum(getProductsPowderShapes),
+        fetchEnum(getProductsPowderTypes),
+        fetchEnum(getProductsPrimerSizes),
+        fetchEnum(getProductsPrimerTypes),
+        fetchEnum(getProductsProductDocumentTypes),
+        fetchEnum(getProductsProjectileMaterials),
+        fetchEnum(getProductsProjectileProfiles),
         fetchEnum(getProductsSuppressorAttachmentTypes),
         fetchEnum(getProductsSuppressorMaterials),
-        fetchEnum(getArmoryItemsItemConditions),
-        fetchEnum(getArmoryItemsNfaFormTypes),
-        fetchEnum(getVaultsLockTypes),
         fetchEnum(getVaultsVaultCategories),
-        fetchEnum(getProductDocumentsDocumentTypes),
       ]);
 
       setEnums({
         actionTypes,
+        armoryItemDocumentTypes,
         batteryTypes,
+        caseMaterials,
+        itemConditions,
         laserColors,
         lightMountTypes,
+        lockTypes,
+        nfaFormTypes,
         opticAdjustmentUnits,
         opticReticles,
         opticTypes,
         pewPewCategories,
+        powderBurnRates,
+        powderShapes,
+        powderTypes,
+        primerSizes,
+        primerTypes,
+        productDocumentTypes,
+        projectileMaterials,
+        projectileProfiles,
         suppressorAttachmentTypes,
         suppressorMaterials,
-        itemConditions,
-        nfaFormTypes,
-        lockTypes,
         vaultCategories,
-        documentTypes,
       });
     } catch (err) {
       console.error("Failed to load enums metadata", err);

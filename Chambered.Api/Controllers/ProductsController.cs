@@ -100,6 +100,12 @@ public class ProductsController : ODataControllerBase<Product, int>
     }
 
     [HttpGet]
+    public IActionResult GetOpticTypes()
+    {
+        return Ok(GetEnumValues<OpticType>());
+    }
+
+    [HttpGet]
     public IActionResult GetPewPewCategories()
     {
         return Ok(GetEnumValues<PewPewCategory>());

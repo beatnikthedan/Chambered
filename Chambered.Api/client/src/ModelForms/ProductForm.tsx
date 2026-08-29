@@ -208,18 +208,26 @@ export default function ProductForm({
   }, [productDocsData]);
 
   // Map Enums
-  const suppressorMaterials = enums?.suppressorMaterials || [];
-  const suppressorAttachmentTypes = enums?.suppressorAttachmentTypes || [];
-  const opticReticles = enums?.opticReticles || [];
-  const opticAdjustmentUnits = enums?.opticAdjustmentUnits || [];
-  const batteryTypes = enums?.batteryTypes || [];
   const actionTypes = enums?.actionTypes || [];
-  const pewPewCategories = enums?.pewPewCategories || [];
-  const opticTypes = enums?.opticTypes || [];
+  const batteryTypes = enums?.batteryTypes || [];
+  const caseMaterials = enums?.caseMaterials || [];
   const laserColors = enums?.laserColors || [];
   const lightMountTypes = enums?.lightMountTypes || [];
   const lockTypes = enums?.lockTypes || [];
-  const powderTypes = enums?.powerTypes || [];
+  const opticAdjustmentUnits = enums?.opticAdjustmentUnits || [];
+  const opticReticles = enums?.opticReticles || [];
+  const opticTypes = enums?.opticTypes || [];
+  const pewPewCategories = enums?.pewPewCategories || [];
+  const powderBurnRates = enums?.powderBurnRates || [];
+  const powderShapes = enums?.powderShapes || [];
+  const powderTypes = enums?.powderTypes || [];
+  const primerSizes = enums?.primerSizes || [];
+  const primerTypes = enums?.primerTypes || [];
+  const productDocumentTypes = enums?.productDocumentTypes || [];
+  const projectileMaterials = enums?.projectileMaterials || [];
+  const projectileProfiles = enums?.projectileProfiles || [];
+  const suppressorAttachmentTypes = enums?.suppressorAttachmentTypes || [];
+  const suppressorMaterials = enums?.suppressorMaterials || [];
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
 
