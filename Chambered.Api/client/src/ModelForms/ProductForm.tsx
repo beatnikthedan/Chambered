@@ -451,6 +451,11 @@ export default function ProductForm({
       payload.batteryType = targetForm.hasBattery
         ? targetForm.batteryType
         : null;
+    } else if (type === "Powder") {
+      payload.powderType = targetForm.powderType || null;
+      payload.shape = targetForm.shape || null;
+      payload.burnRate = targetForm.burnRate || null;
+      payload.containerWeightLbs = targetForm.containerWeightLbs || 0;
     }
 
     // Clean payload of navigation objects to avoid OData mapping errors
@@ -1406,6 +1411,7 @@ export default function ProductForm({
                     </>
                   )}
 
+                  {/* Powder Subclass Form Controls */}
                   {form.productType === "Powder" && (
                     <>
                       <div className="form-item">
@@ -1420,7 +1426,7 @@ export default function ProductForm({
                           }
                         >
                           <option value="">-- select --</option>
-                          {lockTypes.map((opt: any) => (
+                          {powderTypes.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
@@ -1428,13 +1434,60 @@ export default function ProductForm({
                         </select>
                       </div>
 
-                      {renderBatteryControl(
-                        "Requires Battery Power (For locking mechanisms or electronic keypads)",
-                      )}
+                      <div className="form-item">
+                        <label>Powder Shape</label>
+                        <select
+                          value={form.shape || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              shape: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="">-- select --</option>
+                          {powderShapes.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                      {renderCapacityControl(
-                        "Has a maximum capacity limit for Armory Items",
-                      )}
+                      <div className="form-item">
+                        <label>Burn Rate</label>
+                        <select
+                          value={form.burnRate || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              burnRate: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="">-- select --</option>
+                          {powderBurnRates.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Container Weight(lbs)</label>
+                        <input
+                          type="number"
+                          step=".5"
+                          value={form.containerWeightLbs || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              containerWeightLbs: parseFloat(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
                     </>
                   )}
                 </div>
