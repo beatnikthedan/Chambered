@@ -58,6 +58,9 @@ namespace Chambered.Api.Configuration
 
                         var suppressor = builder.EntityType<Suppressor>();
                         suppressor.Property(s => s.ThreadPitch).MaxLength = 50;
+
+                        var casing = builder.EntityType<Casing>();
+                        casing.Property(s => s.HeadStamp).MaxLength = 50;
                         break;
                     }
             }

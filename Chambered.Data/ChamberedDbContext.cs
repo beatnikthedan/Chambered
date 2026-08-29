@@ -137,7 +137,7 @@ namespace Chambered.Data
     //    public decimal Diameter { get; set; }
     //    public decimal WeightGrains { get; set; }
 
-    //    public string Type { get; set; }
+    //    public string PrimerType { get; set; }
 
     //    // Ballistic coefficients
     //    public decimal? BallisticCoefficientG1 { get; set; }
@@ -199,7 +199,7 @@ namespace Chambered.Data
 
     //    public string Manufacturer { get; set; }     // Hodgdon, Alliant, Vihtavuori
     //    public string Name { get; set; }             // "H4350", "Titegroup"
-    //    public string Type { get; set; }             // Extruded, Ball, Flake
+    //    public string PrimerType { get; set; }             // Extruded, Ball, Flake
 
     //    public decimal? BurnRateRank { get; set; }   // Optional: relative burn rate index
     //    public string Notes { get; set; }
@@ -259,7 +259,7 @@ namespace Chambered.Data
 
     //    public string Manufacturer { get; set; }     // CCI, Federal, Winchester
     //    public string Name { get; set; }             // "CCI 450", "Federal 205"
-    //    public string Type { get; set; }             // Small Rifle, Large Pistol, etc.
+    //    public string PrimerType { get; set; }             // Small Rifle, Large Pistol, etc.
 
     //    public string Notes { get; set; }
     //}
@@ -276,7 +276,7 @@ namespace Chambered.Data
     //            .IsRequired()
     //            .HasMaxLength(100);
 
-    //        builder.Property(p => p.Type)
+    //        builder.Property(p => p.PrimerType)
     //            .HasMaxLength(50);
 
     //        builder.Property(p => p.Notes)
@@ -296,7 +296,7 @@ namespace Chambered.Data
     //            .IsRequired()
     //            .HasMaxLength(20);
 
-    //        builder.Property(p => p.Type)
+    //        builder.Property(p => p.PrimerType)
     //            .HasMaxLength(50);
 
     //        builder.Property(p => p.BallisticCoefficientG1)
@@ -360,7 +360,7 @@ namespace Chambered.Data
     //            .IsRequired()
     //            .HasMaxLength(50);
 
-    //        builder.Property(p => p.Type)
+    //        builder.Property(p => p.PrimerType)
     //            .HasMaxLength(50);
 
     //        builder.Property(p => p.Notes)

@@ -87,4 +87,12 @@ namespace Chambered.Data.Configuration
             builder.Property(s => s.ThreadPitch).HasMaxLength(50);
         }
     }
+
+    public class CasingConfiguration : IEntityTypeConfiguration<Casing>
+    {
+        public void Configure(EntityTypeBuilder<Casing> builder)
+        {
+            builder.Property(s => s.HeadStamp).HasMaxLength(50);
+        }
+    }
 }

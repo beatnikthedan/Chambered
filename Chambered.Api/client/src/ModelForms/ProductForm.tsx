@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useStore } from "../StoreContext";
 import SubmitButton from "../components/SubmitButton";
 import ProductDocumentsTable from "../components/ProductDocumentsTable";
-import SecureImage from "../components/SecureImage";
 
 import {
   useGetProductsFromKey,
@@ -15,7 +14,6 @@ import {
   useGetProductsProductTypes,
 } from "../api/endpoints";
 
-import type { Product } from "../api/models/product";
 import type { Manufacturer } from "../api/models/manufacturer";
 import type { Caliber } from "../api/models/caliber";
 
@@ -26,103 +24,122 @@ export interface ProductFormProps {
   onSaved?: (savedProduct: any) => void;
 }
 
-interface FormState {
-  id: number;
-  productType: string;
-  name: string;
-  description: string;
-  partNumber: string;
-  sku: string;
-  manufacturerId: string | number;
-  webPageUrl: string;
-  specifications: Record<string, any>;
-  caliberId: string | number;
-  pewPewCategory: string;
-  actionType: string;
-  isNfaItem: boolean;
-  minMagnification: string | number;
-  maxMagnification: string | number;
-  objectiveDiameterMm: string | number;
-  opticType: string;
-  reticle: string;
-  adjustmentUnits: string;
-  tubeDiameter: string;
-  isIlluminated: boolean;
-  hasBattery: boolean;
-  batteryType: string;
-  threadPitch: string;
-  attachmentType: string;
-  material: string;
-  soundReductionDb: string | number;
-  isFullAutoRated: boolean;
-  isUserServiceable: boolean;
-  lumens: string | number;
-  candela: string | number;
-  mountType: string;
-  laserColor: string;
-  hasRemoteSwitchPort: boolean;
-  isInfraredCapable: boolean;
-  lockType: string;
-  coverImageId: number | null;
-}
+// ---------------------------------------------------------------------------
+// Single Source of Truth for Form State Defaults
+// ---------------------------------------------------------------------------
+const INITIAL_FORM_STATE = {
+  // audit
+  created: new Date(),
+  modified: new Date(),
+  createdBy: "",
+  modifiedBy: "",
+
+  // product
+  id: 0,
+  name: "",
+  description: "",
+  manufacturerId: "" as string | number,
+  productType: "PewPew",
+  partNumber: "",
+  sku: "",
+  webPageUrl: "",
+  coverImageId: null as number | null,
+  specifications: {} as Record<string, any>,
+
+  // pewpew
+  pewPewCategory: "",
+  caliberId: "" as string | number,
+  actionType: "",
+  isNfaItem: false,
+
+  // optic
+  minMagnification: "" as string | number,
+  maxMagnification: "" as string | number,
+  objectiveDiameterMm: "" as string | number,
+  opticType: "",
+  reticle: "",
+  adjustmentUnits: "",
+  tubeDiameter: "",
+  isIlluminated: false,
+
+  // suppressor
+  threadPitch: "",
+  attachmentType: "",
+  material: "",
+  soundReductionDb: "" as string | number,
+  isFullAutoRated: false,
+  isUserServiceable: false,
+
+  // light
+  lumens: "" as string | number,
+  candela: "" as string | number,
+  mountType: "",
+  laserColor: "",
+  hasRemoteSwitchPort: false,
+  isInfraredCapable: false,
+
+  // security
+  lockType: "",
+
+  // power
+  powderType: "",
+  shape: "",
+  burnRate: "",
+  containerWeightLbs: 0,
+
+  // primer
+  primerSize: "",
+  primerType: "",
+  isMagnum: false,
+  isMatch: false,
+
+  // projectile
+  BcG1: null as number | null,
+  BcG7: null as number | null,
+  isBoatTail: false,
+  hasCannelure: false,
+
+  // casing
+  primerPocketSize: "",
+  isPrimed: false,
+  isAnnealed: false,
+  isVirgin: false,
+
+  // ammunition
+  muzzleVelocityFps: 0,
+  muzzleEnergyFtLbs: 0,
+  isPlusP: false,
+  isSubsonic: false,
+
+  // ammo box/battery/capacity
+  hasBattery: false,
+  batteryType: "",
+  isCapcityLimited: false,
+  maxCapcity: 0,
+  quantity: 0,
+
+  // iprojectile
+  projectileProfile: "",
+  projectileMaterial: "",
+  isLeadFree: false,
+  weightGrains: 0,
+
+  // icasing
+  caseMaterial: "",
+  headStamp: "",
+};
+
+// Derived Type
+export type FormState = typeof INITIAL_FORM_STATE;
+
+// Derived Runtime Static Keys for Spec Filtering
+const STATIC_KEYS = new Set(Object.keys(INITIAL_FORM_STATE));
 
 const extractSpecifications = (product: any): Record<string, any> => {
   if (!product) return {};
-  const staticKeys = new Set([
-    "id",
-    "name",
-    "partNumber",
-    "sku",
-    "manufacturerId",
-    "description",
-    "webPageUrl",
-    "productType",
-    "created",
-    "modified",
-    "createdBy",
-    "modifiedBy",
-    "manufacturer",
-    "productDocuments",
-    "armoryItems",
-    "coverImageId",
-    "coverImage",
-    "caliberId",
-    "pewPewCategory",
-    "actionType",
-    "isNfaItem",
-    "caliber",
-    "minMagnification",
-    "maxMagnification",
-    "objectiveDiameterMm",
-    "opticType",
-    "reticle",
-    "adjustmentUnits",
-    "tubeDiameter",
-    "isIlluminated",
-    "hasBattery",
-    "batteryType",
-    "threadPitch",
-    "attachmentType",
-    "material",
-    "soundReductionDb",
-    "isFullAutoRated",
-    "isUserServiceable",
-    "lumens",
-    "candela",
-    "mountType",
-    "laserColor",
-    "hasRemoteSwitchPort",
-    "isInfraredCapable",
-    "lockType",
-    "manufacturerName",
-    "caliberName",
-    "@odata.type",
-    "@odata.context",
-  ]);
-
   const specs: Record<string, any> = {};
   Object.keys(product).forEach((key) => {
-    if (!staticKeys.has(key)) {
+    if (!STATIC_KEYS.has(key)) {
       specs[key] = product[key];
     }
   });
@@ -203,44 +220,24 @@ export default function ProductForm({
   const lightMountTypes = enums?.lightMountTypes || [];
   const lockTypes = enums?.lockTypes || [];
 
-  const [form, setForm] = useState<FormState>({
-    id: 0,
-    productType: "PewPew",
-    name: "",
-    description: "",
-    partNumber: "",
-    sku: "",
-    manufacturerId: "",
-    webPageUrl: "",
-    specifications: {},
-    caliberId: "",
-    pewPewCategory: "",
-    actionType: "",
-    isNfaItem: false,
-    minMagnification: "",
-    maxMagnification: "",
-    objectiveDiameterMm: "",
-    opticType: "",
-    reticle: "",
-    adjustmentUnits: "",
-    tubeDiameter: "",
-    isIlluminated: false,
-    hasBattery: false,
-    batteryType: "",
-    threadPitch: "",
-    attachmentType: "",
-    material: "",
-    soundReductionDb: "",
-    isFullAutoRated: false,
-    isUserServiceable: false,
-    lumens: "",
-    candela: "",
-    mountType: "",
-    laserColor: "",
-    hasRemoteSwitchPort: false,
-    isInfraredCapable: false,
-    lockType: "",
-    coverImageId: null,
+  const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
+
+  // Helper to build initial form combined with dropdown lookup defaults
+  const getInitialFormWithLookups = () => ({
+    ...INITIAL_FORM_STATE,
+    manufacturerId: manufacturersList[0]?.id || "",
+    caliberId: calibersList[0]?.id || "",
+    pewPewCategory: pewPewCategories[0]?.id || "",
+    actionType: actionTypes[0]?.id || "",
+    opticType: opticTypes[0]?.id || "",
+    reticle: opticReticles[0]?.id || "",
+    adjustmentUnits: opticAdjustmentUnits[0]?.id || "",
+    batteryType: batteryTypes[0]?.id || "",
+    attachmentType: suppressorAttachmentTypes[0]?.id || "",
+    material: suppressorMaterials[0]?.id || "",
+    mountType: lightMountTypes[0]?.id || "",
+    laserColor: laserColors[0]?.id || "",
+    lockType: lockTypes[0]?.id || "",
   });
 
   // Effect to load initial defaults or existing details
@@ -260,90 +257,22 @@ export default function ProductForm({
         const parts = prod["@odata.type"].split(".");
         type = parts[parts.length - 1];
       }
-      if (!type) type = "Product";
 
       setCustomSpecs(specsArray);
+
+      // Overlay server data cleanly onto form structure
       setForm({
-        id: prod.id || 0,
-        productType: type,
-        name: prod.name || "",
-        description: prod.description || "",
-        partNumber: prod.partNumber || "",
-        sku: prod.sku || "",
-        manufacturerId: prod.manufacturerId || "",
-        webPageUrl: prod.webPageUrl || "",
+        ...getInitialFormWithLookups(),
+        ...prod,
+        productType: type || "Product",
+        created: prod.created ? new Date(prod.created) : new Date(),
+        modified: prod.modified ? new Date(prod.modified) : new Date(),
         specifications: specs,
-        caliberId: prod.caliberId || "",
-        pewPewCategory: prod.pewPewCategory || "",
-        actionType: prod.actionType || "",
-        isNfaItem: !!prod.isNfaItem,
-        minMagnification: prod.minMagnification || "",
-        maxMagnification: prod.maxMagnification || "",
-        objectiveDiameterMm: prod.objectiveDiameterMm || "",
-        opticType: prod.opticType || "",
-        reticle: prod.reticle || "",
-        adjustmentUnits: prod.adjustmentUnits || "",
-        tubeDiameter: prod.tubeDiameter || "",
-        isIlluminated: !!prod.isIlluminated,
-        hasBattery: !!prod.hasBattery,
-        batteryType: prod.batteryType || "",
-        threadPitch: prod.threadPitch || "",
-        attachmentType: prod.attachmentType || "",
-        material: prod.material || "",
-        soundReductionDb: prod.soundReductionDb || "",
-        isFullAutoRated: !!prod.isFullAutoRated,
-        isUserServiceable: !!prod.isUserServiceable,
-        lumens: prod.lumens || "",
-        candela: prod.candela || "",
-        mountType: prod.mountType || "",
-        laserColor: prod.laserColor || "",
-        hasRemoteSwitchPort: !!prod.hasRemoteSwitchPort,
-        isInfraredCapable: !!prod.isInfraredCapable,
-        lockType: prod.lockType || "",
-        coverImageId: prod.coverImageId || null,
       });
       setActiveTab("general");
     } else if (!isEditMode) {
       setCustomSpecs([]);
-      setForm({
-        id: 0,
-        productType: "PewPew",
-        name: "",
-        description: "",
-        partNumber: "",
-        sku: "",
-        manufacturerId: manufacturersList[0]?.id || "",
-        webPageUrl: "",
-        specifications: {},
-        caliberId: calibersList[0]?.id || "",
-        pewPewCategory: pewPewCategories[0]?.id || "",
-        actionType: actionTypes[0]?.id || "",
-        isNfaItem: false,
-        minMagnification: "",
-        maxMagnification: "",
-        objectiveDiameterMm: "",
-        opticType: opticTypes[0]?.id || "",
-        reticle: opticReticles[0]?.id || "",
-        adjustmentUnits: opticAdjustmentUnits[0]?.id || "",
-        tubeDiameter: "",
-        isIlluminated: false,
-        hasBattery: false,
-        batteryType: batteryTypes[0]?.id || "",
-        threadPitch: "",
-        attachmentType: suppressorAttachmentTypes[0]?.id || "",
-        material: suppressorMaterials[0]?.id || "",
-        soundReductionDb: "",
-        isFullAutoRated: false,
-        isUserServiceable: false,
-        lumens: "",
-        candela: "",
-        mountType: lightMountTypes[0]?.id || "",
-        laserColor: laserColors[0]?.id || "",
-        hasRemoteSwitchPort: false,
-        isInfraredCapable: false,
-        lockType: lockTypes[0]?.id || "",
-        coverImageId: null,
-      });
+      setForm(getInitialFormWithLookups());
       setActiveTab("general");
     }
   }, [
@@ -605,7 +534,7 @@ export default function ProductForm({
                 }
                 style={{ width: "220px", display: "inline-block" }}
               >
-                {batteryTypes.map((opt) => (
+                {batteryTypes.map((opt: any) => (
                   <option key={opt.id} value={opt.id}>
                     {opt.label}
                   </option>
@@ -709,7 +638,7 @@ export default function ProductForm({
                       }
                       disabled={isEditMode}
                     >
-                      {productTypes.map((type) => (
+                      {productTypes.map((type: string) => (
                         <option key={type} value={type}>
                           {type}
                         </option>
@@ -827,7 +756,7 @@ export default function ProductForm({
                         }}
                       >
                         <option value="">-- select cover image --</option>
-                        {productDocuments.map((img) => (
+                        {productDocuments.map((img: any) => (
                           <option key={img.id} value={img.id}>
                             {img.fileName} (
                             {((img.fileSizeBytes || 0) / 1024).toFixed(1)} KB)
@@ -877,7 +806,7 @@ export default function ProductForm({
                             })
                           }
                         >
-                          {pewPewCategories.map((opt) => (
+                          {pewPewCategories.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
@@ -893,7 +822,7 @@ export default function ProductForm({
                             setForm({ ...form, actionType: e.target.value })
                           }
                         >
-                          {actionTypes.map((opt) => (
+                          {actionTypes.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
@@ -937,7 +866,7 @@ export default function ProductForm({
                             })
                           }
                         >
-                          {opticTypes.map((opt) => (
+                          {opticTypes.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
@@ -953,7 +882,7 @@ export default function ProductForm({
                             setForm({ ...form, reticle: e.target.value })
                           }
                         >
-                          {opticReticles.map((opt) => (
+                          {opticReticles.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
@@ -1040,8 +969,8 @@ export default function ProductForm({
                           }}
                         >
                           {opticAdjustmentUnits
-                            .filter((opt) => opt.name !== "None")
-                            .map((opt) => {
+                            .filter((opt: any) => opt.name !== "None")
+                            .map((opt: any) => {
                               const isChecked = form.adjustmentUnits
                                 ? form.adjustmentUnits
                                     .split(",")
@@ -1166,7 +1095,7 @@ export default function ProductForm({
                             })
                           }
                         >
-                          {suppressorAttachmentTypes.map((opt) => (
+                          {suppressorAttachmentTypes.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
@@ -1182,7 +1111,7 @@ export default function ProductForm({
                             setForm({ ...form, material: e.target.value })
                           }
                         >
-                          {suppressorMaterials.map((opt) => (
+                          {suppressorMaterials.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
@@ -1286,7 +1215,7 @@ export default function ProductForm({
                           }
                         >
                           <option value="">-- Select Mount Type --</option>
-                          {lightMountTypes.map((opt) => (
+                          {lightMountTypes.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
@@ -1302,7 +1231,7 @@ export default function ProductForm({
                             setForm({ ...form, laserColor: e.target.value })
                           }
                         >
-                          {laserColors.map((opt) => (
+                          {laserColors.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
@@ -1370,7 +1299,7 @@ export default function ProductForm({
                           }
                         >
                           <option value="">-- Select Lock Type --</option>
-                          {lockTypes.map((opt) => (
+                          {lockTypes.map((opt: any) => (
                             <option key={opt.id} value={opt.id}>
                               {opt.label}
                             </option>
