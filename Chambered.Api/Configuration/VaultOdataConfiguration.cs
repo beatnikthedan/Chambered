@@ -17,7 +17,6 @@ namespace Chambered.Api.Configuration
             builder.EntitySet<Vault>("Vaults");
 
             var vaultsColl = builder.EntityType<Vault>().Collection;
-            vaultsColl.Function("GetLockTypes").ReturnsCollection<EnumDto>();
             vaultsColl.Function("GetVaultCategories").ReturnsCollection<EnumDto>();
 
             switch (apiVersion.MajorVersion)

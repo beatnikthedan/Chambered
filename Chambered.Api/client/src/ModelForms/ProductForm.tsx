@@ -219,6 +219,7 @@ export default function ProductForm({
   const laserColors = enums?.laserColors || [];
   const lightMountTypes = enums?.lightMountTypes || [];
   const lockTypes = enums?.lockTypes || [];
+  const powderTypes = enums?.powerTypes || [];
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
 
@@ -482,10 +483,7 @@ export default function ProductForm({
 
   const renderBatteryControl = (label: string) => {
     return (
-      <div
-        className="form-item checkbox-row full-row"
-        style={{ marginTop: "8px" }}
-      >
+      <div className="form-item checkbox-row" style={{ marginTop: "8px" }}>
         <div
           style={{
             display: "flex",
@@ -547,6 +545,53 @@ export default function ProductForm({
     );
   };
 
+  const renderCapacityControl = (label: string) => {
+    return (
+      <div className="form-item checkbox-row" style={{ marginTop: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            width: "100%",
+          }}
+        >
+          <label className="checkbox-container">
+            <input
+              type="checkbox"
+              checked={form.isCapcityLimited || false}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  isCapcityLimited: e.target.checked,
+                })
+              }
+            />
+            <span className="checkmark"></span>
+            <span>{label}</span>
+          </label>
+
+          {form.isCapcityLimited && (
+            <div className="form-item">
+              <label>Minimum Magnification</label>
+              <input
+                type="number"
+                step="1"
+                value={form.maxCapcity}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    maxCapcity: parseInt(e.target.value),
+                  })
+                }
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -582,6 +627,13 @@ export default function ProductForm({
               {form.productType === "Suppressor" && "Suppressor Specs"}
               {form.productType === "PewPewLight" && "Light Specs"}
               {form.productType === "Security" && "Security Specs"}
+              {form.productType === "Magazine" && "Magazine Specs"}
+              {form.productType === "Powder" && "Powder Specs"}
+              {form.productType === "Primer" && "Primer Specs"}
+              {form.productType === "Projectile" && "Projectile Specs"}
+              {form.productType === "Casing" && "Casing Specs"}
+              {form.productType === "Ammunition" && "Ammunition Specs"}
+              {form.productType === "AmmoBox" && "AmmoBox Specs"}
             </button>
           )}
 
@@ -1172,6 +1224,26 @@ export default function ProductForm({
                           </span>
                         </label>
                       </div>
+
+                      <div
+                        className="form-item checkbox-row"
+                        style={{ alignSelf: "center", marginTop: "14px" }}
+                      >
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isNfaItem || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isNfaItem: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Is NFA Item</span>
+                        </label>
+                      </div>
                     </>
                   )}
 
@@ -1309,6 +1381,51 @@ export default function ProductForm({
 
                       {renderBatteryControl(
                         "Requires Battery Power (For locking mechanisms or electronic keypads)",
+                      )}
+
+                      {renderCapacityControl(
+                        "Has a maximum capacity limit for Armory Items",
+                      )}
+                    </>
+                  )}
+
+                  {/* Magazine Subclass Form Controls */}
+                  {form.productType === "Magazine" && (
+                    <>
+                      {renderCapacityControl(
+                        "Has a maximum capacity limit for Armory Items",
+                      )}
+                    </>
+                  )}
+
+                  {form.productType === "Powder" && (
+                    <>
+                      <div className="form-item">
+                        <label>Powder Type</label>
+                        <select
+                          value={form.powderType || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              powderType: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="">-- select --</option>
+                          {lockTypes.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {renderBatteryControl(
+                        "Requires Battery Power (For locking mechanisms or electronic keypads)",
+                      )}
+
+                      {renderCapacityControl(
+                        "Has a maximum capacity limit for Armory Items",
                       )}
                     </>
                   )}

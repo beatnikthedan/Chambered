@@ -30,7 +30,7 @@ import {
   getArmoryItemsNfaFormTypes,
   getVaultsLockTypes,
   getVaultsVaultCategories,
-  getProductDocumentsDocumentTypes
+  getProductDocumentsDocumentTypes,
 } from "./api/endpoints";
 import type { Arsenal } from "./api/models/arsenal";
 import type { UserResponseDto } from "./api/models/userResponseDto";
@@ -71,12 +71,27 @@ export interface StoreContextType {
   checkAuth: () => Promise<void>;
   checkInitialization: () => Promise<void>;
   login: (username: string, password: string) => Promise<boolean>;
-  firstRegister: (username: string, password: string, email: string) => Promise<boolean>;
+  firstRegister: (
+    username: string,
+    password: string,
+    email: string,
+  ) => Promise<boolean>;
   logout: () => Promise<void>;
   fetchArsenals: () => Promise<void>;
   selectArsenal: (id: number) => Promise<void>;
-  createArsenal: (name: string, description: string | null, iconName: string | null, colorHex: string | null) => Promise<boolean>;
-  updateArsenal: (id: number, name: string, description: string | null, iconName: string | null, colorHex: string | null) => Promise<boolean>;
+  createArsenal: (
+    name: string,
+    description: string | null,
+    iconName: string | null,
+    colorHex: string | null,
+  ) => Promise<boolean>;
+  updateArsenal: (
+    id: number,
+    name: string,
+    description: string | null,
+    iconName: string | null,
+    colorHex: string | null,
+  ) => Promise<boolean>;
   deleteArsenal: (id: number) => Promise<boolean>;
 }
 
@@ -89,7 +104,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
 
   const [activeArsenalId, setActiveArsenalId] = useState<number | null>(null);
-  const [activeArsenalName, setActiveArsenalName] = useState<string>("Loading...");
+  const [activeArsenalName, setActiveArsenalName] =
+    useState<string>("Loading...");
   const [arsenals, setArsenals] = useState<Arsenal[]>([]);
   const [enums, setEnums] = useState<StoreEnums | null>(null);
 
@@ -132,7 +148,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const fetchEnums = useCallback(async () => {
     try {
-      const fetchEnum = async (promiseFn: () => Promise<any>): Promise<EnumOption[]> => {
+      const fetchEnum = async (
+        promiseFn: () => Promise<any>,
+      ): Promise<EnumOption[]> => {
         try {
           const r = await promiseFn();
           if (r.status === 200) {
@@ -151,20 +169,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       const [
         actionTypes,
+        ammoItemDocumentTypes,
         batteryTypes,
+        caseMaterials,
+        itemConditions,
         laserColors,
         lightMountTypes,
+        lockTypes,
+        nfaFormTypes,
         opticAdjustmentUnits,
         opticReticles,
         opticTypes,
         pewPewCategories,
+        powderBurnRates,
+        powderShapes,
+        powderTypes,
+        primerSizes,
+        primerTypes,
+        productDocumentTypes,
+        projectileMaterials,
+        projectileProfiles,
         suppressorAttachmentTypes,
         suppressorMaterials,
-        itemConditions,
-        nfaFormTypes,
-        lockTypes,
         vaultCategories,
-        documentTypes,
       ] = await Promise.all([
         fetchEnum(getProductsActionTypes),
         fetchEnum(getProductsBatteryTypes),
@@ -282,25 +309,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const selectArsenal = useCallback(
-    async (id: number) => {
-      const res = await getArsenals();
-      if (res.status === 200) {
-        const list = res.data.value || [];
-        setArsenals(list);
-        const found = list.find((a) => a.id === id);
-        if (found && found.id !== undefined) {
-          setActiveArsenalId(found.id);
-          setActiveArsenalName(found.name || "");
-          localStorage.setItem("activeArsenalId", String(found.id));
-        }
+  const selectArsenal = useCallback(async (id: number) => {
+    const res = await getArsenals();
+    if (res.status === 200) {
+      const list = res.data.value || [];
+      setArsenals(list);
+      const found = list.find((a) => a.id === id);
+      if (found && found.id !== undefined) {
+        setActiveArsenalId(found.id);
+        setActiveArsenalName(found.name || "");
+        localStorage.setItem("activeArsenalId", String(found.id));
       }
-    },
-    [],
-  );
+    }
+  }, []);
 
   const createArsenal = useCallback(
-    async (name: string, description: string | null, iconName: string | null, colorHex: string | null) => {
+    async (
+      name: string,
+      description: string | null,
+      iconName: string | null,
+      colorHex: string | null,
+    ) => {
       const res = await postArsenals({ name, description, iconName, colorHex });
       if (res.status === 200 || res.status === 201) {
         const newArsenal = res.data;
@@ -322,39 +351,48 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const deleteArsenal = useCallback(
-    async (id: number) => {
-      const res = await deleteArsenalsFromKey(id);
-      if (res.status === 200 || res.status === 204) {
-        const arsenalsRes = await getArsenals();
-        if (arsenalsRes.status === 200) {
-          const list = arsenalsRes.data.value || [];
-          setArsenals(list);
-          if (list.length > 0) {
-            const savedId = localStorage.getItem("activeArsenalId");
-            const found = list.find((a) => a.id === parseInt(savedId || ""));
-            if (found && found.id !== undefined) {
-              setActiveArsenalId(found.id);
-              setActiveArsenalName(found.name || "");
-            } else {
-              setActiveArsenalId(list[0].id ?? null);
-              setActiveArsenalName(list[0].name || "");
-            }
+  const deleteArsenal = useCallback(async (id: number) => {
+    const res = await deleteArsenalsFromKey(id);
+    if (res.status === 200 || res.status === 204) {
+      const arsenalsRes = await getArsenals();
+      if (arsenalsRes.status === 200) {
+        const list = arsenalsRes.data.value || [];
+        setArsenals(list);
+        if (list.length > 0) {
+          const savedId = localStorage.getItem("activeArsenalId");
+          const found = list.find((a) => a.id === parseInt(savedId || ""));
+          if (found && found.id !== undefined) {
+            setActiveArsenalId(found.id);
+            setActiveArsenalName(found.name || "");
           } else {
-            setActiveArsenalId(null);
-            setActiveArsenalName("No Collections");
+            setActiveArsenalId(list[0].id ?? null);
+            setActiveArsenalName(list[0].name || "");
           }
+        } else {
+          setActiveArsenalId(null);
+          setActiveArsenalName("No Collections");
         }
-        return true;
       }
-      throw new Error("Failed to delete arsenal");
-    },
-    [],
-  );
+      return true;
+    }
+    throw new Error("Failed to delete arsenal");
+  }, []);
 
   const updateArsenal = useCallback(
-    async (id: number, name: string, description: string | null, iconName: string | null, colorHex: string | null) => {
-      const res = await putArsenalsFromKey(id, { id, name, description, iconName, colorHex });
+    async (
+      id: number,
+      name: string,
+      description: string | null,
+      iconName: string | null,
+      colorHex: string | null,
+    ) => {
+      const res = await putArsenalsFromKey(id, {
+        id,
+        name,
+        description,
+        iconName,
+        colorHex,
+      });
       if (res.status === 200 || res.status === 204) {
         const arsenalsRes = await getArsenals();
         if (arsenalsRes.status === 200) {

@@ -59,12 +59,6 @@ public class VaultsController : ODataControllerBase<Vault, int>
     #endregion
 
     [HttpGet]
-    public IActionResult GetLockTypes()
-    {
-        return Ok(GetEnumValues<LockType>());
-    }
-
-    [HttpGet]
     public IActionResult GetVaultCategories()
     {
         return Ok(GetEnumValues<VaultCategory>());
