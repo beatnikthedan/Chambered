@@ -94,8 +94,8 @@ const INITIAL_FORM_STATE = {
   isMatch: false,
 
   // projectile
-  BcG1: null as number | null,
-  BcG7: null as number | null,
+  bcG1: null as number | null,
+  bcG7: null as number | null,
   isBoatTail: false,
   hasCannelure: false,
 
@@ -451,11 +451,43 @@ export default function ProductForm({
       payload.batteryType = targetForm.hasBattery
         ? targetForm.batteryType
         : null;
+      payload.isCapacityLimited = !!targetForm.isCapcityLimited;
+      payload.maxCapacity = targetForm.isCapcityLimited
+        ? targetForm.maxCapcity
+        : null;
     } else if (type === "Powder") {
       payload.powderType = targetForm.powderType || null;
       payload.shape = targetForm.shape || null;
       payload.burnRate = targetForm.burnRate || null;
       payload.containerWeightLbs = targetForm.containerWeightLbs || 0;
+    } else if (type === "Primer") {
+      payload.primerSize = targetForm.primerSize || null;
+      payload.primerType = targetForm.primerType || null;
+      payload.isMagnum = !!targetForm.isMagnum;
+      payload.isMatch = !!targetForm.isMatch;
+      payload.quantity = targetForm.quantity || 0;
+    } else if (type === "Projectile") {
+      payload.bcG1 = targetForm.bcG1 || 0;
+      payload.bcG7 = targetForm.bcG7 || 0;
+      payload.isBoatTail = !!targetForm.isBoatTail;
+      payload.hasCannelure = !!targetForm.hasCannelure;
+      payload.projectileProfile = targetForm.projectileProfile || null;
+      payload.projectileMaterial = targetForm.projectileMaterial || null;
+      payload.isLeadFree = !!targetForm.isLeadFree;
+      payload.weightGrains = targetForm.weightGrains || 0;
+    } else if (type === "Casing") {
+      payload.primerPocketSize = targetForm.primerPocketSize || null;
+      payload.caseMaterial = targetForm.caseMaterial || null;
+      payload.isPrimed = !!targetForm.isPrimed;
+      payload.isAnnealed = !!targetForm.isAnnealed;
+      payload.isVirgin = !!targetForm.isVirgin;
+      payload.headStamp = targetForm.headStamp || "";
+      payload.quantity = targetForm.quantity || 0;
+    } else if (type === "AmmoBox") {
+      payload.isCapacityLimited = !!targetForm.isCapcityLimited;
+      payload.maxCapacity = targetForm.isCapcityLimited
+        ? targetForm.maxCapcity
+        : null;
     }
 
     // Clean payload of navigation objects to avoid OData mapping errors
@@ -1488,6 +1520,392 @@ export default function ProductForm({
                           }
                         />
                       </div>
+                    </>
+                  )}
+
+                  {/* Primer Subclass Form Controls */}
+                  {form.productType === "Primer" && (
+                    <>
+                      <div className="form-item">
+                        <label>Quantity</label>
+                        <input
+                          type="number"
+                          value={form.quantity || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              quantity: parseInt(e.target.value, 10),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Primer Type</label>
+                        <select
+                          value={form.primerType || ""}
+                          onChange={(e) =>
+                            setForm({ ...form, primerType: e.target.value })
+                          }
+                        >
+                          {primerTypes.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Primer Size</label>
+                        <select
+                          value={form.primerSize || ""}
+                          onChange={(e) =>
+                            setForm({ ...form, primerSize: e.target.value })
+                          }
+                        >
+                          {primerSizes.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div
+                        className="form-item checkbox-row full-row"
+                        style={{ marginTop: "14px" }}
+                      >
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isMagnum || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isMagnum: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Is Magnum Primer</span>
+                        </label>
+                      </div>
+
+                      <div className="form-item checkbox-row full-row">
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isMatch || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isMatch: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Is Match Grade</span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Projectile Subclass Form Controls */}
+                  {form.productType === "Projectile" && (
+                    <>
+                      <div className="form-item">
+                        <label>Weight(Grains)</label>
+                        <input
+                          type="number"
+                          value={form.weightGrains || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              weightGrains: parseFloat(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>G1 Buillistic Coefficient</label>
+                        <input
+                          type="number"
+                          value={form.bcG1 || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              bcG1: parseFloat(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>G7 Bullistic Coefficient</label>
+                        <input
+                          type="number"
+                          value={form.bcG7 || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              bcG7: parseFloat(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Projectile Profile</label>
+                        <select
+                          value={form.projectileProfile || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              projectileProfile: e.target.value,
+                            })
+                          }
+                        >
+                          {projectileProfiles.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Projectile Material</label>
+                        <select
+                          value={form.projectileMaterial || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              projectileMaterial: e.target.value,
+                            })
+                          }
+                        >
+                          {projectileMaterials.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div
+                        className="form-item checkbox-row full-row"
+                        style={{ marginTop: "14px" }}
+                      >
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isBoatTail || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isBoatTail: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Has Boattail</span>
+                        </label>
+                      </div>
+
+                      <div className="form-item checkbox-row full-row">
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.hasCannelure || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                hasCannelure: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Has Cannelure</span>
+                        </label>
+                      </div>
+
+                      <div
+                        className="form-item checkbox-row full-row"
+                        style={{ marginTop: "14px" }}
+                      >
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isLeadFree || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isLeadFree: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Is Lead Free</span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Casing Subclass Form Controls */}
+                  {form.productType === "Casing" && (
+                    <>
+                      <div className="form-item">
+                        <label>Quantity</label>
+                        <input
+                          type="number"
+                          value={form.quantity || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              quantity: parseInt(e.target.value, 10),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Caliber</label>
+                        <select
+                          value={form.caliberId || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              caliberId: parseInt(e.target.value, 10),
+                            })
+                          }
+                          required
+                        >
+                          <option value="">-- Select Caliber --</option>
+                          {calibersList.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Head Stamp</label>
+                        <input
+                          type="text"
+                          value={form.headStamp || ""}
+                          onChange={(e) =>
+                            setForm({ ...form, headStamp: e.target.value })
+                          }
+                          placeholder="e.g. Win"
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Primer Pocket Size</label>
+                        <select
+                          value={form.primerPocketSize || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              primerPocketSize: e.target.value,
+                            })
+                          }
+                        >
+                          {primerSizes.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Case Material</label>
+                        <select
+                          value={form.caseMaterial || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              caseMaterial: e.target.value,
+                            })
+                          }
+                        >
+                          {caseMaterials.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div
+                        className="form-item checkbox-row full-row"
+                        style={{ marginTop: "14px" }}
+                      >
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isPrimed || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isPrimed: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Pre-Primed</span>
+                        </label>
+                      </div>
+
+                      <div className="form-item checkbox-row full-row">
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isAnnealed || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isAnnealed: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Is Annealed</span>
+                        </label>
+                      </div>
+
+                      <div
+                        className="form-item checkbox-row full-row"
+                        style={{ marginTop: "14px" }}
+                      >
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isVirgin || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isVirgin: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Is Unfired</span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  {/* AmmoBox Subclass Form Controls */}
+                  {form.productType === "AmmoBox" && (
+                    <>
+                      {renderCapacityControl(
+                        "Has a maximum capacity limit for Munitions",
+                      )}
                     </>
                   )}
                 </div>
