@@ -380,7 +380,7 @@ export default function ProductForm({
   });
 
   const buildProductPayload = (targetForm: FormState) => {
-    const type = targetForm.productType || "Product";
+    const type = targetForm.productType;
     const payload: any = {};
     if (type !== "Product") {
       payload["@odata.type"] = `#Chambered.Data.Models.${type}`;
@@ -461,12 +461,14 @@ export default function ProductForm({
       payload.burnRate = targetForm.burnRate || null;
       payload.containerWeightLbs = targetForm.containerWeightLbs || 0;
     } else if (type === "Primer") {
+      payload.quantity = targetForm.quantity || 0;
       payload.primerSize = targetForm.primerSize || null;
       payload.primerType = targetForm.primerType || null;
       payload.isMagnum = !!targetForm.isMagnum;
       payload.isMatch = !!targetForm.isMatch;
-      payload.quantity = targetForm.quantity || 0;
     } else if (type === "Projectile") {
+      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
+      payload.quantity = targetForm.quantity || 0;
       payload.bcG1 = targetForm.bcG1 || 0;
       payload.bcG7 = targetForm.bcG7 || 0;
       payload.isBoatTail = !!targetForm.isBoatTail;
@@ -476,13 +478,26 @@ export default function ProductForm({
       payload.isLeadFree = !!targetForm.isLeadFree;
       payload.weightGrains = targetForm.weightGrains || 0;
     } else if (type === "Casing") {
+      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
+      payload.quantity = targetForm.quantity || 0;
       payload.primerPocketSize = targetForm.primerPocketSize || null;
       payload.caseMaterial = targetForm.caseMaterial || null;
+      payload.headStamp = targetForm.headStamp || "";
       payload.isPrimed = !!targetForm.isPrimed;
       payload.isAnnealed = !!targetForm.isAnnealed;
       payload.isVirgin = !!targetForm.isVirgin;
-      payload.headStamp = targetForm.headStamp || "";
+    } else if (type === "Ammunition") {
+      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
       payload.quantity = targetForm.quantity || 0;
+      payload.muzzleVelocityFps = targetForm.muzzleVelocityFps || 0;
+      payload.muzzleEnergyFtLbs = targetForm.muzzleEnergyFtLbs || 0;
+      payload.isPlusP = !!targetForm.isPlusP;
+      payload.projectileProfile = targetForm.projectileProfile || null;
+      payload.projectileMaterial = targetForm.projectileMaterial || null;
+      payload.isLeadFree = !!targetForm.isLeadFree;
+      payload.weightGrains = targetForm.weightGrains || 0;
+      payload.caseMaterial = targetForm.caseMaterial || null;
+      payload.headStamp = targetForm.headStamp || "";
     } else if (type === "AmmoBox") {
       payload.isCapacityLimited = !!targetForm.isCapcityLimited;
       payload.maxCapacity = targetForm.isCapcityLimited
@@ -1615,6 +1630,41 @@ export default function ProductForm({
                   {form.productType === "Projectile" && (
                     <>
                       <div className="form-item">
+                        <label>Quantity</label>
+                        <input
+                          type="number"
+                          value={form.quantity || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              quantity: parseInt(e.target.value, 10),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Caliber</label>
+                        <select
+                          value={form.caliberId || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              caliberId: parseInt(e.target.value, 10),
+                            })
+                          }
+                          required
+                        >
+                          <option value="">-- Select Caliber --</option>
+                          {calibersList.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
                         <label>Weight(Grains)</label>
                         <input
                           type="number"
@@ -1895,6 +1945,197 @@ export default function ProductForm({
                           />
                           <span className="checkmark"></span>
                           <span>Is Unfired</span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Ammunition Subclass Form Controls */}
+                  {form.productType === "Ammunition" && (
+                    <>
+                      <div className="form-item">
+                        <label>Quantity</label>
+                        <input
+                          type="number"
+                          value={form.quantity || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              quantity: parseInt(e.target.value, 10),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Caliber</label>
+                        <select
+                          value={form.caliberId || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              caliberId: parseInt(e.target.value, 10),
+                            })
+                          }
+                          required
+                        >
+                          <option value="">-- Select Caliber --</option>
+                          {calibersList.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Muzzle Velocity (fps)</label>
+                        <input
+                          type="number"
+                          value={form.muzzleVelocityFps || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              muzzleVelocityFps: parseInt(e.target.value, 10),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Muzzle Energy (ft lbs)</label>
+                        <input
+                          type="number"
+                          value={form.muzzleEnergyFtLbs || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              muzzleEnergyFtLbs: parseInt(e.target.value, 10),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Weight(Grains)</label>
+                        <input
+                          type="number"
+                          value={form.weightGrains || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              weightGrains: parseFloat(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Head Stamp</label>
+                        <input
+                          type="text"
+                          value={form.headStamp || ""}
+                          onChange={(e) =>
+                            setForm({ ...form, headStamp: e.target.value })
+                          }
+                          placeholder="e.g. Win"
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Case Material</label>
+                        <select
+                          value={form.caseMaterial || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              caseMaterial: e.target.value,
+                            })
+                          }
+                        >
+                          {caseMaterials.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Projectile Profile</label>
+                        <select
+                          value={form.projectileProfile || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              projectileProfile: e.target.value,
+                            })
+                          }
+                        >
+                          {projectileProfiles.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Projectile Material</label>
+                        <select
+                          value={form.projectileMaterial || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              projectileMaterial: e.target.value,
+                            })
+                          }
+                        >
+                          {projectileMaterials.map((opt: any) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div
+                        className="form-item checkbox-row full-row"
+                        style={{ marginTop: "14px" }}
+                      >
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isLeadFree || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isLeadFree: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>Is Lead Free</span>
+                        </label>
+                      </div>
+
+                      <div
+                        className="form-item checkbox-row full-row"
+                        style={{ marginTop: "14px" }}
+                      >
+                        <label className="checkbox-container">
+                          <input
+                            type="checkbox"
+                            checked={form.isPlusP || false}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                isPlusP: e.target.checked,
+                              })
+                            }
+                          />
+                          <span className="checkmark"></span>
+                          <span>+P</span>
                         </label>
                       </div>
                     </>
