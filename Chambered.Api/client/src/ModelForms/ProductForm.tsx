@@ -139,7 +139,11 @@ const extractSpecifications = (product: any): Record<string, any> => {
   if (!product) return {};
   const specs: Record<string, any> = {};
   Object.keys(product).forEach((key) => {
-    if (!STATIC_KEYS.has(key)) {
+    if (
+      !STATIC_KEYS.has(key) &&
+      !key.startsWith("@odata.") &&
+      !key.startsWith("odata.")
+    ) {
       specs[key] = product[key];
     }
   });
