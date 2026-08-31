@@ -64,6 +64,12 @@ public class ProductsController : ODataControllerBase<Product, int>
     }
 
     [HttpGet]
+    public IActionResult GetCaseMaterials()
+    {
+        return Ok(GetEnumValues<CaseMaterial>());
+    }
+
+    [HttpGet]
     public IActionResult GetLaserColors()
     {
         return Ok(GetEnumValues<LaserColor>());
@@ -73,6 +79,12 @@ public class ProductsController : ODataControllerBase<Product, int>
     public IActionResult GetLightMountTypes()
     {
         return Ok(GetEnumValues<LightMountType>());
+    }
+
+    [HttpGet]
+    public IActionResult GetLockTypes()
+    {
+        return Ok(GetEnumValues<LockType>());
     }
 
     [HttpGet]
@@ -99,6 +111,53 @@ public class ProductsController : ODataControllerBase<Product, int>
         return Ok(GetEnumValues<PewPewCategory>());
     }
 
+    [HttpGet]
+    public IActionResult GetPowderBurnRates()
+    {
+        return Ok(GetEnumValues<PowderBurnRate>());
+    }
+
+    [HttpGet]
+    public IActionResult GetPowderShapes()
+    {
+        return Ok(GetEnumValues<PowderShape>());
+    }
+
+    [HttpGet]
+    public IActionResult GetPowderTypes()
+    {
+        return Ok(GetEnumValues<PowderType>());
+    }
+
+    [HttpGet]
+    public IActionResult GetPrimerSizes()
+    {
+        return Ok(GetEnumValues<PrimerSize>());
+    }
+
+    [HttpGet]
+    public IActionResult GetPrimerTypes()
+    {
+        return Ok(GetEnumValues<PrimerType>());
+    }
+
+    [HttpGet]
+    public IActionResult GetProductDocumentTypes()
+    {
+        return Ok(GetEnumValues<ProductDocumentType>());
+    }
+
+    [HttpGet]
+    public IActionResult GetProjectileMaterials()
+    {
+        return Ok(GetEnumValues<ProjectileMaterial>());
+    }
+
+    [HttpGet]
+    public IActionResult GetProjectileProfiles()
+    {
+        return Ok(GetEnumValues<ProjectileProfile>());
+    }
     [HttpGet]
     public IActionResult GetSuppressorAttachmentTypes()
     {

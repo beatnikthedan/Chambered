@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BeatnikToolKit\BeatnikToolKit.csproj" />
     <ProjectReference Include="..\BeatnikToolKit.EntityFramework\BeatnikToolKit.EntityFramework.csproj" />
+    <ProjectReference Include="..\BeatnikToolKit.GitVersioning\BeatnikToolKit.GitVersioning.csproj" />
   </ItemGroup>
 
 </Project>

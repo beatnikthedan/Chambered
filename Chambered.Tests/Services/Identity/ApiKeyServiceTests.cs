@@ -155,6 +155,79 @@ namespace Chambered.Tests.Services.Identity
         }
 
         /// <summary>
+        /// Verifies that CreateKeyAsync throws an UnauthorizedAccessException when a standard user delegates a permission they do not possess.
+        /// </summary>
+        [Fact]
+        public async Task CreateKeyAsync_ShouldThrowUnauthorizedException_WhenUserDelegatesUnauthorizedClaim()
+        {
+            var user = new ChamberedUser { Id = "user-123", Email = "user@test.com", UserName = "user@test.com" };
+            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "user-123"),
+                new Claim(ClaimTypes.Role, "Read")
+            }));
+ 
+            var createDto = new CreateApiKeyDto("Delegation Test", DateTime.UtcNow.AddDays(30), new List<string> { "Read", "Write" }, null);
+ 
+            _userManagerMock.Setup(u => u.GetUserAsync(claimsPrincipal))
+                .ReturnsAsync(user);
+ 
+            _userManagerMock.Setup(u => u.GetUserId(claimsPrincipal))
+                .Returns("user-123");
+ 
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                _apiKeyService.CreateKeyAsync(createDto, claimsPrincipal));
+        }
+ 
+        /// <summary>
+        /// Verifies that GetAllSystemKeysAsync lists all active, non-revoked system keys for auditing purposes.
+        /// </summary>
+        [Fact]
+        public async Task GetAllSystemKeysAsync_ShouldReturnAllKeys()
+        {
+            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "admin-123"),
+                new Claim(ClaimTypes.Role, "Admin")
+            }));
+ 
+            var apiKey1 = new ApiKey
+            {
+                Id = 1,
+                Name = "User 1 Key",
+                OwnerId = "user-123",
+                IsRevoked = false,
+                KeyHash = "hash1",
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(5)
+            };
+ 
+            var apiKey2 = new ApiKey
+            {
+                Id = 2,
+                Name = "User 2 Key",
+                OwnerId = "user-456",
+                IsRevoked = true,
+                KeyHash = "hash2",
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(5)
+            };
+ 
+            _db.ApiKeys.AddRange(apiKey1, apiKey2);
+            await _db.SaveChangesAsync();
+ 
+            _userManagerMock.Setup(u => u.GetUserId(claimsPrincipal))
+                .Returns("admin-123");
+ 
+            var result = await _apiKeyService.GetAllSystemKeysAsync(claimsPrincipal);
+ 
+            Assert.NotNull(result);
+            var list = result.ToList();
+            Assert.Single(list);
+            Assert.Equal("User 1 Key", list.First().Name);
+        }
+
+        /// <summary>
         /// Disposes standard active database resources.
         /// </summary>
         public void Dispose()

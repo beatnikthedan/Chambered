@@ -6,6 +6,5 @@ namespace BeatnikToolKit.EntityFramework.Configuration
     public class IdentityConfiguration
     {
         public string Website { get; set; } = string.Empty;
-        public string DefaultEmailAddress { get; set; } = string.Empty;
     }
 }

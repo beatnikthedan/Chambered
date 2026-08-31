@@ -52,6 +52,7 @@ import type {
   GetArmoryItemDocumentsDownloadFromKeyParams,
   GetArmoryItemDocumentsFromKeyParams,
   GetArmoryItemDocumentsParams,
+  GetArmoryItemsArmoryItemDocumentTypesParams,
   GetArmoryItemsArsenalFromKeyParams,
   GetArmoryItemsBeneficiaryFromKeyParams,
   GetArmoryItemsCountParams,
@@ -94,19 +95,29 @@ import type {
   GetProductsArmoryItemsCountFromKeyParams,
   GetProductsArmoryItemsFromKeyParams,
   GetProductsBatteryTypesParams,
+  GetProductsCaseMaterialsParams,
   GetProductsCountParams,
   GetProductsFromKeyParams,
   GetProductsLaserColorsParams,
   GetProductsLightMountTypesParams,
+  GetProductsLockTypesParams,
   GetProductsManufacturerFromKeyParams,
   GetProductsOpticAdjustmentUnitsParams,
   GetProductsOpticReticlesParams,
   GetProductsOpticTypesParams,
   GetProductsParams,
   GetProductsPewPewCategoriesParams,
+  GetProductsPowderBurnRatesParams,
+  GetProductsPowderShapesParams,
+  GetProductsPowderTypesParams,
+  GetProductsPrimerSizesParams,
+  GetProductsPrimerTypesParams,
+  GetProductsProductDocumentTypesParams,
   GetProductsProductDocumentsCountFromKeyParams,
   GetProductsProductDocumentsFromKeyParams,
   GetProductsProductTypesParams,
+  GetProductsProjectileMaterialsParams,
+  GetProductsProjectileProfilesParams,
   GetProductsSuppressorAttachmentTypesParams,
   GetProductsSuppressorMaterialsParams,
   GetVaultsArmoryItemsCountFromKeyParams,
@@ -116,7 +127,6 @@ import type {
   GetVaultsChildVaultsFromKeyParams,
   GetVaultsCountParams,
   GetVaultsFromKeyParams,
-  GetVaultsLockTypesParams,
   GetVaultsParams,
   GetVaultsParentVaultFromKeyParams,
   GetVaultsProductFromKeyParams,
@@ -3719,6 +3729,127 @@ export function useGetArmoryItemsMountedAccessoriesCountFromKey<TData = Awaited<
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetArmoryItemsMountedAccessoriesCountFromKeyQueryOptions(key,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getArmoryItemsArmoryItemDocumentTypesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getArmoryItemsArmoryItemDocumentTypesResponseSuccess = (getArmoryItemsArmoryItemDocumentTypesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getArmoryItemsArmoryItemDocumentTypesResponse = (getArmoryItemsArmoryItemDocumentTypesResponseSuccess)
+
+export const getGetArmoryItemsArmoryItemDocumentTypesUrl = (params?: GetArmoryItemsArmoryItemDocumentTypesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/ArmoryItems/GetArmoryItemDocumentTypes?${stringifiedParams}` : `/api/v1/ArmoryItems/GetArmoryItemDocumentTypes`
+}
+
+export const getArmoryItemsArmoryItemDocumentTypes = async (params?: GetArmoryItemsArmoryItemDocumentTypesParams, options?: RequestInit): Promise<getArmoryItemsArmoryItemDocumentTypesResponse> => {
+
+  const res = await fetch(getGetArmoryItemsArmoryItemDocumentTypesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getArmoryItemsArmoryItemDocumentTypesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getArmoryItemsArmoryItemDocumentTypesResponse
+}
+
+
+
+
+
+export const getGetArmoryItemsArmoryItemDocumentTypesQueryKey = (params?: GetArmoryItemsArmoryItemDocumentTypesParams,) => {
+    return [
+    `/api/v1/ArmoryItems/GetArmoryItemDocumentTypes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetArmoryItemsArmoryItemDocumentTypesQueryOptions = <TData = Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError = unknown>(params?: GetArmoryItemsArmoryItemDocumentTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetArmoryItemsArmoryItemDocumentTypesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>> = ({ signal }) => getArmoryItemsArmoryItemDocumentTypes(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetArmoryItemsArmoryItemDocumentTypesQueryResult = NonNullable<Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>>
+export type GetArmoryItemsArmoryItemDocumentTypesQueryError = unknown
+
+
+export function useGetArmoryItemsArmoryItemDocumentTypes<TData = Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError = unknown>(
+ params: undefined |  GetArmoryItemsArmoryItemDocumentTypesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetArmoryItemsArmoryItemDocumentTypes<TData = Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError = unknown>(
+ params?: GetArmoryItemsArmoryItemDocumentTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetArmoryItemsArmoryItemDocumentTypes<TData = Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError = unknown>(
+ params?: GetArmoryItemsArmoryItemDocumentTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetArmoryItemsArmoryItemDocumentTypes<TData = Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError = unknown>(
+ params?: GetArmoryItemsArmoryItemDocumentTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getArmoryItemsArmoryItemDocumentTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetArmoryItemsArmoryItemDocumentTypesQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -12122,6 +12253,127 @@ export function useGetProductsBatteryTypes<TData = Awaited<ReturnType<typeof get
 
 
 
+export type getProductsCaseMaterialsResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsCaseMaterialsResponseSuccess = (getProductsCaseMaterialsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsCaseMaterialsResponse = (getProductsCaseMaterialsResponseSuccess)
+
+export const getGetProductsCaseMaterialsUrl = (params?: GetProductsCaseMaterialsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetCaseMaterials?${stringifiedParams}` : `/api/v1/Products/GetCaseMaterials`
+}
+
+export const getProductsCaseMaterials = async (params?: GetProductsCaseMaterialsParams, options?: RequestInit): Promise<getProductsCaseMaterialsResponse> => {
+
+  const res = await fetch(getGetProductsCaseMaterialsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsCaseMaterialsResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsCaseMaterialsResponse
+}
+
+
+
+
+
+export const getGetProductsCaseMaterialsQueryKey = (params?: GetProductsCaseMaterialsParams,) => {
+    return [
+    `/api/v1/Products/GetCaseMaterials`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsCaseMaterialsQueryOptions = <TData = Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError = unknown>(params?: GetProductsCaseMaterialsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsCaseMaterialsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsCaseMaterials>>> = ({ signal }) => getProductsCaseMaterials(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsCaseMaterialsQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsCaseMaterials>>>
+export type GetProductsCaseMaterialsQueryError = unknown
+
+
+export function useGetProductsCaseMaterials<TData = Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError = unknown>(
+ params: undefined |  GetProductsCaseMaterialsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsCaseMaterials>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsCaseMaterials>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsCaseMaterials<TData = Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError = unknown>(
+ params?: GetProductsCaseMaterialsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsCaseMaterials>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsCaseMaterials>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsCaseMaterials<TData = Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError = unknown>(
+ params?: GetProductsCaseMaterialsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsCaseMaterials<TData = Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError = unknown>(
+ params?: GetProductsCaseMaterialsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsCaseMaterials>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsCaseMaterialsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export type getProductsLaserColorsResponse200 = {
   data: void
   status: 200
@@ -12352,6 +12604,127 @@ export function useGetProductsLightMountTypes<TData = Awaited<ReturnType<typeof 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetProductsLightMountTypesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getProductsLockTypesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsLockTypesResponseSuccess = (getProductsLockTypesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsLockTypesResponse = (getProductsLockTypesResponseSuccess)
+
+export const getGetProductsLockTypesUrl = (params?: GetProductsLockTypesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetLockTypes?${stringifiedParams}` : `/api/v1/Products/GetLockTypes`
+}
+
+export const getProductsLockTypes = async (params?: GetProductsLockTypesParams, options?: RequestInit): Promise<getProductsLockTypesResponse> => {
+
+  const res = await fetch(getGetProductsLockTypesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsLockTypesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsLockTypesResponse
+}
+
+
+
+
+
+export const getGetProductsLockTypesQueryKey = (params?: GetProductsLockTypesParams,) => {
+    return [
+    `/api/v1/Products/GetLockTypes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsLockTypesQueryOptions = <TData = Awaited<ReturnType<typeof getProductsLockTypes>>, TError = unknown>(params?: GetProductsLockTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsLockTypes>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsLockTypesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsLockTypes>>> = ({ signal }) => getProductsLockTypes(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsLockTypes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsLockTypesQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsLockTypes>>>
+export type GetProductsLockTypesQueryError = unknown
+
+
+export function useGetProductsLockTypes<TData = Awaited<ReturnType<typeof getProductsLockTypes>>, TError = unknown>(
+ params: undefined |  GetProductsLockTypesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsLockTypes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsLockTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsLockTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsLockTypes<TData = Awaited<ReturnType<typeof getProductsLockTypes>>, TError = unknown>(
+ params?: GetProductsLockTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsLockTypes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsLockTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsLockTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsLockTypes<TData = Awaited<ReturnType<typeof getProductsLockTypes>>, TError = unknown>(
+ params?: GetProductsLockTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsLockTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsLockTypes<TData = Awaited<ReturnType<typeof getProductsLockTypes>>, TError = unknown>(
+ params?: GetProductsLockTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsLockTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsLockTypesQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -12836,6 +13209,974 @@ export function useGetProductsPewPewCategories<TData = Awaited<ReturnType<typeof
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetProductsPewPewCategoriesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getProductsPowderBurnRatesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsPowderBurnRatesResponseSuccess = (getProductsPowderBurnRatesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsPowderBurnRatesResponse = (getProductsPowderBurnRatesResponseSuccess)
+
+export const getGetProductsPowderBurnRatesUrl = (params?: GetProductsPowderBurnRatesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetPowderBurnRates?${stringifiedParams}` : `/api/v1/Products/GetPowderBurnRates`
+}
+
+export const getProductsPowderBurnRates = async (params?: GetProductsPowderBurnRatesParams, options?: RequestInit): Promise<getProductsPowderBurnRatesResponse> => {
+
+  const res = await fetch(getGetProductsPowderBurnRatesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsPowderBurnRatesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsPowderBurnRatesResponse
+}
+
+
+
+
+
+export const getGetProductsPowderBurnRatesQueryKey = (params?: GetProductsPowderBurnRatesParams,) => {
+    return [
+    `/api/v1/Products/GetPowderBurnRates`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsPowderBurnRatesQueryOptions = <TData = Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError = unknown>(params?: GetProductsPowderBurnRatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsPowderBurnRatesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsPowderBurnRates>>> = ({ signal }) => getProductsPowderBurnRates(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsPowderBurnRatesQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsPowderBurnRates>>>
+export type GetProductsPowderBurnRatesQueryError = unknown
+
+
+export function useGetProductsPowderBurnRates<TData = Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError = unknown>(
+ params: undefined |  GetProductsPowderBurnRatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPowderBurnRates>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPowderBurnRates>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPowderBurnRates<TData = Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError = unknown>(
+ params?: GetProductsPowderBurnRatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPowderBurnRates>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPowderBurnRates>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPowderBurnRates<TData = Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError = unknown>(
+ params?: GetProductsPowderBurnRatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsPowderBurnRates<TData = Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError = unknown>(
+ params?: GetProductsPowderBurnRatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderBurnRates>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsPowderBurnRatesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getProductsPowderShapesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsPowderShapesResponseSuccess = (getProductsPowderShapesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsPowderShapesResponse = (getProductsPowderShapesResponseSuccess)
+
+export const getGetProductsPowderShapesUrl = (params?: GetProductsPowderShapesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetPowderShapes?${stringifiedParams}` : `/api/v1/Products/GetPowderShapes`
+}
+
+export const getProductsPowderShapes = async (params?: GetProductsPowderShapesParams, options?: RequestInit): Promise<getProductsPowderShapesResponse> => {
+
+  const res = await fetch(getGetProductsPowderShapesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsPowderShapesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsPowderShapesResponse
+}
+
+
+
+
+
+export const getGetProductsPowderShapesQueryKey = (params?: GetProductsPowderShapesParams,) => {
+    return [
+    `/api/v1/Products/GetPowderShapes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsPowderShapesQueryOptions = <TData = Awaited<ReturnType<typeof getProductsPowderShapes>>, TError = unknown>(params?: GetProductsPowderShapesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderShapes>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsPowderShapesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsPowderShapes>>> = ({ signal }) => getProductsPowderShapes(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderShapes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsPowderShapesQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsPowderShapes>>>
+export type GetProductsPowderShapesQueryError = unknown
+
+
+export function useGetProductsPowderShapes<TData = Awaited<ReturnType<typeof getProductsPowderShapes>>, TError = unknown>(
+ params: undefined |  GetProductsPowderShapesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderShapes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPowderShapes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPowderShapes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPowderShapes<TData = Awaited<ReturnType<typeof getProductsPowderShapes>>, TError = unknown>(
+ params?: GetProductsPowderShapesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderShapes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPowderShapes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPowderShapes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPowderShapes<TData = Awaited<ReturnType<typeof getProductsPowderShapes>>, TError = unknown>(
+ params?: GetProductsPowderShapesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderShapes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsPowderShapes<TData = Awaited<ReturnType<typeof getProductsPowderShapes>>, TError = unknown>(
+ params?: GetProductsPowderShapesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderShapes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsPowderShapesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getProductsPowderTypesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsPowderTypesResponseSuccess = (getProductsPowderTypesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsPowderTypesResponse = (getProductsPowderTypesResponseSuccess)
+
+export const getGetProductsPowderTypesUrl = (params?: GetProductsPowderTypesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetPowderTypes?${stringifiedParams}` : `/api/v1/Products/GetPowderTypes`
+}
+
+export const getProductsPowderTypes = async (params?: GetProductsPowderTypesParams, options?: RequestInit): Promise<getProductsPowderTypesResponse> => {
+
+  const res = await fetch(getGetProductsPowderTypesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsPowderTypesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsPowderTypesResponse
+}
+
+
+
+
+
+export const getGetProductsPowderTypesQueryKey = (params?: GetProductsPowderTypesParams,) => {
+    return [
+    `/api/v1/Products/GetPowderTypes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsPowderTypesQueryOptions = <TData = Awaited<ReturnType<typeof getProductsPowderTypes>>, TError = unknown>(params?: GetProductsPowderTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderTypes>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsPowderTypesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsPowderTypes>>> = ({ signal }) => getProductsPowderTypes(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderTypes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsPowderTypesQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsPowderTypes>>>
+export type GetProductsPowderTypesQueryError = unknown
+
+
+export function useGetProductsPowderTypes<TData = Awaited<ReturnType<typeof getProductsPowderTypes>>, TError = unknown>(
+ params: undefined |  GetProductsPowderTypesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderTypes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPowderTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPowderTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPowderTypes<TData = Awaited<ReturnType<typeof getProductsPowderTypes>>, TError = unknown>(
+ params?: GetProductsPowderTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderTypes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPowderTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPowderTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPowderTypes<TData = Awaited<ReturnType<typeof getProductsPowderTypes>>, TError = unknown>(
+ params?: GetProductsPowderTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsPowderTypes<TData = Awaited<ReturnType<typeof getProductsPowderTypes>>, TError = unknown>(
+ params?: GetProductsPowderTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPowderTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsPowderTypesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getProductsPrimerSizesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsPrimerSizesResponseSuccess = (getProductsPrimerSizesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsPrimerSizesResponse = (getProductsPrimerSizesResponseSuccess)
+
+export const getGetProductsPrimerSizesUrl = (params?: GetProductsPrimerSizesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetPrimerSizes?${stringifiedParams}` : `/api/v1/Products/GetPrimerSizes`
+}
+
+export const getProductsPrimerSizes = async (params?: GetProductsPrimerSizesParams, options?: RequestInit): Promise<getProductsPrimerSizesResponse> => {
+
+  const res = await fetch(getGetProductsPrimerSizesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsPrimerSizesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsPrimerSizesResponse
+}
+
+
+
+
+
+export const getGetProductsPrimerSizesQueryKey = (params?: GetProductsPrimerSizesParams,) => {
+    return [
+    `/api/v1/Products/GetPrimerSizes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsPrimerSizesQueryOptions = <TData = Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError = unknown>(params?: GetProductsPrimerSizesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsPrimerSizesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsPrimerSizes>>> = ({ signal }) => getProductsPrimerSizes(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsPrimerSizesQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsPrimerSizes>>>
+export type GetProductsPrimerSizesQueryError = unknown
+
+
+export function useGetProductsPrimerSizes<TData = Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError = unknown>(
+ params: undefined |  GetProductsPrimerSizesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPrimerSizes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPrimerSizes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPrimerSizes<TData = Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError = unknown>(
+ params?: GetProductsPrimerSizesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPrimerSizes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPrimerSizes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPrimerSizes<TData = Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError = unknown>(
+ params?: GetProductsPrimerSizesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsPrimerSizes<TData = Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError = unknown>(
+ params?: GetProductsPrimerSizesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerSizes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsPrimerSizesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getProductsPrimerTypesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsPrimerTypesResponseSuccess = (getProductsPrimerTypesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsPrimerTypesResponse = (getProductsPrimerTypesResponseSuccess)
+
+export const getGetProductsPrimerTypesUrl = (params?: GetProductsPrimerTypesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetPrimerTypes?${stringifiedParams}` : `/api/v1/Products/GetPrimerTypes`
+}
+
+export const getProductsPrimerTypes = async (params?: GetProductsPrimerTypesParams, options?: RequestInit): Promise<getProductsPrimerTypesResponse> => {
+
+  const res = await fetch(getGetProductsPrimerTypesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsPrimerTypesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsPrimerTypesResponse
+}
+
+
+
+
+
+export const getGetProductsPrimerTypesQueryKey = (params?: GetProductsPrimerTypesParams,) => {
+    return [
+    `/api/v1/Products/GetPrimerTypes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsPrimerTypesQueryOptions = <TData = Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError = unknown>(params?: GetProductsPrimerTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsPrimerTypesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsPrimerTypes>>> = ({ signal }) => getProductsPrimerTypes(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsPrimerTypesQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsPrimerTypes>>>
+export type GetProductsPrimerTypesQueryError = unknown
+
+
+export function useGetProductsPrimerTypes<TData = Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError = unknown>(
+ params: undefined |  GetProductsPrimerTypesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPrimerTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPrimerTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPrimerTypes<TData = Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError = unknown>(
+ params?: GetProductsPrimerTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsPrimerTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsPrimerTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsPrimerTypes<TData = Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError = unknown>(
+ params?: GetProductsPrimerTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsPrimerTypes<TData = Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError = unknown>(
+ params?: GetProductsPrimerTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsPrimerTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsPrimerTypesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getProductsProductDocumentTypesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsProductDocumentTypesResponseSuccess = (getProductsProductDocumentTypesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsProductDocumentTypesResponse = (getProductsProductDocumentTypesResponseSuccess)
+
+export const getGetProductsProductDocumentTypesUrl = (params?: GetProductsProductDocumentTypesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetProductDocumentTypes?${stringifiedParams}` : `/api/v1/Products/GetProductDocumentTypes`
+}
+
+export const getProductsProductDocumentTypes = async (params?: GetProductsProductDocumentTypesParams, options?: RequestInit): Promise<getProductsProductDocumentTypesResponse> => {
+
+  const res = await fetch(getGetProductsProductDocumentTypesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsProductDocumentTypesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsProductDocumentTypesResponse
+}
+
+
+
+
+
+export const getGetProductsProductDocumentTypesQueryKey = (params?: GetProductsProductDocumentTypesParams,) => {
+    return [
+    `/api/v1/Products/GetProductDocumentTypes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsProductDocumentTypesQueryOptions = <TData = Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError = unknown>(params?: GetProductsProductDocumentTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsProductDocumentTypesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsProductDocumentTypes>>> = ({ signal }) => getProductsProductDocumentTypes(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsProductDocumentTypesQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsProductDocumentTypes>>>
+export type GetProductsProductDocumentTypesQueryError = unknown
+
+
+export function useGetProductsProductDocumentTypes<TData = Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError = unknown>(
+ params: undefined |  GetProductsProductDocumentTypesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsProductDocumentTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsProductDocumentTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsProductDocumentTypes<TData = Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError = unknown>(
+ params?: GetProductsProductDocumentTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsProductDocumentTypes>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsProductDocumentTypes>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsProductDocumentTypes<TData = Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError = unknown>(
+ params?: GetProductsProductDocumentTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsProductDocumentTypes<TData = Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError = unknown>(
+ params?: GetProductsProductDocumentTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProductDocumentTypes>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsProductDocumentTypesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getProductsProjectileMaterialsResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsProjectileMaterialsResponseSuccess = (getProductsProjectileMaterialsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsProjectileMaterialsResponse = (getProductsProjectileMaterialsResponseSuccess)
+
+export const getGetProductsProjectileMaterialsUrl = (params?: GetProductsProjectileMaterialsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetProjectileMaterials?${stringifiedParams}` : `/api/v1/Products/GetProjectileMaterials`
+}
+
+export const getProductsProjectileMaterials = async (params?: GetProductsProjectileMaterialsParams, options?: RequestInit): Promise<getProductsProjectileMaterialsResponse> => {
+
+  const res = await fetch(getGetProductsProjectileMaterialsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsProjectileMaterialsResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsProjectileMaterialsResponse
+}
+
+
+
+
+
+export const getGetProductsProjectileMaterialsQueryKey = (params?: GetProductsProjectileMaterialsParams,) => {
+    return [
+    `/api/v1/Products/GetProjectileMaterials`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsProjectileMaterialsQueryOptions = <TData = Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError = unknown>(params?: GetProductsProjectileMaterialsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsProjectileMaterialsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsProjectileMaterials>>> = ({ signal }) => getProductsProjectileMaterials(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsProjectileMaterialsQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsProjectileMaterials>>>
+export type GetProductsProjectileMaterialsQueryError = unknown
+
+
+export function useGetProductsProjectileMaterials<TData = Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError = unknown>(
+ params: undefined |  GetProductsProjectileMaterialsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsProjectileMaterials>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsProjectileMaterials>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsProjectileMaterials<TData = Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError = unknown>(
+ params?: GetProductsProjectileMaterialsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsProjectileMaterials>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsProjectileMaterials>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsProjectileMaterials<TData = Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError = unknown>(
+ params?: GetProductsProjectileMaterialsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsProjectileMaterials<TData = Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError = unknown>(
+ params?: GetProductsProjectileMaterialsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileMaterials>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsProjectileMaterialsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getProductsProjectileProfilesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type getProductsProjectileProfilesResponseSuccess = (getProductsProjectileProfilesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getProductsProjectileProfilesResponse = (getProductsProjectileProfilesResponseSuccess)
+
+export const getGetProductsProjectileProfilesUrl = (params?: GetProductsProjectileProfilesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/Products/GetProjectileProfiles?${stringifiedParams}` : `/api/v1/Products/GetProjectileProfiles`
+}
+
+export const getProductsProjectileProfiles = async (params?: GetProductsProjectileProfilesParams, options?: RequestInit): Promise<getProductsProjectileProfilesResponse> => {
+
+  const res = await fetch(getGetProductsProjectileProfilesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getProductsProjectileProfilesResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as getProductsProjectileProfilesResponse
+}
+
+
+
+
+
+export const getGetProductsProjectileProfilesQueryKey = (params?: GetProductsProjectileProfilesParams,) => {
+    return [
+    `/api/v1/Products/GetProjectileProfiles`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProductsProjectileProfilesQueryOptions = <TData = Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError = unknown>(params?: GetProductsProjectileProfilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsProjectileProfilesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductsProjectileProfiles>>> = ({ signal }) => getProductsProjectileProfiles(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductsProjectileProfilesQueryResult = NonNullable<Awaited<ReturnType<typeof getProductsProjectileProfiles>>>
+export type GetProductsProjectileProfilesQueryError = unknown
+
+
+export function useGetProductsProjectileProfiles<TData = Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError = unknown>(
+ params: undefined |  GetProductsProjectileProfilesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsProjectileProfiles>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsProjectileProfiles>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsProjectileProfiles<TData = Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError = unknown>(
+ params?: GetProductsProjectileProfilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductsProjectileProfiles>>,
+          TError,
+          Awaited<ReturnType<typeof getProductsProjectileProfiles>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductsProjectileProfiles<TData = Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError = unknown>(
+ params?: GetProductsProjectileProfilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetProductsProjectileProfiles<TData = Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError = unknown>(
+ params?: GetProductsProjectileProfilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductsProjectileProfiles>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductsProjectileProfilesQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -16710,127 +18051,6 @@ export function useGetVaultsChildVaultsCountFromKey<TData = Awaited<ReturnType<t
 
 
 
-export type getVaultsLockTypesResponse200 = {
-  data: void
-  status: 200
-}
-
-export type getVaultsLockTypesResponseSuccess = (getVaultsLockTypesResponse200) & {
-  headers: Headers;
-};
-;
-
-export type getVaultsLockTypesResponse = (getVaultsLockTypesResponseSuccess)
-
-export const getGetVaultsLockTypesUrl = (params?: GetVaultsLockTypesParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/v1/Vaults/GetLockTypes?${stringifiedParams}` : `/api/v1/Vaults/GetLockTypes`
-}
-
-export const getVaultsLockTypes = async (params?: GetVaultsLockTypesParams, options?: RequestInit): Promise<getVaultsLockTypesResponse> => {
-
-  const res = await fetch(getGetVaultsLockTypesUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getVaultsLockTypesResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as getVaultsLockTypesResponse
-}
-
-
-
-
-
-export const getGetVaultsLockTypesQueryKey = (params?: GetVaultsLockTypesParams,) => {
-    return [
-    `/api/v1/Vaults/GetLockTypes`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getGetVaultsLockTypesQueryOptions = <TData = Awaited<ReturnType<typeof getVaultsLockTypes>>, TError = unknown>(params?: GetVaultsLockTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVaultsLockTypes>>, TError, TData>>, fetch?: RequestInit}
-) => {
-
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetVaultsLockTypesQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVaultsLockTypes>>> = ({ signal }) => getVaultsLockTypes(params, { signal, ...fetchOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVaultsLockTypes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetVaultsLockTypesQueryResult = NonNullable<Awaited<ReturnType<typeof getVaultsLockTypes>>>
-export type GetVaultsLockTypesQueryError = unknown
-
-
-export function useGetVaultsLockTypes<TData = Awaited<ReturnType<typeof getVaultsLockTypes>>, TError = unknown>(
- params: undefined |  GetVaultsLockTypesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVaultsLockTypes>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getVaultsLockTypes>>,
-          TError,
-          Awaited<ReturnType<typeof getVaultsLockTypes>>
-        > , 'initialData'
-      >, fetch?: RequestInit}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVaultsLockTypes<TData = Awaited<ReturnType<typeof getVaultsLockTypes>>, TError = unknown>(
- params?: GetVaultsLockTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVaultsLockTypes>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getVaultsLockTypes>>,
-          TError,
-          Awaited<ReturnType<typeof getVaultsLockTypes>>
-        > , 'initialData'
-      >, fetch?: RequestInit}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVaultsLockTypes<TData = Awaited<ReturnType<typeof getVaultsLockTypes>>, TError = unknown>(
- params?: GetVaultsLockTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVaultsLockTypes>>, TError, TData>>, fetch?: RequestInit}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useGetVaultsLockTypes<TData = Awaited<ReturnType<typeof getVaultsLockTypes>>, TError = unknown>(
- params?: GetVaultsLockTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVaultsLockTypes>>, TError, TData>>, fetch?: RequestInit}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetVaultsLockTypesQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
 export type getVaultsVaultCategoriesResponse200 = {
   data: void
   status: 200
@@ -18746,6 +19966,16 @@ export const getGetArmoryItemsMountedAccessoriesCountFromKeyMockHandler = (overr
   }, options)
 }
 
+export const getGetArmoryItemsArmoryItemDocumentTypesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/ArmoryItems/GetArmoryItemDocumentTypes', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
 export const getGetArmoryItemsItemConditionsMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/ArmoryItems/GetItemConditions', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
@@ -19442,6 +20672,16 @@ export const getGetProductsBatteryTypesMockHandler = (overrideResponse?: void | 
   }, options)
 }
 
+export const getGetProductsCaseMaterialsMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetCaseMaterials', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
 export const getGetProductsLaserColorsMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/Products/GetLaserColors', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
@@ -19454,6 +20694,16 @@ export const getGetProductsLaserColorsMockHandler = (overrideResponse?: void | (
 
 export const getGetProductsLightMountTypesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/Products/GetLightMountTypes', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetProductsLockTypesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetLockTypes', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -19494,6 +20744,86 @@ export const getGetProductsOpticTypesMockHandler = (overrideResponse?: void | ((
 
 export const getGetProductsPewPewCategoriesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/Products/GetPewPewCategories', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetProductsPowderBurnRatesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetPowderBurnRates', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetProductsPowderShapesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetPowderShapes', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetProductsPowderTypesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetPowderTypes', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetProductsPrimerSizesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetPrimerSizes', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetProductsPrimerTypesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetPrimerTypes', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetProductsProductDocumentTypesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetProductDocumentTypes', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetProductsProjectileMaterialsMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetProjectileMaterials', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetProductsProjectileProfilesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/Products/GetProjectileProfiles', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
     return new HttpResponse(null,
@@ -19864,16 +21194,6 @@ export const getGetVaultsChildVaultsCountFromKeyMockHandler = (overrideResponse?
   }, options)
 }
 
-export const getGetVaultsLockTypesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/Vaults/GetLockTypes', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-
-    return new HttpResponse(null,
-      { status: 200
-      })
-  }, options)
-}
-
 export const getGetVaultsVaultCategoriesMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/Vaults/GetVaultCategories', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
   if (typeof overrideResponse === 'function') {await overrideResponse(info); }
@@ -20027,6 +21347,7 @@ export const getChamberedAPIMock = () => [
   getGetArmoryItemsParentItemFromKeyMockHandler(),
   getGetArmoryItemsMountedAccessoriesFromKeyMockHandler(),
   getGetArmoryItemsMountedAccessoriesCountFromKeyMockHandler(),
+  getGetArmoryItemsArmoryItemDocumentTypesMockHandler(),
   getGetArmoryItemsItemConditionsMockHandler(),
   getGetArmoryItemsNfaFormTypesMockHandler(),
   getGetArmoryItemsMockHandler(),
@@ -20089,12 +21410,22 @@ export const getChamberedAPIMock = () => [
   getGetProductsArmoryItemsCountFromKeyMockHandler(),
   getGetProductsActionTypesMockHandler(),
   getGetProductsBatteryTypesMockHandler(),
+  getGetProductsCaseMaterialsMockHandler(),
   getGetProductsLaserColorsMockHandler(),
   getGetProductsLightMountTypesMockHandler(),
+  getGetProductsLockTypesMockHandler(),
   getGetProductsOpticAdjustmentUnitsMockHandler(),
   getGetProductsOpticReticlesMockHandler(),
   getGetProductsOpticTypesMockHandler(),
   getGetProductsPewPewCategoriesMockHandler(),
+  getGetProductsPowderBurnRatesMockHandler(),
+  getGetProductsPowderShapesMockHandler(),
+  getGetProductsPowderTypesMockHandler(),
+  getGetProductsPrimerSizesMockHandler(),
+  getGetProductsPrimerTypesMockHandler(),
+  getGetProductsProductDocumentTypesMockHandler(),
+  getGetProductsProjectileMaterialsMockHandler(),
+  getGetProductsProjectileProfilesMockHandler(),
   getGetProductsSuppressorAttachmentTypesMockHandler(),
   getGetProductsSuppressorMaterialsMockHandler(),
   getGetProductsProductTypesMockHandler(),
@@ -20127,7 +21458,6 @@ export const getChamberedAPIMock = () => [
   getGetVaultsParentVaultFromKeyMockHandler(),
   getGetVaultsChildVaultsFromKeyMockHandler(),
   getGetVaultsChildVaultsCountFromKeyMockHandler(),
-  getGetVaultsLockTypesMockHandler(),
   getGetVaultsVaultCategoriesMockHandler(),
   getGetVaultsMockHandler(),
   getPostVaultsMockHandler(),

@@ -377,12 +377,12 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the standard size classification (e.g., SmallPistol, LargePistol, SmallRifle, LargeRifle, Shotgun209).
         /// </summary>
-        public PrimerSize Size { get; set; } = PrimerSize.Unknown;
+        public PrimerSize PrimerSize { get; set; } = PrimerSize.Unknown;
 
         /// <summary>
         /// Gets or sets the anvil/pocket type (e.g., Boxer, Berdan).
         /// </summary>
-        public PrimerType Type { get; set; } = PrimerType.Boxer;
+        public PrimerType PrimerType { get; set; } = PrimerType.Boxer;
 
         /// <summary>
         /// Gets or sets a value indicating whether this is a Magnum primer formulation.
@@ -406,23 +406,8 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents a bullet, slug, or projectile product used for reloading.
     /// </summary>
-    public class Projectile : CaliberBase, IHasQuantity
+    public class Projectile : CaliberBase, IProjectile, IHasQuantity
     {
-        /// <summary>
-        /// Gets or sets the weight of the projectile in grains.
-        /// </summary>
-        public decimal WeightGrains { get; set; }
-
-        /// <summary>
-        /// Gets or sets the structural bullet shape/profile (e.g., FMJ, HPBT, Spitzer, Wadcutter, RN).
-        /// </summary>
-        public ProjectileProfile Profile { get; set; } = ProjectileProfile.Unknown;
-
-        /// <summary>
-        /// Gets or sets the jacket/core material construction (e.g., CopperJacketed, PolymerTipped, MonolithicCopper, LeadCast).
-        /// </summary>
-        public ProjectileMaterial Material { get; set; } = ProjectileMaterial.Unknown;
-
         /// <summary>
         /// Gets or sets the G1 Ballistic Coefficient for long-range trajectory calculations.
         /// </summary>
@@ -443,6 +428,22 @@ namespace Chambered.Data.Models
         /// </summary>
         public bool HasCannelure { get; set; }
 
+        #region IProjectile
+
+        /// <inheritdoc/>
+        public ProjectileProfile ProjectileProfile { get; set; } = ProjectileProfile.Unknown;
+
+        /// <inheritdoc/>
+        public ProjectileMaterial ProjectileMaterial { get; set; } = ProjectileMaterial.Unknown;
+
+        /// <inheritdoc/>
+        public bool IsLeadFree { get; set; }
+
+        /// <inheritdoc/>
+        public decimal WeightGrains { get; set; }
+
+        #endregion
+
         #region IHasQuantity
 
         /// <inheritdoc/>
@@ -454,14 +455,9 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents raw or prepped unprimed cartridge casings (brass) used for reloading.
     /// </summary>
-    public class Casing : CaliberBase, IHasQuantity
+    public class Casing : CaliberBase, IHasQuantity, ICasing
     {
         #region Caliber & Physical Specs
-
-        /// <summary>
-        /// Gets or sets the metallic or composite material of the casing.
-        /// </summary>
-        public CaseMaterial Material { get; set; } = CaseMaterial.Brass;
 
         /// <summary>
         /// Gets or sets the required primer size format for the casing's primer pocket.
@@ -489,6 +485,16 @@ namespace Chambered.Data.Models
 
         #endregion
 
+        #region ICasing
+
+        /// <inheritdoc/>
+        public CaseMaterial CaseMaterial { get; set; } = CaseMaterial.Brass;
+
+        /// <inheritdoc/>
+        public string HeadStamp { get; set; } = string.Empty;
+
+        #endregion
+
         #region IHasQuantity
 
         /// <inheritdoc/>
@@ -500,27 +506,8 @@ namespace Chambered.Data.Models
     /// <summary>
     /// Represents commercial, pre-assembled factory ammunition catalog products.
     /// </summary>
-    public class Ammunition : CaliberBase, IHasQuantity
+    public class Ammunition : CaliberBase, IProjectile, ICasing, IHasQuantity
     {
-        #region Caliber & Core Specifications
-
-        /// <summary>
-        /// Gets or sets the projectile weight in grains (e.g., 55gr, 115gr, 147gr).
-        /// </summary>
-        public decimal BulletWeightGrains { get; set; }
-
-        /// <summary>
-        /// Gets or sets the shape or profile of the loaded projectile.
-        /// </summary>
-        public ProjectileProfile ProjectileProfile { get; set; } = ProjectileProfile.Unknown;
-
-        /// <summary>
-        /// Gets or sets the cartridge case construction material.
-        /// </summary>
-        public CaseMaterial CaseMaterial { get; set; } = CaseMaterial.Brass;
-
-        #endregion
-
         #region Performance & Ballistics
 
         /// <summary>
@@ -538,12 +525,33 @@ namespace Chambered.Data.Models
         /// </summary>
         public bool IsPlusP { get; set; }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether this is non-toxic / lead-free factory ammo.
-        /// </summary>
+        public bool IsSubsonic => MuzzleVelocityFps > 0 && MuzzleVelocityFps < 1125;
+
+        #endregion
+
+        #region IProjectile
+
+        /// <inheritdoc/>
+        public ProjectileProfile ProjectileProfile { get; set; } = ProjectileProfile.Unknown;
+
+        /// <inheritdoc/>
+        public ProjectileMaterial ProjectileMaterial { get; set; } = ProjectileMaterial.Unknown;
+
+        /// <inheritdoc/>
         public bool IsLeadFree { get; set; }
 
-        public bool IsSubsonic => MuzzleVelocityFps > 0 && MuzzleVelocityFps < 1125;
+        /// <inheritdoc/>
+        public decimal WeightGrains { get; set; }
+
+        #endregion
+
+        #region ICasing
+
+        /// <inheritdoc/>
+        public CaseMaterial CaseMaterial { get; set; } = CaseMaterial.Brass;
+
+        /// <inheritdoc/>
+        public string HeadStamp { get; set; } = string.Empty;
 
         #endregion
 
@@ -579,5 +587,38 @@ namespace Chambered.Data.Models
         public int MaxCapacity { get; set; }
 
         #endregion
+    }
+
+    public interface IProjectile
+    {
+        /// <summary>
+        /// Gets or sets the structural bullet shape/profile (e.g., FMJ, HPBT, Spitzer, Wadcutter, RN).
+        /// </summary>
+        ProjectileProfile ProjectileProfile { get; set; }
+
+        /// <summary>
+        /// Gets or sets the jacket/core material construction (e.g., CopperJacketed, PolymerTipped, MonolithicCopper, LeadCast).
+        /// </summary>
+        ProjectileMaterial ProjectileMaterial { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this is non-toxic / lead-free factory ammo.
+        /// </summary>
+        public bool IsLeadFree { get; set; }
+
+        /// <summary>
+        /// Gets or sets the weight of the projectile in grains.
+        /// </summary>
+        public decimal WeightGrains { get; set; }
+    }
+
+    public interface ICasing
+    {
+        /// <summary>
+        /// Gets or sets the cartridge case construction material.
+        /// </summary>
+        CaseMaterial CaseMaterial { get; set; }
+
+        string HeadStamp { get; set; }
     }
 }

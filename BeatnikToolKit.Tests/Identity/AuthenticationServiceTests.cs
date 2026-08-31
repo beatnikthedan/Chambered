@@ -61,8 +61,7 @@ namespace Chambered.Tests.Services.Identity
 
             _identityOptionsMock.Setup(o => o.Value).Returns(new IdentityConfiguration
             {
-                Website = "https://localhost",
-                DefaultEmailAddress = "no-reply@test.com"
+                Website = "https://localhost"
             });
 
             _authenticationService = new AuthenticationService<IdentityUser>(
@@ -161,6 +160,154 @@ namespace Chambered.Tests.Services.Identity
             var result = await _authenticationService.IsInitializedAsync();
 
             Assert.True(result);
+        }
+
+        /// <summary>
+        /// Verifies that InitiateForgotPasswordAsync generates a password reset token and sends a reset email.
+        /// </summary>
+        [Fact]
+        public async Task InitiateForgotPasswordAsync_ShouldGenerateTokenAndSendEmail_WhenUserExists()
+        {
+            var user = new IdentityUser { Id = "user-123", UserName = "testuser", Email = "test@user.com" };
+            var request = new ForgotPasswordRequestDto("test@user.com");
+ 
+            _userManagerMock.Setup(u => u.FindByEmailAsync(request.Email))
+                .ReturnsAsync(user);
+ 
+            _userManagerMock.Setup(u => u.GeneratePasswordResetTokenAsync(user))
+                .ReturnsAsync("reset-token-abc");
+ 
+            _emailServiceMock.Setup(e => e.SendEmailAsync(It.IsAny<System.Net.Mail.MailMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+ 
+            await _authenticationService.InitiateForgotPasswordAsync(request);
+ 
+            _userManagerMock.Verify(u => u.GeneratePasswordResetTokenAsync(user), Times.Once);
+            _emailServiceMock.Verify(e => e.SendEmailAsync(It.Is<System.Net.Mail.MailMessage>(m =>
+                m.To.Count == 1 &&
+                m.To[0].Address == request.Email &&
+                m.Subject == "Reset Password" &&
+                m.Body.Contains("change-password") &&
+                m.Body.Contains("testuser")
+            ), It.IsAny<CancellationToken>()), Times.Once);
+        }
+ 
+        /// <summary>
+        /// Verifies that InitiateForgotPasswordAsync throws an InvalidOperationException when email sending fails.
+        /// </summary>
+        [Fact]
+        public async Task InitiateForgotPasswordAsync_ShouldThrowException_WhenEmailServiceFails()
+        {
+            var user = new IdentityUser { Id = "user-123", UserName = "testuser", Email = "test@user.com" };
+            var request = new ForgotPasswordRequestDto("test@user.com");
+ 
+            _userManagerMock.Setup(u => u.FindByEmailAsync(request.Email))
+                .ReturnsAsync(user);
+ 
+            _userManagerMock.Setup(u => u.GeneratePasswordResetTokenAsync(user))
+                .ReturnsAsync("reset-token-abc");
+ 
+            _emailServiceMock.Setup(e => e.SendEmailAsync(It.IsAny<System.Net.Mail.MailMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+ 
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _authenticationService.InitiateForgotPasswordAsync(request));
+        }
+ 
+        /// <summary>
+        /// Verifies that ResetPasswordAsync successfully invokes UserManager password reset.
+        /// </summary>
+        [Fact]
+        public async Task ResetPasswordAsync_ShouldInvokeReset_WhenTokenAndUserAreValid()
+        {
+            var user = new IdentityUser { Id = "user-123", Email = "test@user.com" };
+            var request = new ResetPasswordRequestDto("test@user.com", "cmVzZXQtdG9rZW4tYWJj", "NewPassword123!");
+ 
+            _userManagerMock.Setup(u => u.FindByEmailAsync(request.Email))
+                .ReturnsAsync(user);
+ 
+            _userManagerMock.Setup(u => u.ResetPasswordAsync(user, "reset-token-abc", request.NewPassword))
+                .ReturnsAsync(IdentityResult.Success);
+ 
+            await _authenticationService.ResetPasswordAsync(request);
+ 
+            _userManagerMock.Verify(u => u.ResetPasswordAsync(user, "reset-token-abc", request.NewPassword), Times.Once);
+        }
+ 
+        /// <summary>
+        /// Verifies that ResetPasswordAsync throws an InvalidOperationException when the reset fails.
+        /// </summary>
+        [Fact]
+        public async Task ResetPasswordAsync_ShouldThrowException_WhenResetFails()
+        {
+            var user = new IdentityUser { Id = "user-123", Email = "test@user.com" };
+            var request = new ResetPasswordRequestDto("test@user.com", "cmVzZXQtdG9rZW4tYWJj", "NewPassword123!");
+ 
+            _userManagerMock.Setup(u => u.FindByEmailAsync(request.Email))
+                .ReturnsAsync(user);
+ 
+            _userManagerMock.Setup(u => u.ResetPasswordAsync(user, "reset-token-abc", request.NewPassword))
+                .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Reset Error" }));
+ 
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _authenticationService.ResetPasswordAsync(request));
+        }
+ 
+        /// <summary>
+        /// Verifies that VerifyPasswordAsync returns true when the credentials match.
+        /// </summary>
+        [Fact]
+        public async Task VerifyPasswordAsync_ShouldReturnTrue_WhenPasswordIsValid()
+        {
+            var user = new IdentityUser { Id = "user-123" };
+            _userManagerMock.Setup(u => u.FindByIdAsync("user-123"))
+                .ReturnsAsync(user);
+ 
+            _userManagerMock.Setup(u => u.CheckPasswordAsync(user, "Secret123!"))
+                .ReturnsAsync(true);
+ 
+            var result = await _authenticationService.VerifyPasswordAsync("user-123", "Secret123!");
+ 
+            Assert.True(result);
+        }
+ 
+        /// <summary>
+        /// Verifies that ChangePasswordAsync successfully updates the user password.
+        /// </summary>
+        [Fact]
+        public async Task ChangePasswordAsync_ShouldInvokeChange_WhenPasswordsAreValid()
+        {
+            var user = new IdentityUser { Id = "user-123" };
+            var request = new ChangePasswordRequestDto("OldPassword123!", "NewPassword123!");
+ 
+            _userManagerMock.Setup(u => u.FindByIdAsync("user-123"))
+                .ReturnsAsync(user);
+ 
+            _userManagerMock.Setup(u => u.ChangePasswordAsync(user, request.OldPassword, request.NewPassword))
+                .ReturnsAsync(IdentityResult.Success);
+ 
+            await _authenticationService.ChangePasswordAsync("user-123", request);
+ 
+            _userManagerMock.Verify(u => u.ChangePasswordAsync(user, request.OldPassword, request.NewPassword), Times.Once);
+        }
+ 
+        /// <summary>
+        /// Verifies that ChangePasswordAsync throws an InvalidOperationException when the change operation fails.
+        /// </summary>
+        [Fact]
+        public async Task ChangePasswordAsync_ShouldThrowException_WhenChangeFails()
+        {
+            var user = new IdentityUser { Id = "user-123" };
+            var request = new ChangePasswordRequestDto("OldPassword123!", "NewPassword123!");
+ 
+            _userManagerMock.Setup(u => u.FindByIdAsync("user-123"))
+                .ReturnsAsync(user);
+ 
+            _userManagerMock.Setup(u => u.ChangePasswordAsync(user, request.OldPassword, request.NewPassword))
+                .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Update Error" }));
+ 
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _authenticationService.ChangePasswordAsync("user-123", request));
         }
     }
 

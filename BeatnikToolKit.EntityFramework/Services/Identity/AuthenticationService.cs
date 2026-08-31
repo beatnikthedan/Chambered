@@ -141,15 +141,11 @@ namespace BeatnikToolKit.EntityFramework.Services.Identity
 
             var callbackUrl = $"{_identityOptions.Value.Website}/change-password?username={user.UserName}&token={uriEncodedToken}";
 
-            var mailMessage = new MailMessage(
-                _identityOptions.Value.DefaultEmailAddress,
-                request.Email,
-                "Reset Password",
-                $"<p>Please reset your password by clicking <a href=\"{callbackUrl}\">here</a>.</p>"
-            )
-            {
-                IsBodyHtml = true
-            };
+            var mailMessage = new MailMessage();
+            mailMessage.To.Add(request.Email);
+            mailMessage.Subject = "Reset Password";
+            mailMessage.Body = $"<p>Please reset your password by clicking <a href=\"{callbackUrl}\">here</a>.</p>";
+            mailMessage.IsBodyHtml = true;
 
             var emailSent = await _emailService.SendEmailAsync(mailMessage).ConfigureAwait(false);
             if (!emailSent)

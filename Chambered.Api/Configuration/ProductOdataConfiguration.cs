@@ -24,17 +24,27 @@ namespace Chambered.Api.Configuration
             builder.EntityType<Security>().DerivesFrom<Product>();
 
             var productColl = builder.EntityType<Product>().Collection;
+            productColl.Function("GetProductTypes").ReturnsCollection<string>();
             productColl.Function("GetActionTypes").ReturnsCollection<EnumDto>();
             productColl.Function("GetBatteryTypes").ReturnsCollection<EnumDto>();
+            productColl.Function("GetCaseMaterials").ReturnsCollection<EnumDto>();
             productColl.Function("GetLaserColors").ReturnsCollection<EnumDto>();
             productColl.Function("GetLightMountTypes").ReturnsCollection<EnumDto>();
+            productColl.Function("GetLockTypes").ReturnsCollection<EnumDto>();
             productColl.Function("GetOpticAdjustmentUnits").ReturnsCollection<EnumDto>();
             productColl.Function("GetOpticReticles").ReturnsCollection<EnumDto>();
             productColl.Function("GetOpticTypes").ReturnsCollection<EnumDto>();
             productColl.Function("GetPewPewCategories").ReturnsCollection<EnumDto>();
+            productColl.Function("GetPowderBurnRates").ReturnsCollection<EnumDto>();
+            productColl.Function("GetPowderShapes").ReturnsCollection<EnumDto>();
+            productColl.Function("GetPowderTypes").ReturnsCollection<EnumDto>();
+            productColl.Function("GetPrimerSizes").ReturnsCollection<EnumDto>();
+            productColl.Function("GetPrimerTypes").ReturnsCollection<EnumDto>();
+            productColl.Function("GetProductDocumentTypes").ReturnsCollection<EnumDto>();
+            productColl.Function("GetProjectileMaterials").ReturnsCollection<EnumDto>();
+            productColl.Function("GetProjectileProfiles").ReturnsCollection<EnumDto>();
             productColl.Function("GetSuppressorAttachmentTypes").ReturnsCollection<EnumDto>();
-            productColl.Function("GetSuppressorMaterials").ReturnsCollection<EnumDto>();
-            productColl.Function("GetProductTypes").ReturnsCollection<string>();
+            productColl.Function("GetSuppressorMaterials").ReturnsCollection<EnumDto>();         
 
             switch (apiVersion.MajorVersion)
             {
@@ -58,6 +68,9 @@ namespace Chambered.Api.Configuration
 
                         var suppressor = builder.EntityType<Suppressor>();
                         suppressor.Property(s => s.ThreadPitch).MaxLength = 50;
+
+                        var casing = builder.EntityType<Casing>();
+                        casing.Property(s => s.HeadStamp).MaxLength = 50;
                         break;
                     }
             }

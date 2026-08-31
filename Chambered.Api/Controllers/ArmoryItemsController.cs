@@ -75,6 +75,12 @@ public class ArmoryItemsController : ODataControllerBase<ArmoryItem, int>
     #endregion
 
     [HttpGet]
+    public IActionResult GetArmoryItemDocumentTypes()
+    {
+        return Ok(GetEnumValues<ArmoryItemDocumentType>());
+    }
+
+    [HttpGet]
     public IActionResult GetItemConditions()
     {
         return Ok(GetEnumValues<ItemCondition>());

@@ -876,6 +876,14 @@ export default function App() {
                   </GuestRoute>
                 }
               />
+              <Route
+                path="/change-password"
+                element={
+                  <GuestRoute>
+                    <Login />
+                  </GuestRoute>
+                }
+              />
 
               {/* Catch-all fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
