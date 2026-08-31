@@ -1,12 +1,13 @@
 using BeatnikToolKit.GitVersioning.Configuration;
 using BeatnikToolKit.GitVersioning.Exceptions;
+using BeatnikToolKit.GitVersioning.LogMessages;
 using BeatnikToolKit.GitVersioning.ValueObjects;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Text.Json;
-
+ 
 namespace BeatnikToolKit.GitVersioning.Services
 {
     /// <summary>
@@ -25,6 +26,7 @@ namespace BeatnikToolKit.GitVersioning.Services
         private readonly HttpClient _client;
         private readonly IOptions<GitHubReleaseConfiguration> _options;
         private readonly ILogger<GitHubReleaseService> _logger;
+        private readonly GitHubReleaseServiceLogMessages _log;
         private readonly HybridCache _cache;
         private readonly string _baseUrl;
 
@@ -47,6 +49,7 @@ namespace BeatnikToolKit.GitVersioning.Services
             _client = client;
             _client.DefaultRequestHeaders.UserAgent.ParseAdd(_options.Value.UserAgent);
             _logger = logger;
+            _log = new GitHubReleaseServiceLogMessages(logger);
             _baseUrl = $"https://api.github.com/repos/{_options.Value.RepositoryOwner}/{_options.Value.RepositoryName}/releases";
             _cache = cache;
         }
@@ -62,7 +65,7 @@ namespace BeatnikToolKit.GitVersioning.Services
                 {
                     try
                     {
-                        _logger.LogInformation("Fetching release '{Tag}' from GitHub API", tag);
+                        _log.FetchingRelease(tag);
 
                         var json = await _client.GetStringAsync($"{_baseUrl}/tags/{tag}");
                         var release = JsonSerializer.Deserialize<GitHubRelease>(json);
@@ -79,12 +82,12 @@ namespace BeatnikToolKit.GitVersioning.Services
                     }
                     catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
                     {
-                        _logger.LogWarning("GitHub release with tag '{Tag}' was not found", tag);
+                        _log.ReleaseNotFound(tag);
                         throw new GitHubReleaseNotFoundException(tag);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error retrieving GitHub release '{Tag}'", tag);
+                        _log.ErrorRetrievingRelease(ex, tag);
                         throw new GitHubApiException($"Failed to retrieve release '{tag}': {ex.Message}");
                     }
                 },
@@ -129,7 +132,7 @@ namespace BeatnikToolKit.GitVersioning.Services
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error retrieving latest GitHub release");
+                        _log.ErrorRetrievingLatestRelease(ex);
                         throw new GitHubApiException($"Failed to retrieve latest release: {ex.Message}");
                     }
                 },
@@ -166,7 +169,7 @@ namespace BeatnikToolKit.GitVersioning.Services
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error retrieving GitHub release history");
+                        _log.ErrorRetrievingReleaseHistory(ex);
                         throw new GitHubApiException($"Failed to retrieve release history: {ex.Message}");
                     }
                 },

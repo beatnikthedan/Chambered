@@ -96,6 +96,112 @@ namespace Chambered.Tests.Services.Identity
         }
 
         /// <summary>
+        /// Verifies that GetAllUsersAsync successfully lists all database users with their roles mapped.
+        /// </summary>
+        [Fact]
+        public async Task GetAllUsersAsync_ShouldReturnAllUsersWithMappedRoles()
+        {
+            var user1 = new IdentityUser { Id = "user-a", Email = "a@test.com", UserName = "a@test.com" };
+            var user2 = new IdentityUser { Id = "user-b", Email = "b@test.com", UserName = "b@test.com" };
+            _db.Users.AddRange(user1, user2);
+
+            var role = new IdentityRole { Id = "role-1", Name = "User", NormalizedName = "USER" };
+            _db.Roles.Add(role);
+
+            var userRole = new IdentityUserRole<string> { UserId = "user-a", RoleId = "role-1" };
+            _db.UserRoles.Add(userRole);
+
+            await _db.SaveChangesAsync();
+
+            var usersQueryable = _db.Users;
+            _userManagerMock.Setup(u => u.Users).Returns(usersQueryable);
+
+            var result = await _identityService.GetAllUsersAsync();
+
+            Assert.NotNull(result);
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+
+            var returnedUserA = list.FirstOrDefault(u => u.Id == "user-a");
+            Assert.NotNull(returnedUserA);
+            Assert.Contains("User", returnedUserA.Roles);
+
+            var returnedUserB = list.FirstOrDefault(u => u.Id == "user-b");
+            Assert.NotNull(returnedUserB);
+            Assert.Empty(returnedUserB.Roles);
+        }
+
+        /// <summary>
+        /// Verifies that UpdateUserAsync successfully modifies user parameters and syncs role adjustments.
+        /// </summary>
+        [Fact]
+        public async Task UpdateUserAsync_ShouldUpdateEmailAndSyncRoles()
+        {
+            var user = new IdentityUser { Id = "user-123", Email = "old@test.com", UserName = "old@test.com" };
+            var request = new UpdateUserRequestDto("new@test.com", new List<string> { "Admin", "User" });
+
+            _userManagerMock.Setup(u => u.FindByIdAsync("user-123"))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.UpdateAsync(user))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _userManagerMock.Setup(u => u.GetRolesAsync(user))
+                .ReturnsAsync(new List<string> { "User", "Viewer" });
+
+            _userManagerMock.Setup(u => u.AddToRolesAsync(user, It.IsAny<IEnumerable<string>>()))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _userManagerMock.Setup(u => u.RemoveFromRolesAsync(user, It.IsAny<IEnumerable<string>>()))
+                .ReturnsAsync(IdentityResult.Success);
+
+            await _identityService.UpdateUserAsync("user-123", request);
+
+            Assert.Equal("new@test.com", user.Email);
+            Assert.Equal("new@test.com", user.UserName);
+            _userManagerMock.Verify(u => u.UpdateAsync(user), Times.Once);
+            _userManagerMock.Verify(u => u.AddToRolesAsync(user, It.Is<IEnumerable<string>>(r => r.SequenceEqual(new[] { "Admin" }))), Times.Once);
+            _userManagerMock.Verify(u => u.RemoveFromRolesAsync(user, It.Is<IEnumerable<string>>(r => r.SequenceEqual(new[] { "Viewer" }))), Times.Once);
+        }
+
+        /// <summary>
+        /// Verifies that UpdateUserAsync throws an InvalidOperationException when UpdateAsync fails.
+        /// </summary>
+        [Fact]
+        public async Task UpdateUserAsync_ShouldThrowException_WhenUpdateFails()
+        {
+            var user = new IdentityUser { Id = "user-123", Email = "old@test.com" };
+            var request = new UpdateUserRequestDto("new@test.com", new List<string>());
+
+            _userManagerMock.Setup(u => u.FindByIdAsync("user-123"))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.UpdateAsync(user))
+                .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Update error" }));
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _identityService.UpdateUserAsync("user-123", request));
+        }
+
+        /// <summary>
+        /// Verifies that DeleteUserAsync successfully deletes the specified user identity.
+        /// </summary>
+        [Fact]
+        public async Task DeleteUserAsync_ShouldInvokeDelete_WhenUserExists()
+        {
+            var user = new IdentityUser { Id = "user-123" };
+            _userManagerMock.Setup(u => u.FindByIdAsync("user-123"))
+                .ReturnsAsync(user);
+
+            _userManagerMock.Setup(u => u.DeleteAsync(user))
+                .ReturnsAsync(IdentityResult.Success);
+
+            await _identityService.DeleteUserAsync("user-123");
+
+            _userManagerMock.Verify(u => u.DeleteAsync(user), Times.Once);
+        }
+
+        /// <summary>
         /// Disposes standard database resources.
         /// </summary>
         public void Dispose()

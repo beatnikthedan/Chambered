@@ -81,5 +81,115 @@ namespace Chambered.Tests.Services.Identity
             _roleManagerMock.Verify(r => r.RemoveClaimAsync(role, It.Is<Claim>(c => c.Value == "Delete")), Times.Once);
             _roleManagerMock.Verify(r => r.AddClaimAsync(role, It.Is<Claim>(c => c.Value == "Read")), Times.Never);
         }
+ 
+        /// <summary>
+        /// Verifies that DeleteRoleAsync retrieves and deletes the specified role successfully.
+        /// </summary>
+        [Fact]
+        public async Task DeleteRoleAsync_ShouldInvokeRoleManagerDelete()
+        {
+            var roleName = "Admin";
+            var role = new IdentityRole(roleName);
+ 
+            _roleManagerMock.Setup(r => r.FindByNameAsync(roleName))
+                .ReturnsAsync(role);
+ 
+            _roleManagerMock.Setup(r => r.DeleteAsync(role))
+                .ReturnsAsync(IdentityResult.Success);
+ 
+            await _roleService.DeleteRoleAsync(roleName);
+ 
+            _roleManagerMock.Verify(r => r.DeleteAsync(role), Times.Once);
+        }
+ 
+        /// <summary>
+        /// Verifies that GetAllRolesAsync correctly lists all system roles with their permission claims eagerly mapped.
+        /// </summary>
+        [Fact]
+        public async Task GetAllRolesAsync_ShouldReturnAllRolesWithClaims()
+        {
+            var roleList = new List<IdentityRole>
+            {
+                new IdentityRole("Admin"),
+                new IdentityRole("User")
+            }.AsQueryable();
+ 
+            var mockQueryable = new TestAsyncEnumerable<IdentityRole>(roleList);
+            _roleManagerMock.Setup(r => r.Roles).Returns(mockQueryable);
+ 
+            _roleManagerMock.Setup(r => r.GetClaimsAsync(It.Is<IdentityRole>(role => role.Name == "Admin")))
+                .ReturnsAsync(new List<Claim> { new Claim("Permission", "SystemAdmin") });
+ 
+            _roleManagerMock.Setup(r => r.GetClaimsAsync(It.Is<IdentityRole>(role => role.Name == "User")))
+                .ReturnsAsync(new List<Claim> { new Claim("Permission", "Read") });
+ 
+            var result = await _roleService.GetAllRolesAsync();
+ 
+            Assert.NotNull(result);
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+ 
+            var adminResponse = list.FirstOrDefault(r => r.RoleName == "Admin");
+            Assert.NotNull(adminResponse);
+            Assert.Contains("SystemAdmin", adminResponse.AssignedPermissions);
+ 
+            var userResponse = list.FirstOrDefault(r => r.RoleName == "User");
+            Assert.NotNull(userResponse);
+            Assert.Contains("Read", userResponse.AssignedPermissions);
+        }
+ 
+        /// <summary>
+        /// Verifies that GetClaimsForRoleAsync retrieves all claims registered under the specified role name.
+        /// </summary>
+        [Fact]
+        public async Task GetClaimsForRoleAsync_ShouldReturnClaims()
+        {
+            var roleName = "Admin";
+            var role = new IdentityRole(roleName);
+ 
+            _roleManagerMock.Setup(r => r.FindByNameAsync(roleName))
+                .ReturnsAsync(role);
+ 
+            _roleManagerMock.Setup(r => r.GetClaimsAsync(role))
+                .ReturnsAsync(new List<Claim> { new Claim("Permission", "Read"), new Claim("Permission", "Write") });
+ 
+            var result = await _roleService.GetClaimsForRoleAsync(roleName);
+ 
+            Assert.NotNull(result);
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.Contains("Read", list);
+            Assert.Contains("Write", list);
+        }
+ 
+        /// <summary>
+        /// Verifies that GetAllSystemPermissionsAsync lists all distinct claim permission strings defined across any system role.
+        /// </summary>
+        [Fact]
+        public async Task GetAllSystemPermissionsAsync_ShouldReturnDistinctClaimsFromAllRoles()
+        {
+            var roleList = new List<IdentityRole>
+            {
+                new IdentityRole("Admin"),
+                new IdentityRole("User")
+            }.AsQueryable();
+ 
+            var mockQueryable = new TestAsyncEnumerable<IdentityRole>(roleList);
+            _roleManagerMock.Setup(r => r.Roles).Returns(mockQueryable);
+ 
+            _roleManagerMock.Setup(r => r.GetClaimsAsync(It.Is<IdentityRole>(role => role.Name == "Admin")))
+                .ReturnsAsync(new List<Claim> { new Claim("Permission", "Read"), new Claim("Permission", "Write") });
+ 
+            _roleManagerMock.Setup(r => r.GetClaimsAsync(It.Is<IdentityRole>(role => role.Name == "User")))
+                .ReturnsAsync(new List<Claim> { new Claim("Permission", "Read") });
+ 
+            var result = await _roleService.GetAllSystemPermissionsAsync();
+ 
+            Assert.NotNull(result);
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.Contains("Read", list);
+            Assert.Contains("Write", list);
+        }
     }
 }
