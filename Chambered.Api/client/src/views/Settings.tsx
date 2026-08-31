@@ -9,6 +9,7 @@ import AuthSettings from "../components/AuthSettings";
 import ImportExportSettings from "../components/ImportExportSettings";
 import ArsenalSettings from "../components/ArsenalSettings";
 import EmailSettings from "../components/EmailSettings";
+import AppriseSettings from "../components/AppriseSettings";
 
 export default function Settings() {
   const store = useStore();
@@ -135,6 +136,8 @@ export default function Settings() {
         )}
 
         {activeView === "email" && <EmailSettings />}
+
+        {activeView === "apprise" && <AppriseSettings />}
 
         {activeView === "users" && <UserSettings currentUserId="1" />}
 

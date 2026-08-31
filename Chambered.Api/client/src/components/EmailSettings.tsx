@@ -19,7 +19,7 @@ export default function EmailSettings() {
       </div>
       <p className="sec-subtitle">
         Settings for connecting external email provider or smtp relay service
-        (thse settings are readonly).
+        (these settings are readonly).
       </p>
 
       {emailLoading ? (
