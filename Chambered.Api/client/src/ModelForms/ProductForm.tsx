@@ -823,7 +823,6 @@ export default function ProductForm({
                       }
                       required
                     >
-                      <option value="">-- Select Manufacturer --</option>
                       {manufacturersList.map((m) => (
                         <option key={m.id} value={m.id}>
                           {m.name}
@@ -920,7 +919,7 @@ export default function ProductForm({
                           boxSizing: "border-box",
                         }}
                       >
-                        <option value="">-- select cover image --</option>
+                        <option value="">-- select --</option>
                         {productDocuments.map((img: any) => (
                           <option key={img.id} value={img.id}>
                             {img.fileName} (
@@ -951,7 +950,7 @@ export default function ProductForm({
                           }
                           required
                         >
-                          <option value="">-- Select Caliber --</option>
+                          <option value="">-- select --</option>
                           {calibersList.map((c) => (
                             <option key={c.id} value={c.id}>
                               {c.name}
