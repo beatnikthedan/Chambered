@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../StoreContext";
 import {
   postUsersRegister,
   useGetAccountConfiguredProviders,
   getGetAccountPrepareChallengeUrl,
   useGetSettingsLoginSettings,
+  postAccountForgotPassword,
+  postAccountResetPassword,
 } from "../api/endpoints";
 import "./Login.css";
 import "../components/VersionControl.tsx";
@@ -20,6 +22,10 @@ interface PasswordStrengthInfo {
 export default function Login() {
   const store = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const queryParams = new URLSearchParams(location.search);
+  const tokenParam = queryParams.get("token") || "";
 
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -27,9 +33,11 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
-  const [mode, setMode] = useState<"setup" | "login" | "register">(() => {
+  const [mode, setMode] = useState<"setup" | "login" | "register" | "forgot" | "reset">(() => {
     if (store.isInitialized === false) return "setup";
+    if (location.pathname === "/change-password") return "reset";
     return "login";
   });
 
@@ -41,6 +49,12 @@ export default function Login() {
       setMode("login");
     }
   }, [store.isInitialized, mode]);
+
+  useEffect(() => {
+    if (location.pathname === "/change-password") {
+      setMode("reset");
+    }
+  }, [location.pathname]);
 
   // Simple real-time password strength validation score: 0 to 4
   const getPasswordStrength = (pwd: string): PasswordStrengthInfo => {
@@ -72,6 +86,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
+    setSuccessMessage("");
     setIsSubmitting(true);
 
     try {
@@ -84,6 +99,67 @@ export default function Login() {
         const success = await store.login(username, password);
         if (success) {
           navigate("/");
+        }
+      } else if (mode === "forgot") {
+        if (!email) {
+          throw new Error("Please enter your email address.");
+        }
+        try {
+          const res = await postAccountForgotPassword({ email });
+          if (res.status === 200 || res.status === 204) {
+            setSuccessMessage(
+              "A password reset link has been sent to your email address.",
+            );
+          } else {
+            throw new Error(
+              (res.data as any)?.detail ||
+                "Failed to initiate password reset.",
+            );
+          }
+        } catch (err: any) {
+          throw new Error(
+            err.message || "Failed to initiate password reset. Please try again.",
+          );
+        }
+      } else if (mode === "reset") {
+        if (!email) {
+          throw new Error("Please enter your registered email address.");
+        }
+        if (password !== confirmPassword) {
+          throw new Error("Passwords do not match.");
+        }
+        if (pwdStrength.score < 2) {
+          throw new Error("Please choose a stronger password.");
+        }
+        if (!tokenParam) {
+          throw new Error(
+            "Password reset token is missing or invalid. Please check your email link or request a new one.",
+          );
+        }
+
+        try {
+          const res = await postAccountResetPassword({
+            email,
+            token: tokenParam,
+            newPassword: password,
+          });
+
+          if (res.status === 200 || res.status === 204) {
+            setSuccessMessage(
+              "Your password has been successfully reset. You can now sign in with your new password.",
+            );
+            setEmail("");
+            setPassword("");
+            setConfirmPassword("");
+          } else {
+            throw new Error(
+              (res.data as any)?.detail || "Failed to reset password.",
+            );
+          }
+        } catch (err: any) {
+          throw new Error(
+            err.message || "Failed to reset password. Please try again.",
+          );
         }
       } else if (mode === "register") {
         if (password !== confirmPassword) {
@@ -165,6 +241,16 @@ export default function Login() {
               <h1 className="brand-name">CHAMBERED</h1>
               <p className="brand-subtitle">Create your new user account</p>
             </>
+          ) : mode === "forgot" ? (
+            <>
+              <h1 className="brand-name">CHAMBERED</h1>
+              <p className="brand-subtitle">Recover your password</p>
+            </>
+          ) : mode === "reset" ? (
+            <>
+              <h1 className="brand-name">CHAMBERED</h1>
+              <p className="brand-subtitle">Set your new password</p>
+            </>
           ) : (
             <>
               <h1 className="brand-name">CHAMBERED</h1>
@@ -189,25 +275,33 @@ export default function Login() {
           </div>
         )}
 
+        {successMessage && (
+          <div className="success-banner" style={{ marginBottom: "20px" }}>
+            {successMessage}
+          </div>
+        )}
+
         {!loginPolicy?.disableLocalUsers ? (
           <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group">
-              <label htmlFor="username">Username</label>
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder={
-                  mode === "setup" ? "e.g. administrator" : "administrator"
-                }
-                required
-                disabled={isSubmitting}
-              />
-            </div>
+            {mode !== "forgot" && mode !== "reset" && (
+              <div className="form-group">
+                <label htmlFor="username">Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={
+                    mode === "setup" ? "e.g. administrator" : "administrator"
+                  }
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+            )}
 
-            {/* Email field (only in Setup and Register modes) */}
-            {(mode === "setup" || mode === "register") && (
+            {/* Email field (only in Setup, Register, Forgot, and Reset modes) */}
+            {(mode === "setup" || mode === "register" || mode === "forgot" || mode === "reset") && (
               <div className="form-group">
                 <label htmlFor="email">
                   Email Address {mode === "setup" && "· optional"}
@@ -218,44 +312,48 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@domain.local"
-                  required={mode === "register"}
+                  required={mode === "register" || mode === "forgot" || mode === "reset"}
                   disabled={isSubmitting}
                 />
               </div>
             )}
 
-            <div className="form-group">
-              <div className="form-group-header">
-                <label htmlFor="password">Password</label>
-                {mode === "login" && (
-                  <a
-                    href="#forgot"
-                    tabIndex={-1}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert(
-                        "Please contact your administrator to reset your credentials.",
-                      );
-                    }}
-                    className="forgot-password-link"
-                  >
-                    Forgot?
-                  </a>
-                )}
+            {mode !== "forgot" && (
+              <div className="form-group">
+                <div className="form-group-header">
+                  <label htmlFor="password">
+                    {mode === "reset" ? "New Password" : "Password"}
+                  </label>
+                  {mode === "login" && (
+                    <a
+                      href="#forgot"
+                      tabIndex={-1}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setErrorMessage("");
+                        setSuccessMessage("");
+                        setMode("forgot");
+                      }}
+                      className="forgot-password-link"
+                    >
+                      Forgot?
+                    </a>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  disabled={isSubmitting}
+                />
               </div>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                disabled={isSubmitting}
-              />
-            </div>
+            )}
 
-            {/* Reactive Segmented Strength Indicator for Setup and Register */}
-            {(mode === "setup" || mode === "register") && (
+            {/* Reactive Segmented Strength Indicator for Setup, Register, and Reset */}
+            {(mode === "setup" || mode === "register" || mode === "reset") && (
               <div className="password-strength">
                 <div className="password-strength-bar">
                   <div
@@ -279,8 +377,8 @@ export default function Login() {
               </div>
             )}
 
-            {/* Password confirmation for Register mode */}
-            {mode === "register" && (
+            {/* Password confirmation for Register and Reset modes */}
+            {(mode === "register" || mode === "reset") && (
               <div className="form-group">
                 <label htmlFor="confirmPassword">Confirm Password</label>
                 <input
@@ -306,6 +404,10 @@ export default function Login() {
                 "Initialize server & sign in"
               ) : mode === "register" ? (
                 "Create Account & Sign In"
+              ) : mode === "forgot" ? (
+                "Send reset link"
+              ) : mode === "reset" ? (
+                "Reset Password"
               ) : (
                 "Access Armory"
               )}
@@ -360,6 +462,7 @@ export default function Login() {
                     type="button"
                     onClick={() => {
                       setErrorMessage("");
+                      setSuccessMessage("");
                       setMode("register");
                     }}
                     className="auth-toggle-link"
@@ -368,6 +471,38 @@ export default function Login() {
                   </button>
                 </>
               )
+            ) : mode === "forgot" ? (
+              <>
+                Remembered your password?
+                <button
+                  type="button"
+                  onClick={() => {
+                    setErrorMessage("");
+                    setSuccessMessage("");
+                    setMode("login");
+                    navigate("/login");
+                  }}
+                  className="auth-toggle-link"
+                >
+                  Sign in
+                </button>
+              </>
+            ) : mode === "reset" ? (
+              <>
+                Finished resetting?
+                <button
+                  type="button"
+                  onClick={() => {
+                    setErrorMessage("");
+                    setSuccessMessage("");
+                    setMode("login");
+                    navigate("/login");
+                  }}
+                  className="auth-toggle-link"
+                >
+                  Sign in
+                </button>
+              </>
             ) : (
               <>
                 Already have an account?
@@ -375,7 +510,9 @@ export default function Login() {
                   type="button"
                   onClick={() => {
                     setErrorMessage("");
+                    setSuccessMessage("");
                     setMode("login");
+                    navigate("/login");
                   }}
                   className="auth-toggle-link"
                 >

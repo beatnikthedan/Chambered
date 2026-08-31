@@ -61,8 +61,7 @@ namespace Chambered.Tests.Services.Identity
 
             _identityOptionsMock.Setup(o => o.Value).Returns(new IdentityConfiguration
             {
-                Website = "https://localhost",
-                DefaultEmailAddress = "no-reply@test.com"
+                Website = "https://localhost"
             });
 
             _authenticationService = new AuthenticationService<IdentityUser>(
