@@ -247,6 +247,15 @@ export default function ProductForm({
     mountType: lightMountTypes[0]?.id || "",
     laserColor: laserColors[0]?.id || "",
     lockType: lockTypes[0]?.id || "",
+    projectileProfile: projectileProfiles[0]?.id || "",
+    projectileMaterial: projectileMaterials[0]?.id || "",
+    caseMaterial: caseMaterials[0]?.id || "",
+    primerPocketSize: primerSizes[0]?.id || "",
+    powderType: powderTypes[0]?.id || "",
+    shape: powderShapes[0]?.id || "",
+    burnRate: powderBurnRates[0]?.id || "",
+    primerSize: primerSizes[0]?.id || "",
+    primerType: primerTypes[0]?.id || "",
   });
 
   // Effect to load initial defaults or existing details
@@ -405,9 +414,14 @@ export default function ProductForm({
     }
 
     if (type === "PewPew") {
-      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
-      payload.pewPewCategory = targetForm.pewPewCategory || null;
-      payload.actionType = targetForm.actionType || null;
+      payload.caliberId =
+        parseInt(targetForm.caliberId as string, 10) ||
+        calibersList[0]?.id ||
+        0;
+      payload.pewPewCategory =
+        targetForm.pewPewCategory || pewPewCategories[0]?.id || "Handgun";
+      payload.actionType =
+        targetForm.actionType || actionTypes[0]?.id || "Unknown";
       payload.isNfaItem = !!targetForm.isNfaItem;
     } else if (type === "Optic") {
       payload.minMagnification =
@@ -416,20 +430,29 @@ export default function ProductForm({
         parseFloat(targetForm.maxMagnification as string) || 1.0;
       payload.objectiveDiameterMm =
         parseInt(targetForm.objectiveDiameterMm as string, 10) || 0;
-      payload.opticType = targetForm.opticType || null;
-      payload.reticle = targetForm.reticle || null;
-      payload.adjustmentUnits = targetForm.adjustmentUnits || null;
+      payload.opticType =
+        targetForm.opticType || opticTypes[0]?.id || "Unknown";
+      payload.reticle = targetForm.reticle || opticReticles[0]?.id || "None";
+      payload.adjustmentUnits =
+        targetForm.adjustmentUnits || opticAdjustmentUnits[0]?.id || "None";
       payload.tubeDiameter = targetForm.tubeDiameter || null;
       payload.isIlluminated = !!targetForm.isIlluminated;
       payload.hasBattery = !!targetForm.hasBattery;
       payload.batteryType = targetForm.hasBattery
-        ? targetForm.batteryType
-        : null;
+        ? targetForm.batteryType || batteryTypes[0]?.id || "Unknown"
+        : "Unknown";
     } else if (type === "Suppressor") {
-      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
+      payload.caliberId =
+        parseInt(targetForm.caliberId as string, 10) ||
+        calibersList[0]?.id ||
+        0;
       payload.threadPitch = targetForm.threadPitch || null;
-      payload.attachmentType = targetForm.attachmentType || null;
-      payload.material = targetForm.material || null;
+      payload.attachmentType =
+        targetForm.attachmentType ||
+        suppressorAttachmentTypes[0]?.id ||
+        "Unknown";
+      payload.material =
+        targetForm.material || suppressorMaterials[0]?.id || "Unknown";
       payload.soundReductionDb =
         parseInt(targetForm.soundReductionDb as string, 10) || null;
       payload.isFullAutoRated = !!targetForm.isFullAutoRated;
@@ -437,66 +460,92 @@ export default function ProductForm({
     } else if (type === "PewPewLight") {
       payload.lumens = parseInt(targetForm.lumens as string, 10) || 0;
       payload.candela = parseInt(targetForm.candela as string, 10) || 0;
-      payload.mountType = targetForm.mountType || null;
-      payload.laserColor = targetForm.laserColor || null;
+      payload.mountType =
+        targetForm.mountType || lightMountTypes[0]?.id || "None";
+      payload.laserColor =
+        targetForm.laserColor || laserColors[0]?.id || "None";
       payload.hasRemoteSwitchPort = !!targetForm.hasRemoteSwitchPort;
       payload.isInfraredCapable = !!targetForm.isInfraredCapable;
       payload.hasBattery = !!targetForm.hasBattery;
       payload.batteryType = targetForm.hasBattery
-        ? targetForm.batteryType
-        : null;
+        ? targetForm.batteryType || batteryTypes[0]?.id || "Unknown"
+        : "Unknown";
     } else if (type === "Security") {
-      payload.lockType = targetForm.lockType || null;
+      payload.lockType = targetForm.lockType || lockTypes[0]?.id || "None";
       payload.hasBattery = !!targetForm.hasBattery;
       payload.batteryType = targetForm.hasBattery
-        ? targetForm.batteryType
-        : null;
+        ? targetForm.batteryType || batteryTypes[0]?.id || "Unknown"
+        : "Unknown";
       payload.isCapacityLimited = !!targetForm.isCapcityLimited;
       payload.maxCapacity = targetForm.isCapcityLimited
         ? targetForm.maxCapcity
         : null;
     } else if (type === "Powder") {
-      payload.powderType = targetForm.powderType || null;
-      payload.shape = targetForm.shape || null;
-      payload.burnRate = targetForm.burnRate || null;
+      payload.powderType =
+        targetForm.powderType || powderTypes[0]?.id || "Unknown";
+      payload.shape = targetForm.shape || powderShapes[0]?.id || "Unknown";
+      payload.burnRate =
+        targetForm.burnRate || powderBurnRates[0]?.id || "Unknown";
       payload.containerWeightLbs = targetForm.containerWeightLbs || 0;
     } else if (type === "Primer") {
       payload.quantity = targetForm.quantity || 0;
-      payload.primerSize = targetForm.primerSize || null;
-      payload.primerType = targetForm.primerType || null;
+      payload.primerSize =
+        targetForm.primerSize || primerSizes[0]?.id || "Unknown";
+      payload.primerType =
+        targetForm.primerType || primerTypes[0]?.id || "Unknown";
       payload.isMagnum = !!targetForm.isMagnum;
       payload.isMatch = !!targetForm.isMatch;
     } else if (type === "Projectile") {
-      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
+      payload.caliberId =
+        parseInt(targetForm.caliberId as string, 10) ||
+        calibersList[0]?.id ||
+        0;
       payload.quantity = targetForm.quantity || 0;
       payload.bcG1 = targetForm.bcG1 || 0;
       payload.bcG7 = targetForm.bcG7 || 0;
       payload.isBoatTail = !!targetForm.isBoatTail;
       payload.hasCannelure = !!targetForm.hasCannelure;
-      payload.projectileProfile = targetForm.projectileProfile || null;
-      payload.projectileMaterial = targetForm.projectileMaterial || null;
+      payload.projectileProfile =
+        targetForm.projectileProfile || projectileProfiles[0]?.id || "Unknown";
+      payload.projectileMaterial =
+        targetForm.projectileMaterial ||
+        projectileMaterials[0]?.id ||
+        "Unknown";
       payload.isLeadFree = !!targetForm.isLeadFree;
       payload.weightGrains = targetForm.weightGrains || 0;
     } else if (type === "Casing") {
-      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
+      payload.caliberId =
+        parseInt(targetForm.caliberId as string, 10) ||
+        calibersList[0]?.id ||
+        0;
       payload.quantity = targetForm.quantity || 0;
-      payload.primerPocketSize = targetForm.primerPocketSize || null;
-      payload.caseMaterial = targetForm.caseMaterial || null;
+      payload.primerPocketSize =
+        targetForm.primerPocketSize || primerSizes[0]?.id || "Unknown";
+      payload.caseMaterial =
+        targetForm.caseMaterial || caseMaterials[0]?.id || "Unknown";
       payload.headStamp = targetForm.headStamp || "";
       payload.isPrimed = !!targetForm.isPrimed;
       payload.isAnnealed = !!targetForm.isAnnealed;
       payload.isVirgin = !!targetForm.isVirgin;
     } else if (type === "Ammunition") {
-      payload.caliberId = parseInt(targetForm.caliberId as string, 10) || null;
+      payload.caliberId =
+        parseInt(targetForm.caliberId as string, 10) ||
+        calibersList[0]?.id ||
+        0;
       payload.quantity = targetForm.quantity || 0;
       payload.muzzleVelocityFps = targetForm.muzzleVelocityFps || 0;
       payload.muzzleEnergyFtLbs = targetForm.muzzleEnergyFtLbs || 0;
       payload.isPlusP = !!targetForm.isPlusP;
-      payload.projectileProfile = targetForm.projectileProfile || null;
-      payload.projectileMaterial = targetForm.projectileMaterial || null;
+      payload.projectileProfile =
+        targetForm.projectileProfile || projectileProfiles[0]?.id || "Unknown";
+      payload.projectileMaterial =
+        targetForm.projectileMaterial ||
+        projectileMaterials[0]?.id ||
+        "Unknown";
       payload.isLeadFree = !!targetForm.isLeadFree;
       payload.weightGrains = targetForm.weightGrains || 0;
-      payload.caseMaterial = targetForm.caseMaterial || null;
+      payload.caseMaterial =
+        targetForm.caseMaterial || caseMaterials[0]?.id || "Unknown";
       payload.headStamp = targetForm.headStamp || "";
     } else if (type === "AmmoBox") {
       payload.isCapacityLimited = !!targetForm.isCapcityLimited;
