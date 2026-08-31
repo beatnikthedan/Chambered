@@ -41,6 +41,7 @@ import type {
   CreateApiKeyDto,
   CreateUserRequestDto,
   DashboardStatsDto,
+  EmailConfigurationResponseDto,
   ExternalIdentityDto,
   FaveIconDto,
   FederatedLoginResponseDto,
@@ -16458,6 +16459,120 @@ export function useGetSettingsLoginSettings<TData = Awaited<ReturnType<typeof ge
 
 
 
+export type getSettingsEmailSettingsResponse200 = {
+  data: EmailConfigurationResponseDto
+  status: 200
+}
+
+export type getSettingsEmailSettingsResponseSuccess = (getSettingsEmailSettingsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getSettingsEmailSettingsResponse = (getSettingsEmailSettingsResponseSuccess)
+
+export const getGetSettingsEmailSettingsUrl = () => {
+
+
+
+
+  return `/api/v1/settings/email-settings`
+}
+
+export const getSettingsEmailSettings = async ( options?: RequestInit): Promise<getSettingsEmailSettingsResponse> => {
+
+  const res = await fetch(getGetSettingsEmailSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getSettingsEmailSettingsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getSettingsEmailSettingsResponse
+}
+
+
+
+
+
+export const getGetSettingsEmailSettingsQueryKey = () => {
+    return [
+    `/api/v1/settings/email-settings`
+    ] as const;
+    }
+
+
+export const getGetSettingsEmailSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsEmailSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettingsEmailSettings>>> = ({ signal }) => getSettingsEmailSettings({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSettingsEmailSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getSettingsEmailSettings>>>
+export type GetSettingsEmailSettingsQueryError = unknown
+
+
+export function useGetSettingsEmailSettings<TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsEmailSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsEmailSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsEmailSettings<TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsEmailSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsEmailSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsEmailSettings<TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetSettingsEmailSettings<TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSettingsEmailSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export type postUsersRegisterResponse200 = {
   data: UserResponseDto
   status: 200
@@ -19607,6 +19722,8 @@ export const getGetSettingsAppriseSettingsResponseMock = (overrideResponse: Part
 
 export const getGetSettingsLoginSettingsResponseMock = (overrideResponse: Partial<Extract<LoginConfigurationResponseDto, object>> = {}): LoginConfigurationResponseDto => ({sessionLifetime: faker.helpers.arrayElement([faker.number.int(), undefined]), disableLocalUsers: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), disableNewUserRegistration: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
 
+export const getGetSettingsEmailSettingsResponseMock = (overrideResponse: Partial<Extract<EmailConfigurationResponseDto, object>> = {}): EmailConfigurationResponseDto => ({host: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), port: faker.helpers.arrayElement([faker.number.int(), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), hasPassword: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), securityOption: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), allowInvalidCertificates: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), defaultFromAddress: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), defaultFromDisplayName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
+
 export const getPostUsersRegisterResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
 
 export const getGetUsersProfileResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
@@ -21044,6 +21161,18 @@ export const getGetSettingsLoginSettingsMockHandler = (overrideResponse?: LoginC
   }, options)
 }
 
+export const getGetSettingsEmailSettingsMockHandler = (overrideResponse?: EmailConfigurationResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<EmailConfigurationResponseDto> | EmailConfigurationResponseDto), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/settings/email-settings', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSettingsEmailSettingsResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
 export const getPostUsersRegisterMockHandler = (overrideResponse?: UserResponseDto | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserResponseDto> | UserResponseDto), options?: RequestHandlerOptions) => {
   return http.post('*/api/v1/Users/register', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
 
@@ -21445,6 +21574,7 @@ export const getChamberedAPIMock = () => [
   getGetSettingsPasswordPolicyMockHandler(),
   getGetSettingsAppriseSettingsMockHandler(),
   getGetSettingsLoginSettingsMockHandler(),
+  getGetSettingsEmailSettingsMockHandler(),
   getPostUsersRegisterMockHandler(),
   getGetUsersProfileMockHandler(),
   getPutUsersUpdateProfileMockHandler(),

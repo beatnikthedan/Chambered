@@ -12,6 +12,8 @@ namespace Chambered.Api.Controllers.Settings
     /// </summary>
     /// <param name="identityOptions">The security identity password options.</param>
     /// <param name="appriseConfiguration">The Apprise notifications configuration options.</param>
+    /// <param name="loginConfiguration"></param>
+    /// <param name="emailConfiguration"></param>
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/settings")]
@@ -19,11 +21,13 @@ namespace Chambered.Api.Controllers.Settings
     public class SettingsController(
         IOptions<IdentityOptions> identityOptions,
         IOptions<AppriseConfiguration> appriseConfiguration,
-        IOptions<LoginConfiguration> loginConfiguration) : ControllerBase
+        IOptions<LoginConfiguration> loginConfiguration,
+        IOptions<EmailConfiguration> emailConfiguration) : ControllerBase
     {
         private readonly IOptions<IdentityOptions> _identityOptions = identityOptions;
         private readonly IOptions<AppriseConfiguration> _appriseConfiguration = appriseConfiguration;
         private readonly IOptions<LoginConfiguration> _loginConfiguration = loginConfiguration;
+        private readonly IOptions<EmailConfiguration> _emailConfiguration = emailConfiguration;
 
         /// <summary>
         /// Retrieves the active password complexity policy settings.
@@ -33,7 +37,6 @@ namespace Chambered.Api.Controllers.Settings
         /// <response code="401">If the request is unauthorized.</response>
         [HttpGet("password-policy")]
         [Produces("application/json")]
-        [AllowAnonymous]
         [ProducesResponseType(typeof(PasswordPolicyResponseDto), StatusCodes.Status200OK)]
         public ActionResult<PasswordPolicyResponseDto> GetPasswordPolicy()
         {
@@ -76,7 +79,6 @@ namespace Chambered.Api.Controllers.Settings
 
         [HttpGet("login-settings")]
         [Produces("application/json")]
-        [AllowAnonymous]
         [ProducesResponseType(typeof(LoginConfigurationResponseDto), StatusCodes.Status200OK)]
         public ActionResult<LoginConfigurationResponseDto> GetLoginSettings()
         {
@@ -86,6 +88,27 @@ namespace Chambered.Api.Controllers.Settings
                 SessionLifetime: opts.SessionLifetime,
                 DisableLocalUsers: opts.DisableLocalUsers,
                 DisableNewUserRegistration: opts.DisableNewUserRegistration
+            );
+
+            return Ok(response);
+        }
+
+        [HttpGet("email-settings")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(EmailConfigurationResponseDto), StatusCodes.Status200OK)]
+        public ActionResult<EmailConfigurationResponseDto> GetEmailSettings()
+        {
+            var opts = _emailConfiguration.Value;
+
+            var response = new EmailConfigurationResponseDto(
+                Host: opts.Host ?? string.Empty,
+                Port: opts.Port,
+                UserName: opts.UserName ?? string.Empty,
+                HasPassword: !string.IsNullOrWhiteSpace(opts.Password),
+                SecurityOption: opts.SecurityOption.ToString(),
+                AllowInvalidCertificates: opts.AllowInvalidCertificates,
+                DefaultFromAddress: opts.DefaultFromAddress ?? string.Empty,
+                DefaultFromDisplayName: opts.DefaultFromDisplayName ?? string.Empty
             );
 
             return Ok(response);
@@ -129,4 +152,15 @@ namespace Chambered.Api.Controllers.Settings
         bool DisableLocalUsers,
         bool DisableNewUserRegistration
     );
+
+    public record EmailConfigurationResponseDto(
+        string Host,
+        int Port,
+        string UserName,
+        bool HasPassword,
+        string SecurityOption,
+        bool AllowInvalidCertificates,
+        string DefaultFromAddress,
+        string DefaultFromDisplayName
+        );
 }

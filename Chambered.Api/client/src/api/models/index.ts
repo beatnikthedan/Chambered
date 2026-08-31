@@ -148,6 +148,7 @@ export * from './documentsPostPOSTParams';
 export * from './documentsPutByKeyPUTParams';
 export * from './documentsPutPUTParams';
 export * from './documentType';
+export * from './emailConfigurationResponseDto';
 export * from './externalIdentityDto';
 export * from './externalIdentityDtoUserClaims';
 export * from './faveIconDto';

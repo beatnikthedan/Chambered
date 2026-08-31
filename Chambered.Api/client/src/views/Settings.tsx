@@ -8,6 +8,7 @@ import BackupSettings from "../components/BackupSettings";
 import AuthSettings from "../components/AuthSettings";
 import ImportExportSettings from "../components/ImportExportSettings";
 import ArsenalSettings from "../components/ArsenalSettings";
+import EmailSettings from "../components/EmailSettings";
 
 export default function Settings() {
   const store = useStore();
@@ -132,6 +133,8 @@ export default function Settings() {
         {activeView === "import-export" && (
           <ImportExportSettings store={store} />
         )}
+
+        {activeView === "email" && <EmailSettings />}
 
         {activeView === "users" && <UserSettings currentUserId="1" />}
 
