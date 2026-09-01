@@ -20,7 +20,7 @@ namespace BeatnikToolKit.Tests.GitVersioning
         private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
         private readonly Mock<IOptions<GitHubReleaseConfiguration>> _optionsMock;
         private readonly Mock<ILogger<GitHubReleaseService>> _loggerMock;
-        private readonly Mock<HybridCache> _cacheMock;
+        private readonly FakeHybridCache _cacheFake;
         private readonly GitHubReleaseConfiguration _config;
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace BeatnikToolKit.Tests.GitVersioning
             _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
             _optionsMock = new Mock<IOptions<GitHubReleaseConfiguration>>();
             _loggerMock = new Mock<ILogger<GitHubReleaseService>>();
-            _cacheMock = new Mock<HybridCache>();
+            _cacheFake = new FakeHybridCache();
 
             _config = new GitHubReleaseConfiguration
             {
@@ -40,25 +40,6 @@ namespace BeatnikToolKit.Tests.GitVersioning
                 UserAgent = "TestUserAgent"
             };
             _optionsMock.Setup(o => o.Value).Returns(_config);
-
-            // Transparent factory execution for HybridCache mock
-            _cacheMock.Setup(c => c.GetOrCreateAsync(
-                It.IsAny<string>(),
-                It.IsAny<Func<CancellationToken, ValueTask<GitHubRelease>>>(),
-                It.IsAny<HybridCacheEntryOptions>(),
-                It.IsAny<IEnumerable<string>>(),
-                It.IsAny<CancellationToken>()))
-                .Returns(async (string key, Func<CancellationToken, ValueTask<GitHubRelease>> factory, HybridCacheEntryOptions options, IEnumerable<string> tags, CancellationToken token) =>
-                    await factory(token));
-
-            _cacheMock.Setup(c => c.GetOrCreateAsync(
-                It.IsAny<string>(),
-                It.IsAny<Func<CancellationToken, ValueTask<List<GitHubRelease>>>>(),
-                It.IsAny<HybridCacheEntryOptions>(),
-                It.IsAny<IEnumerable<string>>(),
-                It.IsAny<CancellationToken>()))
-                .Returns(async (string key, Func<CancellationToken, ValueTask<List<GitHubRelease>>> factory, HybridCacheEntryOptions options, IEnumerable<string> tags, CancellationToken token) =>
-                    await factory(token));
         }
 
         private HttpClient CreateHttpClient()
@@ -126,7 +107,7 @@ namespace BeatnikToolKit.Tests.GitVersioning
                     Content = new StringContent(latestJson)
                 });
 
-            var service = new GitHubReleaseService(CreateHttpClient(), _optionsMock.Object, _loggerMock.Object, _cacheMock.Object);
+            var service = new GitHubReleaseService(CreateHttpClient(), _optionsMock.Object, _loggerMock.Object, _cacheFake);
 
             var result = await service.GetReleaseByTag("v1.0.0");
 
@@ -150,7 +131,7 @@ namespace BeatnikToolKit.Tests.GitVersioning
                     StatusCode = HttpStatusCode.NotFound
                 });
 
-            var service = new GitHubReleaseService(CreateHttpClient(), _optionsMock.Object, _loggerMock.Object, _cacheMock.Object);
+            var service = new GitHubReleaseService(CreateHttpClient(), _optionsMock.Object, _loggerMock.Object, _cacheFake);
 
             await Assert.ThrowsAsync<GitHubReleaseNotFoundException>(() =>
                 service.GetReleaseByTag("v9.9.9"));
@@ -175,7 +156,7 @@ namespace BeatnikToolKit.Tests.GitVersioning
                     Content = new StringContent(json)
                 });
 
-            var service = new GitHubReleaseService(CreateHttpClient(), _optionsMock.Object, _loggerMock.Object, _cacheMock.Object);
+            var service = new GitHubReleaseService(CreateHttpClient(), _optionsMock.Object, _loggerMock.Object, _cacheFake);
 
             var result = await service.GetLatestRelease(includePrerelease: false);
 
@@ -207,7 +188,7 @@ namespace BeatnikToolKit.Tests.GitVersioning
                     Content = new StringContent(json)
                 });
 
-            var service = new GitHubReleaseService(CreateHttpClient(), _optionsMock.Object, _loggerMock.Object, _cacheMock.Object);
+            var service = new GitHubReleaseService(CreateHttpClient(), _optionsMock.Object, _loggerMock.Object, _cacheFake);
 
             var result = await service.GetReleaseHistory(includePrerelease: false);
 
@@ -216,6 +197,51 @@ namespace BeatnikToolKit.Tests.GitVersioning
             Assert.Single(list);
             Assert.Equal("v1.5.0", list.First().TagName);
             Assert.True(list.First().IsLatest);
+        }
+    }
+
+    /// <summary>
+    /// A minimal, transparent test double for HybridCache that instantly executes the factory delegate.
+    /// </summary>
+    public class FakeHybridCache : HybridCache
+    {
+        /// <inheritdoc/>
+        public override ValueTask<T> GetOrCreateAsync<TState, T>(
+            string key,
+            TState state,
+            Func<TState, CancellationToken, ValueTask<T>> factory,
+            HybridCacheEntryOptions? options = null,
+            IEnumerable<string>? tags = null,
+            CancellationToken cancellationToken = default)
+        {
+            return factory(state, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public override ValueTask SetAsync<T>(
+            string key,
+            T value,
+            HybridCacheEntryOptions? options = null,
+            IEnumerable<string>? tags = null,
+            CancellationToken cancellationToken = default)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public override ValueTask RemoveAsync(
+            string key,
+            CancellationToken cancellationToken = default)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public override ValueTask RemoveByTagAsync(
+            string tag,
+            CancellationToken cancellationToken = default)
+        {
+            return ValueTask.CompletedTask;
         }
     }
 }

@@ -39,7 +39,7 @@ namespace BeatnikToolKit.Tests.Services
             var result = service.GetCurrentUser();
 
             Assert.NotNull(result);
-            Assert.Null(result.Id);
+            Assert.NotNull(result.Id); // IdentityUser constructor automatically assigns a Guid.NewGuid() string
             Assert.Null(result.Email);
             Assert.Null(result.UserName);
         }
@@ -60,7 +60,9 @@ namespace BeatnikToolKit.Tests.Services
             var result = service.GetCurrentUser();
 
             Assert.NotNull(result);
-            Assert.Null(result.Id);
+            Assert.NotNull(result.Id); // IdentityUser constructor automatically assigns a Guid.NewGuid() string
+            Assert.Null(result.Email);
+            Assert.Null(result.UserName);
         }
 
         /// <summary>

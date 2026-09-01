@@ -41,6 +41,7 @@ import type {
   CreateApiKeyDto,
   CreateUserRequestDto,
   DashboardStatsDto,
+  EmailConfigurationResponseDto,
   ExternalIdentityDto,
   FaveIconDto,
   FederatedLoginResponseDto,
@@ -174,6 +175,7 @@ import type {
   RoleResponseDto,
   Security,
   StringODataValue,
+  TestNotificationRequestDto,
   UpdateUserRequestDto,
   UserResponseDto,
   Vault
@@ -16090,6 +16092,103 @@ export const usePostRolesUpdateRoleClaimsFromRoleName = <TError = ProblemDetails
       return useMutation(getPostRolesUpdateRoleClaimsFromRoleNameMutationOptions(options), queryClient);
     }
 
+export type postSettingsSendTestNotificationResponse200 = {
+  data: void
+  status: 200
+}
+
+export type postSettingsSendTestNotificationResponse500 = {
+  data: void
+  status: 500
+}
+
+export type postSettingsSendTestNotificationResponseSuccess = (postSettingsSendTestNotificationResponse200) & {
+  headers: Headers;
+};
+export type postSettingsSendTestNotificationResponseError = (postSettingsSendTestNotificationResponse500) & {
+  headers: Headers;
+};
+
+export type postSettingsSendTestNotificationResponse = (postSettingsSendTestNotificationResponseSuccess | postSettingsSendTestNotificationResponseError)
+
+export const getPostSettingsSendTestNotificationUrl = () => {
+
+
+
+
+  return `/api/v1/settings/test-notification`
+}
+
+/**
+ * @summary Sends a test notification to the configured Apprise instance.
+ */
+export const postSettingsSendTestNotification = async (testNotificationRequestDto?: TestNotificationRequestDto, options?: RequestInit): Promise<postSettingsSendTestNotificationResponse> => {
+
+  const res = await fetch(getPostSettingsSendTestNotificationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json;odata.metadata=minimal;odata.streaming=true', ...options?.headers },
+    body: JSON.stringify(testNotificationRequestDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: postSettingsSendTestNotificationResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as postSettingsSendTestNotificationResponse
+}
+
+
+
+
+
+export const getPostSettingsSendTestNotificationMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postSettingsSendTestNotification>>, TError,{data?: TestNotificationRequestDto}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postSettingsSendTestNotification>>, TError,{data?: TestNotificationRequestDto}, TContext> => {
+
+const mutationKey = ['postSettingsSendTestNotification'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postSettingsSendTestNotification>>, {data?: TestNotificationRequestDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postSettingsSendTestNotification(data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostSettingsSendTestNotificationMutationResult = NonNullable<Awaited<ReturnType<typeof postSettingsSendTestNotification>>>
+    export type PostSettingsSendTestNotificationMutationBody = TestNotificationRequestDto | undefined
+    export type PostSettingsSendTestNotificationMutationError = void
+
+    /**
+ * @summary Sends a test notification to the configured Apprise instance.
+ */
+export const usePostSettingsSendTestNotification = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postSettingsSendTestNotification>>, TError,{data?: TestNotificationRequestDto}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postSettingsSendTestNotification>>,
+        TError,
+        {data?: TestNotificationRequestDto},
+        TContext
+      > => {
+      return useMutation(getPostSettingsSendTestNotificationMutationOptions(options), queryClient);
+    }
+
 export type getSettingsPasswordPolicyResponse200 = {
   data: PasswordPolicyResponseDto
   status: 200
@@ -16446,6 +16545,120 @@ export function useGetSettingsLoginSettings<TData = Awaited<ReturnType<typeof ge
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetSettingsLoginSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getSettingsEmailSettingsResponse200 = {
+  data: EmailConfigurationResponseDto
+  status: 200
+}
+
+export type getSettingsEmailSettingsResponseSuccess = (getSettingsEmailSettingsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getSettingsEmailSettingsResponse = (getSettingsEmailSettingsResponseSuccess)
+
+export const getGetSettingsEmailSettingsUrl = () => {
+
+
+
+
+  return `/api/v1/settings/email-settings`
+}
+
+export const getSettingsEmailSettings = async ( options?: RequestInit): Promise<getSettingsEmailSettingsResponse> => {
+
+  const res = await fetch(getGetSettingsEmailSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getSettingsEmailSettingsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getSettingsEmailSettingsResponse
+}
+
+
+
+
+
+export const getGetSettingsEmailSettingsQueryKey = () => {
+    return [
+    `/api/v1/settings/email-settings`
+    ] as const;
+    }
+
+
+export const getGetSettingsEmailSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsEmailSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettingsEmailSettings>>> = ({ signal }) => getSettingsEmailSettings({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSettingsEmailSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getSettingsEmailSettings>>>
+export type GetSettingsEmailSettingsQueryError = unknown
+
+
+export function useGetSettingsEmailSettings<TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsEmailSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsEmailSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsEmailSettings<TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettingsEmailSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettingsEmailSettings>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettingsEmailSettings<TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetSettingsEmailSettings<TData = Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettingsEmailSettings>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSettingsEmailSettingsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -19607,6 +19820,8 @@ export const getGetSettingsAppriseSettingsResponseMock = (overrideResponse: Part
 
 export const getGetSettingsLoginSettingsResponseMock = (overrideResponse: Partial<Extract<LoginConfigurationResponseDto, object>> = {}): LoginConfigurationResponseDto => ({sessionLifetime: faker.helpers.arrayElement([faker.number.int(), undefined]), disableLocalUsers: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), disableNewUserRegistration: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), ...overrideResponse})
 
+export const getGetSettingsEmailSettingsResponseMock = (overrideResponse: Partial<Extract<EmailConfigurationResponseDto, object>> = {}): EmailConfigurationResponseDto => ({host: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), port: faker.helpers.arrayElement([faker.number.int(), undefined]), userName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), hasPassword: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), securityOption: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), allowInvalidCertificates: faker.helpers.arrayElement([faker.datatype.boolean(), undefined]), defaultFromAddress: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), defaultFromDisplayName: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
+
 export const getPostUsersRegisterResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
 
 export const getGetUsersProfileResponseMock = (overrideResponse: Partial<Extract<UserResponseDto, object>> = {}): UserResponseDto => ({id: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), email: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), roles: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), username: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), gravatarUrl: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), null]), undefined]), ...overrideResponse})
@@ -21008,6 +21223,16 @@ export const getPostRolesUpdateRoleClaimsFromRoleNameMockHandler = (overrideResp
   }, options)
 }
 
+export const getPostSettingsSendTestNotificationMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/settings/test-notification', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
 export const getGetSettingsPasswordPolicyMockHandler = (overrideResponse?: PasswordPolicyResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PasswordPolicyResponseDto> | PasswordPolicyResponseDto), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/settings/password-policy', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
@@ -21039,6 +21264,18 @@ export const getGetSettingsLoginSettingsMockHandler = (overrideResponse?: LoginC
     return HttpResponse.json(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getGetSettingsLoginSettingsResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetSettingsEmailSettingsMockHandler = (overrideResponse?: EmailConfigurationResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<EmailConfigurationResponseDto> | EmailConfigurationResponseDto), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/settings/email-settings', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getGetSettingsEmailSettingsResponseMock(),
       { status: 200
       })
   }, options)
@@ -21442,9 +21679,11 @@ export const getChamberedAPIMock = () => [
   getDeleteRolesRoleFromRoleNameMockHandler(),
   getGetRolesRoleClaimsFromRoleNameMockHandler(),
   getPostRolesUpdateRoleClaimsFromRoleNameMockHandler(),
+  getPostSettingsSendTestNotificationMockHandler(),
   getGetSettingsPasswordPolicyMockHandler(),
   getGetSettingsAppriseSettingsMockHandler(),
   getGetSettingsLoginSettingsMockHandler(),
+  getGetSettingsEmailSettingsMockHandler(),
   getPostUsersRegisterMockHandler(),
   getGetUsersProfileMockHandler(),
   getPutUsersUpdateProfileMockHandler(),

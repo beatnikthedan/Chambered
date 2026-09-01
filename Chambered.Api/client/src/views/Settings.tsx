@@ -8,6 +8,8 @@ import BackupSettings from "../components/BackupSettings";
 import AuthSettings from "../components/AuthSettings";
 import ImportExportSettings from "../components/ImportExportSettings";
 import ArsenalSettings from "../components/ArsenalSettings";
+import EmailSettings from "../components/EmailSettings";
+import AppriseSettings from "../components/AppriseSettings";
 
 export default function Settings() {
   const store = useStore();
@@ -51,7 +53,7 @@ export default function Settings() {
 
           <ul className="menu-list">
             <li
-              className={`menu-item ${activeView === "email" ? "ative" : ""}`}
+              className={`menu-item ${activeView === "email" ? "active" : ""}`}
               onClick={() => setActiveView("email")}
             >
               <span>Email</span>
@@ -132,6 +134,10 @@ export default function Settings() {
         {activeView === "import-export" && (
           <ImportExportSettings store={store} />
         )}
+
+        {activeView === "email" && <EmailSettings />}
+
+        {activeView === "apprise" && <AppriseSettings />}
 
         {activeView === "users" && <UserSettings currentUserId="1" />}
 
