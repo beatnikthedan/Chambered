@@ -62,6 +62,10 @@ export default function SortableTable<T extends { id: number | string }>({
                       textAlign: col.align || "left",
                       cursor: col.sortable !== false ? "pointer" : "default",
                       userSelect: "none",
+                      padding:
+                        col.width && parseInt(col.width) <= 60
+                          ? "8px 8px"
+                          : undefined,
                     }}
                     onClick={() => {
                       if (col.sortable !== false && onSort) {
@@ -103,7 +107,14 @@ export default function SortableTable<T extends { id: number | string }>({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        style={{ textAlign: col.align || "left" }}
+                        style={{
+                          width: col.width,
+                          textAlign: col.align || "left",
+                          padding:
+                            col.width && parseInt(col.width) <= 60
+                              ? "6px 8px"
+                              : undefined,
+                        }}
                       >
                         {col.render
                           ? col.render(item)

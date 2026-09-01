@@ -25,6 +25,7 @@ import type { Product } from "../api/models/product";
 import type { Manufacturer } from "../api/models/manufacturer";
 import type { Caliber } from "../api/models/caliber";
 import SecureImage from "../components/SecureImage";
+import ManufacturerFavicon from "../components/ManufacturerFavicon";
 
 export default function Products() {
   const queryClient = useQueryClient();
@@ -181,7 +182,7 @@ export default function Products() {
         key: "coverImage",
         header: "",
         sortable: false,
-        width: "40px",
+        width: "44px",
         align: "center",
         render: (p) =>
           p.coverImageId ? (
@@ -195,6 +196,8 @@ export default function Products() {
                 borderRadius: "4px",
                 border: "1px solid var(--border-color)",
                 backgroundColor: "var(--bg-input)",
+                display: "block",
+                margin: "0 auto",
               }}
             />
           ) : (
@@ -206,6 +209,7 @@ export default function Products() {
                 border: "1px solid var(--border-color)",
                 backgroundColor: "transparent",
                 boxSizing: "border-box",
+                margin: "0 auto",
               }}
             />
           ),
@@ -213,7 +217,8 @@ export default function Products() {
       {
         key: "productType",
         header: "Type",
-        align: "center",
+        width: "120px",
+        align: "left",
         render: (p) => (
           <span className={`type-badge ${p.productType.toLowerCase()}`}>
             {p.productType}
@@ -223,6 +228,12 @@ export default function Products() {
       {
         key: "manufacturerName",
         header: "Manufacturer",
+        render: (p) => (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <ManufacturerFavicon mfgId={p.manufacturerId} size={20} />
+            <span>{p.manufacturerName}</span>
+          </div>
+        ),
       },
       {
         key: "name",

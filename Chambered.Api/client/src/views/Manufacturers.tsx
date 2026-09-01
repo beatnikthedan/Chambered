@@ -20,6 +20,7 @@ import {
 } from "../api/endpoints";
 import type { Manufacturer } from "../api/models/manufacturer";
 import type { Product } from "../api/models/product";
+import ManufacturerFavicon from "../components/ManufacturerFavicon";
 
 export default function Manufacturers() {
   const queryClient = useQueryClient();
@@ -148,7 +149,10 @@ export default function Manufacturers() {
         key: "name",
         header: "Name",
         render: (m) => (
-          <span className="bold-name-cell">{m.name}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <ManufacturerFavicon mfgId={m.id} size={20} />
+            <span className="bold-name-cell">{m.name}</span>
+          </div>
         ),
       },
       { key: "city", header: "City" },

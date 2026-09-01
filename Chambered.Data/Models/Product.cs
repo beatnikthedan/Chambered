@@ -152,7 +152,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Main body tube diameter or mounting interface in millimeters.
         /// </summary>
-        public string TubeDiameter { get; set; }
+        public string? TubeDiameter { get; set; }
 
         /// <summary>
         /// Indicates whether the reticle or dot features electronic illumination.

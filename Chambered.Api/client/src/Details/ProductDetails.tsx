@@ -19,9 +19,13 @@ export interface ProductDetailsProps {
 const extractSpecifications = (product: any): Record<string, any> => {
   if (!product) return {};
   const specs: Record<string, any> = {};
+  if (product.specifications && typeof product.specifications === "object") {
+    Object.assign(specs, product.specifications);
+  }
   Object.keys(product).forEach((key) => {
     if (
       !PRODUCT_STATIC_KEYS.has(key) &&
+      key !== "specifications" &&
       ![
         "manufacturer",
         "caliber",

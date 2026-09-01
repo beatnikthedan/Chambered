@@ -1,44 +1,6 @@
 import React from "react";
 import type { Manufacturer } from "../api/models/manufacturer";
-import { useGetManufacturersFaviconFromKey } from "../api/endpoints";
-
-export interface ManufacturerCardProps {
-  item: Manufacturer;
-  isSelected: boolean;
-  onClick: () => void;
-}
-
-const ManufacturerFavicon = ({ mfgId }: { mfgId?: number }) => {
-  const { data, isLoading, isError } = useGetManufacturersFaviconFromKey(
-    mfgId || 0,
-    undefined,
-    {
-      query: {
-        retry: false,
-        staleTime: 24 * 60 * 60 * 1000,
-        enabled: !!mfgId,
-      },
-    },
-  );
-
-  if (isLoading) {
-    return <span className="mfg-favicon-placeholder loading" />;
-  }
-
-  if (isError || !data?.data?.base64Data) {
-    return <span className="mfg-favicon-placeholder text-icon">🏢</span>;
-  }
-
-  const { base64Data, contentType } = data.data;
-
-  return (
-    <img
-      src={`data:${contentType};base64,${base64Data}`}
-      alt="Logo"
-      className="mfg-favicon-img"
-    />
-  );
-};
+import ManufacturerFavicon from "../components/ManufacturerFavicon";
 
 export default function ManufacturerCard({
   item,

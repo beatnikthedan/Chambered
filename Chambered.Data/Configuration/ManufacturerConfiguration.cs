@@ -428,7 +428,224 @@ namespace Chambered.Data.Configuration
                     StateOrProvince = "UT",
                     PostalCode = "84118",
                     Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 33,
+                    Name = "Browning Arms Company",
+                    WebPageUrl = "https://www.browning.com",
+                    PhoneNumber = "801-876-2711",
+                    StreetAddress = "One Browning Place",
+                    City = "Morgan",
+                    StateOrProvince = "UT",
+                    PostalCode = "84050",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 34,
+                    Name = "Hornady Manufacturing Company",
+                    WebPageUrl = "https://www.hornady.com",
+                    PhoneNumber = "800-338-3220",
+                    StreetAddress = "3625 West Old Potash Highway",
+                    City = "Grand Island",
+                    StateOrProvince = "NE",
+                    PostalCode = "68803",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 35,
+                    Name = "Sierra Bullets, LLC",
+                    WebPageUrl = "https://www.sierrabullets.com",
+                    PhoneNumber = "800-223-8799",
+                    StreetAddress = "1400 West Henry Street",
+                    City = "Sedalia",
+                    StateOrProvince = "MO",
+                    PostalCode = "65301",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 36,
+                    Name = "Nosler, Inc.",
+                    WebPageUrl = "https://www.nosler.com",
+                    PhoneNumber = "800-285-3701",
+                    StreetAddress = "115 SW Columbia St",
+                    City = "Bend",
+                    StateOrProvince = "OR",
+                    PostalCode = "97702",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 37,
+                    Name = "Barnes Bullets, LLC",
+                    WebPageUrl = "https://www.barnesbullets.com",
+                    PhoneNumber = "800-574-9200",
+                    StreetAddress = "38 North Frontage Road",
+                    City = "Mona",
+                    StateOrProvince = "UT",
+                    PostalCode = "84645",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 38,
+                    Name = "Berger Bullets",
+                    WebPageUrl = "https://www.bergerbullets.com",
+                    PhoneNumber = "714-447-5422",
+                    StreetAddress = "4042 S. 1875 W.",
+                    City = "Salt Lake City",
+                    StateOrProvince = "UT",
+                    PostalCode = "84104",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 39,
+                    Name = "Hodgdon Powder Company",
+                    WebPageUrl = "https://www.hodgdon.com",
+                    PhoneNumber = "913-362-9455",
+                    StreetAddress = "6430 Vista Drive",
+                    City = "Shawnee",
+                    StateOrProvince = "KS",
+                    PostalCode = "66218",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 40,
+                    Name = "Alliant Powder",
+                    WebPageUrl = "https://www.alliantpowder.com",
+                    PhoneNumber = "800-276-9337",
+                    StreetAddress = "900 Ehlen Drive",
+                    City = "Anoka",
+                    StateOrProvince = "MN",
+                    PostalCode = "55303",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 41,
+                    Name = "IMR Legendary Powders",
+                    WebPageUrl = "https://www.imrpowder.com",
+                    PhoneNumber = "913-362-9455",
+                    StreetAddress = "6430 Vista Drive",
+                    City = "Shawnee",
+                    StateOrProvince = "KS",
+                    PostalCode = "66218",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 42,
+                    Name = "Vihtavuori",
+                    WebPageUrl = "https://www.vihtavuori.com",
+                    PhoneNumber = "",
+                    StreetAddress = "",
+                    City = "Vihtavuori",
+                    StateOrProvince = "",
+                    PostalCode = "",
+                    Country = "Finland"
+                },
+                new Manufacturer
+                {
+                    Id = 43,
+                    Name = "Federal Cartridge Company",
+                    WebPageUrl = "https://www.federalpremium.com",
+                    PhoneNumber = "800-379-1732",
+                    StreetAddress = "900 Ehlen Drive",
+                    City = "Anoka",
+                    StateOrProvince = "MN",
+                    PostalCode = "55303",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 44,
+                    Name = "Olin Corporation",
+                    WebPageUrl = "https://www.winchester.com",
+                    PhoneNumber = "618-258-2000",
+                    StreetAddress = "600 Powder Mill Road",
+                    City = "East Alton",
+                    StateOrProvince = "IL",
+                    PostalCode = "62024",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 45,
+                    Name = "Remington Arms Company, LLC",
+                    WebPageUrl = "https://www.remarms.com",
+                    PhoneNumber = "800-243-9700",
+                    StreetAddress = "2502 Triana Boulevard SW",
+                    City = "Huntsville",
+                    StateOrProvince = "AL",
+                    PostalCode = "35805",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 46,
+                    Name = "Cascade Cartridge Inc. (CCI)",
+                    WebPageUrl = "https://www.cci-ammunition.com",
+                    PhoneNumber = "800-379-1732",
+                    StreetAddress = "2299 Snake River Ave",
+                    City = "Lewiston",
+                    StateOrProvince = "ID",
+                    PostalCode = "83501",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 47,
+                    Name = "Speer",
+                    WebPageUrl = "https://www.speer.com",
+                    PhoneNumber = "800-379-1732",
+                    StreetAddress = "2299 Snake River Ave",
+                    City = "Lewiston",
+                    StateOrProvince = "ID",
+                    PostalCode = "83501",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 48,
+                    Name = "Pan Metal Corporation (PMC)",
+                    WebPageUrl = "https://www.pmcammo.com",
+                    PhoneNumber = "888-762-7378",
+                    StreetAddress = "PO Box 1678",
+                    City = "Carson City",
+                    StateOrProvince = "NV",
+                    PostalCode = "89702",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 49,
+                    Name = "Fiocchi of America, Inc.",
+                    WebPageUrl = "https://www.fiocchiusa.com",
+                    PhoneNumber = "417-449-1039",
+                    StreetAddress = "6930 N Fremont Rd",
+                    City = "Ozark",
+                    StateOrProvince = "MO",
+                    PostalCode = "65721",
+                    Country = "United States"
+                },
+                new Manufacturer
+                {
+                    Id = 50,
+                    Name = "Magpul Industries Corp.",
+                    WebPageUrl = "https://magpul.com",
+                    PhoneNumber = "877-462-4785",
+                    StreetAddress = "8226 Bee Caves Rd",
+                    City = "Austin",
+                    StateOrProvince = "TX",
+                    PostalCode = "78746",
+                    Country = "United States"
                 }
+
             );
         }
     }

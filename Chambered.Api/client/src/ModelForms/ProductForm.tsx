@@ -30,9 +30,13 @@ export interface ProductFormProps {
 const extractSpecifications = (product: any): Record<string, any> => {
   if (!product) return {};
   const specs: Record<string, any> = {};
+  if (product.specifications && typeof product.specifications === "object") {
+    Object.assign(specs, product.specifications);
+  }
   Object.keys(product).forEach((key) => {
     if (
       !PRODUCT_STATIC_KEYS.has(key) &&
+      key !== "specifications" &&
       !key.startsWith("@odata.") &&
       !key.startsWith("odata.")
     ) {
@@ -367,7 +371,7 @@ export default function ProductForm({
       payload.material =
         targetForm.material || suppressorMaterials[0]?.id || "Unknown";
       payload.soundReductionDb =
-        parseInt(targetForm.soundReductionDb as string, 10) || null;
+        parseInt(targetForm.soundReductionDb as string, 10) || 0;
       payload.isFullAutoRated = !!targetForm.isFullAutoRated;
       payload.isUserServiceable = !!targetForm.isUserServiceable;
     } else if (type === "PewPewLight") {
@@ -391,8 +395,17 @@ export default function ProductForm({
         : "Unknown";
       payload.isCapacityLimited = !!targetForm.isCapacityLimited;
       payload.maxCapacity = targetForm.isCapacityLimited
-        ? targetForm.maxCapacity
-        : null;
+        ? parseInt(targetForm.maxCapacity as any, 10) || 0
+        : 0;
+    } else if (type === "Magazine") {
+      payload.caliberId =
+        parseInt(targetForm.caliberId as string, 10) ||
+        calibersList[0]?.id ||
+        0;
+      payload.isCapacityLimited = !!targetForm.isCapacityLimited;
+      payload.maxCapacity = targetForm.isCapacityLimited
+        ? parseInt(targetForm.maxCapacity as any, 10) || 0
+        : 0;
     } else if (type === "Powder") {
       payload.powderType =
         targetForm.powderType || powderTypes[0]?.id || "Unknown";
@@ -463,8 +476,8 @@ export default function ProductForm({
     } else if (type === "AmmoBox") {
       payload.isCapacityLimited = !!targetForm.isCapacityLimited;
       payload.maxCapacity = targetForm.isCapacityLimited
-        ? targetForm.maxCapacity
-        : null;
+        ? parseInt(targetForm.maxCapacity as any, 10) || 0
+        : 0;
     }
 
     // Clean payload of navigation objects to avoid OData mapping errors
