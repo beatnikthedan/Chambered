@@ -114,8 +114,6 @@ const INITIAL_FORM_STATE = {
   // ammo box/battery/capacity
   hasBattery: false,
   batteryType: "",
-  isCapcityLimited: false,
-  maxCapcity: 0,
   quantity: 0,
 
   // iprojectile
@@ -127,6 +125,10 @@ const INITIAL_FORM_STATE = {
   // icasing
   caseMaterial: "",
   headStamp: "",
+
+  // ICapacity
+  isCapacityLimited: false,
+  maxCapacity: 0,
 };
 
 // Derived Type
@@ -480,9 +482,9 @@ export default function ProductForm({
       payload.batteryType = targetForm.hasBattery
         ? targetForm.batteryType || batteryTypes[0]?.id || "Unknown"
         : "Unknown";
-      payload.isCapacityLimited = !!targetForm.isCapcityLimited;
-      payload.maxCapacity = targetForm.isCapcityLimited
-        ? targetForm.maxCapcity
+      payload.isCapacityLimited = !!targetForm.isCapacityLimited;
+      payload.maxCapacity = targetForm.isCapacityLimited
+        ? targetForm.maxCapacity
         : null;
     } else if (type === "Powder") {
       payload.powderType =
@@ -552,9 +554,9 @@ export default function ProductForm({
         targetForm.caseMaterial || caseMaterials[0]?.id || "Unknown";
       payload.headStamp = targetForm.headStamp || "";
     } else if (type === "AmmoBox") {
-      payload.isCapacityLimited = !!targetForm.isCapcityLimited;
-      payload.maxCapacity = targetForm.isCapcityLimited
-        ? targetForm.maxCapcity
+      payload.isCapacityLimited = !!targetForm.isCapacityLimited;
+      payload.maxCapacity = targetForm.isCapacityLimited
+        ? targetForm.maxCapacity
         : null;
     }
 
@@ -672,11 +674,11 @@ export default function ProductForm({
           <label className="checkbox-container">
             <input
               type="checkbox"
-              checked={form.isCapcityLimited || false}
+              checked={form.isCapacityLimited || false}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  isCapcityLimited: e.target.checked,
+                  isCapacityLimited: e.target.checked,
                 })
               }
             />
@@ -684,17 +686,17 @@ export default function ProductForm({
             <span>{label}</span>
           </label>
 
-          {form.isCapcityLimited && (
+          {form.isCapacityLimited && (
             <div className="form-item">
-              <label>Minimum Magnification</label>
+              <label>Maximum Capcity</label>
               <input
                 type="number"
                 step="1"
-                value={form.maxCapcity}
+                value={form.maxCapacity}
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    maxCapcity: parseInt(e.target.value),
+                    maxCapacity: parseInt(e.target.value),
                   })
                 }
               />
