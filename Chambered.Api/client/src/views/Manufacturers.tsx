@@ -62,10 +62,7 @@ export default function Manufacturers() {
     error: mfgsError,
   } = useGetManufacturers();
 
-  const {
-    data: productsData,
-    isLoading: productsLoading,
-  } = useGetProducts({
+  const { data: productsData, isLoading: productsLoading } = useGetProducts({
     expand: "manufacturer",
   });
 
@@ -80,7 +77,8 @@ export default function Manufacturers() {
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
 
   // Search & Sorting popovers active states
-  const [showMfgSortPopover, setShowMfgSortPopover] = useState<boolean>(false);
+  const [showMfgFilterPopover, setShowMfgFilterPopover] =
+    useState<boolean>(false);
 
   // Base Data arrays
   const productsList = useMemo(
@@ -111,21 +109,56 @@ export default function Manufacturers() {
   }, [productsList, selectedMfg]);
 
   // References for clicks outside popovers
-  const mfgSortRef = useRef<HTMLDivElement | null>(null);
+  const mfgFilterRef = useRef<HTMLDivElement | null>(null);
 
-  // Manufacturers search/sort
+  // Manufacturers search/sort/filter state
   const [mfgSearchTerm, setMfgSearchTerm] = useState<string>("");
+  const [selectedCountryFilters, setSelectedCountryFilters] = useState<
+    string[]
+  >([]);
+  const [selectedStateFilters, setSelectedStateFilters] = useState<string[]>(
+    [],
+  );
   const [mfgSortKey, setMfgSortKey] = useState<string>("name");
-  const [mfgSortDirection, setMfgSortDirection] = useState<"asc" | "desc">("asc");
+  const [mfgSortDirection, setMfgSortDirection] = useState<"asc" | "desc">(
+    "asc",
+  );
+
+  const handleHeaderSort = (key: string) => {
+    if (mfgSortKey === key) {
+      setMfgSortDirection(mfgSortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setMfgSortKey(key);
+      setMfgSortDirection("asc");
+    }
+  };
+
+  const availableCountries = useMemo(() => {
+    const set = new Set<string>();
+    manufacturersList.forEach((m) => {
+      if (m.country && m.country.trim()) set.add(m.country.trim());
+    });
+    return Array.from(set).sort();
+  }, [manufacturersList]);
+
+  const availableStates = useMemo(() => {
+    const set = new Set<string>();
+    manufacturersList.forEach((m) => {
+      if (m.stateOrProvince && m.stateOrProvince.trim()) {
+        set.add(m.stateOrProvince.trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [manufacturersList]);
 
   // Handle outside clicks for popovers
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (
-        mfgSortRef.current &&
-        !mfgSortRef.current.contains(e.target as Node)
+        mfgFilterRef.current &&
+        !mfgFilterRef.current.contains(e.target as Node)
       ) {
-        setShowMfgSortPopover(false);
+        setShowMfgFilterPopover(false);
       }
     };
     document.addEventListener("click", handleOutsideClick);
@@ -141,9 +174,27 @@ export default function Manufacturers() {
       const search = mfgSearchTerm.toLowerCase();
       result = result.filter(
         (m) =>
-          m.name!.toLowerCase().includes(search) ||
+          (m.name && m.name.toLowerCase().includes(search)) ||
           (m.city && m.city.toLowerCase().includes(search)) ||
+          (m.stateOrProvince &&
+            m.stateOrProvince.toLowerCase().includes(search)) ||
           (m.country && m.country.toLowerCase().includes(search)),
+      );
+    }
+
+    // Country filter
+    if (selectedCountryFilters.length > 0) {
+      result = result.filter(
+        (m) => m.country && selectedCountryFilters.includes(m.country.trim()),
+      );
+    }
+
+    // State filter
+    if (selectedStateFilters.length > 0) {
+      result = result.filter(
+        (m) =>
+          m.stateOrProvince &&
+          selectedStateFilters.includes(m.stateOrProvince.trim()),
       );
     }
 
@@ -153,14 +204,17 @@ export default function Manufacturers() {
       let valB = "";
 
       if (mfgSortKey === "name") {
-        valA = a.name!.toLowerCase();
-        valB = b.name!.toLowerCase();
+        valA = (a.name || "").toLowerCase();
+        valB = (b.name || "").toLowerCase();
       } else if (mfgSortKey === "city") {
-        valA = (a.city || "").toLowerCase();
-        valB = (b.city || "").toLowerCase();
+        valA = (a.city || a.stateOrProvince || "").toLowerCase();
+        valB = (b.city || b.stateOrProvince || "").toLowerCase();
       } else if (mfgSortKey === "country") {
         valA = (a.country || "").toLowerCase();
         valB = (b.country || "").toLowerCase();
+      } else if (mfgSortKey === "phoneNumber") {
+        valA = (a.phoneNumber || "").toLowerCase();
+        valB = (b.phoneNumber || "").toLowerCase();
       }
 
       if (valA < valB) return mfgSortDirection === "asc" ? -1 : 1;
@@ -169,7 +223,14 @@ export default function Manufacturers() {
     });
 
     return result;
-  }, [manufacturersList, mfgSearchTerm, mfgSortKey, mfgSortDirection]);
+  }, [
+    manufacturersList,
+    mfgSearchTerm,
+    selectedCountryFilters,
+    selectedStateFilters,
+    mfgSortKey,
+    mfgSortDirection,
+  ]);
 
   // Automatically select first item if none is selected
   useEffect(() => {
@@ -257,6 +318,91 @@ export default function Manufacturers() {
               value={mfgSearchTerm}
               onChange={(e) => setMfgSearchTerm(e.target.value)}
             />
+
+            {/* ADVANCED FILTER BUTTON */}
+            <div className="popover-wrapper" ref={mfgFilterRef}>
+              <button
+                className={`control-popover-btn ${selectedCountryFilters.length > 0 || selectedStateFilters.length > 0 ? "active-filters" : ""}`}
+                onClick={() => setShowMfgFilterPopover(!showMfgFilterPopover)}
+              >
+                Filter
+                {selectedCountryFilters.length + selectedStateFilters.length >
+                  0 && (
+                  <span className="filter-badge">
+                    {selectedCountryFilters.length +
+                      selectedStateFilters.length}
+                  </span>
+                )}
+              </button>
+              {showMfgFilterPopover && (
+                <div className="abs-popover-panel filter-popover">
+                  {availableCountries.length > 0 && (
+                    <div className="popover-sec">
+                      <h5>Country</h5>
+                      <div className="options-grid scrollable-options">
+                        {availableCountries.map((country) => (
+                          <label key={country} className="popover-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={selectedCountryFilters.includes(country)}
+                              onChange={() => {
+                                setSelectedCountryFilters((prev) =>
+                                  prev.includes(country)
+                                    ? prev.filter((c) => c !== country)
+                                    : [...prev, country],
+                                );
+                              }}
+                            />
+                            <span>{country}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {availableStates.length > 0 && (
+                    <div className="popover-sec">
+                      <h5>State / Province</h5>
+                      <div className="options-grid scrollable-options">
+                        {availableStates.map((state) => (
+                          <label key={state} className="popover-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={selectedStateFilters.includes(state)}
+                              onChange={() => {
+                                setSelectedStateFilters((prev) =>
+                                  prev.includes(state)
+                                    ? prev.filter((s) => s !== state)
+                                    : [...prev, state],
+                                );
+                              }}
+                            />
+                            <span>{state}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="popover-actions">
+                    <button
+                      className="clear-btn"
+                      onClick={() => {
+                        setSelectedCountryFilters([]);
+                        setSelectedStateFilters([]);
+                        setMfgSearchTerm("");
+                      }}
+                    >
+                      Clear All
+                    </button>
+                    <button
+                      className="close-btn"
+                      onClick={() => setShowMfgFilterPopover(false)}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* VIEW SWITCHER & ADD BUTTONS */}
@@ -292,10 +438,38 @@ export default function Manufacturers() {
             <table className="app-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>City / State</th>
-                  <th>Country</th>
-                  <th>Contact Phone</th>
+                  <th
+                    onClick={() => handleHeaderSort("name")}
+                    style={{ cursor: "pointer", userSelect: "none" }}
+                  >
+                    Name{" "}
+                    {mfgSortKey === "name" &&
+                      (mfgSortDirection === "asc" ? " ▲" : " ▼")}
+                  </th>
+                  <th
+                    onClick={() => handleHeaderSort("city")}
+                    style={{ cursor: "pointer", userSelect: "none" }}
+                  >
+                    City / State{" "}
+                    {mfgSortKey === "city" &&
+                      (mfgSortDirection === "asc" ? " ▲" : " ▼")}
+                  </th>
+                  <th
+                    onClick={() => handleHeaderSort("country")}
+                    style={{ cursor: "pointer", userSelect: "none" }}
+                  >
+                    Country{" "}
+                    {mfgSortKey === "country" &&
+                      (mfgSortDirection === "asc" ? " ▲" : " ▼")}
+                  </th>
+                  <th
+                    onClick={() => handleHeaderSort("phoneNumber")}
+                    style={{ cursor: "pointer", userSelect: "none" }}
+                  >
+                    Contact Phone{" "}
+                    {mfgSortKey === "phoneNumber" &&
+                      (mfgSortDirection === "asc" ? " ▲" : " ▼")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -364,6 +538,16 @@ export default function Manufacturers() {
             </div>
           )}
         </div>
+
+        {/* TABLE FOOTER ROW */}
+        {mfgViewMode === "table" && manufacturersList.length > 0 && (
+          <div className="table-footer-row">
+            <div>
+              {processedManufacturers.length} of {manufacturersList.length}{" "}
+              manufacturers
+            </div>
+          </div>
+        )}
       </div>
 
       {/* RIGHT 1/3: DETAILS COLUMN WITH DUAL TILED MASTER-DETAIL VIEW */}

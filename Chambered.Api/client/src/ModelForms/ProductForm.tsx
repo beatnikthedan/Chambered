@@ -229,7 +229,6 @@ export default function ProductForm({
   const powderTypes = enums?.powderTypes || [];
   const primerSizes = enums?.primerSizes || [];
   const primerTypes = enums?.primerTypes || [];
-  const productDocumentTypes = enums?.productDocumentTypes || [];
   const projectileMaterials = enums?.projectileMaterials || [];
   const projectileProfiles = enums?.projectileProfiles || [];
   const suppressorAttachmentTypes = enums?.suppressorAttachmentTypes || [];

@@ -126,7 +126,6 @@ export default function Products() {
 
   // Search & Sorting popovers active states
   const [showFilterPopover, setShowFilterPopover] = useState<boolean>(false);
-  const [showSortPopover, setShowSortPopover] = useState<boolean>(false);
 
   // Base Data arrays
   const productsList = useMemo(
@@ -202,9 +201,6 @@ export default function Products() {
     const handleOutsideClick = (e: MouseEvent) => {
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
         setShowFilterPopover(false);
-      }
-      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
-        setShowSortPopover(false);
       }
     };
     document.addEventListener("click", handleOutsideClick);
@@ -452,14 +448,7 @@ export default function Products() {
                   <div className="popover-sec">
                     <h5>Product Types</h5>
                     <div className="options-grid">
-                      {[
-                        "PewPew",
-                        "Optic",
-                        "Suppressor",
-                        "PewPewLight",
-                        "Security",
-                        "Product",
-                      ].map((type) => (
+                      {productTypes.map((type: string) => (
                         <label key={type} className="popover-checkbox">
                           <input
                             type="checkbox"

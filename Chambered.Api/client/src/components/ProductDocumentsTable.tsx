@@ -15,15 +15,18 @@ interface ProductDocumentsTableProps {
   readOnly?: boolean;
 }
 
-export default function ProductDocumentsTable({ productId, readOnly = false }: ProductDocumentsTableProps) {
+export default function ProductDocumentsTable({
+  productId,
+  readOnly = false,
+}: ProductDocumentsTableProps) {
   const queryClient = useQueryClient();
   const store = useStore();
   const { enums } = store || {};
-  const documentTypes = enums?.documentTypes || [];
+  const documentTypes = enums?.productDocumentTypes || [];
 
   const getDocumentTypeLabel = (typeVal: string | number) => {
     const option = documentTypes.find(
-      (opt) => opt.id === String(typeVal) || opt.name === String(typeVal)
+      (opt) => opt.id === String(typeVal) || opt.name === String(typeVal),
     );
     return option ? option.label : String(typeVal);
   };
@@ -86,7 +89,9 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
       },
     });
 
-  const handleUploadFileImmediate = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadFileImmediate = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       uploadDoc({
@@ -100,16 +105,23 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
   };
 
   const handleDelete = (docId: number, fileName: string) => {
-    if (window.confirm(`Are you sure you want to permanently delete document "${fileName}"?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to permanently delete document "${fileName}"?`,
+      )
+    ) {
       deleteDoc({ key: docId });
     }
   };
 
   const handleDownload = async (docId: number, fileName: string) => {
     try {
-      const response = await fetch(`/api/v1/ProductDocuments(${docId})/Download`, {
-        method: "GET",
-      });
+      const response = await fetch(
+        `/api/v1/ProductDocuments(${docId})/Download`,
+        {
+          method: "GET",
+        },
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -129,9 +141,12 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
 
   const handleDownloadAll = async () => {
     try {
-      const response = await fetch(`/api/v1/ProductDocuments/DownloadAll(parentId=${productId})`, {
-        method: "GET",
-      });
+      const response = await fetch(
+        `/api/v1/ProductDocuments/DownloadAll(parentId=${productId})`,
+        {
+          method: "GET",
+        },
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -162,7 +177,16 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-primary)" }}>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "1.1rem",
+              fontWeight: "bold",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: "var(--text-primary)",
+            }}
+          >
             Product Attachments
           </h3>
         </div>
@@ -241,24 +265,50 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
 
       {/* TABLE & STATES VIEW */}
       {isQueryLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "20px" }}>
-          <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>Loading documents...</span>
+        <div
+          style={{ display: "flex", justifyContent: "center", padding: "20px" }}
+        >
+          <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+            Loading documents...
+          </span>
         </div>
       ) : isQueryError ? (
-        <div style={{ padding: "16px", backgroundColor: "rgba(255, 82, 82, 0.05)", border: "1px solid #ff5252", borderRadius: "var(--radius-md)" }}>
+        <div
+          style={{
+            padding: "16px",
+            backgroundColor: "rgba(255, 82, 82, 0.05)",
+            border: "1px solid #ff5252",
+            borderRadius: "var(--radius-md)",
+          }}
+        >
           <p style={{ margin: 0, color: "#ff5252", fontSize: "13px" }}>
-            ⚠️ Failed to retrieve attachments: {(queryError as any)?.message || "OData Database Query Error"}
+            ⚠️ Failed to retrieve attachments:{" "}
+            {(queryError as any)?.message || "OData Database Query Error"}
           </p>
         </div>
       ) : documents.length === 0 ? (
-        <div style={{ padding: "24px", textAlign: "center", backgroundColor: "rgba(255, 255, 255, 0.01)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)" }}>
-          <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "13px" }}>
-            No documents or pictures are currently attached to this catalog product.
+        <div
+          style={{
+            padding: "24px",
+            textAlign: "center",
+            backgroundColor: "rgba(255, 255, 255, 0.01)",
+            border: "1px solid var(--border-color)",
+            borderRadius: "var(--radius-md)",
+          }}
+        >
+          <p
+            style={{ margin: 0, color: "var(--text-muted)", fontSize: "13px" }}
+          >
+            No documents or pictures are currently attached to this catalog
+            product.
           </p>
         </div>
       ) : (
         <div className="table-container">
-          <table className="app-table" style={{ width: "100%", tableLayout: "fixed" }}>
+          <table
+            className="app-table"
+            style={{ width: "100%", tableLayout: "fixed" }}
+          >
             <thead>
               <tr>
                 <th style={{ width: "35%" }}>Document File</th>
@@ -272,13 +322,37 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
             <tbody>
               {documents.map((d: any) => (
                 <tr key={d.id}>
-                  <td className="text-bold text-mono" style={{ wordBreak: "break-all", width: "35%", verticalAlign: "middle" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <td
+                    className="text-bold text-mono"
+                    style={{
+                      wordBreak: "break-all",
+                      width: "35%",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                      }}
+                    >
                       {(() => {
                         const typeStr = String(d.type || "").toLowerCase();
-                        if (typeStr === "productimage" || typeStr === "6" || typeStr === "5") return true;
-                        const opt = documentTypes.find(o => o.id === typeStr || o.name?.toLowerCase() === typeStr);
-                        return opt ? opt.name?.toLowerCase() === "productimage" : false;
+                        if (
+                          typeStr === "productimage" ||
+                          typeStr === "6" ||
+                          typeStr === "5"
+                        )
+                          return true;
+                        const opt = documentTypes.find(
+                          (o) =>
+                            o.id === typeStr ||
+                            o.name?.toLowerCase() === typeStr,
+                        );
+                        return opt
+                          ? opt.name?.toLowerCase() === "productimage"
+                          : false;
                       })() ? (
                         <SecureImage
                           src={`/api/v1/ProductDocuments/${d.id}/Download`}
@@ -293,19 +367,41 @@ export default function ProductDocumentsTable({ productId, readOnly = false }: P
                           }}
                         />
                       ) : (
-                        <span style={{ fontSize: "16px", minWidth: "32px", textAlign: "center", display: "inline-block" }}>📄</span>
+                        <span
+                          style={{
+                            fontSize: "16px",
+                            minWidth: "32px",
+                            textAlign: "center",
+                            display: "inline-block",
+                          }}
+                        >
+                          📄
+                        </span>
                       )}
                       <span>{d.fileName}</span>
                     </div>
                   </td>
                   <td style={{ width: "18%" }}>
-                    <span className="type-badge-pill" style={{ fontSize: "10px", padding: "2px 8px" }}>
+                    <span
+                      className="type-badge-pill"
+                      style={{ fontSize: "10px", padding: "2px 8px" }}
+                    >
                       {getDocumentTypeLabel(d.type)}
                     </span>
                   </td>
-                  <td style={{ width: "12%" }}>{formatBytes(d.fileSizeBytes)}</td>
-                  <td style={{ fontSize: "12px", color: "var(--text-muted)", width: "15%" }}>
-                    {d.uploadedAt ? new Date(d.uploadedAt).toLocaleDateString() : "N/A"}
+                  <td style={{ width: "12%" }}>
+                    {formatBytes(d.fileSizeBytes)}
+                  </td>
+                  <td
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--text-muted)",
+                      width: "15%",
+                    }}
+                  >
+                    {d.uploadedAt
+                      ? new Date(d.uploadedAt).toLocaleDateString()
+                      : "N/A"}
                   </td>
                   <td style={{ width: "12%", textAlign: "center" }}>
                     <input
