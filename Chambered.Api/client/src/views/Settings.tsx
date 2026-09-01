@@ -53,7 +53,7 @@ export default function Settings() {
 
           <ul className="menu-list">
             <li
-              className={`menu-item ${activeView === "email" ? "ative" : ""}`}
+              className={`menu-item ${activeView === "email" ? "active" : ""}`}
               onClick={() => setActiveView("email")}
             >
               <span>Email</span>
