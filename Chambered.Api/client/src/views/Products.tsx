@@ -981,7 +981,7 @@ export default function Products() {
           productId={isEditMode ? selectedProduct?.id || null : null}
           onSaved={(savedProduct) => {
             setSelectedProduct(savedProduct);
-            setShowModal(false);
+            //setShowModal(false);
           }}
         />
       )}

@@ -1,16 +1,60 @@
 import React, { useState } from "react";
+import {
+  useGetSettingsAppriseSettings,
+  usePostSettingsSendTestNotification,
+} from "../api/endpoints";
 
-import { useGetSettingsAppriseSettings } from "../api/endpoints";
+export interface TestNotificationRequestDto {
+  title?: string | null;
+  body?: string | null;
+  type?: string | null;
+  tags?: string[] | null;
+}
 
-export default function appriseSettings() {
+export default function AppriseSettings() {
+  const [notificationStatus, setNotificationStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+
   const {
     data: appriseData,
     isLoading: appriseLoading,
     error: appriseError,
-    refetch: refetchProfile,
   } = useGetSettingsAppriseSettings();
 
+  const {
+    mutate: sendTestNotification,
+    isPending: isTestPending,
+    reset: resetMutation,
+  } = usePostSettingsSendTestNotification();
+
   const appriseSettings = appriseData?.data;
+
+  const handleSendTestNotification = () => {
+    setNotificationStatus("idle");
+    resetMutation();
+
+    sendTestNotification(
+      {
+        data: {
+          title: "Test Notification",
+          body: "This is a test notification from your Apprise Settings UI.",
+          type: "info",
+          tags: [],
+        },
+      },
+      {
+        onSuccess: () => {
+          setNotificationStatus("success");
+          setTimeout(() => setNotificationStatus("idle"), 4000);
+        },
+        onError: () => {
+          setNotificationStatus("error");
+          setTimeout(() => setNotificationStatus("idle"), 5000);
+        },
+      },
+    );
+  };
 
   return (
     <section className="settings-sec">
@@ -18,7 +62,7 @@ export default function appriseSettings() {
         <h3 className="sec-title">Apprise Integration</h3>
       </div>
       <p className="sec-subtitle">
-        Settings for connecting Apprise compatable services for notifications.
+        Settings for connecting Apprise compatible services for notifications.
         (these settings are readonly).
       </p>
 
@@ -41,8 +85,6 @@ export default function appriseSettings() {
         </div>
       ) : (
         <div className="policy-card">
-          {/* <div className="policy-card-title">Email Configuration Settings</div> */}
-
           <div className="policy-row">
             <div className="policy-info">
               <span className="policy-label">Host</span>
@@ -123,6 +165,45 @@ export default function appriseSettings() {
               />
               <span className="slider"></span>
             </label>
+          </div>
+
+          <div
+            style={{
+              marginTop: "16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <button
+              className="btn btn-primary"
+              onClick={handleSendTestNotification}
+              disabled={isTestPending}
+            >
+              {isTestPending ? "Sending..." : "Test"}
+            </button>
+
+            {notificationStatus === "error" && (
+              <span
+                style={{
+                  color: "var(--color-error, #d32f2f)",
+                  fontSize: "14px",
+                }}
+              >
+                ✕ Failed to send notification. Check server logs.
+              </span>
+            )}
+
+            {notificationStatus === "success" && (
+              <span
+                style={{
+                  color: "var(--color-success, #2e7d32)",
+                  fontSize: "14px",
+                }}
+              >
+                ✓ Test notification sent!
+              </span>
+            )}
           </div>
         </div>
       )}

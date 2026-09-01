@@ -175,6 +175,7 @@ import type {
   RoleResponseDto,
   Security,
   StringODataValue,
+  TestNotificationRequestDto,
   UpdateUserRequestDto,
   UserResponseDto,
   Vault
@@ -16091,6 +16092,103 @@ export const usePostRolesUpdateRoleClaimsFromRoleName = <TError = ProblemDetails
       return useMutation(getPostRolesUpdateRoleClaimsFromRoleNameMutationOptions(options), queryClient);
     }
 
+export type postSettingsSendTestNotificationResponse200 = {
+  data: void
+  status: 200
+}
+
+export type postSettingsSendTestNotificationResponse500 = {
+  data: void
+  status: 500
+}
+
+export type postSettingsSendTestNotificationResponseSuccess = (postSettingsSendTestNotificationResponse200) & {
+  headers: Headers;
+};
+export type postSettingsSendTestNotificationResponseError = (postSettingsSendTestNotificationResponse500) & {
+  headers: Headers;
+};
+
+export type postSettingsSendTestNotificationResponse = (postSettingsSendTestNotificationResponseSuccess | postSettingsSendTestNotificationResponseError)
+
+export const getPostSettingsSendTestNotificationUrl = () => {
+
+
+
+
+  return `/api/v1/settings/test-notification`
+}
+
+/**
+ * @summary Sends a test notification to the configured Apprise instance.
+ */
+export const postSettingsSendTestNotification = async (testNotificationRequestDto?: TestNotificationRequestDto, options?: RequestInit): Promise<postSettingsSendTestNotificationResponse> => {
+
+  const res = await fetch(getPostSettingsSendTestNotificationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json;odata.metadata=minimal;odata.streaming=true', ...options?.headers },
+    body: JSON.stringify(testNotificationRequestDto)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: postSettingsSendTestNotificationResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as postSettingsSendTestNotificationResponse
+}
+
+
+
+
+
+export const getPostSettingsSendTestNotificationMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postSettingsSendTestNotification>>, TError,{data?: TestNotificationRequestDto}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof postSettingsSendTestNotification>>, TError,{data?: TestNotificationRequestDto}, TContext> => {
+
+const mutationKey = ['postSettingsSendTestNotification'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postSettingsSendTestNotification>>, {data?: TestNotificationRequestDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postSettingsSendTestNotification(data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostSettingsSendTestNotificationMutationResult = NonNullable<Awaited<ReturnType<typeof postSettingsSendTestNotification>>>
+    export type PostSettingsSendTestNotificationMutationBody = TestNotificationRequestDto | undefined
+    export type PostSettingsSendTestNotificationMutationError = void
+
+    /**
+ * @summary Sends a test notification to the configured Apprise instance.
+ */
+export const usePostSettingsSendTestNotification = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postSettingsSendTestNotification>>, TError,{data?: TestNotificationRequestDto}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postSettingsSendTestNotification>>,
+        TError,
+        {data?: TestNotificationRequestDto},
+        TContext
+      > => {
+      return useMutation(getPostSettingsSendTestNotificationMutationOptions(options), queryClient);
+    }
+
 export type getSettingsPasswordPolicyResponse200 = {
   data: PasswordPolicyResponseDto
   status: 200
@@ -21125,6 +21223,16 @@ export const getPostRolesUpdateRoleClaimsFromRoleNameMockHandler = (overrideResp
   }, options)
 }
 
+export const getPostSettingsSendTestNotificationMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/settings/test-notification', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
 export const getGetSettingsPasswordPolicyMockHandler = (overrideResponse?: PasswordPolicyResponseDto | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PasswordPolicyResponseDto> | PasswordPolicyResponseDto), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/settings/password-policy', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
@@ -21571,6 +21679,7 @@ export const getChamberedAPIMock = () => [
   getDeleteRolesRoleFromRoleNameMockHandler(),
   getGetRolesRoleClaimsFromRoleNameMockHandler(),
   getPostRolesUpdateRoleClaimsFromRoleNameMockHandler(),
+  getPostSettingsSendTestNotificationMockHandler(),
   getGetSettingsPasswordPolicyMockHandler(),
   getGetSettingsAppriseSettingsMockHandler(),
   getGetSettingsLoginSettingsMockHandler(),

@@ -1,15 +1,18 @@
 using Asp.Versioning;
+using Chambered.Core.Services;
 using Chambered.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Chambered.Core.Services.Models;
 
 namespace Chambered.Api.Controllers.Settings
 {
     /// <summary>
     /// Provides access to general application settings, including password policies and notification configurations.
     /// </summary>
+    /// <param name="appriseService"></param>
     /// <param name="identityOptions">The security identity password options.</param>
     /// <param name="appriseConfiguration">The Apprise notifications configuration options.</param>
     /// <param name="loginConfiguration"></param>
@@ -19,15 +22,46 @@ namespace Chambered.Api.Controllers.Settings
     [Route("api/v{version:apiVersion}/settings")]
     [Authorize]
     public class SettingsController(
+        IAppriseService appriseService,
         IOptions<IdentityOptions> identityOptions,
         IOptions<AppriseConfiguration> appriseConfiguration,
         IOptions<LoginConfiguration> loginConfiguration,
         IOptions<EmailConfiguration> emailConfiguration) : ControllerBase
     {
+        private readonly IAppriseService _appriseService = appriseService;
+        
         private readonly IOptions<IdentityOptions> _identityOptions = identityOptions;
         private readonly IOptions<AppriseConfiguration> _appriseConfiguration = appriseConfiguration;
         private readonly IOptions<LoginConfiguration> _loginConfiguration = loginConfiguration;
         private readonly IOptions<EmailConfiguration> _emailConfiguration = emailConfiguration;
+
+    /// <summary>
+    /// Sends a test notification to the configured Apprise instance.
+    /// </summary>
+    [HttpPost("test-notification")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> SendTestNotification(
+    [FromBody] TestNotificationRequestDto request,
+    CancellationToken cancellationToken)
+    {
+    var message = new AppriseNotificationMessage
+    {
+        Title = string.IsNullOrWhiteSpace(request.Title) ? "Test Notification" : request.Title,
+        Body = string.IsNullOrWhiteSpace(request.Body) ? "This is a test notification from your .NET Service!" : request.Body,
+        Type = string.IsNullOrWhiteSpace(request.Type) ? "info" : request.Type,
+        Tags = request.Tags ?? Array.Empty<string>()
+    };
+
+    var success = await _appriseService.SendNotificationAsync(message, cancellationToken);
+
+    if (!success)
+    {
+        return StatusCode(500, new { Message = "Failed to send notification via Apprise." });
+    }
+
+    return Ok(new { Message = "Test notification sent successfully." });
+    }
 
         /// <summary>
         /// Retrieves the active password complexity policy settings.
@@ -114,6 +148,13 @@ namespace Chambered.Api.Controllers.Settings
             return Ok(response);
         }
     }
+
+    public record TestNotificationRequestDto(
+    string? Title,
+    string? Body,
+    string? Type,
+    string[]? Tags
+);
 
     /// <summary>
     /// Data transfer object defining password complexity criteria.

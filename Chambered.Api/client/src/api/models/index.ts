@@ -400,6 +400,7 @@ export * from './settingsCreateUserPOSTParams';
 export * from './settingsDeleteUserDELETEParams';
 export * from './settingsGetUsersGETParams';
 export * from './stringODataValue';
+export * from './testNotificationRequestDto';
 export * from './updateUserRequest';
 export * from './updateUserRequestDto';
 export * from './userResponseDto';

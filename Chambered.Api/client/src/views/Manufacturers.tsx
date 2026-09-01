@@ -2,12 +2,10 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStore } from "../StoreContext";
 import "./Manufacturers.css";
-import SubmitButton from "../components/SubmitButton";
+import ManufacturerForm from "../ModelForms/ManufacturerForm";
 
 import {
   useGetManufacturers,
-  usePostManufacturers,
-  usePutManufacturersFromKey,
   useDeleteManufacturersFromKey,
   useGetManufacturersFaviconFromKey,
   useGetProducts,
@@ -22,17 +20,37 @@ interface ExtendedProduct extends Omit<Product, "productType"> {
   [key: string]: any;
 }
 
-interface MfgForm {
-  id: number;
-  name: string;
-  webPageUrl: string;
-  phoneNumber: string;
-  streetAddress: string;
-  city: string;
-  stateOrProvince: string;
-  postalCode: string;
-  country: string;
-}
+const ManufacturerFavicon = ({ mfgId }: { mfgId?: number }) => {
+  const { data, isLoading, isError } = useGetManufacturersFaviconFromKey(
+    mfgId || 0,
+    undefined,
+    {
+      query: {
+        retry: false,
+        staleTime: 24 * 60 * 60 * 1000,
+        enabled: !!mfgId,
+      },
+    },
+  );
+
+  if (isLoading) {
+    return <span className="mfg-favicon-placeholder loading" />;
+  }
+
+  if (isError || !data?.data?.base64Data) {
+    return <span className="mfg-favicon-placeholder text-icon">🏢</span>;
+  }
+
+  const { base64Data, contentType } = data.data;
+
+  return (
+    <img
+      src={`data:${contentType};base64,${base64Data}`}
+      alt="Logo"
+      className="mfg-favicon-img"
+    />
+  );
+};
 
 export default function Manufacturers() {
   const queryClient = useQueryClient();
@@ -60,8 +78,6 @@ export default function Manufacturers() {
   // Interaction State (Modal overlays replace inline isEditing)
   const [showMfgModal, setShowMfgModal] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
   // Search & Sorting popovers active states
   const [showMfgSortPopover, setShowMfgSortPopover] = useState<boolean>(false);
@@ -101,38 +117,6 @@ export default function Manufacturers() {
   const [mfgSearchTerm, setMfgSearchTerm] = useState<string>("");
   const [mfgSortKey, setMfgSortKey] = useState<string>("name");
   const [mfgSortDirection, setMfgSortDirection] = useState<"asc" | "desc">("asc");
-
-  const ManufacturerFavicon = ({ mfgId }: { mfgId?: number }) => {
-    const { data, isLoading, isError } = useGetManufacturersFaviconFromKey(
-      mfgId || 0,
-      undefined,
-      {
-        query: {
-          retry: false,
-          staleTime: 24 * 60 * 60 * 1000,
-          enabled: !!mfgId,
-        },
-      },
-    );
-
-    if (isLoading) {
-      return <span className="mfg-favicon-placeholder loading" />;
-    }
-
-    if (isError || !data?.data?.base64Data) {
-      return <span className="mfg-favicon-placeholder text-icon">🏢</span>;
-    }
-
-    const { base64Data, contentType } = data.data;
-
-    return (
-      <img
-        src={`data:${contentType};base64,${base64Data}`}
-        alt="Logo"
-        className="mfg-favicon-img"
-      />
-    );
-  };
 
   // Handle outside clicks for popovers
   useEffect(() => {
@@ -210,60 +194,6 @@ export default function Manufacturers() {
     }
   }, [processedManufacturers, selectedMfg]);
 
-  const [mfgForm, setMfgForm] = useState<MfgForm>({
-    id: 0,
-    name: "",
-    webPageUrl: "",
-    phoneNumber: "",
-    streetAddress: "",
-    city: "",
-    stateOrProvince: "",
-    postalCode: "",
-    country: "",
-  });
-
-  const createMfgMutation = usePostManufacturers({
-    mutation: {
-      onSuccess: (res) => {
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/Manufacturers"] });
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-        setIsSaving(false);
-        if (res?.data) {
-          const newMfg = res.data;
-          setSelectedMfg(newMfg);
-          setMfgForm((prev) => ({
-            ...prev,
-            id: newMfg.id,
-          }));
-        }
-      },
-      onError: (err: any) => {
-        alert(
-          "Failed to create manufacturer: " + (err?.message || "Unknown error"),
-        );
-        setIsSaving(false);
-      },
-    },
-  });
-
-  const updateMfgMutation = usePutManufacturersFromKey({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/Manufacturers"] });
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-        setIsSaving(false);
-      },
-      onError: (err: any) => {
-        alert(
-          "Failed to save manufacturer: " + (err?.message || "Unknown error"),
-        );
-        setIsSaving(false);
-      },
-    },
-  });
-
   const deleteMfgMutation = useDeleteManufacturersFromKey({
     mutation: {
       onSuccess: () => {
@@ -280,17 +210,6 @@ export default function Manufacturers() {
   // Switch right panel to editing mode with a blank manufacturer
   const startAddMfg = () => {
     setIsEditMode(false);
-    setMfgForm({
-      id: 0,
-      name: "",
-      webPageUrl: "",
-      phoneNumber: "",
-      streetAddress: "",
-      city: "",
-      stateOrProvince: "",
-      postalCode: "",
-      country: "",
-    });
     setShowMfgModal(true);
   };
 
@@ -298,48 +217,7 @@ export default function Manufacturers() {
   const startEditMfg = () => {
     if (!selectedMfg) return;
     setIsEditMode(true);
-    setMfgForm({
-      id: selectedMfg.id || 0,
-      name: selectedMfg.name || "",
-      webPageUrl: selectedMfg.webPageUrl || "",
-      phoneNumber: selectedMfg.phoneNumber || "",
-      streetAddress: selectedMfg.streetAddress || "",
-      city: selectedMfg.city || "",
-      stateOrProvince: selectedMfg.stateOrProvince || "",
-      postalCode: selectedMfg.postalCode || "",
-      country: selectedMfg.country || "",
-    });
     setShowMfgModal(true);
-  };
-
-  const handleSaveMfg = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!mfgForm.name.trim()) return;
-
-    setIsSaving(true);
-    const payload = {
-      id: mfgForm.id || 0,
-      name: mfgForm.name || "",
-      webPageUrl: mfgForm.webPageUrl || null,
-      phoneNumber: mfgForm.phoneNumber || null,
-      streetAddress: mfgForm.streetAddress || null,
-      city: mfgForm.city || null,
-      stateOrProvince: mfgForm.stateOrProvince || null,
-      postalCode: mfgForm.postalCode || null,
-      country: mfgForm.country || null,
-    };
-
-    try {
-      if (mfgForm.id > 0) {
-        await updateMfgMutation.mutateAsync({ key: mfgForm.id, data: payload });
-        setSelectedMfg(payload);
-      } else {
-        await createMfgMutation.mutateAsync({ data: payload });
-      }
-    } catch (err) {
-      console.error(err);
-      setIsSaving(false);
-    }
   };
 
   const handleDeleteMfg = () => {
@@ -522,11 +400,6 @@ export default function Manufacturers() {
               </div>
 
               <div className="detail-view-body">
-                {saveSuccess && (
-                  <div className="detail-save-toast">
-                    ✓ Manufacturer updated successfully
-                  </div>
-                )}
                 <div
                   style={{
                     display: "flex",
@@ -655,175 +528,15 @@ export default function Manufacturers() {
       </div>
 
       {/* Manufacturer Modal */}
-      {showMfgModal && (
-        <div className="modal-overlay" onClick={() => setShowMfgModal(false)}>
-          <div
-            className="armory-center-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-title-bar">
-              <div className="title-left">
-                <span className="modal-title-icon">🏢</span>
-                <h3>
-                  {isEditMode
-                    ? "Modify Manufacturer Record"
-                    : "Add New Corporate Record"}
-                </h3>
-              </div>
-              <button
-                className="modal-close-x-btn"
-                onClick={() => setShowMfgModal(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <form
-              onSubmit={handleSaveMfg}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-                overflow: "hidden",
-                margin: 0,
-              }}
-            >
-              <div
-                className="modal-tabs-body-content"
-                style={{ padding: "20px" }}
-              >
-                <div className="form-grid">
-                  <div className="form-item full-row">
-                    <label>Official Corporate Name</label>
-                    <input
-                      type="text"
-                      value={mfgForm.name || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, name: e.target.value })
-                      }
-                      placeholder="e.g. Glock Ges.m.b.H."
-                      required
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Company Website URL</label>
-                    <input
-                      type="url"
-                      value={mfgForm.webPageUrl || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, webPageUrl: e.target.value })
-                      }
-                      placeholder="https://glock.com"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Support Phone Number</label>
-                    <input
-                      type="tel"
-                      value={mfgForm.phoneNumber || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, phoneNumber: e.target.value })
-                      }
-                      placeholder="e.g. +1 770-432-1202"
-                    />
-                  </div>
-
-                  <div className="form-item full-row">
-                    <label>Street Address</label>
-                    <input
-                      type="text"
-                      value={mfgForm.streetAddress || ""}
-                      onChange={(e) =>
-                        setMfgForm({
-                          ...mfgForm,
-                          streetAddress: e.target.value,
-                        })
-                      }
-                      placeholder="e.g. 6000 Highlands Parkway"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>City</label>
-                    <input
-                      type="text"
-                      value={mfgForm.city || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, city: e.target.value })
-                      }
-                      placeholder="e.g. Smyrna"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>State / Province</label>
-                    <input
-                      type="text"
-                      value={mfgForm.stateOrProvince || ""}
-                      onChange={(e) =>
-                        setMfgForm({
-                          ...mfgForm,
-                          stateOrProvince: e.target.value,
-                        })
-                      }
-                      placeholder="e.g. GA"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Postal / ZIP Code</label>
-                    <input
-                      type="text"
-                      value={mfgForm.postalCode || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, postalCode: e.target.value })
-                      }
-                      placeholder="e.g. 30082"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Country of Origin</label>
-                    <input
-                      type="text"
-                      value={mfgForm.country || ""}
-                      onChange={(e) =>
-                        setMfgForm({ ...mfgForm, country: e.target.value })
-                      }
-                      placeholder="e.g. United States"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer Controls */}
-              <div
-                className="modal-footer-row-container"
-                style={{
-                  borderTop: "1px solid rgba(255,255,255,0.1)",
-                  padding: "16px 20px",
-                }}
-              >
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowMfgModal(false)}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </button>
-                <SubmitButton
-                  isSaving={isSaving}
-                  saveSuccess={saveSuccess}
-                  isEditMode={isEditMode}
-                />
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ManufacturerForm
+        isOpen={showMfgModal}
+        onClose={() => setShowMfgModal(false)}
+        currentId={isEditMode && selectedMfg ? selectedMfg.id : null}
+        onSaved={(saved) => {
+          setSelectedMfg(saved);
+          setShowMfgModal(false);
+        }}
+      />
     </div>
   );
 }

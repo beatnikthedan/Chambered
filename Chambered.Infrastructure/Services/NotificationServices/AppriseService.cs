@@ -29,8 +29,7 @@ namespace Chambered.Infrastructure.Services.NotificationServices
             IHttpClientFactory httpClientFactory,
             ILogger<AppriseService> logger)
         {
-            _options = options?.Get(GetType().Name) ?? options?.Value
-                       ?? throw new ArgumentNullException(nameof(options));
+            _options = _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             _logger = logger;
         }
