@@ -337,9 +337,11 @@
 
 /* MASTER LIST SCROLLER */
 .master-list-scroller {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .bold-name-cell {
@@ -348,10 +350,15 @@
 }
 
 /* MASTER CARD LAYOUT GRID */
-.split-view-cards-grid {
+.split-view-cards-grid,
+.cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
 }
 
 .catalog-list-card {

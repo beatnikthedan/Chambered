@@ -1,10 +1,17 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useStore } from "../StoreContext";
 import { useQueryClient } from "@tanstack/react-query";
 import "./Products.css";
 import SubmitButton from "../components/SubmitButton";
 import ProductCard from "../Cards/ProductCard";
+import ProductDetails, { ExtendedProduct } from "../Details/ProductDetails";
 import ProductForm from "../ModelForms/ProductForm";
+import MasterActionBar from "../components/common/MasterActionBar";
+import SortableTable, { ColumnDef } from "../components/common/SortableTable";
+import {
+  useMasterView,
+  FilterGroupConfig,
+} from "../components/common/useMasterView";
 
 import {
   useGetProducts,
@@ -17,82 +24,11 @@ import {
 import type { Product } from "../api/models/product";
 import type { Manufacturer } from "../api/models/manufacturer";
 import type { Caliber } from "../api/models/caliber";
-import SecureImage, { useSecureImage } from "../components/SecureImage";
-
-interface ExtendedProduct extends Omit<Product, "productType"> {
-  productType: string;
-  manufacturerName: string;
-  caliberName: string;
-  [key: string]: any;
-}
-
-const extractSpecifications = (product: any): Record<string, any> => {
-  if (!product) return {};
-  const staticKeys = new Set([
-    "id",
-    "name",
-    "partNumber",
-    "sku",
-    "manufacturerId",
-    "description",
-    "webPageUrl",
-    "productType",
-    "created",
-    "modified",
-    "createdBy",
-    "modifiedBy",
-    "manufacturer",
-    "productDocuments",
-    "armoryItems",
-    "coverImageId",
-    "coverImage",
-    "caliberId",
-    "pewPewCategory",
-    "actionType",
-    "isNfaItem",
-    "caliber",
-    "minMagnification",
-    "maxMagnification",
-    "objectiveDiameterMm",
-    "opticType",
-    "reticle",
-    "adjustmentUnits",
-    "tubeDiameter",
-    "isIlluminated",
-    "hasBattery",
-    "batteryType",
-    "threadPitch",
-    "attachmentType",
-    "material",
-    "soundReductionDb",
-    "isFullAutoRated",
-    "isUserServiceable",
-    "lumens",
-    "candela",
-    "mountType",
-    "laserColor",
-    "hasRemoteSwitchPort",
-    "isInfraredCapable",
-    "lockType",
-    "manufacturerName",
-    "caliberName",
-    "@odata.type",
-    "@odata.context",
-  ]);
-
-  const specs: Record<string, any> = {};
-  Object.keys(product).forEach((key) => {
-    if (!staticKeys.has(key)) {
-      specs[key] = product[key];
-    }
-  });
-  return specs;
-};
+import SecureImage from "../components/SecureImage";
 
 export default function Products() {
   const queryClient = useQueryClient();
   const store = useStore();
-  const { enums } = store || {};
 
   const { data: productTypesData } = useGetProductsProductTypes();
   const productTypes = useMemo(() => {
@@ -117,15 +53,9 @@ export default function Products() {
   const [selectedProduct, setSelectedProduct] =
     useState<ExtendedProduct | null>(null);
 
-  // Layout View Modes ("table" or "card")
-  const [viewMode, setViewMode] = useState<"table" | "card">("table");
-
-  // Interaction State (Modal overlays replace inline isEditing)
+  // Interaction State
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
-
-  // Search & Sorting popovers active states
-  const [showFilterPopover, setShowFilterPopover] = useState<boolean>(false);
 
   // Base Data arrays
   const productsList = useMemo(
@@ -141,17 +71,6 @@ export default function Products() {
     [calibersData],
   );
 
-  // References for clicks outside popovers
-  const filterRef = useRef<HTMLDivElement | null>(null);
-  const sortRef = useRef<HTMLDivElement | null>(null);
-
-  // Search, Sorters & Filters state
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [selectedTypeFilters, setSelectedTypeFilters] = useState<string[]>([]);
-  const [selectedMfgFilters, setSelectedMfgFilters] = useState<number[]>([]);
-  const [sortKey, setSortKey] = useState<string>("name");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
   // Quick Add state
   const [quickAddType, setQuickAddType] = useState<string>("Product");
   const [quickAddMfgId, setQuickAddMfgId] = useState<string>("");
@@ -160,62 +79,9 @@ export default function Products() {
   const [isQuickSaving, setIsQuickSaving] = useState<boolean>(false);
   const [quickSaveSuccess, setQuickSaveSuccess] = useState<boolean>(false);
 
-  const handleHeaderSort = (key: string) => {
-    if (sortKey === key) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDirection("asc");
-    }
-  };
-
-  // Mutation for Quick Add
-  const createProductMutation = usePostProducts({
-    mutation: {
-      onSuccess: (res) => {
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
-        if (res?.data) {
-          const newProd = res.data as any;
-          setSelectedProduct(newProd);
-        }
-      },
-      onError: (err: any) => {
-        alert("Failed to create product: " + (err?.message || "Unknown error"));
-      },
-    },
-  });
-
-  const deleteProductMutation = useDeleteProductsFromKey({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
-        setSelectedProduct(null);
-      },
-      onError: (err: any) =>
-        alert("Failed to delete product: " + (err?.message || "Unknown error")),
-    },
-  });
-
-  // Handle outside clicks for popovers
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
-        setShowFilterPopover(false);
-      }
-    };
-    document.addEventListener("click", handleOutsideClick);
-    return () => document.removeEventListener("click", handleOutsideClick);
-  }, []);
-
-  // Process and sort products list
-  const processedProducts = useMemo(() => {
-    let result = productsList.map((p) => {
-      const manufacturer =
-        p.manufacturer ||
-        manufacturersList.find((m) => m.id === p.manufacturerId);
-      const caliber =
-        p.caliber || calibersList.find((c) => c.id === p.caliberId);
-
+  // Process raw products with manufacturer and caliber names
+  const rawProcessedProducts = useMemo(() => {
+    return productsList.map((p) => {
       let type = p.productType;
       if (!type && p["@odata.type"]) {
         const parts = p["@odata.type"].split(".");
@@ -223,80 +89,165 @@ export default function Products() {
       }
       if (!type) type = "Product";
 
+      const mfg =
+        p.manufacturer ||
+        manufacturersList.find((m) => m.id === p.manufacturerId);
+      const mfgName = mfg ? mfg.name || "Unknown" : "Unknown";
+
+      let calName = "";
+      const pAny = p as any;
+      if (pAny.caliber) {
+        calName = pAny.caliber.name || "";
+      } else if (pAny.caliberId) {
+        const cal = calibersList.find((c) => c.id === pAny.caliberId);
+        calName = cal ? cal.name || "" : "";
+      }
+
       return {
         ...p,
         productType: type,
-        manufacturerName: manufacturer?.name || "",
-        caliberName: caliber?.name || "",
+        manufacturerName: mfgName,
+        caliberName: calName,
       } as ExtendedProduct;
     });
+  }, [productsList, manufacturersList, calibersList]);
 
-    // Search filter
-    if (searchTerm.trim() !== "") {
-      const search = searchTerm.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.name!.toLowerCase().includes(search) ||
-          (p.partNumber && p.partNumber.toLowerCase().includes(search)) ||
-          (p.sku && p.sku.toLowerCase().includes(search)) ||
-          p.manufacturerName.toLowerCase().includes(search),
-      );
+  // Filter group definitions for MasterActionBar
+  const filterGroups: FilterGroupConfig[] = useMemo(() => {
+    const groups: FilterGroupConfig[] = [];
+    if (productTypes.length > 0) {
+      groups.push({
+        id: "productType",
+        label: "Product Type",
+        options: productTypes.map((t) => ({ label: t, value: t })),
+      });
     }
-
-    // Type filters
-    if (selectedTypeFilters.length > 0) {
-      result = result.filter((p) =>
-        selectedTypeFilters.includes(p.productType),
-      );
+    if (manufacturersList.length > 0) {
+      groups.push({
+        id: "manufacturer",
+        label: "Manufacturer",
+        options: manufacturersList.map((m) => ({
+          label: m.name,
+          value: String(m.id),
+        })),
+      });
     }
+    return groups;
+  }, [productTypes, manufacturersList]);
 
-    // Manufacturer filters
-    if (selectedMfgFilters.length > 0) {
-      result = result.filter(
-        (p) =>
-          p.manufacturerId !== undefined &&
-          selectedMfgFilters.includes(p.manufacturerId),
-      );
-    }
-
-    // Sorting
-    result.sort((a, b) => {
-      let valA = "";
-      let valB = "";
-
-      if (sortKey === "name") {
-        valA = a.name!.toLowerCase();
-        valB = b.name!.toLowerCase();
-      } else if (sortKey === "sku") {
-        valA = (a.sku || "").toLowerCase();
-        valB = (b.sku || "").toLowerCase();
-      } else if (sortKey === "partNumber") {
-        valA = (a.partNumber || "").toLowerCase();
-        valB = (b.partNumber || "").toLowerCase();
-      } else if (sortKey === "manufacturer") {
-        valA = a.manufacturerName.toLowerCase();
-        valB = b.manufacturerName.toLowerCase();
-      } else if (sortKey === "type") {
-        valA = a.productType.toLowerCase();
-        valB = b.productType.toLowerCase();
-      }
-
-      if (valA < valB) return sortDirection === "asc" ? -1 : 1;
-      if (valA > valB) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return result;
-  }, [
-    productsList,
-    manufacturersList,
-    calibersList,
+  // Universal Master View Hook
+  const {
     searchTerm,
-    selectedTypeFilters,
-    selectedMfgFilters,
-    sortKey,
-    sortDirection,
-  ]);
+    setSearchTerm,
+    selectedFilters,
+    toggleFilter,
+    clearFilters,
+    activeFilterCount,
+    sortState,
+    handleSort,
+    viewMode,
+    setViewMode,
+    processedItems: processedProducts,
+  } = useMasterView<ExtendedProduct>({
+    data: rawProcessedProducts,
+    searchFields: [
+      "name",
+      "partNumber",
+      "sku",
+      "manufacturerName",
+      "productType",
+    ],
+    defaultSortColumn: "name",
+    defaultSortDirection: "asc",
+    customFilter: (item, filters) => {
+      if (filters.productType && filters.productType.length > 0) {
+        if (!filters.productType.includes(item.productType)) {
+          return false;
+        }
+      }
+      if (filters.manufacturer && filters.manufacturer.length > 0) {
+        if (!filters.manufacturer.includes(String(item.manufacturerId))) {
+          return false;
+        }
+      }
+      return true;
+    },
+  });
+
+  // Table Column Definitions: 1. Cover Image, 2. Type, 3. Manufacturer, 4. Model Name, 5. Part Number, 6. SKU
+  const productColumns: ColumnDef<ExtendedProduct>[] = useMemo(
+    () => [
+      {
+        key: "coverImage",
+        header: "",
+        sortable: false,
+        width: "40px",
+        align: "center",
+        render: (p) =>
+          p.coverImageId ? (
+            <SecureImage
+              src={`/api/v1/ProductDocuments/${p.coverImageId}/Download`}
+              alt={p.name}
+              style={{
+                width: "28px",
+                height: "28px",
+                objectFit: "cover",
+                borderRadius: "4px",
+                border: "1px solid var(--border-color)",
+                backgroundColor: "var(--bg-input)",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "28px",
+                height: "28px",
+                borderRadius: "4px",
+                border: "1px solid var(--border-color)",
+                backgroundColor: "transparent",
+                boxSizing: "border-box",
+              }}
+            />
+          ),
+      },
+      {
+        key: "productType",
+        header: "Type",
+        align: "center",
+        render: (p) => (
+          <span className={`type-badge ${p.productType.toLowerCase()}`}>
+            {p.productType}
+          </span>
+        ),
+      },
+      {
+        key: "manufacturerName",
+        header: "Manufacturer",
+      },
+      {
+        key: "name",
+        header: "Model Name",
+        render: (p) => <span className="bold-name-cell">{p.name}</span>,
+      },
+      {
+        key: "partNumber",
+        header: "Part Number",
+        render: (p) => (
+          <span className="text-muted text-mono">
+            {p.partNumber || "N/A"}
+          </span>
+        ),
+      },
+      {
+        key: "sku",
+        header: "SKU",
+        render: (p) => (
+          <span className="text-muted text-mono">{p.sku || "N/A"}</span>
+        ),
+      },
+    ],
+    [],
+  );
 
   // Automatically select first item if none is selected
   useEffect(() => {
@@ -311,23 +262,45 @@ export default function Products() {
       const freshProduct = processedProducts.find(
         (p) => p.id === selectedProduct.id,
       );
-      if (freshProduct) {
-        if (freshProduct !== selectedProduct) {
-          setSelectedProduct(freshProduct);
-        }
-      } else {
+      if (freshProduct && freshProduct !== selectedProduct) {
+        setSelectedProduct(freshProduct);
+      } else if (!freshProduct) {
         setSelectedProduct(processedProducts[0] || null);
       }
     }
   }, [processedProducts, selectedProduct]);
 
-  // Switch right panel to editing mode with a blank product
+  // Mutations
+  const createProductMutation = usePostProducts({
+    mutation: {
+      onSuccess: (res) => {
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
+        if (res?.data) {
+          const newProd = res.data as any;
+          setSelectedProduct(newProd);
+        }
+      },
+    },
+  });
+
+  const deleteProductMutation = useDeleteProductsFromKey({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
+        setSelectedProduct(null);
+      },
+      onError: (err: any) =>
+        alert(
+          "Failed to delete product: " + (err?.message || "Unknown error"),
+        ),
+    },
+  });
+
   const startAddProduct = () => {
     setIsEditMode(false);
     setShowModal(true);
   };
 
-  // Switch right panel to editing mode with selected product
   const startEditProduct = () => {
     if (!selectedProduct) return;
     setIsEditMode(true);
@@ -374,35 +347,6 @@ export default function Products() {
     }
   };
 
-  // Helper labels & display
-  const renderSubAttributesText = (p: ExtendedProduct) => {
-    if (p.productType === "PewPew") {
-      return `Category: ${p.pewPewCategory || "N/A"} | Caliber: ${p.caliberName || "Unknown"} | Action: ${p.actionType || "N/A"}`;
-    }
-    if (p.productType === "Optic") {
-      return `Type: ${p.opticType || "N/A"} | Magnification: ${p.minMagnification}-${p.maxMagnification}x | Reticle: ${p.reticle || "N/A"}`;
-    }
-    if (p.productType === "Suppressor") {
-      return `Material: ${p.material || "N/A"} | Pitch: ${p.threadPitch || "N/A"} | Sound: -${p.soundReductionDb || 0}dB`;
-    }
-    if (p.productType === "PewPewLight") {
-      return `Lumens: ${p.lumens || 0}lm | Candela: ${p.candela || 0}cd | Mount: ${p.mountType || "N/A"}`;
-    }
-    if (p.productType === "Security") {
-      return `Locking: ${p.lockType || "N/A"}`;
-    }
-    return "";
-  };
-
-  const getConditionClass = (cond?: string | null) => {
-    if (!cond) return "badge-success";
-    const c = cond.toLowerCase();
-    if (c.includes("unfired") || c.includes("excel") || c.includes("very"))
-      return "badge-success";
-    if (c.includes("good") || c.includes("fair")) return "badge-warning";
-    return "badge-danger";
-  };
-
   if (productsLoading || mfgsLoading || calibersLoading) {
     return <div className="loading-state">Loading catalog data...</div>;
   }
@@ -419,129 +363,24 @@ export default function Products() {
     <div className="catalog-split-view">
       {/* LEFT 2/3: MASTER LIST PANEL */}
       <div className="master-panel">
-        <div className="view-actions-row">
-          {/* SEARCH BAR */}
-          <div className="search-filters-group">
-            <input
-              type="text"
-              placeholder="Search model, SKU, or manufacturer..."
-              className="search-input"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-
-            {/* ADVANCED FILTER BUTTON */}
-            <div className="popover-wrapper" ref={filterRef}>
-              <button
-                className={`control-popover-btn ${selectedTypeFilters.length > 0 || selectedMfgFilters.length > 0 ? "active-filters" : ""}`}
-                onClick={() => setShowFilterPopover(!showFilterPopover)}
-              >
-                Filter
-                {selectedTypeFilters.length + selectedMfgFilters.length > 0 && (
-                  <span className="filter-badge">
-                    {selectedTypeFilters.length + selectedMfgFilters.length}
-                  </span>
-                )}
-              </button>
-              {showFilterPopover && (
-                <div className="abs-popover-panel filter-popover">
-                  <div className="popover-sec">
-                    <h5>Product Types</h5>
-                    <div className="options-grid">
-                      {productTypes.map((type: string) => (
-                        <label key={type} className="popover-checkbox">
-                          <input
-                            type="checkbox"
-                            checked={selectedTypeFilters.includes(type)}
-                            onChange={() => {
-                              setSelectedTypeFilters((prev) =>
-                                prev.includes(type)
-                                  ? prev.filter((t) => t !== type)
-                                  : [...prev, type],
-                              );
-                            }}
-                          />
-                          <span>{type === "Product" ? "General" : type}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="popover-sec">
-                    <h5>Manufacturers</h5>
-                    <div className="options-grid scrollable-options">
-                      {manufacturersList.map((m) => (
-                        <label key={m.id} className="popover-checkbox">
-                          <input
-                            type="checkbox"
-                            checked={selectedMfgFilters.includes(m.id!)}
-                            onChange={() => {
-                              setSelectedMfgFilters((prev) =>
-                                prev.includes(m.id!)
-                                  ? prev.filter((id) => id !== m.id)
-                                  : [...prev, m.id!],
-                              );
-                            }}
-                          />
-                          <span>{m.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="popover-actions">
-                    <button
-                      className="clear-btn"
-                      onClick={() => {
-                        setSelectedTypeFilters([]);
-                        setSelectedMfgFilters([]);
-                        setSearchTerm("");
-                      }}
-                    >
-                      Clear All
-                    </button>
-                    <button
-                      className="close-btn"
-                      onClick={() => setShowFilterPopover(false)}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* VIEW SWITCHER & ADD BUTTONS */}
-          <div className="actions-right-group">
-            <div className="view-mode-toggle">
-              <button
-                className={`toggle-icon-btn ${viewMode === "table" ? "active" : ""}`}
-                onClick={() => setViewMode("table")}
-                title="Table View"
-              >
-                List
-              </button>
-              <button
-                className={`toggle-icon-btn ${viewMode === "card" ? "active" : ""}`}
-                onClick={() => setViewMode("card")}
-                title="Card View"
-              >
-                Cards
-              </button>
-            </div>
-
-            <button className="add-master-btn" onClick={startAddProduct}>
-              Add Product
-            </button>
-          </div>
-        </div>
+        <MasterActionBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search model, SKU, or manufacturer..."
+          filterGroups={filterGroups}
+          selectedFilters={selectedFilters}
+          onToggleFilter={toggleFilter}
+          onClearFilters={clearFilters}
+          activeFilterCount={activeFilterCount}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onAddNew={startAddProduct}
+          addNewLabel="Add Product"
+        />
 
         {/* MASTER LIST CONTENT CONTAINER */}
         <div className="master-list-scroller">
-          {processedProducts.length === 0 ? (
-            <div className="empty-state">
-              No matching catalog products found.
-            </div>
-          ) : viewMode === "table" ? (
+          {viewMode === "table" ? (
             <>
               {/* QUICK ADD ROW */}
               <div className="quick-add-container">
@@ -598,369 +437,83 @@ export default function Products() {
                 </form>
               </div>
 
-              <table className="app-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: "40px" }}></th>
-                    <th
-                      onClick={() => handleHeaderSort("type")}
-                      style={{
-                        cursor: "pointer",
-                        userSelect: "none",
-                        textAlign: "center",
-                      }}
-                    >
-                      Type{" "}
-                      {sortKey === "type" &&
-                        (sortDirection === "asc" ? " ▲" : " ▼")}
-                    </th>
-                    <th
-                      onClick={() => handleHeaderSort("manufacturer")}
-                      style={{ cursor: "pointer", userSelect: "none" }}
-                    >
-                      Manufacturer{" "}
-                      {sortKey === "manufacturer" &&
-                        (sortDirection === "asc" ? " ▲" : " ▼")}
-                    </th>
-                    <th
-                      onClick={() => handleHeaderSort("name")}
-                      style={{ cursor: "pointer", userSelect: "none" }}
-                    >
-                      Model Name{" "}
-                      {sortKey === "name" &&
-                        (sortDirection === "asc" ? " ▲" : " ▼")}
-                    </th>
-                    <th
-                      onClick={() => handleHeaderSort("partNumber")}
-                      style={{ cursor: "pointer", userSelect: "none" }}
-                    >
-                      Part Number{" "}
-                      {sortKey === "partNumber" &&
-                        (sortDirection === "asc" ? " ▲" : " ▼")}
-                    </th>
-                    <th
-                      onClick={() => handleHeaderSort("sku")}
-                      style={{ cursor: "pointer", userSelect: "none" }}
-                    >
-                      SKU{" "}
-                      {sortKey === "sku" &&
-                        (sortDirection === "asc" ? " ▲" : " ▼")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {processedProducts.map((p) => (
-                    <tr
-                      key={p.id}
-                      className={`table-row-item ${selectedProduct?.id === p.id ? "selected" : ""}`}
-                      onClick={() => setSelectedProduct(p)}
-                    >
-                      <td
-                        style={{
-                          width: "40px",
-                          verticalAlign: "middle",
-                          textAlign: "center",
-                        }}
-                      >
-                        {p.coverImageId ? (
-                          <SecureImage
-                            src={`/api/v1/ProductDocuments/${p.coverImageId}/Download`}
-                            alt={p.name}
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              objectFit: "cover",
-                              borderRadius: "4px",
-                              border: "1px solid var(--border-color)",
-                              backgroundColor: "var(--bg-input)",
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              borderRadius: "4px",
-                              border: "1px solid var(--border-color)",
-                              backgroundColor: "transparent",
-                              boxSizing: "border-box",
-                            }}
-                          />
-                        )}
-                      </td>
-                      <td
-                        className="type-badge-cell"
-                        style={{
-                          verticalAlign: "middle",
-                          textAlign: "center",
-                        }}
-                      >
-                        <span
-                          className={`type-badge ${p.productType.toLowerCase()}`}
-                        >
-                          {p.productType}
-                        </span>
-                      </td>
-                      <td>{p.manufacturerName}</td>
-                      <td className="bold-name-cell">{p.name}</td>
-                      <td className="text-muted text-mono">
-                        {p.partNumber || "N/A"}
-                      </td>
-                      <td className="text-muted text-mono">{p.sku || "N/A"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <SortableTable<ExtendedProduct>
+                columns={productColumns}
+                data={processedProducts}
+                totalCount={productsList.length}
+                selectedItem={selectedProduct}
+                onSelectItem={(p) => setSelectedProduct(p)}
+                sortState={sortState}
+                onSort={handleSort}
+                emptyMessage="No matching catalog products found."
+                entityName="products"
+                onImport={() => alert("GRT import functionality is a stub.")}
+                onExport={() => {
+                  const headers = [
+                    "Type",
+                    "Manufacturer",
+                    "Model Name",
+                    "Part Number",
+                    "SKU",
+                  ];
+                  const rows = processedProducts.map((p) => [
+                    p.productType,
+                    p.manufacturerName,
+                    p.name,
+                    p.partNumber || "N/A",
+                    p.sku || "N/A",
+                  ]);
+                  const csvContent = [
+                    headers.join(","),
+                    ...rows.map((e) =>
+                      e.map((val) => `"${val.replace(/"/g, '""')}"`).join(","),
+                    ),
+                  ].join("\n");
+                  const blob = new Blob([csvContent], {
+                    type: "text/csv;charset=utf-8;",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.setAttribute("href", url);
+                  link.setAttribute(
+                    "download",
+                    `products_export_${new Date().toISOString().slice(0, 10)}.csv`,
+                  );
+                  link.style.visibility = "hidden";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              />
             </>
           ) : (
-            /* CARD VIEW MODE */
             <div className="split-view-cards-grid">
-              {processedProducts.map((p) => (
-                <ProductCard
-                  item={p}
-                  isSelected={selectedProduct?.id === p.id}
-                  onClick={() => setSelectedProduct(p)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* TABLE FOOTER ROW */}
-        {viewMode === "table" && productsList.length > 0 && (
-          <div className="table-footer-row">
-            <div>
-              {processedProducts.length} of {productsList.length} products
-            </div>
-            <div className="footer-actions">
-              <button
-                type="button"
-                className="footer-btn"
-                onClick={() => alert("GRT import functionality is a stub.")}
-              >
-                Import
-              </button>
-              <button
-                type="button"
-                className="footer-btn"
-                // onClick={() => {
-                //   const headers = [
-                //     "Type",
-                //     "Manufacturer",
-                //     "Model Name",
-                //     "Part Number",
-                //     "SKU",
-                //   ];
-                //   const rows = processedProducts.map((p) => [
-                //     p.productType,
-                //     p.manufacturerName,
-                //     p.name,
-                //     p.partNumber || "N/A",
-                //     p.sku || "N/A",
-                //   ]);
-                //   const csvContent = [
-                //     headers.join(","),
-                //     ...rows.map((e) =>
-                //       e.map((val) => `"${val.replace(/"/g, '""')}"`).join(","),
-                //     ),
-                //   ].join("\n");
-                //   const blob = new Blob([csvContent], {
-                //     type: "text/csv;charset=utf-8;",
-                //   });
-                //   const url = URL.createObjectURL(blob);
-                //   const link = document.createElement("a");
-                //   link.setAttribute("href", url);
-                //   link.setAttribute(
-                //     "download",
-                //     `products_export_${new Date().toISOString().slice(0, 10)}.csv`,
-                //   );
-                //   link.style.visibility = "hidden";
-                //   document.body.appendChild(link);
-                //   link.click();
-                //   document.body.removeChild(link);
-                // }}
-              >
-                Export
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* RIGHT 1/3: DETAILS COLUMN WITH DUAL TILED MASTER-DETAIL VIEW */}
-      <div className="right-pane-column">
-        {/* TOP PANEL: PRIMARY SELECTED META DETAILS */}
-        <div className="detail-panel">
-          {!selectedProduct ? (
-            <div className="empty-detail-state">
-              <span className="icon">📦</span>
-              <h3>No Product Selected</h3>
-              <p>
-                Select a product from the list on the left, or add a brand-new
-                entry.
-              </p>
-              <button className="add-master-btn" onClick={startAddProduct}>
-                + Add Product
-              </button>
-            </div>
-          ) : (
-            <div className="detail-view-container">
-              <div className="detail-panel-header">
-                <span className="type-badge-pill">
-                  {selectedProduct.productType}
-                </span>
-                <div className="header-actions">
-                  <button
-                    className="btn btn-secondary edit-btn"
-                    onClick={startEditProduct}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn delete-btn"
-                    onClick={handleDeleteProduct}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-
-              <div className="detail-view-body">
-                {/* {saveSuccess && (
-                  <div className="detail-save-toast">
-                    ✓ Product updated successfully
-                  </div>
-                )} */}
-                <span className="detail-mfg">
-                  {selectedProduct.manufacturerName}
-                </span>
-                <h2>{selectedProduct.name}</h2>
-                <div className="text-mono detail-pn-sku">
-                  <span>Part No: {selectedProduct.partNumber || "None"}</span>
-                  <span>SKU: {selectedProduct.sku || "None"}</span>
-                </div>
-
-                <p className="detail-desc">
-                  {selectedProduct.description ||
-                    "No model description loaded for this product catalog asset."}
-                </p>
-
-                {selectedProduct.webPageUrl && (
-                  <a
-                    href={selectedProduct.webPageUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="external-site-link"
-                  >
-                    🌐 Open Official Website
-                  </a>
-                )}
-
-                <hr className="detail-divider" />
-
-                {/* Subclass Specs Detail Block */}
-                {selectedProduct.productType !== "Product" && (
-                  <div className="details-specs-block">
-                    <h3>Technical Details</h3>
-                    <p className="sub-specs-text">
-                      {renderSubAttributesText(selectedProduct)}
-                    </p>
-                  </div>
-                )}
-
-                {/* Specifications Key-Value Details */}
-                {(() => {
-                  const specs = extractSpecifications(selectedProduct);
-                  return (
-                    Object.keys(specs).length > 0 && (
-                      <div className="details-specs-block">
-                        <h3>Manual Specifications</h3>
-                        <div className="specs-table">
-                          {Object.entries(specs).map(([key, value]) => (
-                            <div key={key} className="specs-table-row">
-                              <span className="key-col">{key}</span>
-                              <span className="val-col">{String(value)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* BOTTOM PANEL: RELATED PHYSICAL INVENTORY ITEMS */}
-        <div className="detail-panel">
-          {!selectedProduct ? (
-            <div className="empty-detail-state">
-              <span className="icon">🛡️</span>
-              <h3>No Product Selected</h3>
-              <p>
-                Select a product model to inspect physical armory inventory.
-              </p>
-            </div>
-          ) : (
-            <div className="detail-view-container">
-              <div className="detail-panel-header">
-                <h3>Related Physical Items</h3>
-              </div>
-              {/* {relatedArmoryItemsLoading ? (
-                <div className="loading-state" style={{ padding: "20px 0" }}>
-                  Loading physical armory inventory...
-                </div>
-              ) : !relatedArmoryItemsData?.data?.value ||
-                relatedArmoryItemsData.data.value.length === 0 ? (
-                <div className="empty-state" style={{ padding: "20px 0" }}>
-                  No physical instances registered in your armory for this
-                  model.
+              {processedProducts.length === 0 ? (
+                <div className="empty-state">
+                  No matching catalog products found.
                 </div>
               ) : (
-                <table className="app-table">
-                  <thead>
-                    <tr>
-                      <th>Serial Number</th>
-                      <th>Name / Nickname</th>
-                      <th>Condition</th>
-                      <th>Round Count</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(relatedArmoryItemsData.data.value || []).map(
-                      (item: any) => (
-                        <tr
-                          key={item.id}
-                          className="table-row-item"
-                          style={{ cursor: "default" }}
-                        >
-                          <td className="bold-name-cell">
-                            {item.serialNumber || "N/A"}
-                          </td>
-                          <td>{item.name || "N/A"}</td>
-                          <td>
-                            <span
-                              className={`badge item-badge-condition ${getConditionClass(item.condition)}`}
-                            >
-                              {item.condition}
-                            </span>
-                          </td>
-                          <td className="text-mono">
-                            {item.roundCount !== undefined
-                              ? item.roundCount
-                              : "—"}
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                  </tbody>
-                </table>
-              )} */}
+                processedProducts.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    item={p as any}
+                    isSelected={selectedProduct?.id === p.id}
+                    onClick={() => setSelectedProduct(p)}
+                  />
+                ))
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* RIGHT 1/3: DETAILS COLUMN VIA DEDICATED PRODUCTDETAILS COMPONENT */}
+      <ProductDetails
+        product={selectedProduct}
+        onEdit={startEditProduct}
+        onDelete={handleDeleteProduct}
+        onAddNew={startAddProduct}
+      />
 
       {/* Catalog Modal */}
       {showModal && (
@@ -969,8 +522,9 @@ export default function Products() {
           onClose={() => setShowModal(false)}
           productId={isEditMode ? selectedProduct?.id || null : null}
           onSaved={(savedProduct) => {
-            setSelectedProduct(savedProduct);
-            //setShowModal(false);
+            if (savedProduct) {
+              setSelectedProduct(savedProduct as any);
+            }
           }}
         />
       )}

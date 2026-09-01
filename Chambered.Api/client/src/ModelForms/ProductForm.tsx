@@ -14,8 +14,11 @@ import {
   useGetProductsProductTypes,
 } from "../api/endpoints";
 
-import type { Manufacturer } from "../api/models/manufacturer";
-import type { Caliber } from "../api/models/caliber";
+import {
+  INITIAL_FORM_STATE,
+  PRODUCT_STATIC_KEYS,
+  type FormState,
+} from "../types/productSchema";
 
 export interface ProductFormProps {
   isOpen: boolean;
@@ -24,125 +27,12 @@ export interface ProductFormProps {
   onSaved?: (savedProduct: any) => void;
 }
 
-// ---------------------------------------------------------------------------
-// Single Source of Truth for Form State Defaults
-// ---------------------------------------------------------------------------
-const INITIAL_FORM_STATE = {
-  // audit
-  created: new Date(),
-  modified: new Date(),
-  createdBy: "",
-  modifiedBy: "",
-
-  // product
-  id: 0,
-  name: "",
-  description: "",
-  manufacturerId: "" as string | number,
-  productType: "PewPew",
-  partNumber: "",
-  sku: "",
-  webPageUrl: "",
-  coverImageId: null as number | null,
-  specifications: {} as Record<string, any>,
-
-  // pewpew
-  pewPewCategory: "",
-  caliberId: "" as string | number,
-  actionType: "",
-  isNfaItem: false,
-
-  // optic
-  minMagnification: "" as string | number,
-  maxMagnification: "" as string | number,
-  objectiveDiameterMm: "" as string | number,
-  opticType: "",
-  reticle: "",
-  adjustmentUnits: "",
-  tubeDiameter: "",
-  isIlluminated: false,
-
-  // suppressor
-  threadPitch: "",
-  attachmentType: "",
-  material: "",
-  soundReductionDb: "" as string | number,
-  isFullAutoRated: false,
-  isUserServiceable: false,
-
-  // light
-  lumens: "" as string | number,
-  candela: "" as string | number,
-  mountType: "",
-  laserColor: "",
-  hasRemoteSwitchPort: false,
-  isInfraredCapable: false,
-
-  // security
-  lockType: "",
-
-  // power
-  powderType: "",
-  shape: "",
-  burnRate: "",
-  containerWeightLbs: 0,
-
-  // primer
-  primerSize: "",
-  primerType: "",
-  isMagnum: false,
-  isMatch: false,
-
-  // projectile
-  bcG1: null as number | null,
-  bcG7: null as number | null,
-  isBoatTail: false,
-  hasCannelure: false,
-
-  // casing
-  primerPocketSize: "",
-  isPrimed: false,
-  isAnnealed: false,
-  isVirgin: false,
-
-  // ammunition
-  muzzleVelocityFps: 0,
-  muzzleEnergyFtLbs: 0,
-  isPlusP: false,
-  isSubsonic: false,
-
-  // ammo box/battery/capacity
-  hasBattery: false,
-  batteryType: "",
-  quantity: 0,
-
-  // iprojectile
-  projectileProfile: "",
-  projectileMaterial: "",
-  isLeadFree: false,
-  weightGrains: 0,
-
-  // icasing
-  caseMaterial: "",
-  headStamp: "",
-
-  // ICapacity
-  isCapacityLimited: false,
-  maxCapacity: 0,
-};
-
-// Derived Type
-export type FormState = typeof INITIAL_FORM_STATE;
-
-// Derived Runtime Static Keys for Spec Filtering
-const STATIC_KEYS = new Set(Object.keys(INITIAL_FORM_STATE));
-
 const extractSpecifications = (product: any): Record<string, any> => {
   if (!product) return {};
   const specs: Record<string, any> = {};
   Object.keys(product).forEach((key) => {
     if (
-      !STATIC_KEYS.has(key) &&
+      !PRODUCT_STATIC_KEYS.has(key) &&
       !key.startsWith("@odata.") &&
       !key.startsWith("odata.")
     ) {
@@ -359,7 +249,16 @@ export default function ProductForm({
   // Mutation Save operations
   const createProductMutation = usePostProducts({
     mutation: {
-      onSuccess: (res) => {
+      onSuccess: (res: any) => {
+        if (res?.status && res.status >= 400) {
+          const errMsg =
+            res.data?.error?.message ||
+            res.data?.title ||
+            `Server returned HTTP ${res.status}`;
+          alert("Failed to create product: " + errMsg);
+          setIsSaving(false);
+          return;
+        }
         queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
@@ -377,7 +276,16 @@ export default function ProductForm({
 
   const updateProductMutation = usePatchProductsFromKey({
     mutation: {
-      onSuccess: (res) => {
+      onSuccess: (res: any) => {
+        if (res?.status && res.status >= 400) {
+          const errMsg =
+            res.data?.error?.message ||
+            res.data?.title ||
+            `Server returned HTTP ${res.status}`;
+          alert("Failed to save product: " + errMsg);
+          setIsSaving(false);
+          return;
+        }
         queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
@@ -451,7 +359,7 @@ export default function ProductForm({
         parseInt(targetForm.caliberId as string, 10) ||
         calibersList[0]?.id ||
         0;
-      payload.threadPitch = targetForm.threadPitch || null;
+      payload.threadPitch = targetForm.threadPitch || "";
       payload.attachmentType =
         targetForm.attachmentType ||
         suppressorAttachmentTypes[0]?.id ||
