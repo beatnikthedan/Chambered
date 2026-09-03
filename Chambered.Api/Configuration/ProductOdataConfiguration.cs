@@ -17,12 +17,6 @@ namespace Chambered.Api.Configuration
         {
             builder.EntitySet<Product>("Products");
 
-            builder.EntityType<PewPew>().DerivesFrom<Product>();
-            builder.EntityType<Optic>().DerivesFrom<Product>();
-            builder.EntityType<Suppressor>().DerivesFrom<Product>();
-            builder.EntityType<PewPewLight>().DerivesFrom<Product>();
-            builder.EntityType<Security>().DerivesFrom<Product>();
-
             var productColl = builder.EntityType<Product>().Collection;
             productColl.Function("GetProductTypes").ReturnsCollection<string>();
             productColl.Function("GetActionTypes").ReturnsCollection<EnumDto>();
@@ -61,16 +55,6 @@ namespace Chambered.Api.Configuration
                         product.Property(p => p.WebPageUrl).MaxLength = 2048;
                         product.Property(p => p.CoverImageId);
                         product.Ignore(p => p.CoverImage);
-
-                        var optic = builder.EntityType<Optic>();
-                        optic.Property(o => o.MinMagnification).Precision = 2;
-                        optic.Property(o => o.MaxMagnification).Precision = 2;
-
-                        var suppressor = builder.EntityType<Suppressor>();
-                        suppressor.Property(s => s.ThreadPitch).MaxLength = 50;
-
-                        var casing = builder.EntityType<Casing>();
-                        casing.Property(s => s.HeadStamp).MaxLength = 50;
                         break;
                     }
             }
