@@ -197,7 +197,7 @@ export default function Products() {
                 border: "1px solid var(--border-color)",
                 backgroundColor: "var(--bg-input)",
                 display: "block",
-                margin: "0 auto",
+                margin: "0px 0px 0px 4px",
               }}
             />
           ) : (
@@ -218,7 +218,7 @@ export default function Products() {
         key: "productType",
         header: "Type",
         width: "120px",
-        align: "left",
+        align: "center",
         render: (p) => (
           <span className={`type-badge ${p.productType.toLowerCase()}`}>
             {p.productType}
@@ -244,9 +244,7 @@ export default function Products() {
         key: "partNumber",
         header: "Part Number",
         render: (p) => (
-          <span className="text-muted text-mono">
-            {p.partNumber || "N/A"}
-          </span>
+          <span className="text-muted text-mono">{p.partNumber || "N/A"}</span>
         ),
       },
       {
@@ -301,9 +299,7 @@ export default function Products() {
         setSelectedProduct(null);
       },
       onError: (err: any) =>
-        alert(
-          "Failed to delete product: " + (err?.message || "Unknown error"),
-        ),
+        alert("Failed to delete product: " + (err?.message || "Unknown error")),
     },
   });
 
