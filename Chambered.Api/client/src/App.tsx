@@ -25,6 +25,7 @@ import Manufacturers from "./views/Manufacturers";
 // Route guarding components
 import { ARSENAL_ICONS } from "./components/ArsenalIcons";
 import { VersionControl } from "./components/VersionControl";
+import { ChamberedLogo } from "./components/ChamberedLogo";
 
 interface RouteProps {
   children: ReactNode;
@@ -165,7 +166,7 @@ export default function App() {
       {store.isAuthenticated && (
         <aside className={`sidebar ${isSidebarCollapsed ? "collapsed" : ""}`}>
           <div className="sidebar-header">
-            <span className="logo-emoji">🔥</span>
+            <ChamberedLogo size={28} color="var(--color-primary)" className="logo-img" />
             {!isSidebarCollapsed && (
               <span className="logo-text">CHAMBERED</span>
             )}

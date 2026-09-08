@@ -141,8 +141,12 @@
   flex-shrink: 0;
 }
 
+.logo-img,
 .logo-emoji {
-  font-size: 24px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .logo-text {

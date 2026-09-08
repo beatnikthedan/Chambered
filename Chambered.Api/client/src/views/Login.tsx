@@ -12,6 +12,7 @@ import {
 import "./Login.css";
 import "../components/VersionControl.tsx";
 import { VersionControl } from "../components/VersionControl.tsx";
+import { ChamberedLogo } from "../components/ChamberedLogo";
 
 interface PasswordStrengthInfo {
   score: number;
@@ -230,7 +231,7 @@ export default function Login() {
       <div className="login-card">
         {/* Sleek Dynamic Brand Header */}
         <div className="brand">
-          <span className="brand-emoji">🛡️</span>
+          <ChamberedLogo size={48} color="var(--color-primary)" className="brand-img" />
           {mode === "setup" ? (
             <>
               <h1 className="brand-name font-setup">CHAMBERED</h1>

@@ -32,8 +32,11 @@
   margin-bottom: 28px;
 }
 
+.brand-img,
 .brand-emoji {
-  font-size: 40px;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
   display: inline-block;
   margin-bottom: 12px;
   filter: drop-shadow(0 0 10px rgba(204, 164, 59, 0.4));
