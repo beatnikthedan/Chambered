@@ -94,8 +94,11 @@ export default function ManufacturerForm({
           queryKey: getGetManufacturersQueryKey(),
         });
         setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-        setIsSaving(false);
+        setTimeout(() => {
+          setSaveSuccess(false);
+          setIsSaving(false);
+          onClose();
+        }, 800);
         if (res?.data && onSaved) {
           onSaved(res.data);
         }

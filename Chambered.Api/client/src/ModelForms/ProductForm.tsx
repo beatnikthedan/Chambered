@@ -265,8 +265,11 @@ export default function ProductForm({
         }
         queryClient.invalidateQueries({ queryKey: ["/api/v1/Products"] });
         setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-        setIsSaving(false);
+        setTimeout(() => {
+          setSaveSuccess(false);
+          setIsSaving(false);
+          onClose();
+        }, 800);
         if (res?.data && onSaved) {
           onSaved(res.data);
         }
