@@ -29,22 +29,13 @@ export interface VaultCardProps {
 }
 
 export default function VaultCard(props: VaultCardProps) {
-  const {
-    item,
-    isSelected = false,
-    onClick,
-  } = props;
+  const { item, isSelected = false, onClick } = props;
 
   // Resolve values from item or direct props
   const arsenalColor =
-    props.arsenalColor ||
-    item?.arsenal?.colorHex ||
-    "#d9ac3a";
+    props.arsenalColor || item?.arsenal?.colorHex || "#d9ac3a";
 
-  const title =
-    props.title ||
-    item?.name ||
-    "Vault";
+  const title = props.title || item?.name || "Vault";
 
   const rawArmoryItems = item?.armoryItems || item?.storedItems || [];
   const safeCurrent =
@@ -55,7 +46,7 @@ export default function VaultCard(props: VaultCardProps) {
   const safeTotal =
     props.totalCount !== undefined
       ? props.totalCount
-      : ((item as any)?.capacity || (item?.product as any)?.capacity || 12);
+      : (item?.product as any)?.maxCapacity || 0;
 
   const fillPercentage = Math.min(
     100,
@@ -80,8 +71,20 @@ export default function VaultCard(props: VaultCardProps) {
   }
 
   // Telemetry metrics
-  const temp = props.temp ?? (item?.temperature !== undefined ? item.temperature : (isSelected ? "68" : "--"));
-  const humidity = props.humidity ?? (item?.humidity !== undefined ? item.humidity : (isSelected ? (item?.targetMaxHumidityPercent || "44") : "--"));
+  const temp =
+    props.temp ??
+    (item?.temperature !== undefined
+      ? item.temperature
+      : isSelected
+        ? "68"
+        : "--");
+  const humidity =
+    props.humidity ??
+    (item?.humidity !== undefined
+      ? item.humidity
+      : isSelected
+        ? item?.targetMaxHumidityPercent || "44"
+        : "--");
 
   const calculatedValue = React.useMemo(() => {
     if (props.value !== undefined) return String(props.value);
@@ -102,25 +105,28 @@ export default function VaultCard(props: VaultCardProps) {
   // Status & Warning
   const isHighHumidity =
     Number(humidity) > 60 ||
-    (item?.targetMaxHumidityPercent && Number(humidity) > item.targetMaxHumidityPercent);
+    (item?.targetMaxHumidityPercent &&
+      Number(humidity) > item.targetMaxHumidityPercent);
 
   const statusText =
-    props.statusText ||
-    (isHighHumidity ? "RH HIGH" : "ONLINE");
+    props.statusText || (isHighHumidity ? "RH HIGH" : "ONLINE");
 
   const statusColor =
     props.statusColor ||
-    (statusText === "ONLINE" || statusText === "NORMAL" ? "#10B981" : "#F97316");
+    (statusText === "ONLINE" || statusText === "NORMAL"
+      ? "#10B981"
+      : "#F97316");
 
   const tempColor = props.tempColor || "#10B981";
-  const humidityColor = props.humidityColor || (isHighHumidity ? "#F97316" : "#10B981");
+  const humidityColor =
+    props.humidityColor || (isHighHumidity ? "#F97316" : "#10B981");
 
   const warningText =
     props.warningText !== undefined
       ? props.warningText
-      : (isHighHumidity
-          ? "Above target humidity — inspect dehumidifier"
-          : null);
+      : isHighHumidity
+        ? "Above target humidity — inspect dehumidifier"
+        : null;
 
   const deselectedBorderColor = arsenalColor.startsWith("#")
     ? `${arsenalColor}44`

@@ -61,7 +61,7 @@ export default function Vaults() {
   const [quickSaveSuccess, setQuickSaveSuccess] = useState<boolean>(false);
 
   // Base Data arrays
-  const vaultsList = useMemo(
+  const rawVaultsList = useMemo(
     () => (vaultsData?.data?.value || []) as ExtendedVault[],
     [vaultsData],
   );
@@ -70,6 +70,18 @@ export default function Vaults() {
     () => (securityProductsData?.data?.value || []) as Product[],
     [securityProductsData],
   );
+
+  const vaultsList = useMemo(() => {
+    return rawVaultsList.map((vault) => {
+      const fullSecurityProduct = securityProductsList.find(
+        (p) => p.id === vault.productId,
+      );
+      return {
+        ...vault,
+        product: fullSecurityProduct || vault.product,
+      };
+    });
+  }, [rawVaultsList, securityProductsList]);
 
   // Setup default arsenal in quick add
   useEffect(() => {
