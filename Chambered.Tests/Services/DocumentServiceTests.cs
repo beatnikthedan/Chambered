@@ -3,19 +3,12 @@ using Chambered.Core.Services.Models;
 using Chambered.Data;
 using Chambered.Data.Enums;
 using Chambered.Data.Models;
+using Chambered.Infrastructure.Configuration;
 using Chambered.Infrastructure.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
-
-using Chambered.Infrastructure.Configuration;
 
 namespace Chambered.Tests.Services
 {

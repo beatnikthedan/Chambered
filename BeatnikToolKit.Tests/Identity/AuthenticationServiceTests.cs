@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace Chambered.Tests.Services.Identity
+namespace BeatnikToolKit.Tests.Identity
 {
     /// <summary>
     /// Contains unit tests for the <see cref="AuthenticationService"/> class.
@@ -170,18 +170,18 @@ namespace Chambered.Tests.Services.Identity
         {
             var user = new IdentityUser { Id = "user-123", UserName = "testuser", Email = "test@user.com" };
             var request = new ForgotPasswordRequestDto("test@user.com");
- 
+
             _userManagerMock.Setup(u => u.FindByEmailAsync(request.Email))
                 .ReturnsAsync(user);
- 
+
             _userManagerMock.Setup(u => u.GeneratePasswordResetTokenAsync(user))
                 .ReturnsAsync("reset-token-abc");
- 
+
             _emailServiceMock.Setup(e => e.SendEmailAsync(It.IsAny<System.Net.Mail.MailMessage>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
- 
+
             await _authenticationService.InitiateForgotPasswordAsync(request);
- 
+
             _userManagerMock.Verify(u => u.GeneratePasswordResetTokenAsync(user), Times.Once);
             _emailServiceMock.Verify(e => e.SendEmailAsync(It.Is<System.Net.Mail.MailMessage>(m =>
                 m.To.Count == 1 &&
@@ -191,7 +191,7 @@ namespace Chambered.Tests.Services.Identity
                 m.Body.Contains("testuser")
             ), It.IsAny<CancellationToken>()), Times.Once);
         }
- 
+
         /// <summary>
         /// Verifies that InitiateForgotPasswordAsync throws an InvalidOperationException when email sending fails.
         /// </summary>
@@ -200,20 +200,20 @@ namespace Chambered.Tests.Services.Identity
         {
             var user = new IdentityUser { Id = "user-123", UserName = "testuser", Email = "test@user.com" };
             var request = new ForgotPasswordRequestDto("test@user.com");
- 
+
             _userManagerMock.Setup(u => u.FindByEmailAsync(request.Email))
                 .ReturnsAsync(user);
- 
+
             _userManagerMock.Setup(u => u.GeneratePasswordResetTokenAsync(user))
                 .ReturnsAsync("reset-token-abc");
- 
+
             _emailServiceMock.Setup(e => e.SendEmailAsync(It.IsAny<System.Net.Mail.MailMessage>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(false);
- 
+
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 _authenticationService.InitiateForgotPasswordAsync(request));
         }
- 
+
         /// <summary>
         /// Verifies that ResetPasswordAsync successfully invokes UserManager password reset.
         /// </summary>
@@ -222,18 +222,18 @@ namespace Chambered.Tests.Services.Identity
         {
             var user = new IdentityUser { Id = "user-123", Email = "test@user.com" };
             var request = new ResetPasswordRequestDto("test@user.com", "cmVzZXQtdG9rZW4tYWJj", "NewPassword123!");
- 
+
             _userManagerMock.Setup(u => u.FindByEmailAsync(request.Email))
                 .ReturnsAsync(user);
- 
+
             _userManagerMock.Setup(u => u.ResetPasswordAsync(user, "reset-token-abc", request.NewPassword))
                 .ReturnsAsync(IdentityResult.Success);
- 
+
             await _authenticationService.ResetPasswordAsync(request);
- 
+
             _userManagerMock.Verify(u => u.ResetPasswordAsync(user, "reset-token-abc", request.NewPassword), Times.Once);
         }
- 
+
         /// <summary>
         /// Verifies that ResetPasswordAsync throws an InvalidOperationException when the reset fails.
         /// </summary>
@@ -242,17 +242,17 @@ namespace Chambered.Tests.Services.Identity
         {
             var user = new IdentityUser { Id = "user-123", Email = "test@user.com" };
             var request = new ResetPasswordRequestDto("test@user.com", "cmVzZXQtdG9rZW4tYWJj", "NewPassword123!");
- 
+
             _userManagerMock.Setup(u => u.FindByEmailAsync(request.Email))
                 .ReturnsAsync(user);
- 
+
             _userManagerMock.Setup(u => u.ResetPasswordAsync(user, "reset-token-abc", request.NewPassword))
                 .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Reset Error" }));
- 
+
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 _authenticationService.ResetPasswordAsync(request));
         }
- 
+
         /// <summary>
         /// Verifies that VerifyPasswordAsync returns true when the credentials match.
         /// </summary>
@@ -262,15 +262,15 @@ namespace Chambered.Tests.Services.Identity
             var user = new IdentityUser { Id = "user-123" };
             _userManagerMock.Setup(u => u.FindByIdAsync("user-123"))
                 .ReturnsAsync(user);
- 
+
             _userManagerMock.Setup(u => u.CheckPasswordAsync(user, "Secret123!"))
                 .ReturnsAsync(true);
- 
+
             var result = await _authenticationService.VerifyPasswordAsync("user-123", "Secret123!");
- 
+
             Assert.True(result);
         }
- 
+
         /// <summary>
         /// Verifies that ChangePasswordAsync successfully updates the user password.
         /// </summary>
@@ -279,18 +279,18 @@ namespace Chambered.Tests.Services.Identity
         {
             var user = new IdentityUser { Id = "user-123" };
             var request = new ChangePasswordRequestDto("OldPassword123!", "NewPassword123!");
- 
+
             _userManagerMock.Setup(u => u.FindByIdAsync("user-123"))
                 .ReturnsAsync(user);
- 
+
             _userManagerMock.Setup(u => u.ChangePasswordAsync(user, request.OldPassword, request.NewPassword))
                 .ReturnsAsync(IdentityResult.Success);
- 
+
             await _authenticationService.ChangePasswordAsync("user-123", request);
- 
+
             _userManagerMock.Verify(u => u.ChangePasswordAsync(user, request.OldPassword, request.NewPassword), Times.Once);
         }
- 
+
         /// <summary>
         /// Verifies that ChangePasswordAsync throws an InvalidOperationException when the change operation fails.
         /// </summary>
@@ -299,13 +299,13 @@ namespace Chambered.Tests.Services.Identity
         {
             var user = new IdentityUser { Id = "user-123" };
             var request = new ChangePasswordRequestDto("OldPassword123!", "NewPassword123!");
- 
+
             _userManagerMock.Setup(u => u.FindByIdAsync("user-123"))
                 .ReturnsAsync(user);
- 
+
             _userManagerMock.Setup(u => u.ChangePasswordAsync(user, request.OldPassword, request.NewPassword))
                 .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Update Error" }));
- 
+
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 _authenticationService.ChangePasswordAsync("user-123", request));
         }
@@ -352,7 +352,7 @@ namespace Chambered.Tests.Services.Identity
         }
 
         /// <inheritdoc/>
-        public TResult ExecuteAsync<TResult>(System.Linq.Expressions.Expression expression, System.Threading.CancellationToken cancellationToken = default)
+        public TResult ExecuteAsync<TResult>(System.Linq.Expressions.Expression expression, CancellationToken cancellationToken = default)
         {
             var expectedResultType = typeof(TResult).GetGenericArguments()[0];
             var executionResult = typeof(IQueryProvider)
@@ -388,7 +388,7 @@ namespace Chambered.Tests.Services.Identity
         { }
 
         /// <inheritdoc/>
-        public IAsyncEnumerator<T> GetAsyncEnumerator(System.Threading.CancellationToken cancellationToken = default)
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
             return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
         }

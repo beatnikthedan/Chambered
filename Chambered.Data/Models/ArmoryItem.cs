@@ -1,32 +1,14 @@
 using Chambered.Data.Enums;
 using Chambered.Data.Interfaces;
+using Chambered.Data.Relationships;
 
 namespace Chambered.Data.Models
 {
     /// <summary>
     /// Represents an item in your armory.
     /// </summary>
-    public class ArmoryItem : ModelBase<int>, IItemIdentifier
+    public class ArmoryItem : ModelBase<int>, IItemIdentifier, IHasProduct, IHasArsenal
     {
-        #region Primary Identification & Relational Lookups
-
-        /// <summary>
-        /// Gets or sets the discriminator value for the item type (used for TPH inheritance mapping).
-        /// </summary>
-        public string ItemType { get; set; }
-
-        /// <summary>
-        /// Gets or sets the foreign key for the catalog product model.
-        /// </summary>
-        public int ProductId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the navigation property for the catalog product model.
-        /// </summary>
-        public Product? Product { get; set; }
-
-        #endregion
-
         #region IItemIdentifier
 
         /// <inheritdoc/>
@@ -38,14 +20,9 @@ namespace Chambered.Data.Models
         #endregion
 
         /// <summary>
-        /// Gets or sets the optional foreign key for the primary workspace arsenal context.
+        /// Gets or sets the discriminator value for the item type (used for TPH inheritance mapping).
         /// </summary>
-        public int? ArsenalId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the navigation property for the assigned workspace arsenal context.
-        /// </summary>
-        public Arsenal? Arsenal { get; set; }
+        public string ItemType { get; set; }
 
         #region Financial & Valuation
 
@@ -68,6 +45,36 @@ namespace Chambered.Data.Models
         /// Gets or sets the physical condition rating of the item.
         /// </summary>
         public ItemCondition Condition { get; set; } = ItemCondition.Unknown;
+
+        #endregion
+
+        #region IHasProduct
+
+        /// <inheritdoc/>
+        public int? ProductId { get; set; }
+
+        /// <inheritdoc/>
+        public Product? Product { get; set; }
+
+        #endregion
+
+        #region IHasArsenal
+
+        /// <inheritdoc/>
+        public int? ArsenalId { get; set; }
+
+        /// <inheritdoc/>
+        public Arsenal? Arsenal { get; set; }
+
+        #endregion
+
+        #region IHasVault
+
+        /// <inheritdoc/>
+        public int? VaultId { get; set; }
+
+        /// <inheritdoc/>
+        public Vault? Vault { get; set; }
 
         #endregion
 
@@ -96,16 +103,6 @@ namespace Chambered.Data.Models
         public ChamberedUser? Beneficiary { get; set; }
 
         /// <summary>
-        /// Gets or sets the optional foreign key for the physical vault container housing this item.
-        /// </summary>
-        public int? VaultId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the navigation property for the assigned vault container.
-        /// </summary>
-        public Vault? Vault { get; set; }
-
-        /// <summary>
         /// Gets or sets the optional foreign key for the parent armory item (for mounted accessories).
         /// </summary>
         public int? ParentItemId { get; set; }
@@ -118,7 +115,7 @@ namespace Chambered.Data.Models
         /// <summary>
         /// Gets or sets the collection of mounted accessories under this armory item.
         /// </summary>
-        public ICollection<ArmoryItem> MountedAccessories { get; set; } = new List<ArmoryItem>();
+        public ICollection<ArmoryItem> Accessories { get; set; } = new List<ArmoryItem>();
 
         #endregion
 
@@ -136,11 +133,19 @@ namespace Chambered.Data.Models
         /// </summary>
         public string? NotesMarkdown { get; set; }
 
-        #region Entity Relationships
+        #region Documents
+
+        /// <summary>
+        /// Gets or sets the foreign key of the selected secure cover image.
+        /// </summary>
+        public int? CoverImageId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the navigation property of the selected secure cover image.
+        /// </summary>
+        public virtual ArmoryItemDocument? CoverImage { get; set; }
 
         public ICollection<ArmoryItemDocument> ArmoryItemDocuments { get; set; } = new List<ArmoryItemDocument>();
-        //public ICollection<MaintenanceLog> MaintenanceLogs { get; set; } = new List<MaintenanceLog>();
-        //public ICollection<RangeSessionLog> RangeLogs { get; set; } = new List<RangeSessionLog>();
 
         #endregion
     }

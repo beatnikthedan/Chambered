@@ -1,5 +1,3 @@
-using System;
-
 namespace Chambered.Core.Services.Models
 {
     /// <summary>

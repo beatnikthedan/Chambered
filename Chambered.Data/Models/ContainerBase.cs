@@ -1,23 +1,10 @@
 ﻿using Chambered.Data.Interfaces;
+using Chambered.Data.Relationships;
 
 namespace Chambered.Data.Models
 {
-    public abstract class ContainerBase : ModelBase<int>, IItemIdentifier, ICurrentCapcity
+    public abstract class ContainerBase : ModelBase<int>, IItemIdentifier, IHasProduct, IHasArsenal, ICurrentCapcity
     {
-        #region Primary Identification
-
-        /// <summary>
-        /// Gets or sets the foreign key of the associated catalog product.
-        /// </summary>
-        public int? ProductId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the navigation property for the associated catalog product.
-        /// </summary>
-        public Product? Product { get; set; }
-
-        #endregion
-
         #region IItemIdentifier
 
         /// <inheritdoc/>
@@ -28,15 +15,25 @@ namespace Chambered.Data.Models
 
         #endregion
 
-        /// <summary>
-        /// Gets or sets the foreign key for the owning arsenal context.
-        /// </summary>
-        public int ArsenalId { get; set; }
+        #region IHasProduct
 
-        /// <summary>
-        /// Gets or sets the navigation property for the owning arsenal context.
-        /// </summary>
+        /// <inheritdoc/>
+        public int? ProductId { get; set; }
+
+        /// <inheritdoc/>
+        public Product? Product { get; set; }
+
+        #endregion
+
+        #region IHasArsenal
+
+        /// <inheritdoc/>
+        public int? ArsenalId { get; set; }
+
+        /// <inheritdoc/>
         public Arsenal? Arsenal { get; set; }
+
+        #endregion
 
         #region ICurrentCapacity
 

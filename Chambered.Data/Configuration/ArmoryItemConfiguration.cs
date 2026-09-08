@@ -33,6 +33,15 @@ namespace Chambered.Data.Configuration
             builder.Property(a => a.NotesMarkdown)
                 .HasMaxLength(2048);
 
+            #region Cover Image Relationship
+
+            builder.HasOne(p => p.CoverImage)
+                .WithMany()
+                .HasForeignKey(p => p.CoverImageId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            #endregion
+
             #region Dynamic Specifications (JSON Mapping)
 
             builder.Property(e => e.Specifications)
@@ -73,7 +82,7 @@ namespace Chambered.Data.Configuration
                 .OnDelete(DeleteBehavior.SetNull);
 
             builder.HasOne(a => a.ParentItem)
-                .WithMany(a => a.MountedAccessories)
+                .WithMany(a => a.Accessories)
                 .HasForeignKey(a => a.ParentItemId)
                 .OnDelete(DeleteBehavior.SetNull);
         }

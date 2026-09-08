@@ -15,21 +15,17 @@ namespace Chambered.Api.Configuration
         /// <inheritdoc/>
         public void Apply(ODataModelBuilder builder, ApiVersion apiVersion, string? routePrefix)
         {
-            // Register standard EntitySet
             builder.EntitySet<ProductDocumentDto>("ProductDocuments");
 
             var productDocEntity = builder.EntityType<ProductDocumentDto>();
 
-            // Bound Entity Function: GET /api/ProductDocuments(5)/Download
             productDocEntity.Function("Download").Returns<FileStreamResult>();
 
-            // Bound Collection Function: GET /api/ProductDocuments/DownloadAll(parentId=5)
             var productDocColl = productDocEntity.Collection;
             productDocColl.Function("DownloadAll")
                 .Returns<FileStreamResult>()
                 .Parameter<int>("parentId");
 
-            // Bound Collection Function: GET /api/ProductDocuments/GetDocumentTypes
             productDocColl.Function("GetDocumentTypes").ReturnsCollection<EnumDto>();
         }
     }

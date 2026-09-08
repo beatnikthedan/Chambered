@@ -1,5 +1,3 @@
-using Chambered.Data.Enums;
-
 namespace Chambered.Data.Models
 {
     /// <summary>

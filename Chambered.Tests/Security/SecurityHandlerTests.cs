@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 using Chambered.Core.Security;
-using Chambered.Infrastructure.Services.Identity;
 using Chambered.Core.Utility;
 using Chambered.Data;
 using Chambered.Data.Models;
@@ -18,7 +12,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Xunit;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
 
 namespace Chambered.Tests.Security
 {
@@ -165,7 +160,7 @@ namespace Chambered.Tests.Security
             Assert.NotNull(result);
             Assert.True(result.Succeeded);
             Assert.NotNull(result.Principal);
-            
+
             Assert.True(result.Principal.HasClaim(ChamberedRulebook.PermissionClaimTypeConstant, ChamberedRulebook.Permissions.ArsenalView));
             Assert.True(result.Principal.HasClaim(ClaimTypes.NameIdentifier, "admin-user-id"));
         }

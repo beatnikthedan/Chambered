@@ -1,5 +1,3 @@
-using System.IO;
-
 namespace Chambered.Core.Services.Models
 {
     /// <summary>

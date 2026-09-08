@@ -1,9 +1,5 @@
 using Chambered.Core.Services.Models;
 using Chambered.Data.Models;
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Chambered.Core.Services
 {

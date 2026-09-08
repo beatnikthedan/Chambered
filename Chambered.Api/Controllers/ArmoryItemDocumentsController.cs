@@ -6,7 +6,6 @@ using Chambered.Data.Enums;
 using Chambered.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 
 namespace Chambered.Api.Controllers
 {

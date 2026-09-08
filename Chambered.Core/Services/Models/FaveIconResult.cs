@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Chambered.Core.Services.Models
+﻿namespace Chambered.Core.Services.Models
 {
     /// <summary>
     /// Represents the resolved image bytes and metadata of a favicon.

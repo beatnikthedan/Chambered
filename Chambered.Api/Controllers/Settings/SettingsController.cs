@@ -1,11 +1,11 @@
 using Asp.Versioning;
 using Chambered.Core.Services;
+using Chambered.Core.Services.Models;
 using Chambered.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Chambered.Core.Services.Models;
 
 namespace Chambered.Api.Controllers.Settings
 {
@@ -29,39 +29,39 @@ namespace Chambered.Api.Controllers.Settings
         IOptions<EmailConfiguration> emailConfiguration) : ControllerBase
     {
         private readonly IAppriseService _appriseService = appriseService;
-        
+
         private readonly IOptions<IdentityOptions> _identityOptions = identityOptions;
         private readonly IOptions<AppriseConfiguration> _appriseConfiguration = appriseConfiguration;
         private readonly IOptions<LoginConfiguration> _loginConfiguration = loginConfiguration;
         private readonly IOptions<EmailConfiguration> _emailConfiguration = emailConfiguration;
 
-    /// <summary>
-    /// Sends a test notification to the configured Apprise instance.
-    /// </summary>
-    [HttpPost("test-notification")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> SendTestNotification(
-    [FromBody] TestNotificationRequestDto request,
-    CancellationToken cancellationToken)
-    {
-    var message = new AppriseNotificationMessage
-    {
-        Title = string.IsNullOrWhiteSpace(request.Title) ? "Test Notification" : request.Title,
-        Body = string.IsNullOrWhiteSpace(request.Body) ? "This is a test notification from your .NET Service!" : request.Body,
-        Type = string.IsNullOrWhiteSpace(request.Type) ? "info" : request.Type,
-        Tags = request.Tags ?? Array.Empty<string>()
-    };
+        /// <summary>
+        /// Sends a test notification to the configured Apprise instance.
+        /// </summary>
+        [HttpPost("test-notification")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> SendTestNotification(
+        [FromBody] TestNotificationRequestDto request,
+        CancellationToken cancellationToken)
+        {
+            var message = new AppriseNotificationMessage
+            {
+                Title = string.IsNullOrWhiteSpace(request.Title) ? "Test Notification" : request.Title,
+                Body = string.IsNullOrWhiteSpace(request.Body) ? "This is a test notification from your .NET Service!" : request.Body,
+                Type = string.IsNullOrWhiteSpace(request.Type) ? "info" : request.Type,
+                Tags = request.Tags ?? Array.Empty<string>()
+            };
 
-    var success = await _appriseService.SendNotificationAsync(message, cancellationToken);
+            var success = await _appriseService.SendNotificationAsync(message, cancellationToken);
 
-    if (!success)
-    {
-        return StatusCode(500, new { Message = "Failed to send notification via Apprise." });
-    }
+            if (!success)
+            {
+                return StatusCode(500, new { Message = "Failed to send notification via Apprise." });
+            }
 
-    return Ok(new { Message = "Test notification sent successfully." });
-    }
+            return Ok(new { Message = "Test notification sent successfully." });
+        }
 
         /// <summary>
         /// Retrieves the active password complexity policy settings.

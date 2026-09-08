@@ -3,7 +3,7 @@ using BeatnikToolKit.GitVersioning.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace BeatnikToolKit.GitVersioning.Extensions
 {
     public static class GitVersioningExtensions
     {

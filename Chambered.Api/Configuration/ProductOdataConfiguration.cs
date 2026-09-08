@@ -1,6 +1,5 @@
 using Asp.Versioning;
 using Asp.Versioning.OData;
-using Chambered.Api.Dto;
 using Chambered.Api.Models;
 using Chambered.Data.Models;
 using Microsoft.OData.ModelBuilder;
@@ -38,7 +37,7 @@ namespace Chambered.Api.Configuration
             productColl.Function("GetProjectileMaterials").ReturnsCollection<EnumDto>();
             productColl.Function("GetProjectileProfiles").ReturnsCollection<EnumDto>();
             productColl.Function("GetSuppressorAttachmentTypes").ReturnsCollection<EnumDto>();
-            productColl.Function("GetSuppressorMaterials").ReturnsCollection<EnumDto>();         
+            productColl.Function("GetSuppressorMaterials").ReturnsCollection<EnumDto>();
 
             switch (apiVersion.MajorVersion)
             {

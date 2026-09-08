@@ -2,15 +2,9 @@ using Chambered.Core.Services;
 using Chambered.Core.Services.Models;
 using Chambered.Data;
 using Chambered.Data.Models;
-using Chambered.Infrastructure.LogMessages;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
 using Chambered.Infrastructure.Configuration;
+using Chambered.Infrastructure.LogMessages;
+using Microsoft.Extensions.Logging;
 
 namespace Chambered.Infrastructure.Services
 {

@@ -14,7 +14,7 @@ namespace Chambered.Api.Controllers;
 public class ManufacturersController(ChamberedDbContext db, IFaveIconService faveIconService) : ODataControllerBase<Manufacturer, int>(db)
 {
     private readonly IFaveIconService _faveIconService = faveIconService;
-        
+
     #region Navigation Properties
 
     [EnableQuery]
@@ -33,35 +33,35 @@ public class ManufacturersController(ChamberedDbContext db, IFaveIconService fav
     /// Retrieves the cached favicon for the specified manufacturer.
     /// </summary>
     [HttpGet]
-[Authorize]
-[ProducesResponseType(typeof(FaveIconDto), StatusCodes.Status200OK)]
-[ProducesResponseType(StatusCodes.Status404NotFound)]
-public async Task<IActionResult> GetFavicon([FromRoute] int key, CancellationToken cancellationToken)
-{
-    try
+    [Authorize]
+    [ProducesResponseType(typeof(FaveIconDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetFavicon([FromRoute] int key, CancellationToken cancellationToken)
     {
-        var mfg = await db.Manufacturers.FindAsync(new object[] { key }, cancellationToken);
-        if (mfg == null || string.IsNullOrWhiteSpace(mfg.WebPageUrl))
+        try
         {
-            return NotFound();
+            var mfg = await db.Manufacturers.FindAsync(new object[] { key }, cancellationToken);
+            if (mfg == null || string.IsNullOrWhiteSpace(mfg.WebPageUrl))
+            {
+                return NotFound();
+            }
+            var result = await _faveIconService.GetFaveIconAsync(mfg.WebPageUrl, cancellationToken);
+            if (result == null || result.ImageBytes.Length == 0)
+            {
+                return NotFound();
+            }
+            var dto = new FaveIconDto
+            {
+                Base64Data = Convert.ToBase64String(result.ImageBytes),
+                ContentType = result.ContentType
+            };
+            return Ok(dto);
         }
-        var result = await _faveIconService.GetFaveIconAsync(mfg.WebPageUrl, cancellationToken);
-        if (result == null || result.ImageBytes.Length == 0)
+        catch (OperationCanceledException)
         {
-            return NotFound();
+            return StatusCode(499); // Client Closed Request
         }
-        var dto = new FaveIconDto
-        {
-            Base64Data = Convert.ToBase64String(result.ImageBytes),
-            ContentType = result.ContentType
-        };
-        return Ok(dto);
     }
-    catch (OperationCanceledException)
-    {
-        return StatusCode(499); // Client Closed Request
-    }
-}
 
     #endregion
 }

@@ -16,7 +16,6 @@
 #endregion
 
 using BeatnikToolKit.EntityFramework.Utility;
-using Chambered.Data.Interfaces;
 
 namespace Chambered.Data.Models
 {

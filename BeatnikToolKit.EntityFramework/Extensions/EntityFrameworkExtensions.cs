@@ -12,7 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace BeatnikToolKit.EntityFramework.Extensions
 {
     /// <summary>
     /// Provides extension methods for Entity Framework database migrations and seeding operations.
@@ -21,7 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddIdentityServices<TContext, TUser>(this IServiceCollection services) where TContext : IdentityDbContext<TUser> where TUser : IdentityUser, new()
         {
-            services.AddOptions<FederatedAuthenticationConfiguration>().Configure<IConfiguration>((settings, configuration) =>{configuration.GetSection(nameof(FederatedAuthenticationConfiguration)).Bind(settings);});
+            services.AddOptions<FederatedAuthenticationConfiguration>().Configure<IConfiguration>((settings, configuration) => { configuration.GetSection(nameof(FederatedAuthenticationConfiguration)).Bind(settings); });
             services.AddOptions<IdentityConfiguration>().Configure<IConfiguration>((settings, configuration) => { configuration.GetSection(nameof(IdentityConfiguration)).Bind(settings); });
 
             services.AddScoped<IAuthenticationService, AuthenticationService<TUser>>();
@@ -31,7 +31,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             return services;
         }
-        
+
         /// <summary>
         /// Registers the generic current user service and configures custom claims mapping.
         /// </summary>

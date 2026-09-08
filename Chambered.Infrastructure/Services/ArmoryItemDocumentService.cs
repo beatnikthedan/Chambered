@@ -2,14 +2,9 @@ using Chambered.Core.Services;
 using Chambered.Data;
 using Chambered.Data.Enums;
 using Chambered.Data.Models;
+using Chambered.Infrastructure.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Chambered.Infrastructure.Configuration;
 
 namespace Chambered.Infrastructure.Services
 {

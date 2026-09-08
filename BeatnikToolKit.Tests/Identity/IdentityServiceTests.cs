@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace Chambered.Tests.Services.Identity
+namespace BeatnikToolKit.Tests.Identity
 {
     /// <summary>
     /// Contains unit tests for the <see cref="IdentityService"/> class.
@@ -38,7 +38,7 @@ namespace Chambered.Tests.Services.Identity
                 userStoreMock.Object, null, null, null, null, null, null, null, null);
 
             _loggerMock = new Mock<ILogger<IdentityService<IdentityDbContext<IdentityUser>, IdentityUser>>>();
-            _identityService = new IdentityService<IdentityDbContext<IdentityUser>, IdentityUser> (_userManagerMock.Object, _db, _loggerMock.Object);
+            _identityService = new IdentityService<IdentityDbContext<IdentityUser>, IdentityUser>(_userManagerMock.Object, _db, _loggerMock.Object);
         }
 
         /// <summary>

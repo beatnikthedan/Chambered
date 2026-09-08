@@ -1,18 +1,19 @@
 ﻿using Chambered.Data.Enums;
+using Chambered.Data.Relationships;
 
 namespace Chambered.Data.Models
 {
     /// <summary>
     /// Represents an external document (image or manual) for a product.
     /// </summary>
-    public class ArmoryItemDocument : ExternalDocument
+    public class ArmoryItemDocument : ExternalDocument, IHasArmoryItem
     {
         /// <summary>
         /// Gets or sets the document type classification.
         /// </summary>
         public ArmoryItemDocumentType Type { get; set; }
 
-        #region Product Relationship
+        #region IHasArmoryItem
 
         /// <inheritdoc/>
         public virtual int? ArmoryItemId { get; set; }

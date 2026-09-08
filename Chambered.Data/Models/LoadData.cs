@@ -34,7 +34,7 @@ namespace Chambered.Data.Models
         #region Load Data Specifications
 
         public string Notes { get; set; }
-        
+
         /// <summary>
         /// checked if the load has been verified or if it's a work in progress load
         /// </summary>

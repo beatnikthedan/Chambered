@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace Chambered.Tests.Services.Identity
+namespace BeatnikToolKit.Tests.Identity
 {
     /// <summary>
     /// Contains unit tests for the <see cref="FederatedAuthService"/> class.

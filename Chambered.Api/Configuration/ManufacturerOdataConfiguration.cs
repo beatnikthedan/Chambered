@@ -21,7 +21,7 @@ namespace Chambered.Api.Configuration
 
             var getFaviconFunc = manufacturer.Function("GetFavicon");
             getFaviconFunc.Returns<FaveIconDto>();
-            
+
             switch (apiVersion.MajorVersion)
             {
                 case 1:

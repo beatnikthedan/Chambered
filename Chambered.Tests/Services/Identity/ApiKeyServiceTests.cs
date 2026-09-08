@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using BeatnikToolKit.EntityFramework.Services.Identity.Dto;
 using Chambered.Data;
 using Chambered.Data.Models;
@@ -12,7 +7,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
+using System.Security.Claims;
 
 namespace Chambered.Tests.Services.Identity
 {
@@ -166,19 +161,19 @@ namespace Chambered.Tests.Services.Identity
                 new Claim(ClaimTypes.NameIdentifier, "user-123"),
                 new Claim(ClaimTypes.Role, "Read")
             }));
- 
+
             var createDto = new CreateApiKeyDto("Delegation Test", DateTime.UtcNow.AddDays(30), new List<string> { "Read", "Write" }, null);
- 
+
             _userManagerMock.Setup(u => u.GetUserAsync(claimsPrincipal))
                 .ReturnsAsync(user);
- 
+
             _userManagerMock.Setup(u => u.GetUserId(claimsPrincipal))
                 .Returns("user-123");
- 
+
             await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
                 _apiKeyService.CreateKeyAsync(createDto, claimsPrincipal));
         }
- 
+
         /// <summary>
         /// Verifies that GetAllSystemKeysAsync lists all active, non-revoked system keys for auditing purposes.
         /// </summary>
@@ -190,7 +185,7 @@ namespace Chambered.Tests.Services.Identity
                 new Claim(ClaimTypes.NameIdentifier, "admin-123"),
                 new Claim(ClaimTypes.Role, "Admin")
             }));
- 
+
             var apiKey1 = new ApiKey
             {
                 Id = 1,
@@ -201,7 +196,7 @@ namespace Chambered.Tests.Services.Identity
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(5)
             };
- 
+
             var apiKey2 = new ApiKey
             {
                 Id = 2,
@@ -212,15 +207,15 @@ namespace Chambered.Tests.Services.Identity
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(5)
             };
- 
+
             _db.ApiKeys.AddRange(apiKey1, apiKey2);
             await _db.SaveChangesAsync();
- 
+
             _userManagerMock.Setup(u => u.GetUserId(claimsPrincipal))
                 .Returns("admin-123");
- 
+
             var result = await _apiKeyService.GetAllSystemKeysAsync(claimsPrincipal);
- 
+
             Assert.NotNull(result);
             var list = result.ToList();
             Assert.Single(list);

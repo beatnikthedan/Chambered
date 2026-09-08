@@ -10,12 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
 using System.Net.Mail;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Chambered.Tests.Integration
 {
@@ -85,7 +80,7 @@ namespace Chambered.Tests.Integration
             services.AddScoped<AuthenticationService<ChamberedUser>>();
 
             _serviceProvider = services.BuildServiceProvider();
-            
+
             httpContext.RequestServices = _serviceProvider;
 
             _db = _serviceProvider.GetRequiredService<ChamberedDbContext>();
