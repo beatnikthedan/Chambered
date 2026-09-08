@@ -5,6 +5,7 @@ import "./Vaults.css";
 import VaultCard from "../Cards/VaultCard";
 import VaultDetails, { ExtendedVault } from "../Details/VaultDetails";
 import VaultForm from "../ModelForms/VaultForm";
+import VaultSpatialTree from "../components/VaultSpatialTree";
 import MasterActionBar from "../components/common/MasterActionBar";
 import SortableTable, { ColumnDef } from "../components/common/SortableTable";
 import SubmitButton from "../components/SubmitButton";
@@ -16,6 +17,7 @@ import {
 import {
   useGetVaults,
   usePostVaults,
+  usePatchVaultsFromKey,
   useDeleteVaultsFromKey,
   useGetProducts,
   getGetVaultsQueryKey,
@@ -248,7 +250,7 @@ export default function Vaults() {
         setQuickAddName("");
         setTimeout(() => {
           setQuickSaveSuccess(false);
-          setIsQuickSaving(false);
+          setIsSaving(false);
         }, 1500);
       },
       onError: (err: any) => {
@@ -257,6 +259,31 @@ export default function Vaults() {
       },
     },
   });
+
+  // Reparent drag-and-drop mutation
+  const patchVaultMutation = usePatchVaultsFromKey({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: getGetVaultsQueryKey(),
+        });
+      },
+      onError: (err: any) => {
+        alert("Failed to update vault hierarchy: " + (err?.message || "Unknown error"));
+      },
+    },
+  });
+
+  const handleReparentVault = async (vaultId: number, targetParentId: number | null) => {
+    try {
+      await patchVaultMutation.mutateAsync({
+        key: vaultId,
+        data: { parentVaultId: targetParentId },
+      });
+    } catch (err) {
+      console.error("Reparent error:", err);
+    }
+  };
 
   const handleQuickAddSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -328,6 +355,7 @@ export default function Vaults() {
           activeFilterCount={activeFilterCount}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          showTreeToggle={true}
           onAddNew={startAddVault}
           addNewLabel="Add Vault"
         />
@@ -437,7 +465,7 @@ export default function Vaults() {
                 }}
               />
             </>
-          ) : (
+          ) : viewMode === "card" ? (
             <div className="cards-grid">
               {processedVaults.length === 0 ? (
                 <div className="empty-state">No matching vaults found.</div>
@@ -452,6 +480,13 @@ export default function Vaults() {
                 ))
               )}
             </div>
+          ) : (
+            <VaultSpatialTree
+              vaults={processedVaults}
+              selectedVault={selectedVault}
+              onSelectVault={setSelectedVault}
+              onReparentVault={handleReparentVault}
+            />
           )}
         </div>
       </div>

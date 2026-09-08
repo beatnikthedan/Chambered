@@ -402,3 +402,262 @@
 .add-master-btn:hover {
   opacity: 0.9;
 }
+
+/* ==========================================================================
+   SPATIAL CONTAINER & TREE VIEW (FLUENT NESTING & DRAG-AND-DROP)
+   ========================================================================== */
+.vault-spatial-tree-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.spatial-root-dropzone {
+  border: 2px dashed color-mix(in srgb, var(--color-primary) 50%, transparent);
+  border-radius: var(--radius-lg);
+  padding: 14px 20px;
+  text-align: center;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.spatial-root-dropzone.is-active-mode {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  animation: pulse 1.5s infinite;
+}
+
+.spatial-root-dropzone.active-target {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  transform: scale(1.01);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.spatial-tree-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+}
+
+.spatial-vault-card {
+  --tint-percent: calc(6% + 7% * var(--depth, 0));
+  --border-percent: calc(15% + 10% * var(--depth, 0));
+  border-radius: 16px;
+  border: 2px solid color-mix(in srgb, var(--color-primary) var(--border-percent), rgba(255, 255, 255, 0.08));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-primary) var(--tint-percent), var(--bg-card)) 0%,
+    var(--bg-card) 100%
+  );
+  padding: 16px 18px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  box-shadow: 0 calc(4px + 2px * var(--depth, 0)) calc(16px + 4px * var(--depth, 0)) rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.spatial-vault-card.drop-eligible {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+
+.spatial-vault-card.is-dragging {
+  opacity: 0.35;
+  transform: scale(0.98);
+}
+
+.spatial-vault-card.drag-target-hover {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-primary) 45%, transparent) !important;
+  transform: scale(1.008);
+}
+
+.spatial-vault-card.selected-vault {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-primary) 40%, transparent) !important;
+}
+
+.spatial-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: grab;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 14px;
+  user-select: none;
+  -webkit-user-drag: element;
+}
+
+.spatial-node-header:active {
+  cursor: grabbing;
+}
+
+.spatial-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.spatial-drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.spatial-node-header:hover .spatial-drag-handle {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.spatial-vault-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.spatial-vault-card.selected-vault .spatial-vault-title {
+  color: var(--color-primary);
+}
+
+.spatial-product-tag {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.spatial-badges-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.spatial-move-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.spatial-quick-move-select {
+  background: var(--bg-input, rgba(0, 0, 0, 0.4));
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.spatial-quick-move-select:hover {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-color: var(--color-primary);
+}
+
+.spatial-arsenal-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+
+.spatial-count-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #9ca3af;
+}
+
+.spatial-contents-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.spatial-items-zone {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.spatial-item-chip {
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.spatial-item-chip:hover {
+  transform: translateY(-2px);
+  background: rgba(0, 0, 0, 0.65);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.item-chip-title {
+  font-weight: 700;
+  line-height: 1.2;
+  color: #f3f4f6;
+}
+
+.item-chip-sub {
+  font-size: 10px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+.spatial-children-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.spatial-empty-zone {
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+}

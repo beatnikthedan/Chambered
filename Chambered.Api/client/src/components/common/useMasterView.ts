@@ -13,12 +13,14 @@ export interface FilterGroupConfig {
   options: { label: string; value: string }[];
 }
 
+export type ViewMode = "table" | "card" | "tree";
+
 export interface UseMasterViewOptions<T> {
   data: T[];
   searchFields: (keyof T | string)[];
   defaultSortColumn?: string;
   defaultSortDirection?: SortDirection;
-  defaultViewMode?: "table" | "card";
+  defaultViewMode?: ViewMode;
   customFilter?: (item: T, activeFilters: Record<string, string[]>) => boolean;
 }
 
@@ -36,7 +38,7 @@ export function useMasterView<T extends Record<string, any>>({
     column: defaultSortColumn,
     direction: defaultSortDirection,
   });
-  const [viewMode, setViewMode] = useState<"table" | "card">(defaultViewMode);
+  const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
 
   // Active filter count (excluding empty arrays)
   const activeFilterCount = useMemo(() => {
