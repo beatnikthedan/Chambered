@@ -69,6 +69,332 @@ const extractSpecifications = (item: any): Record<string, any> => {
   return specs;
 };
 
+interface ProductCatalogSpecsCardProps {
+  product: any;
+  itemType: string;
+}
+
+const ProductCatalogSpecsCard: React.FC<ProductCatalogSpecsCardProps> = ({
+  product,
+  itemType,
+}) => {
+  if (!product) {
+    return (
+      <div
+        className="full-row"
+        style={{
+          backgroundColor: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: "var(--radius-md)",
+          padding: "16px",
+          color: "#94a3b8",
+          fontSize: "0.875rem",
+          fontStyle: "italic",
+        }}
+      >
+        No catalog product specifications available for this item.
+      </div>
+    );
+  }
+
+  const mfgName =
+    product.manufacturer?.name ||
+    product.manufacturerName ||
+    (typeof product.manufacturer === "string" ? product.manufacturer : null);
+
+  const caliberDisplay =
+    product.caliber?.name ||
+    product.caliberName ||
+    (typeof product.caliber === "string" ? product.caliber : null) ||
+    "N/A";
+
+  const specItemStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+  };
+
+  const specLabelStyle: React.CSSProperties = {
+    fontSize: "0.75rem",
+    fontWeight: 600,
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    color: "#94a3b8",
+  };
+
+  const specValueStyle: React.CSSProperties = {
+    fontSize: "0.875rem",
+    fontWeight: 500,
+    color: "#f8fafc",
+    wordBreak: "break-word",
+  };
+
+  const renderSpecs = () => {
+    switch (itemType) {
+      case "PewArmoryItem":
+        return (
+          <>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Category</span>
+              <span style={specValueStyle}>{product.pewPewCategory || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Action Type</span>
+              <span style={specValueStyle}>{product.actionType || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Caliber</span>
+              <span style={specValueStyle}>{caliberDisplay}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>NFA Classification</span>
+              <span style={specValueStyle}>
+                {product.isNfaItem ? "NFA Item" : "Standard / Non-NFA"}
+              </span>
+            </div>
+            {product.partNumber && (
+              <div style={specItemStyle}>
+                <span style={specLabelStyle}>Part Number / SKU</span>
+                <span style={specValueStyle} className="text-mono">
+                  {product.partNumber || product.sku}
+                </span>
+              </div>
+            )}
+            {product.modelNumber && (
+              <div style={specItemStyle}>
+                <span style={specLabelStyle}>Model Number</span>
+                <span style={specValueStyle} className="text-mono">
+                  {product.modelNumber}
+                </span>
+              </div>
+            )}
+            {product.upc && (
+              <div style={specItemStyle}>
+                <span style={specLabelStyle}>UPC</span>
+                <span style={specValueStyle} className="text-mono">
+                  {product.upc}
+                </span>
+              </div>
+            )}
+          </>
+        );
+
+      case "OpticArmoryItem":
+        const magDisplay =
+          product.minMagnification !== undefined && product.maxMagnification !== undefined
+            ? product.minMagnification === product.maxMagnification
+              ? `${product.minMagnification}x`
+              : `${product.minMagnification}x - ${product.maxMagnification}x`
+            : "N/A";
+        return (
+          <>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Optic Type</span>
+              <span style={specValueStyle}>{product.opticType || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Magnification</span>
+              <span style={specValueStyle}>{magDisplay}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Objective Lens</span>
+              <span style={specValueStyle}>
+                {product.objectiveDiameterMm ? `${product.objectiveDiameterMm} mm` : "N/A"}
+              </span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Reticle</span>
+              <span style={specValueStyle}>{product.reticle || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Adjustment Units</span>
+              <span style={specValueStyle}>{product.adjustmentUnits || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Tube Diameter</span>
+              <span style={specValueStyle}>{product.tubeDiameter || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Illumination</span>
+              <span style={specValueStyle}>
+                {product.isIlluminated ? "Illuminated" : "Non-Illuminated"}
+              </span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Battery Required</span>
+              <span style={specValueStyle}>
+                {product.hasBattery
+                  ? product.batteryType
+                    ? `Yes (${product.batteryType})`
+                    : "Yes"
+                  : "No"}
+              </span>
+            </div>
+          </>
+        );
+
+      case "SuppressorArmoryItem":
+        return (
+          <>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Caliber Compatibility</span>
+              <span style={specValueStyle}>{caliberDisplay}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Direct Thread Pitch</span>
+              <span style={specValueStyle}>{product.threadPitch || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Attachment Type</span>
+              <span style={specValueStyle}>{product.attachmentType || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Material</span>
+              <span style={specValueStyle}>{product.material || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Sound Reduction</span>
+              <span style={specValueStyle}>
+                {product.soundReductionDb ? `-${product.soundReductionDb} dB` : "N/A"}
+              </span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Full-Auto Rated</span>
+              <span style={specValueStyle}>{product.isFullAutoRated ? "Yes" : "No"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>User Serviceable</span>
+              <span style={specValueStyle}>{product.isUserServiceable ? "Yes" : "No"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>NFA Classification</span>
+              <span style={specValueStyle}>{product.isNfaItem ? "NFA Item" : "Standard"}</span>
+            </div>
+          </>
+        );
+
+      case "LightArmoryItem":
+        return (
+          <>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Luminous Output</span>
+              <span style={specValueStyle}>
+                {product.lumens ? `${product.lumens.toLocaleString()} lm` : "N/A"}
+              </span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Beam Intensity</span>
+              <span style={specValueStyle}>
+                {product.candela ? `${product.candela.toLocaleString()} cd` : "N/A"}
+              </span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Mount Type</span>
+              <span style={specValueStyle}>{product.mountType || "N/A"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Laser Emitter</span>
+              <span style={specValueStyle}>{product.laserColor || "None"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Remote Switch Port</span>
+              <span style={specValueStyle}>{product.hasRemoteSwitchPort ? "Yes" : "No"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Infrared (IR) Capable</span>
+              <span style={specValueStyle}>{product.isInfraredCapable ? "Yes" : "No"}</span>
+            </div>
+            <div style={specItemStyle}>
+              <span style={specLabelStyle}>Battery Required</span>
+              <span style={specValueStyle}>
+                {product.hasBattery
+                  ? product.batteryType
+                    ? `Yes (${product.batteryType})`
+                    : "Yes"
+                  : "No"}
+              </span>
+            </div>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div
+      className="full-row"
+      style={{
+        backgroundColor: "#1e293b",
+        border: "1px solid #334155",
+        borderRadius: "var(--radius-md)",
+        padding: "16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+        marginTop: "8px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "1px solid #334155",
+          paddingBottom: "8px",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontWeight: 600,
+              fontSize: "0.95rem",
+              color: "#e2e8f0",
+              letterSpacing: "0.5px",
+              textTransform: "uppercase",
+            }}
+          >
+            Product Catalog Specifications
+          </div>
+          {(product.name || mfgName) && (
+            <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "2px" }}>
+              {mfgName ? `${mfgName} ` : ""}
+              {product.name || ""}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: "12px",
+        }}
+      >
+        {renderSpecs()}
+      </div>
+
+      {product.description && (
+        <div
+          style={{
+            borderTop: "1px solid rgba(51, 65, 85, 0.6)",
+            paddingTop: "8px",
+            marginTop: "4px",
+            fontSize: "0.8rem",
+            color: "#94a3b8",
+            lineHeight: "1.4",
+          }}
+        >
+          <span style={{ fontWeight: 600, color: "#cbd5e1" }}>Description: </span>
+          {product.description}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function ArmoryItemForm({
   isOpen,
   onClose,
@@ -1280,6 +1606,12 @@ export default function ArmoryItemForm({
                           </div>
                         </div>
                       )}
+
+                      {/* Product Catalog Specs (Read-Only) */}
+                      <ProductCatalogSpecsCard
+                        product={selectedProduct}
+                        itemType={form.itemType}
+                      />
                     </>
                   )}
 
@@ -1382,6 +1714,12 @@ export default function ArmoryItemForm({
                           </div>
                         </div>
                       )}
+
+                      {/* Product Catalog Specs (Read-Only) */}
+                      <ProductCatalogSpecsCard
+                        product={selectedProduct}
+                        itemType={form.itemType}
+                      />
                     </>
                   )}
 
@@ -1465,6 +1803,12 @@ export default function ArmoryItemForm({
                           </div>
                         </div>
                       )}
+
+                      {/* Product Catalog Specs (Read-Only) */}
+                      <ProductCatalogSpecsCard
+                        product={selectedProduct}
+                        itemType={form.itemType}
+                      />
                     </>
                   )}
 
@@ -1534,6 +1878,12 @@ export default function ArmoryItemForm({
                           </div>
                         </div>
                       )}
+
+                      {/* Product Catalog Specs (Read-Only) */}
+                      <ProductCatalogSpecsCard
+                        product={selectedProduct}
+                        itemType={form.itemType}
+                      />
                     </>
                   )}
                 </div>
