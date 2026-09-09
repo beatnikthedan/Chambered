@@ -1,6 +1,8 @@
 using Asp.Versioning;
+using BeatnikToolKit.EntityFramework.Extensions;
 using BeatnikToolKit.EntityFramework.Services.Identity;
 using BeatnikToolKit.EntityFramework.Utility;
+using BeatnikToolKit.GitVersioning.Extensions;
 using BeatnikToolKit.Services;
 using Chambered.Api.BackgroundServices;
 using Chambered.Api.Mappings;
@@ -308,7 +310,7 @@ await app.ApplyMigrations<ChamberedDbContext>(async services =>
 
 
 
-// Custom API Request & ModelState Debug Logger Middleware
+//Custom API Request & ModelState Debug Logger Middleware
 // app.Use(async (context, next) =>
 // {
 //     if (context.Request.Path.Value != null && context.Request.Path.Value.Contains("/api/v1/"))

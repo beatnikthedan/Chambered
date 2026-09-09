@@ -258,11 +258,11 @@ export default function Vaults() {
         queryClient.invalidateQueries({
           queryKey: getGetVaultsQueryKey(),
         });
+        setIsQuickSaving(false);
         setQuickSaveSuccess(true);
         setQuickAddName("");
         setTimeout(() => {
           setQuickSaveSuccess(false);
-          setIsSaving(false);
         }, 1500);
       },
       onError: (err: any) => {

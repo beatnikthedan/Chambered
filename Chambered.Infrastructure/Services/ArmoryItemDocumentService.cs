@@ -11,7 +11,7 @@ namespace Chambered.Infrastructure.Services
     /// <summary>
     /// Armory Item concrete business service implementing generic document orchestration.
     /// </summary>
-    public class ArmoryItemDocumentService : DocumentServiceBase<ArmoryItemDocument, PewArmoryItem, ArmoryItemDocumentType>
+    public class ArmoryItemDocumentService : DocumentServiceBase<ArmoryItemDocument, ArmoryItem, ArmoryItemDocumentType>
     {
         public ArmoryItemDocumentService(
             ChamberedDbContext db,

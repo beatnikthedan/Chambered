@@ -45,13 +45,9 @@ namespace Chambered.Data.Utility
             return Convert.ToBase64String(combinedResult);
         }
 
-        private static string? DecryptPasscode(string? combinedBase64)
+        private static string DecryptPasscode(string? combinedBase64)
         {
-            if (combinedBase64 == null)
-            {
-                return null;
-            }
-            if (combinedBase64 == string.Empty)
+            if (string.IsNullOrEmpty(combinedBase64))
             {
                 return string.Empty;
             }

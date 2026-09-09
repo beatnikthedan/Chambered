@@ -15,10 +15,10 @@ import {
 } from "../api/endpoints";
 
 import {
-  INITIAL_FORM_STATE,
+  createDefaultProductForm,
   PRODUCT_STATIC_KEYS,
-  type FormState,
-} from "../types/productSchema";
+  type ProductFormData,
+} from "../types/formModels";
 
 export interface ProductFormProps {
   isOpen: boolean;
@@ -128,11 +128,11 @@ export default function ProductForm({
   const suppressorAttachmentTypes = enums?.suppressorAttachmentTypes || [];
   const suppressorMaterials = enums?.suppressorMaterials || [];
 
-  const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE);
+  const [form, setForm] = useState<ProductFormData>(createDefaultProductForm());
 
   // Helper to build initial form combined with dropdown lookup defaults
   const getInitialFormWithLookups = () => ({
-    ...INITIAL_FORM_STATE,
+    ...createDefaultProductForm(),
     manufacturerId: manufacturersList[0]?.id || "",
     caliberId: calibersList[0]?.id || "",
     pewPewCategory: pewPewCategories[0]?.id || "",

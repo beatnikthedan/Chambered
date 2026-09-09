@@ -994,8 +994,8 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  background-color: rgba(var(--color-primary-rgb), 0.04);
-  border: 1px dashed rgba(var(--color-primary-rgb), 0.4);
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1.5px dashed var(--color-primary);
   border-radius: var(--radius-md);
   padding: 12px 16px;
   margin-bottom: 16px;

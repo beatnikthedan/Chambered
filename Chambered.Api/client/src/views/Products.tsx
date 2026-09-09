@@ -42,8 +42,7 @@ export default function Products() {
     isLoading: productsLoading,
     error: productsError,
   } = useGetProducts({
-    expand:
-      "manufacturer,Chambered.Data.Models.PewPew/caliber,Chambered.Data.Models.Suppressor/caliber",
+    expand: "manufacturer",
   });
 
   const { data: manufacturersData, isLoading: mfgsLoading } =
@@ -316,19 +315,30 @@ export default function Products() {
 
   const handleQuickAddSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickAddModel.trim() || !quickAddMfgId) return;
+    if (!quickAddModel.trim()) return;
 
-    setIsQuickSaving(true);
+    const mfgId = parseInt(quickAddMfgId, 10);
+    if (!mfgId || isNaN(mfgId)) {
+      alert("Please select a valid manufacturer.");
+      return;
+    }
 
     const type = quickAddType || "Product";
     const payload: any = {};
     if (type !== "Product") {
       payload["@odata.type"] = `#Chambered.Data.Models.${type}`;
     }
+
+    if (type === "PewPew") {
+      payload.caliberId = calibersList[0]?.id || 1;
+    }
+
     payload.id = 0;
     payload.name = quickAddModel.trim();
     payload.partNumber = quickAddPartNo.trim();
-    payload.manufacturerId = parseInt(quickAddMfgId, 10) || 0;
+    payload.manufacturerId = mfgId;
+
+    setIsQuickSaving(true);
 
     try {
       await createProductMutation.mutateAsync({ data: payload });
@@ -409,6 +419,7 @@ export default function Products() {
                     className="quick-add-select"
                     value={quickAddMfgId}
                     onChange={(e) => setQuickAddMfgId(e.target.value)}
+                    required
                   >
                     <option value="">-- Select Manufacturer --</option>
                     {manufacturersList.map((m) => (
@@ -424,6 +435,7 @@ export default function Products() {
                     placeholder="Model Name"
                     value={quickAddModel}
                     onChange={(e) => setQuickAddModel(e.target.value)}
+                    required
                   />
 
                   <input

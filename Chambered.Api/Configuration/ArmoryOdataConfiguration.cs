@@ -22,6 +22,7 @@ namespace Chambered.Api.Configuration
             builder.EntityType<LightArmoryItem>().DerivesFrom<ArmoryItem>();
 
             var armoryColl = builder.EntityType<ArmoryItem>().Collection;
+            armoryColl.Function("GetArmoryItemTypes").ReturnsCollection<string>();
             armoryColl.Function("GetArmoryItemDocumentTypes").ReturnsCollection<EnumDto>();
             armoryColl.Function("GetItemConditions").ReturnsCollection<EnumDto>();
             armoryColl.Function("GetNfaFormTypes").ReturnsCollection<EnumDto>();

@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Chambered.Api.Models;
 using Chambered.Data;
 using Chambered.Data.Enums;
 using Chambered.Data.Models;
@@ -67,7 +68,15 @@ public class ArmoryItemsController : ODataControllerBase<ArmoryItem, int>
     [EnableQuery]
     [ProducesResponseType(typeof(IEnumerable<ArmoryItem>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetMountedAccessories([FromRoute] int key)
+    public async Task<ActionResult> GetAccessories([FromRoute] int key)
+    {
+        return await GetNavigationPropertyAsync(key);
+    }
+
+    [EnableQuery]
+    [ProducesResponseType(typeof(IEnumerable<ArmoryItemDocument>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetArmoryItemDocuments([FromRoute] int key)
     {
         return await GetNavigationPropertyAsync(key);
     }
@@ -90,5 +99,25 @@ public class ArmoryItemsController : ODataControllerBase<ArmoryItem, int>
     public IActionResult GetNfaFormTypes()
     {
         return Ok(GetEnumValues<NfaFormType>());
+    }
+
+    /// <summary>
+    /// Gets the list of available armory item types, including the base ArmoryItem type and all of its derived subclasses.
+    /// </summary>
+    /// <returns>A list of armory item type names.</returns>
+    [HttpGet]
+    [ProducesResponseType(typeof(ODataValue<string>), StatusCodes.Status200OK)]
+    public ActionResult<IEnumerable<string>> GetArmoryItemTypes()
+    {
+        var baseType = typeof(ArmoryItem);
+        var types = System.Reflection.Assembly.GetAssembly(baseType)!
+            .GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && (t == baseType || t.IsSubclassOf(baseType)))
+            .Select(t => t.Name)
+            .OrderBy(name => name == "ArmoryItem" ? 0 : 1)
+            .ThenBy(name => name)
+            .ToList();
+
+        return Ok(types);
     }
 }

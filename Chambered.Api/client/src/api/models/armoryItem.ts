@@ -15,16 +15,11 @@ import type { Vault } from './vault';
 
 export interface ArmoryItem {
   /** @nullable */
-  itemType?: string | null;
-  productId?: number;
-  product?: Product;
-  /** @nullable */
   name?: string | null;
   /** @nullable */
   description?: string | null;
   /** @nullable */
-  arsenalId?: number | null;
-  arsenal?: Arsenal;
+  itemType?: string | null;
   /** @nullable */
   purchasePrice?: number | null;
   /** @nullable */
@@ -33,17 +28,24 @@ export interface ArmoryItem {
   estimatedValue?: number | null;
   condition?: ItemCondition;
   /** @nullable */
+  productId?: number | null;
+  product?: Product;
+  /** @nullable */
+  arsenalId?: number | null;
+  arsenal?: Arsenal;
+  /** @nullable */
+  vaultId?: number | null;
+  /** @nullable */
   ownerId?: string | null;
   /** @nullable */
   beneficiaryId?: string | null;
-  /** @nullable */
-  vaultId?: number | null;
   /** @nullable */
   parentItemId?: number | null;
   /** @nullable */
   notesMarkdown?: string | null;
   /** @nullable */
-  armoryItemDocuments?: ArmoryItemDocument[] | null;
+  coverImageId?: number | null;
+  coverImage?: ArmoryItemDocument;
   id?: number;
   /** @nullable */
   created?: string | null;
@@ -53,10 +55,12 @@ export interface ArmoryItem {
   createdBy?: string | null;
   /** @nullable */
   modifiedBy?: string | null;
+  vault?: Vault;
   owner?: ChamberedUser;
   beneficiary?: ChamberedUser;
-  vault?: Vault;
   parentItem?: __ArmoryItem;
   /** @nullable */
-  mountedAccessories?: ArmoryItem[] | null;
+  accessories?: ArmoryItem[] | null;
+  /** @nullable */
+  armoryItemDocuments?: ArmoryItemDocument[] | null;
 }

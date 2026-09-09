@@ -38,7 +38,7 @@ function ProtectedRoute({ children }: RouteProps) {
     return (
       <div className="global-loading">
         <div className="spinner"></div>
-        <p>Opening vaults...</p>
+        <p>Loading Chambered...</p>
       </div>
     );
   }
@@ -57,7 +57,7 @@ function GuestRoute({ children }: RouteProps) {
     return (
       <div className="global-loading">
         <div className="spinner"></div>
-        <p>Opening vaults...</p>
+        <p>Loading Chambered...</p>
       </div>
     );
   }

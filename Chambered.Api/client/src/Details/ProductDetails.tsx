@@ -1,5 +1,5 @@
 import React from "react";
-import { PRODUCT_STATIC_KEYS } from "../types/productSchema";
+import { PRODUCT_STATIC_KEYS } from "../types/formModels";
 import type { Product } from "../api/models/product";
 
 export interface ExtendedProduct extends Omit<Product, "productType"> {

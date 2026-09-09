@@ -28,12 +28,13 @@ export interface Vault {
   /** @nullable */
   batteryExpirationDate?: string | null;
   /** @nullable */
-  productId?: number | null;
-  /** @nullable */
   name?: string | null;
   /** @nullable */
   description?: string | null;
-  arsenalId?: number;
+  /** @nullable */
+  productId?: number | null;
+  /** @nullable */
+  arsenalId?: number | null;
   currentCapacity?: number;
   hasDehumidifier?: boolean;
   /** @nullable */
