@@ -375,6 +375,7 @@ export default function ProductForm({
         targetForm.material || suppressorMaterials[0]?.id || "Unknown";
       payload.soundReductionDb =
         parseInt(targetForm.soundReductionDb as string, 10) || 0;
+      payload.isNfaItem = !!targetForm.isNfaItem;
       payload.isFullAutoRated = !!targetForm.isFullAutoRated;
       payload.isUserServiceable = !!targetForm.isUserServiceable;
     } else if (type === "PewPewLight") {
@@ -2147,7 +2148,7 @@ export default function ProductForm({
               {activeTab === "specifications" && (
                 <div className="specifications-editor-container">
                   <div className="spec-info-card">
-                    <h4>💡 User Custom Specifications</h4>
+                    <h4>User Custom Specifications</h4>
                     <p>
                       You can store arbitrary metadata parameters that don't
                       belong to predefined schemas. These fields compile

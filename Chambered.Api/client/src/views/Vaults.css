@@ -61,7 +61,7 @@
 
 .catalog-list-card.selected {
   border-color: var(--color-primary);
-  background-color: rgba(240, 98, 146, 0.05);
+  background-color: var(--bg-selected);
 }
 
 .card-badge {
@@ -258,134 +258,9 @@
   outline: none;
 }
 
-/* MODAL STYLES */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-
-
-.modal-title-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.modal-title-bar h3 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.modal-close-x-btn {
-  background: transparent;
-  border: none;
-  font-size: 24px;
-  color: var(--text-muted);
-  cursor: pointer;
-  line-height: 1;
-  padding: 0 4px;
-}
-
-.modal-close-x-btn:hover {
-  color: var(--text-primary);
-}
-
-.modal-tabs-header-row {
-  display: flex;
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-input);
-  padding: 0 16px;
-  gap: 8px;
-}
-
-.tab-btn {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 12px 16px;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tab-btn:hover:not(:disabled) {
-  color: var(--text-primary);
-}
-
-.tab-btn.active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
-  font-weight: 600;
-}
-
-.tab-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.modal-tabs-body-content {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.form-grid-columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.form-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-item.full-row {
-  grid-column: 1 / -1;
-}
-
-.form-item label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.form-item input,
-.form-item select,
-.form-item textarea {
-  background-color: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 8px 12px;
-  color: var(--text-primary);
-  font-size: 13px;
-  box-sizing: border-box;
-}
-
-.form-item input:focus,
-.form-item select:focus,
-.form-item textarea:focus {
-  border-color: var(--color-primary);
-  outline: none;
-}
-
-.req {
-  color: #f87171;
-  margin-left: 2px;
-}
+/* ==========================================================================
+   VAULT ACTION BUTTONS
+   ========================================================================== */
 
 .add-master-btn {
   background-color: var(--color-primary);

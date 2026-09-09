@@ -54,7 +54,7 @@
 .search-input:focus {
   border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(240, 98, 146, 0.15);
+  box-shadow: 0 0 0 2px var(--border-selected);
 }
 
 /* POPOVER TRIGGER BUTTONS */
@@ -87,7 +87,7 @@
 .control-popover-btn.active-filters {
   border-color: var(--color-primary);
   color: var(--color-primary);
-  background-color: rgba(240, 98, 146, 0.05);
+  background-color: var(--bg-selected);
 }
 
 .filter-badge {
@@ -237,7 +237,7 @@
 
 .sort-option-btn.active {
   color: var(--color-primary);
-  background-color: rgba(240, 98, 146, 0.06);
+  background-color: var(--bg-selected);
 }
 
 .popover-divider {
@@ -418,8 +418,10 @@
 }
 
 .catalog-list-card.selected {
-  background-color: rgba(240, 98, 146, 0.03);
-  border-color: var(--color-primary);
+  background-color: var(--bg-selected);
+  border: 2px solid var(--color-primary);
+  border-left: 10px solid var(--color-primary);
+  box-shadow: -4px 0 16px -2px rgba(204, 164, 59, 0.35);
 }
 
 .catalog-list-card h4 {
@@ -582,6 +584,9 @@
 /* DETAIL VIEW BODY */
 .detail-view-body {
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow-y: auto;
   padding: 24px 20px;
 }

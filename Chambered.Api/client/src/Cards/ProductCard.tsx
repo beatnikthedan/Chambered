@@ -36,6 +36,16 @@ export default function ProductCard({
         backgroundSize: "cover",
         backgroundPosition: "center",
         transition: "all 0.2s ease-in-out",
+        backgroundColor: isSelected ? "var(--bg-selected)" : undefined,
+        border: isSelected
+          ? "2px solid var(--color-primary)"
+          : "1px solid var(--border-color)",
+        borderLeft: isSelected
+          ? "10px solid var(--color-primary)"
+          : "1px solid var(--border-color)",
+        boxShadow: isSelected
+          ? "-4px 0 16px -2px rgba(204, 164, 59, 0.35)"
+          : undefined,
       }}
     >
       <span className="card-badge">{item.productType}</span>

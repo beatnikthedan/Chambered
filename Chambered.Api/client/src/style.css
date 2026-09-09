@@ -12,6 +12,9 @@
   
   --color-accent: #d27c2d;     /* Bullet copper accent */
   --color-accent-hover: #ea8b39;
+  --color-accent-rgb: 210, 124, 45;
+  --bg-selected: rgba(210, 124, 45, 0.08);
+  --border-selected: rgba(210, 124, 45, 0.45);
   --color-danger: #ef4444;     /* Red alert status */
   --color-success: #10b981;    /* Safe active green */
   --color-info: #3b82f6;       /* Blue indicators */
@@ -120,15 +123,56 @@ button, .btn {
   border-color: var(--color-primary);
 }
 
-.btn-danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--color-danger);
-  border-color: rgba(239, 68, 68, 0.3);
+.btn-danger, .delete-btn {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: var(--color-danger) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
-.btn-danger:hover {
-  background: var(--color-danger);
-  color: white;
+.btn-danger:hover, .delete-btn:hover {
+  background: var(--color-danger) !important;
+  color: white !important;
 }
+
+/* Redesigned Audit Footer */
+.audit-footer-card {
+  margin-top: auto !important;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.audit-footer-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.audit-footer-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.audit-footer-value {
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.audit-footer-user {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
 
 /* Standard Glassmorphic Panel style */
 .panel {
@@ -224,7 +268,11 @@ input:focus, select:focus, textarea:focus {
 
   --color-primary: #61afef;
   --color-primary-hover: #4897fb;
+  --color-primary-rgb: 97, 175, 239;
   --color-accent: #e5c07b;
+  --color-accent-rgb: 229, 192, 123;
+  --bg-selected: rgba(229, 192, 123, 0.08);
+  --border-selected: rgba(229, 192, 123, 0.45);
   --color-danger: #f06345;
   --color-success: #4cd6b9;
 
@@ -247,7 +295,11 @@ input:focus, select:focus, textarea:focus {
 
   --color-primary: #f5d261;
   --color-primary-hover: #e8c44d;
+  --color-primary-rgb: 245, 210, 97;
   --color-accent: #e8a04c;
+  --color-accent-rgb: 232, 160, 76;
+  --bg-selected: rgba(232, 160, 76, 0.08);
+  --border-selected: rgba(232, 160, 76, 0.45);
   --color-danger: #7c7c7c;
   --color-success: #f5d261;
 
@@ -270,7 +322,11 @@ input:focus, select:focus, textarea:focus {
 
   --color-primary: #4fd1c5;
   --color-primary-hover: #38b2ac;
+  --color-primary-rgb: 79, 209, 197;
   --color-accent: #60a5fa;
+  --color-accent-rgb: 96, 165, 250;
+  --bg-selected: rgba(96, 165, 250, 0.08);
+  --border-selected: rgba(96, 165, 250, 0.45);
   --color-danger: #fc8181;
   --color-success: #4fd1c5;
 
@@ -293,7 +349,11 @@ input:focus, select:focus, textarea:focus {
 
   --color-primary: #8b7355;
   --color-primary-hover: #9c8166;
-  --color-accent: #6b5542;
+  --color-primary-rgb: 139, 115, 85;
+  --color-accent: #c49a6c;
+  --color-accent-rgb: 196, 154, 108;
+  --bg-selected: rgba(196, 154, 108, 0.09);
+  --border-selected: rgba(196, 154, 108, 0.45);
   --color-danger: #a95e50;
   --color-success: #8b7355;
 
@@ -316,7 +376,11 @@ input:focus, select:focus, textarea:focus {
 
   --color-primary: #8c8c8c;
   --color-primary-hover: #999999;
-  --color-accent: #666666;
+  --color-primary-rgb: 140, 140, 140;
+  --color-accent: #a0aec0;
+  --color-accent-rgb: 160, 174, 192;
+  --bg-selected: rgba(160, 174, 192, 0.08);
+  --border-selected: rgba(160, 174, 192, 0.45);
   --color-danger: #5a5a5a;
   --color-success: #7c7c7c;
 
@@ -339,7 +403,11 @@ input:focus, select:focus, textarea:focus {
 
   --color-primary: #6b8c55;
   --color-primary-hover: #7aa366;
-  --color-accent: #4f6348;
+  --color-primary-rgb: 107, 140, 85;
+  --color-accent: #c2a649;
+  --color-accent-rgb: 194, 166, 73;
+  --bg-selected: rgba(194, 166, 73, 0.09);
+  --border-selected: rgba(194, 166, 73, 0.45);
   --color-danger: #a95e50;
   --color-success: #5a7a4d;
 
@@ -354,7 +422,6 @@ input:focus, select:focus, textarea:focus {
 
 /* 
     Single unified layout style for all modal boxes across views.
-   Using 'height: auto' allows the modal to shrink to fit the content,
    while 'max-height' prevents the modal from overflowing the screen.
 */
 .armory-center-modal,
@@ -605,10 +672,160 @@ input:focus, select:focus, textarea:focus {
 }
 
 .app-table tr.table-row-item.selected {
-  background-color: rgba(240, 98, 146, 0.04);
+  background-color: var(--bg-selected);
+  box-shadow: inset 4px 0 0 var(--border-selected);
+  outline: 1px solid var(--border-selected);
+  outline-offset: -1px;
 }
 
 .app-table tr.table-row-item.selected .bold-name-cell {
   color: var(--color-primary);
+}
+
+/* ==========================================================================
+   FORM SECTION DIVIDERS & INTERFACE CARDS
+   ========================================================================== */
+
+.form-section-divider {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 6px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.form-section-divider::before,
+.form-section-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px dotted var(--border-color);
+}
+
+.subclass-interface-card {
+  grid-column: 1 / -1;
+  background-color: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subclass-interface-card-header {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.subclass-interface-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* ==========================================================================
+   SPECIFICATIONS DICTIONARY EDITOR
+   ========================================================================== */
+
+.specifications-editor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.spec-info-card {
+  background-color: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.spec-info-card h4 {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.spec-info-card p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.specs-editor-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.specs-headers {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.spec-editor-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px;
+  gap: 12px;
+  align-items: center;
+}
+
+.remove-spec-btn {
+  background-color: rgba(255, 82, 82, 0.05);
+  border: 1px solid rgba(255, 82, 82, 0.2);
+  color: #ff5252;
+  border-radius: var(--radius-md);
+  padding: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.remove-spec-btn:hover {
+  background-color: rgba(255, 82, 82, 0.15);
+}
+
+.add-spec-btn {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.add-spec-btn:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: var(--color-primary);
+  color: var(--text-primary);
+}
+
+.no-specs-text {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
 }
 

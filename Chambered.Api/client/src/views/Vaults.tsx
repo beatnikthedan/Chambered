@@ -76,9 +76,23 @@ export default function Vaults() {
       const fullSecurityProduct = securityProductsList.find(
         (p) => p.id === vault.productId,
       );
+      const prod = fullSecurityProduct || vault.product;
+      const makeName = prod?.manufacturer?.name || "";
+      const modelName = prod?.name || "";
+      const arsenalName = vault.arsenal?.name || "";
+      const parentVaultName =
+        vault.parentVault?.name ||
+        (vault.parentVaultId ? `Vault #${vault.parentVaultId}` : "None (Root)");
+      const itemsCount = vault.armoryItems?.length || 0;
+
       return {
         ...vault,
-        product: fullSecurityProduct || vault.product,
+        product: prod,
+        make: makeName,
+        model: modelName,
+        arsenalName: arsenalName,
+        parentVaultName: parentVaultName,
+        itemsCount: itemsCount,
       };
     });
   }, [rawVaultsList, securityProductsList]);
@@ -105,16 +119,54 @@ export default function Vaults() {
         })),
       });
     }
-    if (securityProductsList.length > 0) {
+
+    const uniqueMakes = Array.from(
+      new Set(
+        securityProductsList
+          .map((p) => p.manufacturer?.name)
+          .filter(Boolean) as string[],
+      ),
+    ).sort();
+    if (uniqueMakes.length > 0) {
       groups.push({
-        id: "productId",
-        label: "Security Model",
-        options: securityProductsList.map((p) => ({
-          label: `${p.manufacturer?.name ? `${p.manufacturer.name} ` : ""}${p.name}`,
-          value: String(p.id),
+        id: "make",
+        label: "Make",
+        options: uniqueMakes.map((m) => ({
+          label: m,
+          value: m,
         })),
       });
     }
+
+    if (securityProductsList.length > 0) {
+      groups.push({
+        id: "model",
+        label: "Model",
+        options: securityProductsList.map((p) => ({
+          label: p.name || "",
+          value: p.name || "",
+        })),
+      });
+    }
+
+    groups.push({
+      id: "parentVault",
+      label: "Parent Vault",
+      options: [
+        { label: "Root Vaults", value: "__ROOT__" },
+        { label: "Sub-Vaults", value: "__SUB__" },
+      ],
+    });
+
+    groups.push({
+      id: "storedItems",
+      label: "Stored Items",
+      options: [
+        { label: "Contains Items", value: "has_items" },
+        { label: "Empty (0 items)", value: "empty" },
+      ],
+    });
+
     return groups;
   }, [store.arsenals, securityProductsList]);
 
@@ -133,17 +185,56 @@ export default function Vaults() {
     processedItems: processedVaults,
   } = useMasterView<ExtendedVault>({
     data: vaultsList,
-    searchFields: ["name", "description"],
+    searchFields: [
+      "name",
+      "description",
+      "make",
+      "model",
+      "arsenalName",
+      "parentVaultName",
+    ],
     defaultSortColumn: "name",
     defaultSortDirection: "asc",
-    customFilter: (item, filters) => {
+    customFilter: (item: any, filters) => {
       if (filters.arsenalId && filters.arsenalId.length > 0) {
         if (!filters.arsenalId.includes(String(item.arsenalId))) {
           return false;
         }
       }
-      if (filters.productId && filters.productId.length > 0) {
-        if (!item.productId || !filters.productId.includes(String(item.productId))) {
+      if (filters.make && filters.make.length > 0) {
+        const itemMake = item.product?.manufacturer?.name || item.make;
+        if (!itemMake || !filters.make.includes(itemMake)) {
+          return false;
+        }
+      }
+      if (filters.model && filters.model.length > 0) {
+        const itemModel = item.product?.name || item.model;
+        if (!itemModel || !filters.model.includes(itemModel)) {
+          return false;
+        }
+      }
+      if (filters.parentVault && filters.parentVault.length > 0) {
+        if (filters.parentVault.includes("__ROOT__") && item.parentVaultId) {
+          if (!filters.parentVault.includes("__SUB__")) return false;
+        }
+        if (filters.parentVault.includes("__SUB__") && !item.parentVaultId) {
+          if (!filters.parentVault.includes("__ROOT__")) return false;
+        }
+      }
+      if (filters.storedItems && filters.storedItems.length > 0) {
+        const count = item.armoryItems?.length || 0;
+        if (
+          filters.storedItems.includes("has_items") &&
+          count === 0 &&
+          !filters.storedItems.includes("empty")
+        ) {
+          return false;
+        }
+        if (
+          filters.storedItems.includes("empty") &&
+          count > 0 &&
+          !filters.storedItems.includes("has_items")
+        ) {
           return false;
         }
       }
@@ -179,17 +270,18 @@ export default function Vaults() {
         },
       },
       {
-        key: "product",
-        header: "Security Model",
-        render: (v) =>
-          v.product ? (
-            <span>
-              {v.product.manufacturer?.name ? `${v.product.manufacturer.name} ` : ""}
-              {v.product.name}
-            </span>
-          ) : (
-            <span className="text-muted">—</span>
-          ),
+        key: "make",
+        header: "Make",
+        render: (v) => (
+          <span>{v.product?.manufacturer?.name || "—"}</span>
+        ),
+      },
+      {
+        key: "model",
+        header: "Model",
+        render: (v) => (
+          <span>{v.product?.name || "—"}</span>
+        ),
       },
       {
         key: "itemsCount",
@@ -209,7 +301,8 @@ export default function Vaults() {
         header: "Parent Vault",
         render: (v) => (
           <span className="text-muted">
-            {v.parentVault?.name || (v.parentVaultId ? `Vault #${v.parentVaultId}` : "None (Root)")}
+            {v.parentVault?.name ||
+              (v.parentVaultId ? `Vault #${v.parentVaultId}` : "None (Root)")}
           </span>
         ),
       },

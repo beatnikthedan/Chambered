@@ -281,7 +281,7 @@ export default function VaultForm({
         {/* Header */}
         <div className="modal-title-bar">
           <div className="title-left">
-            <h3>{isEditMode ? `Edit Vault: ${form.name}` : "Add New Vault"}</h3>
+            <h3>{isEditMode ? "Edit Vault" : "Add New Vault"}</h3>
           </div>
           <button
             type="button"
@@ -299,7 +299,7 @@ export default function VaultForm({
             className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
             onClick={() => setActiveTab("general")}
           >
-            General
+            Vault Details
           </button>
           <button
             type="button"
@@ -321,14 +321,29 @@ export default function VaultForm({
 
         {/* Tab Body */}
         {isLoading ? (
-          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+          <div className="loading-state" style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
             Loading vault details...
           </div>
         ) : (
-          <form onSubmit={handleSave} className="modal-tabs-body-content">
-            {activeTab === "general" && (
-              <div className="tab-pane">
-                <div className="form-grid-columns">
+          <form
+            onSubmit={handleSave}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              flex: 1,
+              overflow: "hidden",
+              margin: 0,
+            }}
+          >
+            <div className="modal-tabs-body-content">
+              {saveSuccess && (
+                <div className="detail-save-toast">
+                  ✓ Vault saved successfully
+                </div>
+              )}
+
+              {activeTab === "general" && (
+                <div className="form-grid">
                   <div className="form-item full-row">
                     <label>Catalog Security Product Link</label>
                     <select
@@ -413,18 +428,16 @@ export default function VaultForm({
                       <option value="">None (Top-Level Container)</option>
                       {eligibleParentVaults.map((v) => (
                         <option key={v.id} value={v.id}>
-                          🔗 {v.name}
+                          {v.name}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === "security" && (
-              <div className="tab-pane">
-                <div className="form-grid-columns">
+              {activeTab === "security" && (
+                <div className="form-grid">
                   <div className="form-item">
                     <label>Passcode / Combination</label>
                     <div className="passcode-input-wrapper" style={{ display: "flex", gap: "8px" }}>
@@ -446,7 +459,7 @@ export default function VaultForm({
                         onClick={() => setShowPassword((prev) => !prev)}
                         style={{ padding: "0 12px" }}
                       >
-                        {showPassword ? "Hide 🔒" : "Show 👁️"}
+                        {showPassword ? "Hide" : "Show"}
                       </button>
                     </div>
                   </div>
@@ -521,11 +534,9 @@ export default function VaultForm({
                     setForm={setForm as any}
                   />
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === "inventory" && (
-              <div className="tab-pane">
+              {activeTab === "inventory" && (
                 <div className="vault-inventory-wrapper">
                   <h4 style={{ marginBottom: "12px" }}>Assigned Armory Items</h4>
                   {form.armoryItems && form.armoryItems.length > 0 ? (
@@ -555,11 +566,11 @@ export default function VaultForm({
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Footer */}
-            <div className="modal-footer-row-container" style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+            <div className="modal-footer-row-container">
               <button
                 type="button"
                 className="btn btn-secondary"

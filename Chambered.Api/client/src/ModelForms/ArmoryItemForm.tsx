@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStore } from "../StoreContext";
 import SubmitButton from "../components/SubmitButton";
 import ArmoryItemDocumentsTable from "../components/ArmoryItemDocumentsTable";
+import MarkdownRenderer from "../components/MarkdownRenderer";
 import {
   useGetArmoryItemsFromKey,
   useGetArmoryItems,
@@ -12,6 +13,7 @@ import {
   useGetVaults,
   useGetUsersUsers,
   useGetArmoryItemsArmoryItemTypes,
+  useGetArmoryItemDocuments,
 } from "../api/endpoints";
 import {
   createDefaultArmoryItemForm,
@@ -23,6 +25,7 @@ export interface ArmoryItemFormProps {
   isOpen: boolean;
   onClose: () => void;
   armoryItemId: number | null; // null for Add, number for Edit
+  initialItem?: any;
   onSaved?: (savedItem: any) => void;
 }
 
@@ -52,6 +55,10 @@ const extractSpecifications = (item: any): Record<string, any> => {
         "actionType",
         "storageLocation",
         "isNfaItem",
+        "arsenalName",
+        "vaultName",
+        "productName",
+        "manufacturerName",
       ].includes(key) &&
       !key.startsWith("@odata.") &&
       !key.startsWith("odata.")
@@ -66,6 +73,7 @@ export default function ArmoryItemForm({
   isOpen,
   onClose,
   armoryItemId,
+  initialItem,
   onSaved,
 }: ArmoryItemFormProps) {
   const queryClient = useQueryClient();
@@ -77,6 +85,7 @@ export default function ArmoryItemForm({
   const [activeTab, setActiveTab] = useState<string>("general");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [selectedChildToAttach, setSelectedChildToAttach] = useState<string>("");
 
   const [form, setForm] = useState<ArmoryItemFormData>(createDefaultArmoryItemForm());
 
@@ -88,7 +97,14 @@ export default function ArmoryItemForm({
   // Fetch lookups
   const { data: armoryTypesData } = useGetArmoryItemsArmoryItemTypes();
   const armoryTypes = useMemo(() => {
-    return (armoryTypesData?.data?.value || []) as string[];
+    const raw = (armoryTypesData?.data?.value || armoryTypesData?.data || []) as string[];
+    if (raw && raw.length > 0) return raw;
+    return [
+      "PewArmoryItem",
+      "OpticArmoryItem",
+      "SuppressorArmoryItem",
+      "LightArmoryItem",
+    ];
   }, [armoryTypesData]);
 
   const { data: productsData } = useGetProducts({
@@ -102,25 +118,38 @@ export default function ArmoryItemForm({
   // Filter products by selected ArmoryItem type
   const filteredProductsList = useMemo(() => {
     if (!productsList || productsList.length === 0) return [];
-    if (!form.itemType || form.itemType === "ArmoryItem") return productsList;
-    if (form.itemType === "PewArmoryItem") {
-      return productsList.filter(
-        (p) => p.productType === "PewPew" || p.productType === "Pew",
+    let list = productsList;
+    if (form.itemType && form.itemType !== "ArmoryItem") {
+      if (form.itemType === "PewArmoryItem") {
+        list = productsList.filter(
+          (p) =>
+            p.productType === "PewPew" ||
+            p.productType === "Pew" ||
+            p.productType === "Firearm",
+        );
+      } else if (form.itemType === "OpticArmoryItem") {
+        list = productsList.filter((p) => p.productType === "Optic");
+      } else if (form.itemType === "SuppressorArmoryItem") {
+        list = productsList.filter((p) => p.productType === "Suppressor");
+      } else if (form.itemType === "LightArmoryItem") {
+        list = productsList.filter(
+          (p) => p.productType === "Light" || p.productType === "PewPewLight",
+        );
+      }
+    }
+    if (form.productId) {
+      const selected = productsList.find(
+        (p) => String(p.id) === String(form.productId),
       );
+      if (
+        selected &&
+        !list.some((p) => String(p.id) === String(form.productId))
+      ) {
+        list = [selected, ...list];
+      }
     }
-    if (form.itemType === "OpticArmoryItem") {
-      return productsList.filter((p) => p.productType === "Optic");
-    }
-    if (form.itemType === "SuppressorArmoryItem") {
-      return productsList.filter((p) => p.productType === "Suppressor");
-    }
-    if (form.itemType === "LightArmoryItem") {
-      return productsList.filter(
-        (p) => p.productType === "Light" || p.productType === "PewPewLight",
-      );
-    }
-    return productsList;
-  }, [productsList, form.itemType]);
+    return list;
+  }, [productsList, form.itemType, form.productId]);
 
   const { data: vaultsData } = useGetVaults();
   const vaultsList = useMemo(() => {
@@ -143,12 +172,26 @@ export default function ArmoryItemForm({
     return list.filter((i) => !armoryItemId || i.id !== armoryItemId);
   }, [allItemsData, armoryItemId]);
 
-  // Fetch single item if in edit mode
+  const attachedAccessories = useMemo(() => {
+    const raw = allItemsData?.data;
+    const list = (Array.isArray(raw) ? raw : (raw as any)?.value || []) as any[];
+    if (!form.id) return [];
+    return list.filter((i) => i.parentItemId === form.id);
+  }, [allItemsData, form.id]);
+
+  const availableToAttach = useMemo(() => {
+    const raw = allItemsData?.data;
+    const list = (Array.isArray(raw) ? raw : (raw as any)?.value || []) as any[];
+    if (!form.id) return [];
+    return list.filter((i) => i.id !== form.id && i.parentItemId !== form.id);
+  }, [allItemsData, form.id]);
+
+  // Fetch single item if in edit mode (expand product for trait flags)
   const { data: itemDetailsData, isLoading: isDetailsLoading } =
     useGetArmoryItemsFromKey(
       armoryItemId || 0,
       {
-        expand: "product($expand=manufacturer),vault,arsenal,owner,beneficiary,armoryItemDocuments",
+        expand: "product",
       },
       {
         query: {
@@ -157,11 +200,70 @@ export default function ArmoryItemForm({
       },
     );
 
+  // Directly fetch documents for immediate reactivity upon upload/delete
+  const { data: itemDocumentsData } = useGetArmoryItemDocuments(
+    {
+      filter: `armoryItemId eq ${armoryItemId}`,
+    },
+    {
+      query: {
+        enabled: isOpen && isEditMode && !!armoryItemId,
+      },
+    },
+  );
+
   const itemDocuments = useMemo(() => {
-    if (!itemDetailsData?.data) return [];
-    const data = itemDetailsData.data as any;
-    return data.armoryItemDocuments || [];
-  }, [itemDetailsData]);
+    if (itemDocumentsData?.data) {
+      const raw = itemDocumentsData.data;
+      return (Array.isArray(raw) ? raw : (raw as any)?.value || []) as any[];
+    }
+    if (itemDetailsData?.data) {
+      const data = itemDetailsData.data as any;
+      return data.armoryItemDocuments || [];
+    }
+    if (initialItem?.armoryItemDocuments) {
+      return initialItem.armoryItemDocuments || [];
+    }
+    return [];
+  }, [itemDocumentsData, itemDetailsData, initialItem]);
+
+  // Selected catalog product model for interface checks (e.g. isNfaItem, hasBattery)
+  const selectedProduct = useMemo(() => {
+    if (form.productId) {
+      const p = productsList.find(
+        (prod) => String(prod.id) === String(form.productId),
+      );
+      if (p) return p;
+    }
+    const currentDataSource = itemDetailsData?.data || initialItem;
+    if (currentDataSource && (currentDataSource as any).product) {
+      return (currentDataSource as any).product;
+    }
+    return null;
+  }, [productsList, form.productId, itemDetailsData, initialItem]);
+
+  // Trait flag resolution with product and dataSource fallbacks
+  const isNfaItem = useMemo(() => {
+    const currentDataSource = itemDetailsData?.data || initialItem;
+    return Boolean(
+      selectedProduct?.isNfaItem ||
+      (currentDataSource as any)?.product?.isNfaItem ||
+      (currentDataSource as any)?.isNfaItem ||
+      (initialItem as any)?.product?.isNfaItem ||
+      (initialItem as any)?.isNfaItem
+    );
+  }, [selectedProduct, itemDetailsData, initialItem]);
+
+  const hasBattery = useMemo(() => {
+    const currentDataSource = itemDetailsData?.data || initialItem;
+    return Boolean(
+      selectedProduct?.hasBattery ||
+      (currentDataSource as any)?.product?.hasBattery ||
+      (currentDataSource as any)?.hasBattery ||
+      (initialItem as any)?.product?.hasBattery ||
+      (initialItem as any)?.hasBattery
+    );
+  }, [selectedProduct, itemDetailsData, initialItem]);
 
   // Enums
   const itemConditions = enums?.itemConditions || [];
@@ -175,17 +277,49 @@ export default function ArmoryItemForm({
       setActiveTab("general");
       setIsSaving(false);
       setSaveSuccess(false);
+      setSelectedChildToAttach("");
       return;
     }
 
-    if (isEditMode && itemDetailsData?.data) {
-      const data = itemDetailsData.data as any;
-      let detectedType = "ArmoryItem";
+    const dataSource = itemDetailsData?.data || (isEditMode ? initialItem : null);
+
+    if (isEditMode && dataSource) {
+      const data = dataSource as any;
+      let detectedType = data.itemType;
       if (data["@odata.type"]) {
         const fullType = data["@odata.type"].replace("#", "");
-        detectedType = fullType.split(".").pop() || "ArmoryItem";
-      } else if (data.itemType) {
-        detectedType = data.itemType;
+        detectedType = fullType.split(".").pop() || detectedType;
+      }
+      if (!detectedType && (data.product?.productType || data.productType)) {
+        const pType = data.product?.productType || data.productType;
+        if (pType === "PewPew" || pType === "Pew" || pType === "Firearm") {
+          detectedType = "PewArmoryItem";
+        } else if (pType === "Optic") {
+          detectedType = "OpticArmoryItem";
+        } else if (pType === "Suppressor") {
+          detectedType = "SuppressorArmoryItem";
+        } else if (pType === "Light" || pType === "PewPewLight") {
+          detectedType = "LightArmoryItem";
+        }
+      }
+      if (!detectedType) {
+        detectedType = "ArmoryItem";
+      }
+
+      const prodId = data.productId ? String(data.productId) : data.product?.id ? String(data.product.id) : "";
+      const arsId = data.arsenalId ? String(data.arsenalId) : data.arsenal?.id ? String(data.arsenal.id) : "";
+      const vltId = data.vaultId ? String(data.vaultId) : data.vault?.id ? String(data.vault.id) : "";
+      const ownId = data.ownerId || data.owner?.id || "";
+      const benId = data.beneficiaryId || data.beneficiary?.id || "";
+
+      let condVal = "Good";
+      if (data.condition) {
+        condVal = typeof data.condition === "object" ? data.condition.name || data.condition.id || "Good" : String(data.condition);
+      }
+
+      let nfaVal = "Form4";
+      if (data.nfaFormType) {
+        nfaVal = typeof data.nfaFormType === "object" ? data.nfaFormType.name || data.nfaFormType.id || "Form4" : String(data.nfaFormType);
       }
 
       setForm({
@@ -194,13 +328,13 @@ export default function ArmoryItemForm({
         name: data.name || "",
         description: data.description || "",
         itemType: detectedType,
-        productId: data.productId || "",
-        arsenalId: data.arsenalId || "",
-        vaultId: data.vaultId || "",
-        ownerId: data.ownerId || "",
-        beneficiaryId: data.beneficiaryId || "",
+        productId: prodId,
+        arsenalId: arsId,
+        vaultId: vltId,
+        ownerId: ownId,
+        beneficiaryId: benId,
         parentItemId: data.parentItemId || null,
-        condition: typeof data.condition === "object" ? data.condition?.name || "Good" : data.condition || "Good",
+        condition: condVal,
         purchasePrice: data.purchasePrice !== null && data.purchasePrice !== undefined ? data.purchasePrice : "",
         estimatedValue: data.estimatedValue !== null && data.estimatedValue !== undefined ? data.estimatedValue : "",
         purchaseDate: data.purchaseDate ? data.purchaseDate.substring(0, 10) : "",
@@ -212,7 +346,7 @@ export default function ArmoryItemForm({
         twistRate: data.twistRate || "",
         threadPitch: data.threadPitch || "",
         serialNumber: data.serialNumber || "",
-        nfaFormType: data.nfaFormType?.name || data.nfaFormType || "Form4",
+        nfaFormType: nfaVal,
         taxStampDocumentUrl: data.taxStampDocumentUrl || "",
         stampApprovalDate: data.stampApprovalDate ? data.stampApprovalDate.substring(0, 10) : "",
         batteryLastChangedDate: data.batteryLastChangedDate ? data.batteryLastChangedDate.substring(0, 10) : "",
@@ -227,15 +361,16 @@ export default function ArmoryItemForm({
       setCustomSpecs(parsedSpecs);
     } else if (!isEditMode) {
       setForm({
-        ...INITIAL_ARMORY_FORM_STATE,
+        ...createDefaultArmoryItemForm(),
         arsenalId: activeArsenalId || (arsenals[0]?.id ? String(arsenals[0].id) : ""),
         vaultId: vaultsList[0]?.id ? String(vaultsList[0].id) : "",
         condition: itemConditions[0]?.name || "Excellent",
         nfaFormType: nfaFormTypes[0]?.name || "Form4",
       });
       setCustomSpecs([]);
+      setActiveTab("general");
     }
-  }, [isOpen, isEditMode, itemDetailsData, activeArsenalId, arsenals, vaultsList, itemConditions, nfaFormTypes]);
+  }, [isOpen, isEditMode, armoryItemId, itemDetailsData, initialItem, activeArsenalId, arsenals, vaultsList, itemConditions, nfaFormTypes]);
 
   // Handle Item Type Change with cascading product reset
   const handleItemTypeChange = (newItemType: string) => {
@@ -273,9 +408,26 @@ export default function ArmoryItemForm({
 
   // Handle Product Selection
   const handleProductChange = (prodId: string) => {
+    const selectedProd = productsList.find(
+      (p) => String(p.id) === String(prodId),
+    );
+    let derivedType = form.itemType;
+    if (selectedProd?.productType) {
+      const pType = selectedProd.productType;
+      if (pType === "PewPew" || pType === "Pew" || pType === "Firearm") {
+        derivedType = "PewArmoryItem";
+      } else if (pType === "Optic") {
+        derivedType = "OpticArmoryItem";
+      } else if (pType === "Suppressor") {
+        derivedType = "SuppressorArmoryItem";
+      } else if (pType === "Light" || pType === "PewPewLight") {
+        derivedType = "LightArmoryItem";
+      }
+    }
     setForm((prev) => ({
       ...prev,
       productId: prodId,
+      itemType: derivedType || prev.itemType,
     }));
   };
 
@@ -298,12 +450,163 @@ export default function ArmoryItemForm({
     );
   };
 
-  // Mutations
-  const { mutate: createItem } = usePostArmoryItems();
-  const { mutate: patchItem } = usePatchArmoryItemsFromKey();
+  // Markdown editor ref & helper
+  const notesTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const handleSave = (e: React.FormEvent) => {
+  const insertMarkdown = (
+    type: "bold" | "italic" | "heading" | "list" | "code" | "table",
+  ) => {
+    const textarea = notesTextareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = form.notesMarkdown || "";
+    const selectedText = text.substring(start, end);
+
+    let replacement = "";
+    let cursorOffset = 0;
+
+    switch (type) {
+      case "bold":
+        replacement = `**${selectedText || "bold text"}**`;
+        cursorOffset = selectedText ? replacement.length : 2;
+        break;
+      case "italic":
+        replacement = `*${selectedText || "italic text"}*`;
+        cursorOffset = selectedText ? replacement.length : 1;
+        break;
+      case "heading":
+        replacement = `\n### ${selectedText || "Heading"}\n`;
+        cursorOffset = replacement.length;
+        break;
+      case "list":
+        replacement = `\n- ${selectedText || "List item"}\n`;
+        cursorOffset = replacement.length;
+        break;
+      case "code":
+        replacement = selectedText.includes("\n")
+          ? `\n\`\`\`\n${selectedText || "code block"}\n\`\`\`\n`
+          : `\`${selectedText || "code"}\``;
+        cursorOffset = selectedText ? replacement.length : 1;
+        break;
+      case "table":
+        replacement = `\n| Column 1 | Column 2 |\n| --- | --- |\n| Value 1 | Value 2 |\n`;
+        cursorOffset = replacement.length;
+        break;
+    }
+
+    const updatedText =
+      text.substring(0, start) + replacement + text.substring(end);
+    setForm((prev) => ({ ...prev, notesMarkdown: updatedText }));
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + cursorOffset, start + cursorOffset);
+    }, 0);
+  };
+
+  // Mutation Save operations
+  const createItemMutation = usePostArmoryItems({
+    mutation: {
+      onSuccess: (res: any) => {
+        if (res?.status && res.status >= 400) {
+          const errMsg =
+            res.data?.error?.message ||
+            res.data?.title ||
+            `Server returned HTTP ${res.status}`;
+          alert("Failed to create armory item: " + errMsg);
+          setIsSaving(false);
+          return;
+        }
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/ArmoryItems"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Armory"] });
+        setSaveSuccess(true);
+        setTimeout(() => {
+          setSaveSuccess(false);
+          setIsSaving(false);
+          onClose();
+        }, 800);
+        if (res?.data && onSaved) {
+          onSaved(res.data);
+        }
+      },
+      onError: (err: any) => {
+        alert(
+          "Failed to create armory item: " + (err?.message || "Unknown error"),
+        );
+        setIsSaving(false);
+      },
+    },
+  });
+
+  const updateItemMutation = usePatchArmoryItemsFromKey({
+    mutation: {
+      onSuccess: (res: any) => {
+        if (res?.status && res.status >= 400) {
+          const errMsg =
+            res.data?.error?.message ||
+            res.data?.title ||
+            `Server returned HTTP ${res.status}`;
+          alert("Failed to save armory item: " + errMsg);
+          setIsSaving(false);
+          return;
+        }
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/ArmoryItems"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Armory"] });
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2000);
+        setIsSaving(false);
+        if (onSaved) {
+          onSaved(res?.data || { ...form });
+        }
+      },
+      onError: (err: any) => {
+        alert(
+          "Failed to save armory item: " + (err?.message || "Unknown error"),
+        );
+        setIsSaving(false);
+      },
+    },
+  });
+
+  const handleAttachAccessory = async (childId: number) => {
+    if (!childId || !form.id) return;
+    try {
+      await updateItemMutation.mutateAsync({
+        key: childId,
+        data: { parentItemId: form.id },
+      });
+      setSelectedChildToAttach("");
+      queryClient.invalidateQueries({ queryKey: ["/api/v1/ArmoryItems"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/v1/Armory"] });
+    } catch (err: any) {
+      alert("Failed to attach accessory: " + (err?.message || "Unknown error"));
+    }
+  };
+
+  const handleDetachAccessory = async (childId: number) => {
+    if (!childId) return;
+    if (window.confirm("Detach this accessory from this item?")) {
+      try {
+        await updateItemMutation.mutateAsync({
+          key: childId,
+          data: { parentItemId: null },
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/ArmoryItems"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/Armory"] });
+      } catch (err: any) {
+        alert("Failed to detach accessory: " + (err?.message || "Unknown error"));
+      }
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.name.trim()) {
+      alert("Name is required.");
+      return;
+    }
+
     setIsSaving(true);
 
     const dynamicSpecifications: Record<string, any> = {};
@@ -313,98 +616,98 @@ export default function ArmoryItemForm({
       }
     });
 
-    const odataType = `#Chambered.Data.Models.${form.itemType}`;
-
     const payload: Record<string, any> = {
-      "@odata.type": odataType,
       name: form.name.trim(),
       description: form.description?.trim() || null,
-      itemType: form.itemType,
       productId: form.productId ? parseInt(String(form.productId), 10) : null,
       arsenalId: form.arsenalId ? parseInt(String(form.arsenalId), 10) : null,
       vaultId: form.vaultId ? parseInt(String(form.vaultId), 10) : null,
       ownerId: form.ownerId?.trim() || null,
       beneficiaryId: form.beneficiaryId?.trim() || null,
-      parentItemId: form.parentItemId ? parseInt(String(form.parentItemId), 10) : null,
+      parentItemId: form.parentItemId
+        ? parseInt(String(form.parentItemId), 10)
+        : null,
       condition: form.condition,
-      purchasePrice: form.purchasePrice !== "" && form.purchasePrice !== null ? parseFloat(String(form.purchasePrice)) : null,
-      estimatedValue: form.estimatedValue !== "" && form.estimatedValue !== null ? parseFloat(String(form.estimatedValue)) : null,
-      purchaseDate: form.purchaseDate ? new Date(form.purchaseDate).toISOString() : null,
-      coverImageId: form.coverImageId ? parseInt(String(form.coverImageId), 10) : null,
+      purchasePrice:
+        form.purchasePrice !== "" && form.purchasePrice !== null
+          ? parseFloat(String(form.purchasePrice))
+          : null,
+      estimatedValue:
+        form.estimatedValue !== "" && form.estimatedValue !== null
+          ? parseFloat(String(form.estimatedValue))
+          : null,
+      purchaseDate: form.purchaseDate
+        ? new Date(form.purchaseDate).toISOString()
+        : null,
+      coverImageId: form.coverImageId
+        ? parseInt(String(form.coverImageId), 10)
+        : null,
       notesMarkdown: form.notesMarkdown?.trim() || null,
       specifications: dynamicSpecifications,
     };
 
+    if (form.itemType && form.itemType !== "ArmoryItem") {
+      payload["@odata.type"] = `#Chambered.Data.Models.${form.itemType}`;
+    }
+
     if (form.itemType === "PewArmoryItem") {
       payload.roundCount = parseInt(String(form.roundCount), 10) || 0;
-      payload.barrelLengthInches = form.barrelLengthInches !== "" && form.barrelLengthInches !== null ? parseFloat(String(form.barrelLengthInches)) : null;
+      payload.barrelLengthInches =
+        form.barrelLengthInches !== "" && form.barrelLengthInches !== null
+          ? parseFloat(String(form.barrelLengthInches))
+          : null;
       payload.twistRate = form.twistRate?.trim() || null;
       payload.threadPitch = form.threadPitch?.trim() || null;
       payload.serialNumber = form.serialNumber?.trim() || "";
       payload.nfaFormType = form.nfaFormType;
       payload.taxStampDocumentUrl = form.taxStampDocumentUrl?.trim() || null;
-      payload.stampApprovalDate = form.stampApprovalDate ? new Date(form.stampApprovalDate).toISOString() : null;
+      payload.stampApprovalDate = form.stampApprovalDate
+        ? new Date(form.stampApprovalDate).toISOString()
+        : null;
     } else if (form.itemType === "SuppressorArmoryItem") {
       payload.serialNumber = form.serialNumber?.trim() || "";
       payload.nfaFormType = form.nfaFormType;
       payload.taxStampDocumentUrl = form.taxStampDocumentUrl?.trim() || null;
-      payload.stampApprovalDate = form.stampApprovalDate ? new Date(form.stampApprovalDate).toISOString() : null;
+      payload.stampApprovalDate = form.stampApprovalDate
+        ? new Date(form.stampApprovalDate).toISOString()
+        : null;
     } else if (form.itemType === "OpticArmoryItem") {
       payload.serialNumber = form.serialNumber?.trim() || "";
-      payload.batteryLastChangedDate = form.batteryLastChangedDate ? new Date(form.batteryLastChangedDate).toISOString() : null;
-      payload.batteryExpirationDate = form.batteryExpirationDate ? new Date(form.batteryExpirationDate).toISOString() : null;
+      payload.batteryLastChangedDate = form.batteryLastChangedDate
+        ? new Date(form.batteryLastChangedDate).toISOString()
+        : null;
+      payload.batteryExpirationDate = form.batteryExpirationDate
+        ? new Date(form.batteryExpirationDate).toISOString()
+        : null;
     } else if (form.itemType === "LightArmoryItem") {
-      payload.batteryLastChangedDate = form.batteryLastChangedDate ? new Date(form.batteryLastChangedDate).toISOString() : null;
-      payload.batteryExpirationDate = form.batteryExpirationDate ? new Date(form.batteryExpirationDate).toISOString() : null;
+      payload.batteryLastChangedDate = form.batteryLastChangedDate
+        ? new Date(form.batteryLastChangedDate).toISOString()
+        : null;
+      payload.batteryExpirationDate = form.batteryExpirationDate
+        ? new Date(form.batteryExpirationDate).toISOString()
+        : null;
     }
 
+    // Strip complex navigation objects from payload to avoid OData binding errors
+    Object.keys(payload).forEach((key) => {
+      if (
+        payload[key] !== null &&
+        typeof payload[key] === "object" &&
+        key !== "specifications"
+      ) {
+        delete payload[key];
+      }
+    });
+
     if (isEditMode && armoryItemId) {
-      patchItem(
-        {
-          key: armoryItemId,
-          data: payload,
-        },
-        {
-          onSuccess: (res: any) => {
-            setIsSaving(false);
-            setSaveSuccess(true);
-            queryClient.invalidateQueries();
-            if (onSaved) onSaved(res?.data || payload);
-            setTimeout(() => {
-              setSaveSuccess(false);
-              onClose();
-            }, 600);
-          },
-          onError: (err: any) => {
-            setIsSaving(false);
-            const msg = err?.response?.data?.error?.message || err?.message || "Unknown error";
-            alert(`Failed to update armory item: ${msg}`);
-          },
-        },
-      );
+      await updateItemMutation.mutateAsync({
+        key: armoryItemId,
+        data: payload,
+      });
     } else {
-      createItem(
-        {
-          data: payload,
-        },
-        {
-          onSuccess: (res: any) => {
-            setIsSaving(false);
-            setSaveSuccess(true);
-            queryClient.invalidateQueries();
-            if (onSaved) onSaved(res?.data || payload);
-            setTimeout(() => {
-              setSaveSuccess(false);
-              onClose();
-            }, 600);
-          },
-          onError: (err: any) => {
-            setIsSaving(false);
-            const msg = err?.response?.data?.error?.message || err?.message || "Unknown error";
-            alert(`Failed to create armory item: ${msg}`);
-          },
-        },
-      );
+      await createItemMutation.mutateAsync({
+        data: payload,
+      });
     }
   };
 
@@ -416,7 +719,11 @@ export default function ArmoryItemForm({
         {/* MODAL TITLE BAR */}
         <div className="modal-title-bar">
           <div className="title-left">
-            <h3>{isEditMode ? `Edit Armory Item #${armoryItemId}` : "Add New Armory Item"}</h3>
+            <h3>
+              {isEditMode
+                ? `Edit Armory Item #${armoryItemId}`
+                : "Add New Armory Item"}
+            </h3>
           </div>
           <button className="modal-close-x-btn" onClick={onClose} type="button">
             ×
@@ -446,13 +753,31 @@ export default function ArmoryItemForm({
             </button>
           )}
 
+          <button
+            className={`tab-btn ${activeTab === "notes" ? "active" : ""}`}
+            onClick={() => setActiveTab("notes")}
+            type="button"
+          >
+            Notes
+          </button>
+
+          {form.id > 0 && (
+            <button
+              className={`tab-btn ${activeTab === "attachments" ? "active" : ""}`}
+              onClick={() => setActiveTab("attachments")}
+              type="button"
+            >
+              Attachments
+            </button>
+          )}
+
           {form.id > 0 && (
             <button
               className={`tab-btn ${activeTab === "documents" ? "active" : ""}`}
               onClick={() => setActiveTab("documents")}
               type="button"
             >
-              Attachments
+              Documents ({itemDocuments.length})
             </button>
           )}
 
@@ -487,7 +812,7 @@ export default function ArmoryItemForm({
                 </div>
               )}
 
-              {/* TAB: GENERAL */}
+              {/* TAB 1: ARMORY DETAILS (BASE PROPERTIES) */}
               {activeTab === "general" && (
                 <div className="form-grid">
                   <div className="form-item">
@@ -510,14 +835,18 @@ export default function ArmoryItemForm({
                     <select
                       value={form.productId || ""}
                       onChange={(e) => handleProductChange(e.target.value)}
+                      disabled={isEditMode}
                       required
                     >
                       <option value="">-- Select Catalog Product --</option>
                       {filteredProductsList.map((p) => {
-                        const mfg = p.manufacturer?.name ? `${p.manufacturer.name} - ` : "";
+                        const mfg = p.manufacturer?.name
+                          ? `${p.manufacturer.name} - `
+                          : "";
                         return (
                           <option key={p.id} value={p.id}>
-                            {mfg}{p.name} [{p.productType || "Product"}]
+                            {mfg}
+                            {p.name} [{p.productType || "Product"}]
                           </option>
                         );
                       })}
@@ -525,144 +854,245 @@ export default function ArmoryItemForm({
                   </div>
 
                   <div className="form-item full-row">
-                    <label>Item Name / Instance Title</label>
+                    <label>Name</label>
                     <input
                       type="text"
                       value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, name: e.target.value })
+                      }
                       placeholder="e.g. BCM Recce-14 Custom Build"
                       required
                     />
                   </div>
 
-                  <div className="form-item">
-                    <label>Arsenal</label>
-                    <select
-                      value={form.arsenalId || ""}
+                  <div className="form-item full-row">
+                    <label>Description</label>
+                    <textarea
+                      rows={2}
+                      value={form.description || ""}
                       onChange={(e) =>
-                        setForm({
-                          ...form,
-                          arsenalId: e.target.value ? parseInt(e.target.value, 10) : "",
-                        })
+                        setForm({ ...form, description: e.target.value })
                       }
-                    >
-                      <option value="">-- Unassigned Arsenal --</option>
-                      {arsenals.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-item">
-                    <label>Vault Location</label>
-                    <select
-                      value={form.vaultId || ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          vaultId: e.target.value ? parseInt(e.target.value, 10) : "",
-                        })
-                      }
-                    >
-                      <option value="">-- Unassigned Vault --</option>
-                      {vaultsList.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-item">
-                    <label>Parent Item (Attachment Mount)</label>
-                    <select
-                      value={form.parentItemId || ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          parentItemId: e.target.value ? parseInt(e.target.value, 10) : null,
-                        })
-                      }
-                    >
-                      <option value="">-- Standalone Item (No Parent) --</option>
-                      {otherItemsList.map((it: any) => (
-                        <option key={it.id} value={it.id}>
-                          {it.name || it.product?.name || `Item #${it.id}`} ({it.itemType?.replace("ArmoryItem", "") || "Item"})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-item">
-                    <label>Physical Condition</label>
-                    <select
-                      value={form.condition}
-                      onChange={(e) => setForm({ ...form, condition: e.target.value })}
-                    >
-                      {itemConditions.map((c: any) => (
-                        <option key={c.id} value={c.name || c.id}>
-                          {c.label || c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-item">
-                    <label>Purchase Price ($)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.purchasePrice ?? ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          purchasePrice: e.target.value ? parseFloat(e.target.value) : "",
-                        })
-                      }
-                      placeholder="0.00"
+                      placeholder="Brief summary or description..."
                     />
                   </div>
 
-                  <div className="form-item">
-                    <label>Purchase Date</label>
-                    <input
-                      type="date"
-                      value={form.purchaseDate || ""}
-                      onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Estimated Market Value ($)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.estimatedValue ?? ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          estimatedValue: e.target.value ? parseFloat(e.target.value) : "",
-                        })
-                      }
-                      placeholder="0.00"
-                    />
-                  </div>
-
-                  <div className="form-item">
-                    <label>Legal Estate Beneficiary</label>
-                    <select
-                      value={form.beneficiaryId || ""}
-                      onChange={(e) => setForm({ ...form, beneficiaryId: e.target.value })}
+                  {/* Valuation & Condition Group Container */}
+                  <div
+                    className="full-row"
+                    style={{
+                      backgroundColor: "var(--bg-selected)",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "0.9rem",
+                        color: "var(--color-primary)",
+                        borderBottom: "1px solid var(--border-color)",
+                        paddingBottom: "8px",
+                        letterSpacing: "0.5px",
+                        textTransform: "uppercase",
+                      }}
                     >
-                      <option value="">-- Select Beneficiary --</option>
-                      {usersList.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.userName || u.email || u.id}
-                        </option>
-                      ))}
-                    </select>
+                      Valuation & Condition
+                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                        gap: "12px",
+                      }}
+                    >
+                      <div className="form-item">
+                        <label>Purchase Price ($)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={form.purchasePrice ?? ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              purchasePrice: e.target.value
+                                ? parseFloat(e.target.value)
+                                : "",
+                            })
+                          }
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Estimated Market Value ($)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={form.estimatedValue ?? ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              estimatedValue: e.target.value
+                                ? parseFloat(e.target.value)
+                                : "",
+                            })
+                          }
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Purchase Date</label>
+                        <input
+                          type="date"
+                          value={form.purchaseDate || ""}
+                          onChange={(e) =>
+                            setForm({ ...form, purchaseDate: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="form-item">
+                        <label>Physical Condition</label>
+                        <select
+                          value={form.condition}
+                          onChange={(e) =>
+                            setForm({ ...form, condition: e.target.value })
+                          }
+                        >
+                          {itemConditions.map((c: any) => (
+                            <option key={c.id} value={c.name || c.id}>
+                              {c.label || c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Assignment & Location Group Container */}
+                  <div
+                    className="full-row"
+                    style={{
+                      backgroundColor: "var(--bg-selected)",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "0.9rem",
+                        color: "var(--color-primary)",
+                        borderBottom: "1px solid var(--border-color)",
+                        paddingBottom: "8px",
+                        letterSpacing: "0.5px",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Assignment & Location
+                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                        gap: "12px",
+                      }}
+                    >
+                      <div className="form-item">
+                        <label>Arsenal</label>
+                        <select
+                          value={form.arsenalId || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              arsenalId: e.target.value
+                                ? parseInt(e.target.value, 10)
+                                : "",
+                            })
+                          }
+                        >
+                          <option value="">-- Unassigned Arsenal --</option>
+                          {arsenals.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Vault Location</label>
+                        <select
+                          value={form.vaultId || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              vaultId: e.target.value
+                                ? parseInt(e.target.value, 10)
+                                : "",
+                            })
+                          }
+                        >
+                          <option value="">-- Unassigned Vault --</option>
+                          {vaultsList.map((v) => (
+                            <option key={v.id} value={v.id}>
+                              {v.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Legal Estate Beneficiary</label>
+                        <select
+                          value={form.beneficiaryId || ""}
+                          onChange={(e) =>
+                            setForm({ ...form, beneficiaryId: e.target.value })
+                          }
+                        >
+                          <option value="">-- Select Beneficiary --</option>
+                          {usersList.map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.userName || u.email || u.id}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-item">
+                        <label>Parent Item (Attachment Mount)</label>
+                        <select
+                          value={form.parentItemId || ""}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              parentItemId: e.target.value
+                                ? parseInt(e.target.value, 10)
+                                : null,
+                            })
+                          }
+                        >
+                          <option value="">-- Standalone Item (No Parent) --</option>
+                          {otherItemsList.map((it: any) => (
+                            <option key={it.id} value={it.id}>
+                              {it.name || it.product?.name || `Item #${it.id}`} (
+                              {it.itemType?.replace("ArmoryItem", "") || "Item"})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                   </div>
 
                   {form.id > 0 && (
@@ -673,7 +1103,9 @@ export default function ArmoryItemForm({
                         onChange={(e) =>
                           setForm({
                             ...form,
-                            coverImageId: e.target.value ? parseInt(e.target.value, 10) : null,
+                            coverImageId: e.target.value
+                              ? parseInt(e.target.value, 10)
+                              : null,
                           })
                         }
                       >
@@ -686,30 +1118,10 @@ export default function ArmoryItemForm({
                       </select>
                     </div>
                   )}
-
-                  <div className="form-item full-row">
-                    <label>Description</label>
-                    <textarea
-                      rows={2}
-                      value={form.description || ""}
-                      onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      placeholder="Brief summary or description..."
-                    />
-                  </div>
-
-                  <div className="form-item full-row">
-                    <label>Detailed Markdown Notes</label>
-                    <textarea
-                      rows={4}
-                      value={form.notesMarkdown || ""}
-                      onChange={(e) => setForm({ ...form, notesMarkdown: e.target.value })}
-                      placeholder="Detailed notes, maintenance logs, configuration markdown..."
-                    />
-                  </div>
                 </div>
               )}
 
-              {/* TAB: SUBCLASS SPECS */}
+              {/* TAB 2: SUBCLASS SPECS */}
               {activeTab === "subclass" && (
                 <div className="form-grid">
                   {form.itemType === "PewArmoryItem" && (
@@ -720,7 +1132,9 @@ export default function ArmoryItemForm({
                           type="text"
                           className="text-mono"
                           value={form.serialNumber || ""}
-                          onChange={(e) => setForm({ ...form, serialNumber: e.target.value })}
+                          onChange={(e) =>
+                            setForm({ ...form, serialNumber: e.target.value })
+                          }
                           placeholder="e.g. SN12345678"
                           required
                         />
@@ -734,7 +1148,9 @@ export default function ArmoryItemForm({
                           onChange={(e) =>
                             setForm({
                               ...form,
-                              roundCount: e.target.value ? parseInt(e.target.value, 10) : 0,
+                              roundCount: e.target.value
+                                ? parseInt(e.target.value, 10)
+                                : 0,
                             })
                           }
                           placeholder="0"
@@ -750,7 +1166,9 @@ export default function ArmoryItemForm({
                           onChange={(e) =>
                             setForm({
                               ...form,
-                              barrelLengthInches: e.target.value ? parseFloat(e.target.value) : "",
+                              barrelLengthInches: e.target.value
+                                ? parseFloat(e.target.value)
+                                : "",
                             })
                           }
                           placeholder="16.0"
@@ -761,7 +1179,9 @@ export default function ArmoryItemForm({
                         <input
                           type="text"
                           value={form.twistRate || ""}
-                          onChange={(e) => setForm({ ...form, twistRate: e.target.value })}
+                          onChange={(e) =>
+                            setForm({ ...form, twistRate: e.target.value })
+                          }
                           placeholder="e.g. 1:7, 1:10"
                         />
                       </div>
@@ -770,202 +1190,684 @@ export default function ArmoryItemForm({
                         <input
                           type="text"
                           value={form.threadPitch || ""}
-                          onChange={(e) => setForm({ ...form, threadPitch: e.target.value })}
+                          onChange={(e) =>
+                            setForm({ ...form, threadPitch: e.target.value })
+                          }
                           placeholder="e.g. 1/2x28, 5/8x24"
                         />
                       </div>
-                      <div className="form-item">
-                        <label>NFA Form Type</label>
-                        <select
-                          value={form.nfaFormType}
-                          onChange={(e) => setForm({ ...form, nfaFormType: e.target.value })}
+
+                      {/* INfaItem Section Card - Only rendered if selected product is an NFA item */}
+                      {isNfaItem && (
+                        <div
+                          className="full-row"
+                          style={{
+                            backgroundColor: "#1e293b",
+                            border: "1px solid #3b82f6",
+                            borderLeft: "6px solid #3b82f6",
+                            borderRadius: "var(--radius-md)",
+                            padding: "16px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "12px",
+                          }}
                         >
-                          {nfaFormTypes.map((n: any) => (
-                            <option key={n.id} value={n.name || n.id}>
-                              {n.label || n.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-item">
-                        <label>Tax Stamp Approval Date</label>
-                        <input
-                          type="date"
-                          value={form.stampApprovalDate || ""}
-                          onChange={(e) => setForm({ ...form, stampApprovalDate: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-item full-row">
-                        <label>Tax Stamp Document URL</label>
-                        <input
-                          type="text"
-                          value={form.taxStampDocumentUrl || ""}
-                          onChange={(e) => setForm({ ...form, taxStampDocumentUrl: e.target.value })}
-                          placeholder="https://..."
-                        />
-                      </div>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "0.95rem",
+                              color: "#60a5fa",
+                              borderBottom: "1px solid rgba(59, 130, 246, 0.3)",
+                              paddingBottom: "8px",
+                              letterSpacing: "0.5px",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            National Firearms Act (NFA) Configuration
+                          </div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "12px",
+                            }}
+                          >
+                            <div className="form-item">
+                              <label style={{ color: "#93c5fd" }}>NFA Form Type</label>
+                              <select
+                                value={form.nfaFormType}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    nfaFormType: e.target.value,
+                                  })
+                                }
+                              >
+                                {nfaFormTypes.map((n: any) => (
+                                  <option key={n.id} value={n.name || n.id}>
+                                    {n.label || n.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="form-item">
+                              <label style={{ color: "#93c5fd" }}>Tax Stamp Approval Date</label>
+                              <input
+                                type="date"
+                                value={form.stampApprovalDate || ""}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    stampApprovalDate: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="form-item full-row">
+                              <label style={{ color: "#93c5fd" }}>Tax Stamp Document URL</label>
+                              <input
+                                type="text"
+                                value={form.taxStampDocumentUrl || ""}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    taxStampDocumentUrl: e.target.value,
+                                  })
+                                }
+                                placeholder="https://..."
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
 
                   {form.itemType === "SuppressorArmoryItem" && (
                     <>
-                      <div className="form-item">
+                      <div className="form-item full-row">
                         <label>Serial Number</label>
                         <input
                           type="text"
                           className="text-mono"
                           value={form.serialNumber || ""}
-                          onChange={(e) => setForm({ ...form, serialNumber: e.target.value })}
+                          onChange={(e) =>
+                            setForm({ ...form, serialNumber: e.target.value })
+                          }
                           placeholder="e.g. SUP-987654"
                           required
                         />
                       </div>
-                      <div className="form-item">
-                        <label>NFA Form Type</label>
-                        <select
-                          value={form.nfaFormType}
-                          onChange={(e) => setForm({ ...form, nfaFormType: e.target.value })}
+
+                      {/* INfaItem Section Card - Only rendered if selected product is an NFA item */}
+                      {isNfaItem && (
+                        <div
+                          className="full-row"
+                          style={{
+                            backgroundColor: "#1e293b",
+                            border: "1px solid #3b82f6",
+                            borderLeft: "6px solid #3b82f6",
+                            borderRadius: "var(--radius-md)",
+                            padding: "16px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "12px",
+                          }}
                         >
-                          {nfaFormTypes.map((n: any) => (
-                            <option key={n.id} value={n.name || n.id}>
-                              {n.label || n.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-item">
-                        <label>Tax Stamp Approval Date</label>
-                        <input
-                          type="date"
-                          value={form.stampApprovalDate || ""}
-                          onChange={(e) => setForm({ ...form, stampApprovalDate: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-item full-row">
-                        <label>Tax Stamp Document URL</label>
-                        <input
-                          type="text"
-                          value={form.taxStampDocumentUrl || ""}
-                          onChange={(e) => setForm({ ...form, taxStampDocumentUrl: e.target.value })}
-                          placeholder="https://..."
-                        />
-                      </div>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "0.95rem",
+                              color: "#60a5fa",
+                              borderBottom: "1px solid rgba(59, 130, 246, 0.3)",
+                              paddingBottom: "8px",
+                              letterSpacing: "0.5px",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            National Firearms Act (NFA) Configuration
+                          </div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "12px",
+                            }}
+                          >
+                            <div className="form-item">
+                              <label style={{ color: "#93c5fd" }}>NFA Form Type</label>
+                              <select
+                                value={form.nfaFormType}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    nfaFormType: e.target.value,
+                                  })
+                                }
+                              >
+                                {nfaFormTypes.map((n: any) => (
+                                  <option key={n.id} value={n.name || n.id}>
+                                    {n.label || n.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="form-item">
+                              <label style={{ color: "#93c5fd" }}>Tax Stamp Approval Date</label>
+                              <input
+                                type="date"
+                                value={form.stampApprovalDate || ""}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    stampApprovalDate: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="form-item full-row">
+                              <label style={{ color: "#93c5fd" }}>Tax Stamp Document URL</label>
+                              <input
+                                type="text"
+                                value={form.taxStampDocumentUrl || ""}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    taxStampDocumentUrl: e.target.value,
+                                  })
+                                }
+                                placeholder="https://..."
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
 
                   {form.itemType === "OpticArmoryItem" && (
                     <>
-                      <div className="form-item">
+                      <div className="form-item full-row">
                         <label>Serial Number</label>
                         <input
                           type="text"
                           className="text-mono"
                           value={form.serialNumber || ""}
-                          onChange={(e) => setForm({ ...form, serialNumber: e.target.value })}
+                          onChange={(e) =>
+                            setForm({ ...form, serialNumber: e.target.value })
+                          }
                           placeholder="e.g. OPT-112233"
                           required
                         />
                       </div>
-                      <div className="form-item">
-                        <label>Battery Last Changed Date</label>
-                        <input
-                          type="date"
-                          value={form.batteryLastChangedDate || ""}
-                          onChange={(e) => setForm({ ...form, batteryLastChangedDate: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-item">
-                        <label>Battery Expiration Date</label>
-                        <input
-                          type="date"
-                          value={form.batteryExpirationDate || ""}
-                          onChange={(e) => setForm({ ...form, batteryExpirationDate: e.target.value })}
-                        />
-                      </div>
+
+                      {/* IHasBattery Section Card - Only rendered if selected product has battery */}
+                      {hasBattery && (
+                        <div
+                          className="full-row"
+                          style={{
+                            backgroundColor: "#064e3b",
+                            border: "1px solid #10b981",
+                            borderLeft: "6px solid #10b981",
+                            borderRadius: "var(--radius-md)",
+                            padding: "16px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "12px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "0.95rem",
+                              color: "#34d399",
+                              borderBottom: "1px solid rgba(16, 185, 129, 0.3)",
+                              paddingBottom: "8px",
+                              letterSpacing: "0.5px",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            Battery & Power Management
+                          </div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "12px",
+                            }}
+                          >
+                            <div className="form-item">
+                              <label style={{ color: "#a7f3d0" }}>Battery Last Changed Date</label>
+                              <input
+                                type="date"
+                                value={form.batteryLastChangedDate || ""}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    batteryLastChangedDate: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="form-item">
+                              <label style={{ color: "#a7f3d0" }}>Battery Expiration Date</label>
+                              <input
+                                type="date"
+                                value={form.batteryExpirationDate || ""}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    batteryExpirationDate: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
 
                   {form.itemType === "LightArmoryItem" && (
                     <>
-                      <div className="form-item">
-                        <label>Battery Last Changed Date</label>
-                        <input
-                          type="date"
-                          value={form.batteryLastChangedDate || ""}
-                          onChange={(e) => setForm({ ...form, batteryLastChangedDate: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-item">
-                        <label>Battery Expiration Date</label>
-                        <input
-                          type="date"
-                          value={form.batteryExpirationDate || ""}
-                          onChange={(e) => setForm({ ...form, batteryExpirationDate: e.target.value })}
-                        />
-                      </div>
+                      {/* IHasBattery Section Card - Only rendered if selected product has battery */}
+                      {hasBattery && (
+                        <div
+                          className="full-row"
+                          style={{
+                            backgroundColor: "#064e3b",
+                            border: "1px solid #10b981",
+                            borderLeft: "6px solid #10b981",
+                            borderRadius: "var(--radius-md)",
+                            padding: "16px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "12px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "0.95rem",
+                              color: "#34d399",
+                              borderBottom: "1px solid rgba(16, 185, 129, 0.3)",
+                              paddingBottom: "8px",
+                              letterSpacing: "0.5px",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            Battery & Power Management
+                          </div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "12px",
+                            }}
+                          >
+                            <div className="form-item">
+                              <label style={{ color: "#a7f3d0" }}>Battery Last Changed Date</label>
+                              <input
+                                type="date"
+                                value={form.batteryLastChangedDate || ""}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    batteryLastChangedDate: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="form-item">
+                              <label style={{ color: "#a7f3d0" }}>Battery Expiration Date</label>
+                              <input
+                                type="date"
+                                value={form.batteryExpirationDate || ""}
+                                onChange={(e) =>
+                                  setForm({
+                                    ...form,
+                                    batteryExpirationDate: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
               )}
 
-              {/* TAB: ATTACHMENTS */}
-              {activeTab === "documents" && form.id > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                  <ArmoryItemDocumentsTable
-                    armoryItemId={form.id}
-                    coverImageId={form.coverImageId}
-                    onCoverImageChanged={(docId) => {
-                      setForm((prev) => ({ ...prev, coverImageId: docId }));
-                    }}
-                  />
+              {/* TAB 3: NOTES (MARKDOWN EDITOR & TOOLBAR) */}
+              {activeTab === "notes" && (
+                <div className="markdown-editor-pane">
+                  <div className="markdown-toolbar">
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => insertMarkdown("bold")}
+                    >
+                      Bold
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => insertMarkdown("italic")}
+                    >
+                      Italic
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => insertMarkdown("heading")}
+                    >
+                      Heading
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => insertMarkdown("list")}
+                    >
+                      List
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => insertMarkdown("code")}
+                    >
+                      Code
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => insertMarkdown("table")}
+                    >
+                      Table
+                    </button>
+                    <span className="text-format-indicator">
+                      Markdown Supported
+                    </span>
+                  </div>
+                  <div className="markdown-split-panel">
+                    <div className="editor-col">
+                      <textarea
+                        ref={notesTextareaRef}
+                        value={form.notesMarkdown || ""}
+                        onChange={(e) =>
+                          setForm({ ...form, notesMarkdown: e.target.value })
+                        }
+                        placeholder="Detailed notes, maintenance logs, configuration markdown..."
+                      />
+                    </div>
+                    <div className="preview-col">
+                      <div className="preview-tag-title">Live Preview</div>
+                      <div className="markdown-rendered-view">
+                        <MarkdownRenderer
+                          content={form.notesMarkdown || "*Nothing to preview...*"}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* TAB: USER SPECS */}
+              {/* TAB 4: ATTACHMENTS (CHILD ACCESSORIES & PARENT HOST) */}
+              {activeTab === "attachments" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  {/* Parent Host Item */}
+                  <div
+                    style={{
+                      padding: "16px",
+                      backgroundColor: "var(--bg-selected)",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "var(--radius-md)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "0.85rem",
+                        color: "var(--color-primary)",
+                        letterSpacing: "0.5px",
+                        textTransform: "uppercase",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      Parent Host Item
+                    </div>
+                    {form.parentItemId ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "12px",
+                          backgroundColor: "var(--bg-card)",
+                          border: "1px solid var(--border-color)",
+                          borderRadius: "var(--radius-sm)",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: "0.95rem" }}>
+                            {otherItemsList.find((i) => i.id === form.parentItemId)?.name || `Item #${form.parentItemId}`}
+                          </div>
+                          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                            {otherItemsList.find((i) => i.id === form.parentItemId)?.product?.name || ""}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => setForm((prev) => ({ ...prev, parentItemId: null }))}
+                        >
+                          Detach From Parent
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                        This item is currently a standalone root item (not mounted to any parent).
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Attached Accessories */}
+                  <div
+                    style={{
+                      padding: "16px",
+                      backgroundColor: "var(--bg-selected)",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "var(--radius-md)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "0.85rem",
+                        color: "var(--color-primary)",
+                        letterSpacing: "0.5px",
+                        textTransform: "uppercase",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      Attached Accessories ({attachedAccessories.length})
+                    </div>
+                    {attachedAccessories.length === 0 ? (
+                      <div style={{ padding: "12px 0", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                        No accessories or sub-items are currently attached to this item.
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "12px" }}>
+                        {attachedAccessories.map((acc: any) => (
+                          <div
+                            key={acc.id}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "10px 14px",
+                              backgroundColor: "var(--bg-card)",
+                              borderRadius: "var(--radius-sm)",
+                              border: "1px solid var(--border-color)",
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{acc.name}</div>
+                              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                                {acc.product?.name || acc.productName || acc.itemType || "Accessory"}
+                                {acc.serialNumber ? ` • S/N: ${acc.serialNumber}` : ""}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ color: "var(--danger-color, #ff5c5c)" }}
+                              onClick={() => handleDetachAccessory(acc.id)}
+                            >
+                              Detach
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Attach New Accessory Dropdown */}
+                    {availableToAttach.length > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "10px",
+                          marginTop: "12px",
+                          paddingTop: "12px",
+                          borderTop: "1px solid var(--border-color)",
+                        }}
+                      >
+                        <select
+                          className="form-control"
+                          style={{ flex: 1 }}
+                          value={selectedChildToAttach}
+                          onChange={(e) => setSelectedChildToAttach(e.target.value)}
+                        >
+                          <option value="">-- Select an item to attach --</option>
+                          {availableToAttach.map((item: any) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} {item.product?.name ? `(${item.product.name})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          disabled={!selectedChildToAttach}
+                          onClick={() => {
+                            if (selectedChildToAttach) {
+                              handleAttachAccessory(parseInt(selectedChildToAttach, 10));
+                            }
+                          }}
+                        >
+                          Attach Item
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: DOCUMENTS */}
+              {activeTab === "documents" && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                  }}
+                >
+                  {form.id > 0 ? (
+                    <ArmoryItemDocumentsTable
+                      armoryItemId={form.id}
+                      selectedCoverImageId={form.coverImageId}
+                      onSetCoverImage={(docId) => {
+                        setForm((prev) => ({ ...prev, coverImageId: docId }));
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        padding: "32px",
+                        textAlign: "center",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      Documents can be uploaded after saving the armory item.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 5: USER SPECS (MATCHES PRODUCTFORM) */}
               {activeTab === "specifications" && (
-                <div className="specifications-tab-wrapper">
-                  <div className="custom-specs-list">
+                <div className="specifications-editor-container">
+                  <div className="spec-info-card">
+                    <div className="spec-info-title">
+                      Custom Item Specifications
+                    </div>
+                    <div className="spec-info-text">
+                      Define custom key-value specification pairs for this
+                      specific armory item.
+                    </div>
+                  </div>
+
+                  <div className="specs-editor-grid">
+                    <div className="specs-headers">
+                      <span>Specification Key</span>
+                      <span>Value</span>
+                      <span></span>
+                    </div>
+
                     {customSpecs.length === 0 ? (
-                      <div className="empty-specs-message" style={{ padding: "24px", textAlign: "center", color: "var(--text-muted)" }}>
-                        No custom specifications defined. Use the button below to add custom metadata pairs.
+                      <div className="no-specs-text">
+                        No custom specifications defined yet. Click below to
+                        add key-value specifications.
                       </div>
                     ) : (
                       customSpecs.map((spec, index) => (
-                        <div key={index} className="custom-spec-row" style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+                        <div key={index} className="spec-editor-row">
                           <input
                             type="text"
-                            placeholder="Key (e.g. Trigger Pull Weight)"
+                            placeholder="e.g. Trigger Pull Weight"
                             value={spec.key}
-                            onChange={(e) => updateCustomSpec(index, "key", e.target.value)}
-                            style={{ flex: 1 }}
+                            onChange={(e) =>
+                              updateCustomSpec(index, "key", e.target.value)
+                            }
                           />
                           <input
                             type="text"
-                            placeholder="Value (e.g. 3.5 lbs)"
+                            placeholder="e.g. 3.5 lbs"
                             value={spec.value}
-                            onChange={(e) => updateCustomSpec(index, "value", e.target.value)}
-                            style={{ flex: 1 }}
+                            onChange={(e) =>
+                              updateCustomSpec(index, "value", e.target.value)
+                            }
                           />
                           <button
                             type="button"
-                            className="btn btn-danger"
-                            style={{ height: "38px", padding: "0 12px" }}
+                            className="remove-spec-btn"
                             onClick={() => removeCustomSpec(index)}
+                            title="Remove Specification"
                           >
-                            Delete
+                            Remove
                           </button>
                         </div>
                       ))
                     )}
+
+                    <button
+                      type="button"
+                      className="add-spec-btn"
+                      onClick={addCustomSpec}
+                    >
+                      + Add Custom Specification
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={addCustomSpec}
-                    style={{ marginTop: "12px" }}
-                  >
-                    + Add New Specification Key
-                  </button>
                 </div>
               )}
             </div>

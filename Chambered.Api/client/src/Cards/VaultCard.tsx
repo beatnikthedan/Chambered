@@ -138,7 +138,7 @@ export default function VaultCard(props: VaultCardProps) {
       style={{
         position: "relative",
         width: "100%",
-        backgroundColor: isSelected ? "#1f2937" : "#181920",
+        backgroundColor: isSelected ? "var(--bg-selected)" : "var(--bg-card)",
         borderRadius: "14px",
         overflow: "hidden",
         border: isSelected

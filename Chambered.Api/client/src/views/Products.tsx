@@ -329,7 +329,8 @@ export default function Products() {
       payload["@odata.type"] = `#Chambered.Data.Models.${type}`;
     }
 
-    if (type === "PewPew") {
+    const caliberRequiringTypes = ["PewPew", "Suppressor", "Projectile", "Casing", "Ammunition", "Magazine"];
+    if (caliberRequiringTypes.includes(type)) {
       payload.caliberId = calibersList[0]?.id || 1;
     }
 

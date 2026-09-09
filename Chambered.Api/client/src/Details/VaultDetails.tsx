@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Vault } from "../api/models/vault";
+import AuditFooter from "../components/AuditFooter";
 
 export interface ExtendedVault extends Vault {
   temperature?: number;
@@ -179,6 +180,14 @@ export default function VaultDetails({
                   </div>
                 </div>
               )}
+
+              {/* Audit Properties */}
+              <AuditFooter
+                created={vault.created}
+                createdBy={vault.createdBy}
+                modified={vault.modified}
+                modifiedBy={vault.modifiedBy}
+              />
             </div>
           </div>
         )}

@@ -65,6 +65,12 @@ export default function ArmoryItemCard({
   const mfgName = item.manufacturer || item.product?.manufacturer?.name || "";
   const modelName = item.name || item.model || item.product?.name || "Armory Item";
 
+  const arsenalColor = item.arsenal?.colorHex || item.arsenalColor || "var(--color-primary)";
+  const hasArsenal = Boolean(item.arsenal || item.arsenalColor);
+  const deselectedBorderColor = hasArsenal && arsenalColor.startsWith("#")
+    ? `${arsenalColor}44`
+    : "var(--border-color)";
+
   return (
     <div
       className={`catalog-list-card ${isSelected ? "selected" : ""}`}
@@ -73,10 +79,18 @@ export default function ArmoryItemCard({
         backgroundImage: blobUrl
           ? `linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.88)), url(${blobUrl})`
           : undefined,
+        backgroundColor: isSelected ? "var(--bg-selected)" : undefined,
         backgroundSize: "cover",
         backgroundPosition: "center",
         transition: "all 0.2s ease-in-out",
         cursor: "pointer",
+        border: isSelected
+          ? `2px solid ${arsenalColor}`
+          : `1px solid ${deselectedBorderColor}`,
+        borderLeft: isSelected
+          ? `10px solid ${arsenalColor}`
+          : `1px solid ${deselectedBorderColor}`,
+        boxShadow: isSelected ? `-4px 0 16px -2px ${arsenalColor}55` : undefined,
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -113,7 +127,7 @@ export default function ArmoryItemCard({
         )}
         {item.storageLocation && (
           <span className="text-muted" style={{ fontSize: "12px" }}>
-            📍 {item.storageLocation}
+            {item.storageLocation}
           </span>
         )}
       </div>

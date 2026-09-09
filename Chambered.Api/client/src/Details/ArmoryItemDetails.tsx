@@ -1,6 +1,8 @@
 import React from "react";
 import { ARMORY_STATIC_KEYS } from "../types/formModels";
 import type { ExtendedArmoryItem } from "../Cards/ArmoryItemCard";
+import AuditFooter from "../components/AuditFooter";
+import MarkdownRenderer from "../components/MarkdownRenderer";
 
 export interface ArmoryItemDetailsProps {
   item: ExtendedArmoryItem | null;
@@ -38,6 +40,10 @@ const extractSpecifications = (item: any): Record<string, any> => {
         "storageLocation",
         "itemType",
         "isNfaItem",
+        "arsenalName",
+        "vaultName",
+        "productName",
+        "manufacturerName",
       ].includes(key) &&
       !key.startsWith("@odata.") &&
       !key.startsWith("odata.")
@@ -90,7 +96,6 @@ export default function ArmoryItemDetails({
       <div className="detail-panel">
         {!item ? (
           <div className="empty-detail-state">
-            <span className="icon">🛡️</span>
             <h3>No Armory Item Selected</h3>
             <p>
               Select an item from the armory list on the left, or register a new
@@ -140,62 +145,68 @@ export default function ArmoryItemDetails({
             </div>
 
             <div className="detail-view-body">
-              {item.manufacturer && <span className="detail-mfg">{item.manufacturer}</span>}
-              <h2>{item.name || item.model || item.product?.name || "Armory Item"}</h2>
-
-              <div className="text-mono detail-pn-sku">
-                {item.serialNumber && (
-                  <span style={{ color: "var(--color-primary)" }}>
-                    Serial: {item.serialNumber}
-                  </span>
-                )}
-                {item.caliber && <span>Caliber: {item.caliber}</span>}
-                {item.storageLocation && <span>Vault: {item.storageLocation}</span>}
+              {/* Product Hero Info */}
+              <div className="detail-hero">
+                <h2 className="detail-title">{item.name || item.product?.name || "Untitled Item"}</h2>
+                <div className="detail-subtitle">
+                  {item.product?.manufacturer?.name && (
+                    <span className="manufacturer-name">{item.product.manufacturer.name}</span>
+                  )}
+                  {item.product?.model && <span className="model-name">{item.product.model}</span>}
+                  {item.serialNumber && (
+                    <span className="serial-number text-mono">SN: {item.serialNumber}</span>
+                  )}
+                </div>
               </div>
 
-              {item.description && (
-                <p className="detail-desc">{item.description}</p>
+              {/* Cover Image / Image Carousel */}
+              {item.coverImage && (
+                <div className="detail-image-box">
+                  <img
+                    src={item.coverImage}
+                    alt={item.name || "Item image"}
+                    className="detail-main-img"
+                  />
+                </div>
               )}
 
-              {/* Ownership & Valuation Details */}
-              <div className="detail-section" style={{ marginTop: "16px" }}>
-                <h4>Acquisition & Valuation</h4>
+              {/* Core Attributes Grid */}
+              <div className="detail-section">
+                <h4>General Information</h4>
                 <div className="detail-grid">
                   <div className="detail-item">
-                    <span className="detail-label">Purchase Date</span>
-                    <span className="detail-value">{formatDate(item.purchaseDate)}</span>
+                    <span className="detail-label">Status</span>
+                    <span className="detail-value">{item.status || "Active"}</span>
                   </div>
                   <div className="detail-item">
-                    <span className="detail-label">Purchase Price</span>
-                    <span className="detail-value">{formatCurrency(item.purchasePrice)}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Estimated Value</span>
-                    <span className="detail-value" style={{ color: "var(--color-primary)", fontWeight: 600 }}>
-                      {formatCurrency(item.estimatedValue)}
-                    </span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Owner</span>
-                    <span className="detail-value">{item.owner?.username || item.owner?.email || "—"}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Beneficiary</span>
-                    <span className="detail-value">{item.beneficiary?.username || item.beneficiary?.email || "—"}</span>
+                    <span className="detail-label">Vault</span>
+                    <span className="detail-value">{item.vault?.name || "Unassigned"}</span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Storage Location</span>
-                    <span className="detail-value">{item.storageLocation || item.vault?.name || "Unassigned"}</span>
+                    <span className="detail-value">{item.storageLocation || "—"}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Acquisition Date</span>
+                    <span className="detail-value">{formatDate(item.acquiredDate)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Purchase Price</span>
+                    <span className="detail-value text-mono">{formatCurrency(item.acquiredPrice)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Current Value</span>
+                    <span className="detail-value text-mono">{formatCurrency(item.currentValue)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Subclass Technical Specs */}
+              {/* Specific Subclass Details */}
               {(itemType === "PewArmoryItem" ||
                 itemType === "SuppressorArmoryItem" ||
                 itemType === "OpticArmoryItem" ||
                 itemType === "LightArmoryItem") && (
-                <div className="detail-section" style={{ marginTop: "16px" }}>
+                <div className="detail-section">
                   <h4>Technical Specifications</h4>
                   <div className="detail-grid">
                     {itemType === "PewArmoryItem" && (
@@ -225,37 +236,41 @@ export default function ArmoryItemDetails({
                       </>
                     )}
 
-                    {(itemType === "PewArmoryItem" || itemType === "SuppressorArmoryItem") && item.nfaFormType && item.nfaFormType !== "Unknown" && (
-                      <>
-                        <div className="detail-item">
-                          <span className="detail-label">NFA Form</span>
-                          <span className="detail-value">{item.nfaFormType}</span>
-                        </div>
-                        {item.stampApprovalDate && (
+                    {(itemType === "PewArmoryItem" || itemType === "SuppressorArmoryItem") &&
+                      Boolean(item.product?.isNfaItem || (item as any).isNfaItem) &&
+                      item.nfaFormType &&
+                      item.nfaFormType !== "Unknown" && (
+                        <>
                           <div className="detail-item">
-                            <span className="detail-label">Stamp Approval</span>
-                            <span className="detail-value">{formatDate(item.stampApprovalDate)}</span>
+                            <span className="detail-label">NFA Form</span>
+                            <span className="detail-value">{item.nfaFormType}</span>
                           </div>
-                        )}
-                      </>
-                    )}
+                          {item.stampApprovalDate && (
+                            <div className="detail-item">
+                              <span className="detail-label">Stamp Approval</span>
+                              <span className="detail-value">{formatDate(item.stampApprovalDate)}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
 
-                    {(itemType === "OpticArmoryItem" || itemType === "LightArmoryItem") && (
-                      <>
-                        {item.batteryLastChangedDate && (
-                          <div className="detail-item">
-                            <span className="detail-label">Battery Changed</span>
-                            <span className="detail-value">{formatDate(item.batteryLastChangedDate)}</span>
-                          </div>
-                        )}
-                        {item.batteryExpirationDate && (
-                          <div className="detail-item">
-                            <span className="detail-label">Battery Expires</span>
-                            <span className="detail-value">{formatDate(item.batteryExpirationDate)}</span>
-                          </div>
-                        )}
-                      </>
-                    )}
+                    {(itemType === "OpticArmoryItem" || itemType === "LightArmoryItem") &&
+                      Boolean(item.product?.hasBattery || (item as any).hasBattery) && (
+                        <>
+                          {item.batteryLastChangedDate && (
+                            <div className="detail-item">
+                              <span className="detail-label">Battery Changed</span>
+                              <span className="detail-value">{formatDate(item.batteryLastChangedDate)}</span>
+                            </div>
+                          )}
+                          {item.batteryExpirationDate && (
+                            <div className="detail-item">
+                              <span className="detail-label">Battery Expires</span>
+                              <span className="detail-value">{formatDate(item.batteryExpirationDate)}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
                   </div>
                 </div>
               )}
@@ -272,10 +287,9 @@ export default function ArmoryItemDetails({
                       padding: "12px",
                       fontSize: "13px",
                       lineHeight: "1.5",
-                      whiteSpace: "pre-wrap",
                     }}
                   >
-                    {item.notesMarkdown}
+                    <MarkdownRenderer content={item.notesMarkdown} />
                   </div>
                 </div>
               )}
@@ -299,6 +313,14 @@ export default function ArmoryItemDetails({
                   )
                 );
               })()}
+
+              {/* Audit Properties */}
+              <AuditFooter
+                created={item.created}
+                createdBy={item.createdBy}
+                modified={item.modified}
+                modifiedBy={item.modifiedBy}
+              />
             </div>
           </div>
         )}
@@ -308,7 +330,6 @@ export default function ArmoryItemDetails({
       <div className="detail-panel">
         {!item ? (
           <div className="empty-detail-state">
-            <span className="icon">⚙️</span>
             <h3>No Item Selected</h3>
             <p>Select an armory item to inspect mounted optics, suppressors, and accessories.</p>
           </div>

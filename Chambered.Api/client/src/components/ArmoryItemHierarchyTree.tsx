@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useRef } from "react";
-import SecureImage from "./SecureImage";
 import ManufacturerFavicon from "./ManufacturerFavicon";
 import type { ExtendedArmoryItem } from "../views/Armory";
 
@@ -140,35 +139,22 @@ export default function ArmoryItemHierarchyTree({
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}
       onDrop={handleRootDrop}
-      style={{ minHeight: "100%", padding: "12px" }}
     >
-      {/* Root Level Dropzone Banner */}
+      {/* Root Level Drop Banner */}
       <div
         className={`spatial-root-dropzone ${
           draggedItemId !== null ? "is-active-mode" : ""
         } ${dragOverTargetId === "ROOT" ? "active-target" : ""}`}
-        style={{
-          border: "1.5px dashed var(--color-primary)",
-          borderRadius: "8px",
-          padding: "12px",
-          textAlign: "center",
-          marginBottom: "16px",
-          backgroundColor: dragOverTargetId === "ROOT" ? "rgba(240, 98, 146, 0.1)" : "transparent",
-          transition: "all 0.2s ease",
-          display: draggedItemId !== null ? "block" : "none",
-        }}
       >
-        <span style={{ fontWeight: 600, color: "var(--color-primary)", fontSize: "13px" }}>
-          Root Level Dropzone (Drag any accessory here to unmount / make standalone)
-        </span>
+        <span>Root Level Dropzone (Drag any accessory here to unmount / make standalone)</span>
       </div>
 
       {treeRoots.length === 0 ? (
         <div className="empty-state" style={{ padding: "40px 20px", textAlign: "center" }}>
-          No matching armory items found.
+          No armory items found matching current filters.
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div className="spatial-tree-grid">
           {treeRoots.map((rootNode) => (
             <ArmoryItemTreeNode
               key={rootNode.id}
@@ -227,7 +213,6 @@ function ArmoryItemTreeNode({
   canDrop,
   isDescendant,
 }: ArmoryItemTreeNodeProps) {
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const isSelected = selectedItemId === node.id;
   const isDragTarget = dragOverTargetId === node.id;
   const isBeingDragged = draggedItemId === node.id;
@@ -238,13 +223,12 @@ function ArmoryItemTreeNode({
 
   const dragCounterRef = useRef<number>(0);
 
-  const coverUrl = node.coverImageId
-    ? `/api/v1/ArmoryItemDocuments/${node.coverImageId}/Download`
-    : node.product?.coverImageId
-      ? `/api/v1/ProductDocuments/${node.product.coverImageId}/Download`
-      : null;
+  const linkedProduct = node.product;
 
-  const typeName = node.itemType?.replace("ArmoryItem", "") || "Item";
+  // Valid target parents for the quick move selector
+  const validParents = useMemo(() => {
+    return allItems.filter((i) => i.id !== node.id && !isDescendant(node.id, i.id));
+  }, [allItems, node.id, isDescendant]);
 
   const handleDragStart = (e: React.DragEvent) => {
     e.stopPropagation();
@@ -300,196 +284,147 @@ function ArmoryItemTreeNode({
 
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "6px",
-        marginLeft: depth > 0 ? `${depth * 20}px` : "0px",
-      }}
+      className={`spatial-vault-card depth-${depth} ${
+        isSelected ? "selected-vault" : ""
+      } ${isDropEligible ? "drop-eligible" : ""} ${
+        isDragTarget ? "drag-target-hover" : ""
+      } ${isBeingDragged ? "is-dragging" : ""}`}
+      style={{ "--depth": depth } as React.CSSProperties}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
+      {/* Header bar / Drag grip */}
       <div
-        draggable
+        className="spatial-node-header"
+        draggable={true}
         onDragStart={handleDragStart}
         onDragEnd={onDragEnd}
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => onSelectItem(node)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 14px",
-          borderRadius: "8px",
-          backgroundColor: isSelected
-            ? "rgba(240, 98, 146, 0.08)"
-            : isDragTarget
-              ? "rgba(240, 98, 146, 0.15)"
-              : "var(--bg-card)",
-          border: `1px solid ${
-            isDragTarget
-              ? "var(--color-primary)"
-              : isSelected
-                ? "var(--color-primary)"
-                : isDropEligible
-                  ? "rgba(240, 98, 146, 0.3)"
-                  : "var(--border-color)"
-          }`,
-          cursor: "grab",
-          opacity: isBeingDragged ? 0.4 : 1,
-          boxShadow: isSelected ? "0 0 0 1px var(--color-primary)" : "none",
-          transition: "all 0.15s ease",
-          gap: "12px",
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectItem(node);
         }}
       >
-        {/* Left Info Group */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
-          {/* Chevron expand/collapse if has children */}
-          {node.childrenNodes.length > 0 ? (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(!isExpanded);
-              }}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--text-muted)",
-                cursor: "pointer",
-                padding: "2px 4px",
-                fontSize: "12px",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              {isExpanded ? "▼" : "▶"}
-            </button>
-          ) : (
-            <div style={{ width: "16px" }} />
+        <div className="spatial-title-group">
+          <div
+            className="spatial-drag-handle"
+            title="Click and drag to mount onto another armory item"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="9" cy="6" r="2" />
+              <circle cx="15" cy="6" r="2" />
+              <circle cx="9" cy="12" r="2" />
+              <circle cx="15" cy="12" r="2" />
+              <circle cx="9" cy="18" r="2" />
+              <circle cx="15" cy="18" r="2" />
+            </svg>
+          </div>
+
+          {linkedProduct?.manufacturerId && (
+            <ManufacturerFavicon mfgId={linkedProduct.manufacturerId} size={16} />
           )}
 
-          {/* Depth connector indicator */}
-          {depth > 0 && (
-            <span style={{ color: "var(--color-primary)", fontWeight: 700, fontSize: "14px" }}>
-              ↳
+          <h3 className="spatial-vault-title">
+            {node.name || linkedProduct?.name || `Item #${node.id}`}
+          </h3>
+
+          {linkedProduct && (
+            <span className="spatial-product-tag">
+              {linkedProduct.manufacturer?.name
+                ? `${linkedProduct.manufacturer.name} `
+                : ""}
+              {linkedProduct.name}
             </span>
           )}
 
-          {/* Cover Thumbnail */}
-          {coverUrl ? (
-            <SecureImage
-              src={coverUrl}
-              alt={node.name || "Cover"}
-              style={{
-                width: "32px",
-                height: "32px",
-                objectFit: "cover",
-                borderRadius: "4px",
-                border: "1px solid var(--border-color)",
-                backgroundColor: "var(--bg-input)",
-                flexShrink: 0,
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "4px",
-                border: "1px solid var(--border-color)",
-                backgroundColor: "var(--bg-input)",
-                flexShrink: 0,
-              }}
-            />
-          )}
-
-          {/* Type Badge */}
-          <span className={`type-badge ${typeName.toLowerCase()}`} style={{ fontSize: "11px" }}>
-            {typeName}
-          </span>
-
-          {/* Manufacturer & Title */}
-          <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {node.product?.manufacturerId && (
-                <ManufacturerFavicon mfgId={node.product.manufacturerId} size={16} />
-              )}
-              <span
-                style={{
-                  fontWeight: 600,
-                  fontSize: "13.5px",
-                  color: isSelected ? "var(--color-primary)" : "var(--text-main)",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {node.name || node.product?.name || `Item #${node.id}`}
-              </span>
-            </div>
-            {node.product?.name && node.name !== node.product.name && (
-              <span style={{ fontSize: "11px", color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                Model: {node.product.name}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Right Info Group: Vault, Serial, Accessory Count */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
           {node.serialNumber && (
-            <span className="text-mono" style={{ fontSize: "11px", color: "var(--color-primary)" }}>
+            <span className="spatial-count-tag" style={{ fontFamily: "monospace" }}>
               SN: {node.serialNumber}
             </span>
           )}
+        </div>
 
-          <span className="text-muted" style={{ fontSize: "11.5px" }}>
-            {node.vault?.name || node.storageLocation || "Unassigned"}
-          </span>
-
-          {node.childrenNodes.length > 0 && (
-            <span
-              style={{
-                fontSize: "10.5px",
-                fontWeight: 600,
-                padding: "2px 6px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                borderRadius: "10px",
-                color: "var(--text-muted)",
+        <div className="spatial-badges-group">
+          {/* Quick Nest / Move Dropdown */}
+          <div className="spatial-move-wrapper" onClick={(e) => e.stopPropagation()}>
+            <select
+              className="spatial-quick-move-select"
+              title="Quick re-mount / change parent"
+              value={node.parentItemId ?? "ROOT"}
+              onChange={(e) => {
+                const val = e.target.value === "ROOT" ? null : Number(e.target.value);
+                onReparentItem(node.id, val);
               }}
             >
-              {node.childrenNodes.length} mounted
+              <option value="ROOT">Standalone (Root)</option>
+              {validParents.map((p) => (
+                <option key={p.id} value={p.id}>
+                  Mounted on: {p.name || p.product?.name || `Item #${p.id}`}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {node.arsenal && (
+            <span
+              className="spatial-arsenal-tag"
+              style={{
+                color: node.arsenal.colorHex || "var(--color-primary)",
+                borderColor: node.arsenal.colorHex ? `${node.arsenal.colorHex}66` : undefined,
+                backgroundColor: node.arsenal.colorHex ? `${node.arsenal.colorHex}22` : undefined,
+              }}
+            >
+              {node.arsenal.name}
             </span>
           )}
+
+          {node.vault && (
+            <span className="spatial-count-tag">
+              {node.vault.name}
+            </span>
+          )}
+
+          <span className="spatial-count-tag">
+            {node.childrenNodes.length} {node.childrenNodes.length === 1 ? "accessory" : "accessories"}
+          </span>
         </div>
       </div>
 
-      {/* Child Accessories Nodes (Recursive) */}
-      {isExpanded && node.childrenNodes.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          {node.childrenNodes.map((childNode) => (
-            <ArmoryItemTreeNode
-              key={childNode.id}
-              node={childNode}
-              allItems={allItems}
-              depth={depth + 1}
-              selectedItemId={selectedItemId}
-              draggedItemId={draggedItemId}
-              dragOverTargetId={dragOverTargetId}
-              activeDragIdRef={activeDragIdRef}
-              onSelectItem={onSelectItem}
-              onReparentItem={onReparentItem}
-              onDragStart={onDragStart}
-              onDragEnd={onDragEnd}
-              onDragTargetChange={onDragTargetChange}
-              canDrop={canDrop}
-              isDescendant={isDescendant}
-            />
-          ))}
-        </div>
-      )}
+      {/* Body: Nested child accessories */}
+      <div className="spatial-contents-body">
+        {/* Nested Child Accessories */}
+        {node.childrenNodes.length > 0 && (
+          <div className="spatial-children-zone">
+            {node.childrenNodes.map((child) => (
+              <ArmoryItemTreeNode
+                key={child.id}
+                node={child}
+                allItems={allItems}
+                depth={depth + 1}
+                selectedItemId={selectedItemId}
+                draggedItemId={draggedItemId}
+                dragOverTargetId={dragOverTargetId}
+                activeDragIdRef={activeDragIdRef}
+                onSelectItem={onSelectItem}
+                onReparentItem={onReparentItem}
+                onDragStart={onDragStart}
+                onDragEnd={onDragEnd}
+                onDragTargetChange={onDragTargetChange}
+                canDrop={canDrop}
+                isDescendant={isDescendant}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Empty slot drop invitation */}
+        {node.childrenNodes.length === 0 && (
+          <div className="spatial-empty-zone">
+            <span>Empty Attachment Slot (Drag accessories here or select parent in dropdown)</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

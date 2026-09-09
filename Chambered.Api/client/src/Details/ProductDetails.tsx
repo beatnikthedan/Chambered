@@ -1,6 +1,7 @@
 import React from "react";
 import { PRODUCT_STATIC_KEYS } from "../types/formModels";
 import type { Product } from "../api/models/product";
+import AuditFooter from "../components/AuditFooter";
 
 export interface ExtendedProduct extends Omit<Product, "productType"> {
   productType: string;
@@ -75,7 +76,6 @@ export default function ProductDetails({
       <div className="detail-panel">
         {!product ? (
           <div className="empty-detail-state">
-            <span className="icon">📦</span>
             <h3>No Product Selected</h3>
             <p>
               Select a product from the list on the left, or add a brand-new
@@ -127,7 +127,7 @@ export default function ProductDetails({
                   rel="noreferrer"
                   className="external-site-link"
                 >
-                  🌐 Open Official Website
+                  Open Official Website
                 </a>
               )}
 
@@ -162,6 +162,14 @@ export default function ProductDetails({
                   )
                 );
               })()}
+
+              {/* Audit Properties */}
+              <AuditFooter
+                created={product.created}
+                createdBy={product.createdBy}
+                modified={product.modified}
+                modifiedBy={product.modifiedBy}
+              />
             </div>
           </div>
         )}
@@ -171,7 +179,6 @@ export default function ProductDetails({
       <div className="detail-panel">
         {!product ? (
           <div className="empty-detail-state">
-            <span className="icon">🛡️</span>
             <h3>No Product Selected</h3>
             <p>Select a product model to inspect physical armory inventory.</p>
           </div>

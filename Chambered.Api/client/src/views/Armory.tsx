@@ -96,14 +96,29 @@ export default function Armory() {
         item.product?.manufacturer?.name ||
         (item as any).manufacturer ||
         "";
+      const modelName =
+        item.model || linkedProduct?.model || linkedProduct?.name || "";
+      const arsenalName =
+        item.arsenal?.name ||
+        (item.arsenalId ? `Arsenal #${item.arsenalId}` : "");
+      const vaultName =
+        linkedVault?.name ||
+        item.vault?.name ||
+        (item.vaultId ? `Vault #${item.vaultId}` : "Unassigned");
 
       return {
         ...item,
         product: linkedProduct || item.product,
         vault: linkedVault || item.vault,
         manufacturer: manufacturerName,
-        model: item.model || linkedProduct?.model || linkedProduct?.name || "",
-        caliber: item.caliber || (linkedProduct as any)?.caliber || (item as any).caliber || "",
+        model: modelName,
+        caliber:
+          item.caliber ||
+          (linkedProduct as any)?.caliber ||
+          (item as any).caliber ||
+          "",
+        arsenalName: arsenalName,
+        vaultName: vaultName,
       } as ExtendedArmoryItem;
     });
   }, [rawArmoryList, productsList, vaultsList]);
@@ -115,7 +130,8 @@ export default function Armory() {
 
   const quickAddFilteredProducts = useMemo(() => {
     if (!productsList || productsList.length === 0) return [];
-    if (!quickAddArmoryType || quickAddArmoryType === "ArmoryItem") return productsList;
+    if (!quickAddArmoryType || quickAddArmoryType === "ArmoryItem")
+      return productsList;
     if (quickAddArmoryType === "PewArmoryItem") {
       return productsList.filter(
         (p) => p.productType === "PewPew" || p.productType === "Pew",
@@ -150,7 +166,9 @@ export default function Armory() {
       },
       onError: (err: any) => {
         setIsQuickSaving(false);
-        alert("Failed to quick-add armory item: " + (err?.message || "Unknown error"));
+        alert(
+          "Failed to quick-add armory item: " + (err?.message || "Unknown error"),
+        );
       },
     },
   });
@@ -176,7 +194,10 @@ export default function Armory() {
     if (itemType === "PewArmoryItem") {
       payload.serialNumber = "";
       payload.roundCount = 0;
-    } else if (itemType === "SuppressorArmoryItem" || itemType === "OpticArmoryItem") {
+    } else if (
+      itemType === "SuppressorArmoryItem" ||
+      itemType === "OpticArmoryItem"
+    ) {
       payload.serialNumber = "";
     }
 
@@ -209,6 +230,42 @@ export default function Armory() {
       });
     }
 
+    const uniqueMakes = Array.from(
+      new Set(
+        armoryList
+          .map((i) => i.manufacturer || i.product?.manufacturer?.name)
+          .filter(Boolean) as string[],
+      ),
+    ).sort();
+    if (uniqueMakes.length > 0) {
+      groups.push({
+        id: "manufacturer",
+        label: "Make",
+        options: uniqueMakes.map((m) => ({
+          label: m,
+          value: m,
+        })),
+      });
+    }
+
+    const uniqueModels = Array.from(
+      new Set(
+        armoryList
+          .map((i) => i.model || i.product?.model || i.product?.name)
+          .filter(Boolean) as string[],
+      ),
+    ).sort();
+    if (uniqueModels.length > 0) {
+      groups.push({
+        id: "model",
+        label: "Model",
+        options: uniqueModels.map((m) => ({
+          label: m,
+          value: m,
+        })),
+      });
+    }
+
     if (vaultsList.length > 0) {
       groups.push({
         id: "vaultId",
@@ -221,7 +278,7 @@ export default function Armory() {
     }
 
     return groups;
-  }, [armoryTypes, store.arsenals, vaultsList]);
+  }, [armoryTypes, store.arsenals, armoryList, vaultsList]);
 
   // Master view hook
   const {
@@ -238,10 +295,20 @@ export default function Armory() {
     processedItems: processedArmoryItems,
   } = useMasterView<ExtendedArmoryItem>({
     data: armoryList,
-    searchFields: ["name", "model", "notes", "manufacturer", "caliber"],
+    searchFields: [
+      "name",
+      "model",
+      "manufacturer",
+      "caliber",
+      "notes",
+      "notesMarkdown",
+      "serialNumber",
+      "arsenalName",
+      "vaultName",
+    ],
     defaultSortColumn: "name",
     defaultSortDirection: "asc",
-    customFilter: (item, filters) => {
+    customFilter: (item: any, filters) => {
       if (filters.itemType && filters.itemType.length > 0) {
         const itemType = item.itemType || "ArmoryItem";
         if (!filters.itemType.includes(itemType)) return false;
@@ -249,6 +316,21 @@ export default function Armory() {
 
       if (filters.arsenalId && filters.arsenalId.length > 0) {
         if (!filters.arsenalId.includes(String(item.arsenalId))) {
+          return false;
+        }
+      }
+
+      if (filters.manufacturer && filters.manufacturer.length > 0) {
+        const itemMfg = item.manufacturer || item.product?.manufacturer?.name;
+        if (!itemMfg || !filters.manufacturer.includes(itemMfg)) {
+          return false;
+        }
+      }
+
+      if (filters.model && filters.model.length > 0) {
+        const itemModel =
+          item.model || item.product?.model || item.product?.name;
+        if (!itemModel || !filters.model.includes(itemModel)) {
           return false;
         }
       }
@@ -263,7 +345,7 @@ export default function Armory() {
     },
   });
 
-  // Table Columns: 1. Cover Image, 2. Type, 3. Manufacturer, 4. Model, 5. Name, 6. Vault, 7. Est. Value
+  // Table Columns: 1. Cover Image, 2. Type, 3. Arsenal, 4. Make, 5. Model, 6. Name, 7. Vault
   const armoryColumns: ColumnDef<ExtendedArmoryItem>[] = useMemo(
     () => [
       {
@@ -315,11 +397,33 @@ export default function Armory() {
         ),
       },
       {
-        key: "manufacturer",
-        header: "Manufacturer",
+        key: "arsenal",
+        header: "Arsenal",
         render: (item) => {
-          const mfgId = item.product?.manufacturerId || (item.product?.manufacturer as any)?.id;
-          const mfgName = item.manufacturer || item.product?.manufacturer?.name || "—";
+          const color = item.arsenal?.colorHex || "var(--color-primary)";
+          return (
+            <span
+              className="type-badge"
+              style={{
+                backgroundColor: `${color}22`,
+                color: color,
+                border: `1px solid ${color}55`,
+              }}
+            >
+              {item.arsenal?.name || (item.arsenalId ? `Arsenal #${item.arsenalId}` : "—")}
+            </span>
+          );
+        },
+      },
+      {
+        key: "manufacturer",
+        header: "Make",
+        render: (item) => {
+          const mfgId =
+            item.product?.manufacturerId ||
+            (item.product?.manufacturer as any)?.id;
+          const mfgName =
+            item.manufacturer || item.product?.manufacturer?.name || "—";
           return (
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               {mfgId ? <ManufacturerFavicon mfgId={mfgId} size={20} /> : null}
@@ -332,7 +436,9 @@ export default function Armory() {
         key: "model",
         header: "Model",
         render: (item) => (
-          <span>{item.model || item.product?.model || item.product?.name || "—"}</span>
+          <span>
+            {item.model || item.product?.model || item.product?.name || "—"}
+          </span>
         ),
       },
       {
@@ -347,22 +453,8 @@ export default function Armory() {
         header: "Vault",
         render: (item) => (
           <span className="text-muted">
-            {item.vault?.name || (item.vaultId ? `Vault #${item.vaultId}` : "Unassigned")}
-          </span>
-        ),
-      },
-      {
-        key: "estimatedValue",
-        header: "Est. Value",
-        align: "right",
-        render: (item) => (
-          <span className="text-mono">
-            {item.estimatedValue != null
-              ? `$${Number(item.estimatedValue).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}`
-              : "—"}
+            {item.vault?.name ||
+              (item.vaultId ? `Vault #${item.vaultId}` : "Unassigned")}
           </span>
         ),
       },
@@ -666,6 +758,7 @@ export default function Armory() {
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           armoryItemId={isEditMode && selectedItem ? selectedItem.id : null}
+          initialItem={isEditMode ? selectedItem : null}
           onSaved={(savedItem) => {
             if (savedItem) {
               setSelectedItem(savedItem as any);

@@ -192,7 +192,13 @@ export const createDefaultProductForm = (): ProductFormData => ({
   maxCapacity: 0,
 });
 
-export const PRODUCT_STATIC_KEYS = new Set(Object.keys(createDefaultProductForm()));
+export const PRODUCT_STATIC_KEYS = new Set([
+  ...Object.keys(createDefaultProductForm()),
+  "created",
+  "createdBy",
+  "modified",
+  "modifiedBy",
+]);
 
 // ---------------------------------------------------------------------------
 // Armory Item Form Model & Factories
@@ -264,7 +270,13 @@ export const createDefaultArmoryItemForm = (): ArmoryItemFormData => ({
   batteryExpirationDate: "",
 });
 
-export const ARMORY_STATIC_KEYS = new Set(Object.keys(createDefaultArmoryItemForm()));
+export const ARMORY_STATIC_KEYS = new Set([
+  ...Object.keys(createDefaultArmoryItemForm()),
+  "created",
+  "createdBy",
+  "modified",
+  "modifiedBy",
+]);
 
 // ---------------------------------------------------------------------------
 // Manufacturer & Vault Default Factories

@@ -2,6 +2,7 @@ import React from "react";
 import type { Manufacturer } from "../api/models/manufacturer";
 import { useGetManufacturersFaviconFromKey } from "../api/endpoints";
 import { ExtendedProduct } from "./ProductDetails";
+import AuditFooter from "../components/AuditFooter";
 
 export interface ManufacturerDetailsProps {
   manufacturer: Manufacturer | null;
@@ -29,7 +30,7 @@ const ManufacturerFavicon = ({ mfgId }: { mfgId?: number }) => {
   }
 
   if (isError || !data?.data?.base64Data) {
-    return <span className="mfg-favicon-placeholder text-icon">🏢</span>;
+    return null;
   }
 
   const { base64Data, contentType } = data.data;
@@ -56,7 +57,6 @@ export default function ManufacturerDetails({
       <div className="detail-panel">
         {!manufacturer ? (
           <div className="empty-detail-state">
-            <span className="icon">🏢</span>
             <h3>No Manufacturer Selected</h3>
             <p>Select a manufacturer on the left to inspect details.</p>
             <button
@@ -161,13 +161,23 @@ export default function ManufacturerDetails({
                           rel="noreferrer"
                           className="external-site-link"
                         >
-                          🌐 Open Official Website
+                          Open Official Website
                         </a>
                       </span>
                     </div>
                   </div>
                 </div>
               )}
+
+              {/* Audit Properties */}
+              <div style={{ marginTop: "auto", paddingTop: "16px" }}>
+                <AuditFooter
+                  created={manufacturer.created}
+                  createdBy={manufacturer.createdBy}
+                  modified={manufacturer.modified}
+                  modifiedBy={manufacturer.modifiedBy}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -177,7 +187,6 @@ export default function ManufacturerDetails({
       <div className="detail-panel">
         {!manufacturer ? (
           <div className="empty-detail-state">
-            <span className="icon">📦</span>
             <h3>No Manufacturer Selected</h3>
             <p>Select a manufacturer to inspect associated product models.</p>
           </div>
